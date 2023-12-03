@@ -25,9 +25,9 @@ fn print_hotpoints(hotpoints: &Vec<Vec<bool>>) {
 
 fn main() {
     let stdin = io::stdin();
-    let mut schematic = Vec::new();
+    let mut schematic: Vec<Vec<char>> = Vec::new();
     for line in stdin.lines().map(|l| l.unwrap()) {
-        schematic.push(line);
+        schematic.push(line.chars().collect());
     }
 
     // A "hot point" is a point around a symbol.
@@ -35,9 +35,9 @@ fn main() {
     let mut hotpoints: Vec<Vec<bool>> =
         vec![vec![false; schematic.first().unwrap().len()]; schematic.len()];
     schematic.iter().enumerate().for_each(|(i, line)| {
-        line.chars()
+        line.iter()
             .enumerate()
-            .filter(|(_, d)| !d.is_digit(10) && !d.eq(&'.'))
+            .filter(|(_, d)| !d.is_digit(10) && **d != '.')
             .for_each(|(j, _)| {
                 set_hotpoints(&mut hotpoints, i, j);
                 set_hotpoints(&mut hotpoints, usize::max(0, i - 1), j);
@@ -50,7 +50,7 @@ fn main() {
     schematic.iter().enumerate().for_each(|(i, line)| {
         let mut n = 0;
         let mut include = false;
-        line.chars().enumerate().for_each(|(j, c)| {
+        line.iter().enumerate().for_each(|(j, c)| {
             if let Some(d) = c.to_digit(10) {
                 n = n * 10 + d;
                 //println!("{i}:{j}  {d} => {n}");
