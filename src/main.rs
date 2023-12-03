@@ -4,23 +4,20 @@
 
 use std::{io, usize};
 
-fn set_hotpoints(hotpoints: &mut Vec<Vec<bool>>, i: usize, j: usize) {
-    let last_idx = hotpoints[i].len() - 1;
-    hotpoints[i][j] = true;
-    hotpoints[i][usize::max(0, j - 1)] = true;
-    hotpoints[i][usize::min(j + 1, last_idx)] = true;
+fn is_symbol(c: char) -> bool {
+    !c.is_digit(10) && c != '.'
 }
 
-fn print_hotpoints(hotpoints: &Vec<Vec<bool>>) {
-    hotpoints.iter().for_each(|line| {
-        println!(
-            "{}",
-            line.iter()
-                .map(|i| if *i { "*" } else { "." })
-                .collect::<Vec<&str>>()
-                .join("")
-        );
-    });
+fn is_symbol_adj_line(s: &Vec<Vec<char>>, i: usize, j: usize) -> bool {
+    is_symbol(s[i][j])
+        || is_symbol(s[i][j.saturating_sub(1)])
+        || is_symbol(s[i][usize::min(j + 1, s[i].len() - 1)])
+}
+
+fn is_symbol_adjacent(s: &Vec<Vec<char>>, i: usize, j: usize) -> bool {
+    is_symbol_adj_line(s, i, j)
+        || is_symbol_adj_line(s, i.saturating_sub(1), j)
+        || is_symbol_adj_line(s, usize::min(i + 1, s.len() - 1), j)
 }
 
 fn main() {
@@ -30,22 +27,6 @@ fn main() {
         schematic.push(line.chars().collect());
     }
 
-    // A "hot point" is a point around a symbol.
-    // All numbers that overlap such a point must be counted.
-    let mut hotpoints: Vec<Vec<bool>> =
-        vec![vec![false; schematic.first().unwrap().len()]; schematic.len()];
-    schematic.iter().enumerate().for_each(|(i, line)| {
-        line.iter()
-            .enumerate()
-            .filter(|(_, d)| !d.is_digit(10) && **d != '.')
-            .for_each(|(j, _)| {
-                set_hotpoints(&mut hotpoints, i, j);
-                set_hotpoints(&mut hotpoints, usize::max(0, i - 1), j);
-                set_hotpoints(&mut hotpoints, usize::min(i + 1, schematic.len() - 1), j);
-            });
-    });
-    //print_hotpoints(&hotpoints);
-
     let mut total = 0;
     schematic.iter().enumerate().for_each(|(i, line)| {
         let mut n = 0;
@@ -54,7 +35,7 @@ fn main() {
             if let Some(d) = c.to_digit(10) {
                 n = n * 10 + d;
                 //println!("{i}:{j}  {d} => {n}");
-                if hotpoints[i][j] {
+                if is_symbol_adjacent(&schematic, i, j) {
                     include = true;
                 }
             } else {
