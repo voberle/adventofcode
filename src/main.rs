@@ -4,9 +4,9 @@
 // Part 2 test: 30
 // Part 2: 6050769
 
-use std::{collections::HashSet, io, usize};
+use std::{collections::HashSet, io, usize, ops::AddAssign};
 
-fn set_or_inc(v: &mut Vec<u32>, i: usize, val: u32) {
+fn set_or_inc<T: AddAssign>(v: &mut Vec<T>, i: usize, val: T) {
     if v.get(i).is_some() {
         v[i] += val;
     } else {
