@@ -7,12 +7,9 @@ use std::{collections::HashSet, io};
 fn main() {
     let mut total = 0;
     // Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
-    for line in io::stdin().lines() {
-        let sets: Vec<HashSet<u32>> = line
-            .unwrap()
-            .split(": ")
-            .nth(1)
-            .unwrap()
+    for l in io::stdin().lines() {
+        let line = l.unwrap();
+        let sets: Vec<HashSet<u32>> = line[line.find(": ").unwrap() + 1..]
             .split(" | ")
             .map(|s| {
                 s.split_whitespace() // better than split(" ") as this handles multiple spaces
