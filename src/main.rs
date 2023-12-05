@@ -1,6 +1,8 @@
 // https://adventofcode.com/2023/day/5
 // Part 1 test: 35
 // Part 1: 282277027
+// Part 2 test: 46
+// Part 2:
 
 use regex::Regex;
 use std::{collections::HashMap, io};
@@ -44,6 +46,38 @@ fn check_convert() {
     assert_eq!(r2.convert(53), 55);
 }
 
+fn get_location(seeds: &Vec<u64>, maps: &HashMap<(String, String), Vec<Range>>) -> u64 {
+    seeds
+        .iter()
+        .map(|seed| {
+            let mut n = *seed;
+            let mut item = "seed";
+            while item != "location" {
+                let map = maps.iter().find(|(k, _)| k.0 == item).unwrap();
+                if let Some(range) = map.1.iter().find(|r| r.is_in(n)) {
+                    n = range.convert(n);
+                }
+                item = &map.0 .1;
+            }
+            n
+        })
+        .min()
+        .unwrap()
+}
+
+fn get_seed_ranges(seeds: &Vec<u64>) -> Vec<u64> {
+    seeds.chunks(2).flat_map(|c| c[0]..c[0] + c[1]).collect()
+}
+
+#[test]
+fn check_get_seed_ranges() {
+    let seeds: Vec<u64> = vec![79, 14, 55, 13];
+    let seed_ranges = get_seed_ranges(&seeds);
+    assert_eq!(seed_ranges.len(), 27);
+    assert_eq!(seed_ranges[0], 79);
+    assert_eq!(*seed_ranges.last().unwrap(), 67);
+}
+
 fn main() {
     let stdin = io::stdin();
     let mut n = String::new();
@@ -82,24 +116,8 @@ fn main() {
     // println!("Seeds {:?}", seeds);
     // println!("Maps {:#?}", maps);
 
-    let location = seeds
-        .iter()
-        .map(|seed| {
-            let mut n = *seed;
-            let mut item = "seed";
-            while item != "location" {
-                let map = maps.iter().find(|(k, _)| k.0 == item).unwrap();
-                if let Some(range) = map.1.iter().find(|r| r.is_in(n)) {
-                    n = range.convert(n);
-                }
-                item = &map.0 .1;
-            }
-            n
-        })
-        .min()
-        .unwrap();
-
-    println!("Part 1: {}", location);
+    println!("Part 1: {}", get_location(&seeds, &maps));
+    println!("Part 2: {}", get_location(&get_seed_ranges(&seeds), &maps));
 }
 
 #[test]
