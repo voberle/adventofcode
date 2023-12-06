@@ -2,19 +2,19 @@
 // Part 1 test: 35
 // Part 1: 282277027
 // Part 2 test: 46
-// Part 2:
+// Part 2: 11554135
 
 use regex::Regex;
-use std::{collections::HashMap, io};
+use std::{collections::HashMap, io, ops::Range};
 
 #[derive(Debug)]
-struct Range {
+struct RangeMapping {
     dest_range_start: u64,
     src_range_start: u64,
     range_len: u64,
 }
 
-impl Range {
+impl RangeMapping {
     fn new(dest_range_start: u64, src_range_start: u64, range_len: u64) -> Self {
         Self {
             dest_range_start,
@@ -35,47 +35,75 @@ impl Range {
 
 #[test]
 fn check_convert() {
-    let r1 = Range::new(50, 98, 2);
+    let r1 = RangeMapping::new(50, 98, 2);
     assert!(r1.is_in(98));
     assert_eq!(r1.convert(98), 50);
     assert!(r1.is_in(99));
     assert_eq!(r1.convert(99), 51);
     assert!(!r1.is_in(10));
-    let r2 = Range::new(52, 50, 48);
+    let r2 = RangeMapping::new(52, 50, 48);
     assert!(r2.is_in(53));
     assert_eq!(r2.convert(53), 55);
 }
 
-fn get_location(seeds: &Vec<u64>, maps: &HashMap<(String, String), Vec<Range>>) -> u64 {
-    seeds
-        .iter()
-        .map(|seed| {
-            let mut n = *seed;
-            let mut item = "seed";
-            while item != "location" {
-                let map = maps.iter().find(|(k, _)| k.0 == item).unwrap();
-                if let Some(range) = map.1.iter().find(|r| r.is_in(n)) {
-                    n = range.convert(n);
-                }
-                item = &map.0 .1;
-            }
-            n
-        })
-        .min()
-        .unwrap()
+fn convert(maps: &HashMap<(String, String), Vec<RangeMapping>>, seed: u64) -> u64 {
+    let mut n = seed;
+    let mut item = "seed";
+    while item != "location" {
+        let map = maps.iter().find(|(k, _)| k.0 == item).unwrap();
+        if let Some(range) = map.1.iter().find(|r| r.is_in(n)) {
+            n = range.convert(n);
+        }
+        item = &map.0 .1;
+    }
+    n
 }
 
-fn get_seed_ranges(seeds: &Vec<u64>) -> Vec<u64> {
-    seeds.chunks(2).flat_map(|c| c[0]..c[0] + c[1]).collect()
+#[derive(Debug)]
+struct SeedRanges{
+    ranges: Vec<Range<u64>>,
+}
+
+impl SeedRanges {
+    fn new(ranges: Vec<Range<u64>>) -> Self {
+        let mut s = Self {
+            ranges
+        };
+        s.ranges.sort_by_key(|r| r.start);
+        s
+    }
+
+    fn first(&self) -> u64 {
+        self.ranges[0].start
+    }
+
+    fn add(&self, val: u64, to_add: u64) -> Result<u64, &'static str> {
+        let mut res = val;
+        let mut inc = to_add;
+        let mut idx: usize = self.ranges.iter().enumerate().find(|(_, r)| r.contains(&val)).unwrap().0;
+        // println!("{val}");
+        while !self.ranges[idx].contains(&(res + inc)) {
+            inc -= self.ranges[idx].end - res;
+            idx += 1;
+            if idx >= self.ranges.len() {
+                return Err("Reached end of ranges");
+            }
+            res = self.ranges[idx].start;
+        }
+        res += inc;
+        Ok(res)
+    }
 }
 
 #[test]
-fn check_get_seed_ranges() {
-    let seeds: Vec<u64> = vec![79, 14, 55, 13];
-    let seed_ranges = get_seed_ranges(&seeds);
-    assert_eq!(seed_ranges.len(), 27);
-    assert_eq!(seed_ranges[0], 79);
-    assert_eq!(*seed_ranges.last().unwrap(), 67);
+fn check_seed_range() {
+    let ranges = vec![79..(79+14), 55..(55+13)];
+    let s = SeedRanges::new(ranges);
+    assert_eq!(s.first(), 55);
+    assert_eq!(s.add(55, 2), Ok(57));
+    assert_eq!(s.add(57, 13), Ok(81));
+    assert_eq!(s.add(81, 11), Ok(92));
+    assert!(s.add(92, 1).is_err());
 }
 
 fn main() {
@@ -92,9 +120,9 @@ fn main() {
     let map_re = Regex::new(r"(\w+)-to-(\w+) map:").unwrap();
     let range_re = Regex::new(r"(\d+) (\d+) (\d+)").unwrap();
 
-    let mut maps: HashMap<(String, String), Vec<Range>> = HashMap::new();
+    let mut maps: HashMap<(String, String), Vec<RangeMapping>> = HashMap::new();
     // Initialization isn't used but needed to keep compiler happy
-    let mut current_range_list: &mut Vec<Range> = &mut Vec::new();
+    let mut current_range_list: &mut Vec<RangeMapping> = &mut Vec::new();
     for line in stdin.lines() {
         let s = line.unwrap();
         if s.ends_with(" map:") {
@@ -105,7 +133,7 @@ fn main() {
         } else if !s.is_empty() {
             // ranges
             let captures = range_re.captures(&s).unwrap();
-            current_range_list.push(Range::new(
+            current_range_list.push(RangeMapping::new(
                 captures[1].parse().unwrap(),
                 captures[2].parse().unwrap(),
                 captures[3].parse().unwrap(),
@@ -116,8 +144,43 @@ fn main() {
     // println!("Seeds {:?}", seeds);
     // println!("Maps {:#?}", maps);
 
-    println!("Part 1: {}", get_location(&seeds, &maps));
-    println!("Part 2: {}", get_location(&get_seed_ranges(&seeds), &maps));
+    let location_part_1 = seeds
+        .iter()
+        .map(|seed| convert(&maps, *seed))
+        .min()
+        .unwrap();
+    println!("Part 1: {}", location_part_1);
+
+
+    let mut seed_ranges: Vec<Range<u64>> = seeds.chunks(2).map(|c| (c[0]..c[0] + c[1])).collect();
+    seed_ranges.sort_by_key(|r| r.start);
+    println!("Seed ranges {:#?}", seed_ranges);
+
+    // Very crude brute force way of doing it.
+    // First with a big STEP, identify which range most likely has the lowest.
+    // Then on this range only decrease the step until 1 to get the lowest.
+    let mut location = u64::MAX;
+    const STEP: u64 = 100000;
+    // const STEP: u64 = 1;
+    let mut lowest_seed_idx = 0;
+    seed_ranges.iter().enumerate()
+    // .filter(|(i, _)| *i == 9)
+    .for_each(|(i, range)| {
+        let mut seed = range.start;
+        while seed < range.end {
+            let r = convert(&maps, seed);
+            if r < location {
+                lowest_seed_idx = i;
+                location = r;
+                println!("In {:?} found {}", range, location);
+            }
+            seed += STEP;
+        }
+    });
+    println!("Idx: {}: {}", lowest_seed_idx, location);
+
+    println!("Part 2: {}", location);
+
 }
 
 #[test]
