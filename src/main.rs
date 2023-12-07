@@ -1,12 +1,15 @@
 // https://adventofcode.com/2023/day/7
-// Part 1 test: 6440
-// Part 1: 252052080
+// Part 2 test: 5905
+// Part 2:
 
 use std::{cmp::Ordering, collections::HashMap, io};
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 // variants are ordered by their top-to-bottom discriminant order
-#[derive(PartialOrd, Ord, PartialEq, Eq, Hash, Debug)]
+#[derive(PartialOrd, Ord, PartialEq, Eq, Copy, Clone, Hash, Debug, EnumIter)]
 enum Card {
+    J, // joker, weakest one
     C2,
     C3,
     C4,
@@ -16,7 +19,6 @@ enum Card {
     C8,
     C9,
     T,
-    J,
     Q,
     K,
     A,
@@ -45,13 +47,13 @@ impl Card {
 
 #[derive(PartialOrd, Ord, PartialEq, Eq, Debug)]
 enum HandType {
-    HighCard, // where all cards' labels are distinct: 23456
+    HighCard,     // where all cards' labels are distinct: 23456
     OnePair, // where two cards share one label, and the other three cards have a different label from the pair and each other: A23A4
     TwoPair, // where two cards share one label, two other cards share a second label, and the remaining card has a third label: 23432
     ThreeOfAKind, // where three cards have the same label, and the remaining two cards are each different from any other card in the hand: TTT98
     FullHouse, // where three cards have the same label, and the remaining two cards share a different label: 23332
-    FourOfAKind,  // where four cards have the same label and one card has a different label: AA8AA
-    FiveOfAKind,  // where all five cards have the same label: AAAAA
+    FourOfAKind, // where four cards have the same label and one card has a different label: AA8AA
+    FiveOfAKind, // where all five cards have the same label: AAAAA
 }
 
 impl HandType {
@@ -88,17 +90,34 @@ impl Hand {
     }
 
     fn recognize(cards: &Vec<Card>) -> HandType {
-        let frequencies_map = cards
-            .iter()
-            // .copied()
-            .fold(HashMap::new(), |mut map, val| {
-                map.entry(val).and_modify(|frq| *frq += 1).or_insert(1);
-                map
-            });
+        let mut highest_hand_type = HandType::HighCard;
+        if Self::contains_joker(cards) {
+            for replacement_card in Card::iter() {
+                let mut cards_copy = cards.clone();
+                cards_copy.iter_mut().for_each(|c| {
+                    if *c == Card::J {
+                        *c = replacement_card
+                    }
+                });
+                highest_hand_type = highest_hand_type.max(Self::find_hand_type(&cards_copy));
+            }
+        }
+        highest_hand_type.max(Self::find_hand_type(cards))
+    }
+
+    fn find_hand_type(cards: &Vec<Card>) -> HandType {
+        let frequencies_map = cards.iter().fold(HashMap::new(), |mut map, val| {
+            map.entry(val).and_modify(|frq| *frq += 1).or_insert(1);
+            map
+        });
         let mut frequencies: Vec<i32> = frequencies_map.values().cloned().collect();
         frequencies.sort();
         frequencies.reverse();
         HandType::new(&frequencies)
+    }
+
+    fn contains_joker(cards: &Vec<Card>) -> bool {
+        cards.contains(&Card::J)
     }
 }
 
@@ -176,5 +195,5 @@ fn main() {
         .enumerate()
         .map(|(i, hand)| (i as u32 + 1) * hand.bid)
         .sum();
-    println!("Part 1: {}", total_winnings);
+    println!("Part 2: {}", total_winnings);
 }
