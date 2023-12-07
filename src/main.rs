@@ -7,19 +7,19 @@ use std::{cmp::Ordering, collections::HashMap, io};
 // variants are ordered by their top-to-bottom discriminant order
 #[derive(PartialOrd, Ord, PartialEq, Eq, Hash, Debug)]
 enum Card {
-    A,
-    K,
-    Q,
-    J,
-    T,
-    C9,
-    C8,
-    C7,
-    C6,
-    C5,
-    C4,
-    C3,
     C2,
+    C3,
+    C4,
+    C5,
+    C6,
+    C7,
+    C8,
+    C9,
+    T,
+    J,
+    Q,
+    K,
+    A,
 }
 
 impl Card {
@@ -45,13 +45,13 @@ impl Card {
 
 #[derive(PartialOrd, Ord, PartialEq, Eq, Debug)]
 enum HandType {
-    FiveOfAKind,  // where all five cards have the same label: AAAAA
-    FourOfAKind,  // where four cards have the same label and one card has a different label: AA8AA
-    FullHouse, // where three cards have the same label, and the remaining two cards share a different label: 23332
-    ThreeOfAKind, // where three cards have the same label, and the remaining two cards are each different from any other card in the hand: TTT98
-    TwoPair, // where two cards share one label, two other cards share a second label, and the remaining card has a third label: 23432
-    OnePair, // where two cards share one label, and the other three cards have a different label from the pair and each other: A23A4
     HighCard, // where all cards' labels are distinct: 23456
+    OnePair, // where two cards share one label, and the other three cards have a different label from the pair and each other: A23A4
+    TwoPair, // where two cards share one label, two other cards share a second label, and the remaining card has a third label: 23432
+    ThreeOfAKind, // where three cards have the same label, and the remaining two cards are each different from any other card in the hand: TTT98
+    FullHouse, // where three cards have the same label, and the remaining two cards share a different label: 23332
+    FourOfAKind,  // where four cards have the same label and one card has a different label: AA8AA
+    FiveOfAKind,  // where all five cards have the same label: AAAAA
 }
 
 impl HandType {
@@ -140,7 +140,6 @@ fn check_ordering() {
         Hand::new("QQQJA"),
     ];
     hands.sort();
-    hands.reverse();
     assert_eq!(hands[0], Hand::new("32T3K"));
     assert_eq!(hands[1], Hand::new("KTJJT"));
     assert_eq!(hands[2], Hand::new("KK677"));
@@ -172,7 +171,6 @@ fn main() {
     }
 
     hands.sort();
-    hands.reverse();
     let total_winnings: u32 = hands
         .iter()
         .enumerate()
