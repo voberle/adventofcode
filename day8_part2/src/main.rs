@@ -29,20 +29,25 @@ fn main() {
     let mut total_steps = 0;
     // Start with all nodes that end with A
     let mut keys: Vec<&String> = network.keys().filter(|n| n.ends_with('A')).collect();
+
     'outer: loop {
         for i in instructions.chars() {
-            let nodes: Vec<&(String, String)> = network
-                .iter()
-                .filter(|(k, v)| keys.contains(k))
-                .map(|(k, v)| v)
-                .collect();
-            total_steps += 1;
+            for z in 0..keys.len() {
+                let n = network.get(keys[z]).unwrap();
+                keys[z] = if i == 'L' {
+                    &n.0
+                } else {
+                    &n.1
+                };
+            }
+            // println!("{:?}", keys);
 
-            keys.clear();
-            keys = nodes
-                .iter()
-                .map(|node| if i == 'L' { &node.0 } else { &node.1 })
-                .collect();
+            total_steps += 1;
+            if total_steps % 10000000 == 0 {
+                println!(".. {}", total_steps);
+                // break 'outer;
+            }
+
             if keys.iter().all(|n| n.ends_with('Z')) {
                 break 'outer;
             }
