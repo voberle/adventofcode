@@ -86,11 +86,14 @@ fn main() {
 
     let mut total_steps: u64 = 0;
     // Start with all nodes that end with A
-    let mut keys: Vec<usize> = network
+    // Using an array instead of a vector, as it's small and results in a faster loop.
+    let mut keys: [usize; KEYS_LEN] = network
         .iter()
         .filter(|(k, _)| k.ends_with('A'))
         .map(|(_, n)| n.index)
-        .collect();
+        .collect::<Vec<usize>>()
+        .try_into()
+        .unwrap();
     assert_eq!(KEYS_LEN, keys.len());
     let z_index_sum = (0..KEYS_LEN).fold(0, |acc, x| acc + x);
     // println!("Initial keys: {:?}", keys);
@@ -122,7 +125,7 @@ fn main() {
 }
 
 #[inline]
-fn sum_keys(keys: &Vec<usize>) -> usize {
+fn sum_keys(keys: &[usize; KEYS_LEN]) -> usize {
     // This will be optimized in the same way as a for loop
     keys.iter().sum::<usize>()
     // let mut t = 0;
