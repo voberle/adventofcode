@@ -88,7 +88,7 @@ impl fmt::Display for Pipe {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Position {
     y: usize,
     x: usize,
@@ -148,20 +148,20 @@ fn guess_start(grid: &Vec<Vec<Pipe>>, pos: Position) -> Pipe {
         Pipe::SouthEast,
     ]
     .into();
-    if pos.y > 0 && dbg!(grid[pos.y - 1][pos.x].directions().contains(&TO_SOUTH)) {
+    if pos.y > 0 && grid[pos.y - 1][pos.x].directions().contains(&TO_SOUTH) {
         // If above has an element that goes south, we should consider all guesses that go north
         set = intersec_with(&mut set, [Pipe::Vertical, Pipe::NorthEast, Pipe::NorthWest]);
     };
-    if pos.y < grid.len() - 1 && dbg!(grid[pos.y + 1][pos.x].directions().contains(&TO_NORTH)) {
+    if pos.y < grid.len() - 1 && grid[pos.y + 1][pos.x].directions().contains(&TO_NORTH) {
         set = intersec_with(&mut set, [Pipe::Vertical, Pipe::SouthEast, Pipe::SouthWest]);
     };
-    if pos.x > 0 && dbg!(grid[pos.y][pos.x - 1].directions().contains(&TO_EAST)) {
+    if pos.x > 0 && grid[pos.y][pos.x - 1].directions().contains(&TO_EAST) {
         set = intersec_with(
             &mut set,
             [Pipe::Horizontal, Pipe::NorthWest, Pipe::SouthWest],
         );
     };
-    if pos.x < grid[0].len() - 1 && dbg!(grid[pos.y][pos.x + 1].directions().contains(&TO_WEST)) {
+    if pos.x < grid[0].len() - 1 && grid[pos.y][pos.x + 1].directions().contains(&TO_WEST) {
         set = intersec_with(
             &mut set,
             [Pipe::Horizontal, Pipe::NorthEast, Pipe::SouthEast],
@@ -181,6 +181,7 @@ where
         .collect()
 }
 
+// TODO uses slices
 fn print_grid(grid: &Vec<Vec<Pipe>>, highlight_pos: &Vec<Position>) {
     for (y, row) in grid.iter().enumerate() {
         for (x, el) in row.iter().enumerate() {
@@ -194,13 +195,118 @@ fn print_grid(grid: &Vec<Vec<Pipe>>, highlight_pos: &Vec<Position>) {
     }
 }
 
+fn in_loop(loop_pipe: &Vec<Position>, pos: Position) -> bool {
+    loop_pipe.iter().find(|p| **p == pos).is_some()
+}
+
+fn count_enclosed_area(grid: &Vec<Vec<Pipe>>, loop_pipe: &Vec<Position>) -> usize {
+    // Follow the line one direction and save all the dots on the left of the line
+    // from that direction's perspective
+
+    // we start from top left corner, so we know the direction and side
+    let min_y = loop_pipe.iter().map(|p| p.y).min().unwrap();
+    let min_x = loop_pipe.iter().filter(|p| p.y == min_y).map(|p| p.x).min().unwrap();
+    let start = Position::new(min_y, min_x);
+    println!("Start {:?}", start);
+    // normally start should always be a SouthEast one
+    assert_eq!(grid[start.y][start.x], Pipe::SouthEast);
+    
+    let mut set: HashSet<Position> = HashSet::new();
+    
+    let mut prev: Position = start;
+    let mut started = false;
+    for p in loop_pipe.iter().cycle() {
+        if !started {
+            if *p != start {
+                continue;
+            } else {
+                started = true;
+            }
+        } else if *p == start {
+            break;
+        }
+        // println!("p {:?}", p);
+
+        let pipe = grid[p.y][p.x];
+        if (pipe == Pipe::Horizontal || pipe == Pipe::SouthWest || pipe == Pipe::SouthEast) && prev.x < p.x && p.y > 0 {
+            // look up
+            let mut s: HashSet<Position> = HashSet::new();
+            let mut y = p.y - 1;
+            while !in_loop(loop_pipe, Position::new(y, p.x)) {
+                // println!("{}, {}: Up {},{}", p.y, p.x, y, p.x);
+                s.insert(Position::new(y, p.x));
+                if y == 0 { panic!("Wrong dir");  s.clear(); break; }
+                y -= 1;
+            }
+            set = &set | &s;
+        } else if (pipe == Pipe::Horizontal || pipe == Pipe::NorthEast || pipe == Pipe::NorthWest) && prev.x > p.x && p.y < grid.len() - 1 {
+            // look below
+            let mut s: HashSet<Position> = HashSet::new();
+            let mut y = p.y + 1;
+            while !in_loop(loop_pipe, Position::new(y, p.x)) {
+                // println!("{}, {}: Below {},{}", p.y, p.x, y, p.x);
+                s.insert(Position::new(y, p.x));
+                if y == grid.len() - 1 { panic!("Wrong dir");  s.clear(); break; }
+                y += 1;
+            }
+            set = &set | &s;
+        }
+        if (pipe == Pipe::Vertical || pipe == Pipe::NorthWest || pipe == Pipe::SouthWest) && prev.y < p.y && p.x < grid[0].len() - 1 {
+            // look right
+            let mut s: HashSet<Position> = HashSet::new();
+            let mut x = p.x + 1;
+            while !in_loop(loop_pipe, Position::new(p.y, x)) {
+                // println!("{}, {}: Right {},{}", p.y, p.x, p.y, x);
+                s.insert(Position::new(p.y, x));
+                if x == grid[0].len() - 1 { panic!("Wrong dir");  s.clear(); break; }
+                x += 1;
+            }
+            set = &set | &s;
+        } else if (pipe == Pipe::Vertical || pipe == Pipe::SouthEast || pipe == Pipe::NorthEast) && prev.y > p.y && p.x > 0 {
+            // look left
+            let mut s: HashSet<Position> = HashSet::new();
+            let mut x = p.x - 1;
+            while !in_loop(loop_pipe, Position::new(p.y, x)) {
+                // println!("{}, {}: Left {},{}", p.y, p.x, p.y, x);
+                s.insert(Position::new(p.y, x));
+                if x == 0 { panic!("Wrong dir"); s.clear(); break; }
+                x -= 1;
+            }
+            set = &set | &s;
+        }
+        prev = *p;
+    }
+
+    // here we seem to have the areas, but incomplete (not sure why)
+    // so let's add the missing pieces
+    let v: Vec<_> = set.clone().into_iter().collect();
+    for p in v {
+        if p.x > 0 && !in_loop(loop_pipe, Position::new(p.y, p.x - 1)) {
+            set.insert(Position::new(p.y, p.x - 1));
+        }
+        if p.x < grid[0].len() - 1 && !in_loop(loop_pipe, Position::new(p.y, p.x + 1)) {
+            set.insert(Position::new(p.y, p.x + 1));
+        }
+        if p.y > 0 && !in_loop(loop_pipe, Position::new(p.y - 1, p.x)) {
+            set.insert(Position::new(p.y - 1, p.x));
+        }
+        if p.y < grid.len() - 1 && !in_loop(loop_pipe, Position::new(p.y + 1, p.x)) {
+            set.insert(Position::new(p.y + 1, p.x));
+        }
+    }
+
+    let total = set.len();
+    print_grid(grid, &Vec::from_iter(set));
+    total
+}
+
 fn main() {
     let stdin = io::stdin();
     let mut grid: Vec<Vec<Pipe>> = build_grid(&mut stdin.lock());
 
     // Find position of starting pipe
     let start: Position = find_start(&grid).unwrap();
-    print_grid(&grid, &vec![start]);
+    // print_grid(&grid, &vec![start]);
 
     // and replace that spot in the grid with the real pipe
     let guessed_start: Pipe = guess_start(&grid, start);
@@ -209,7 +315,6 @@ fn main() {
         start.y, start.x, guessed_start
     );
     grid[start.y][start.x] = guessed_start;
-    // print_grid(&grid, start);
 
     // We could move in both direction to do only half the iterations,
     // but it adds in complexity for minimal gain.
@@ -237,9 +342,10 @@ fn main() {
     }
 
     println!("Part 1: {}", count / 2);
-
+    
     print_grid(&grid, &loop_pipe);
-
+    // loop_pipe.reverse();
+    println!("Part 2: {}", count_enclosed_area(&grid, &loop_pipe));
 }
 
 #[test]
