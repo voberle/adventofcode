@@ -1,6 +1,11 @@
 // https://adventofcode.com/2023/day/10
 // Part 1 test 1: 4
 // Part 1 test 2: 8
+// Part 1: 6754
+// Part 2 test 3: 4
+// Part 2 test 4: 4
+// Part 2 test 5: 8
+// Part 2 test 6: 10
 
 // S in main input
 // LJL
@@ -176,10 +181,10 @@ where
         .collect()
 }
 
-fn print_grid(grid: &Vec<Vec<Pipe>>, highlight_pos: Position) {
+fn print_grid(grid: &Vec<Vec<Pipe>>, highlight_pos: &Vec<Position>) {
     for (y, row) in grid.iter().enumerate() {
         for (x, el) in row.iter().enumerate() {
-            if highlight_pos.y == y && highlight_pos.x == x {
+            if highlight_pos.iter().find(|p| **p == Position::new(y, x)).is_some() {
                 print!("\x1b[92m{}\x1b[0m", *el);
             } else {
                 print!("{}", *el);
@@ -195,7 +200,7 @@ fn main() {
 
     // Find position of starting pipe
     let start: Position = find_start(&grid).unwrap();
-    print_grid(&grid, start);
+    print_grid(&grid, &vec![start]);
 
     // and replace that spot in the grid with the real pipe
     let guessed_start: Pipe = guess_start(&grid, start);
@@ -204,7 +209,7 @@ fn main() {
         start.y, start.x, guessed_start
     );
     grid[start.y][start.x] = guessed_start;
-    print_grid(&grid, start);
+    // print_grid(&grid, start);
 
     // We could move in both direction to do only half the iterations,
     // but it adds in complexity for minimal gain.
@@ -212,6 +217,9 @@ fn main() {
     let mut curr: Position = next_pipes(&grid, &prev)[0];
     // Starting at 1, as curr is already set to next pipe
     let mut count: usize = 1;
+    let mut loop_pipe: Vec<Position> = Vec::new();
+    loop_pipe.push(curr); // start will be put at the end
+
     while curr != start {
         let next_pipes1 = next_pipes(&grid, &curr);
         // println!("------");
@@ -224,10 +232,14 @@ fn main() {
                 break;
             }
         }
+        loop_pipe.push(curr);
         count += 1;
     }
 
     println!("Part 1: {}", count / 2);
+
+    print_grid(&grid, &loop_pipe);
+
 }
 
 #[test]
