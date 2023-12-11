@@ -39,54 +39,68 @@ fn print_image(image: &Vec<Vec<char>>) {
     }
 }
 
-// From https://stackoverflow.com/a/64499219
-fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
-    assert!(!v.is_empty());
-    let len = v[0].len();
-    let mut iters: Vec<_> = v.into_iter().map(|n| n.into_iter()).collect();
-    (0..len)
-        .map(|_| {
-            iters
-                .iter_mut()
-                .map(|n| n.next().unwrap())
-                .collect::<Vec<T>>()
-        })
-        .collect()
-}
-
 // any rows or columns that contain no galaxies should all actually be twice as big
 fn expand_universe(image: &Vec<Vec<char>>, expansion_factor: usize) -> Vec<Vec<char>> {
-    // print_image(image);
-    let mut expanded_horizontally: Vec<Vec<char>> = Vec::new();
+    print_image(image);
+
+    let mut expanded_hor: Vec<Vec<char>> = vec![vec!['.'; image[0].len() * expansion_factor]; image.len() * expansion_factor];
     // Expand horizontally
-    for l in image {
-        if l.iter().all(|c| *c == '.') {
-            let big_line = vec!['.'; l.len() * expansion_factor];
+    let mut ye = 0;
+    for y in 0..image.len() {
+        // Find if line is all empty
+        let mut all_empty = true;
+        for x in 0..image[0].len() {
+            if image[y][x] == '#' {
+                all_empty = false;
+                break;
+            }
+        }
+
+        if all_empty {
+            // expand
             for _ in 0..expansion_factor {
-                expanded_horizontally.push(big_line.clone());
+                ye += 1;
             }
         } else {
-            expanded_horizontally.push(l.clone());
+            for x in 0..image[0].len() {
+                expanded_hor[ye][x] = image[y][x];
+            }
+            ye += 1;
         }
     }
-    // print_image(&expanded_horizontally);
+    expanded_hor.truncate(ye);
+    print_image(&expanded_hor);
 
-    let transposed = transpose(expanded_horizontally);
-    // print_image(&transposed);
+    let mut expanded: Vec<Vec<char>> = vec![vec!['.'; image[0].len() * expansion_factor]; expanded_hor.len()];
 
-    let mut expanded_transposed: Vec<Vec<char>> = Vec::new();
-    for l in transposed {
-        if l.iter().all(|c| *c == '.') {
-            let big_col = vec!['.'; l.len() * expansion_factor];
+    // Expand vertically
+    let mut xe = 0;
+    for x in 0..image[0].len() {
+        // Find if line is all empty
+        let mut all_empty = true;
+        for y in 0..expanded_hor.len() {
+            if expanded_hor[y][x] == '#' {
+                all_empty = false;
+                break;
+            }
+        }
+
+        if all_empty {
+            // expand
             for _ in 0..expansion_factor {
-                expanded_transposed.push(big_col.clone());
+                xe += 1;
             }
         } else {
-            expanded_transposed.push(l.clone());
+            for y in 0..expanded_hor.len() {
+                expanded[y][xe] = expanded_hor[y][x];
+            }
+            xe += 1;
         }
     }
-    let expanded = transpose(expanded_transposed);
-    // print_image(&expanded);
+    for y in 0..expanded.len() {
+        expanded[y].truncate(xe);
+    }
+    print_image(&expanded);
     expanded
 }
 
