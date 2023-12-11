@@ -1,4 +1,4 @@
-// https://adventofcode.com/2023/day/1#part2
+// https://adventofcode.com/2023/day/1
 // input_test: 142
 // input_test2: 281
 // input part 1: 54990
