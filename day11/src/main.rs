@@ -6,7 +6,7 @@ use std::{
     io::{self, BufRead, BufReader},
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct Position {
     y: usize,
     x: usize,
@@ -21,6 +21,7 @@ impl Position {
 // The universe is a vast amount of emptyness with a few galaxies.
 // So instead of storing it as a grid with galaxies and empty space,
 // we store only the positions of the galaxies.
+#[derive(Debug, PartialEq)]
 struct Universe {
     galaxies: Vec<Position>,
     width: usize,
@@ -28,6 +29,10 @@ struct Universe {
 }
 
 impl Universe {
+    fn new(width: usize, height: usize) -> Self {
+        Self { galaxies: Vec::new(), width, height }
+    }
+
     fn build<R>(reader: &mut R) -> Self
     where
         R: BufRead,
@@ -45,11 +50,32 @@ impl Universe {
                 }
             }
         }
+        galaxies.sort();
         Universe { galaxies, width, height }
     }
 
     fn find(&self, pos: Position) -> Option<&Position> {
         self.galaxies.iter().find(|p| **p == pos)
+    }
+
+    fn get(&self, y: usize, x: usize) -> Option<&Position> {
+        let pos = Position::new(y, x);
+        self.galaxies.iter().find(|p| **p == pos)
+    }
+
+    fn set(&mut self, y: usize, x: usize) {
+        let pos = Position::new(y, x);
+        if self.find(pos).is_none() {
+            self.galaxies.push(pos);
+        }
+    }
+
+    fn is_row_empty(&self, y: usize) -> bool {
+        !self.galaxies.iter().any(|p| p.y == y)
+    }
+
+    fn is_col_empty(&self, x: usize) -> bool {
+        !self.galaxies.iter().any(|p| p.x == x)
     }
 
     fn print(&self) {
@@ -68,93 +94,65 @@ impl Universe {
 }
 
 // any rows or columns that contain no galaxies should all actually be twice as big
-fn expand_universe(image: &Vec<Vec<char>>, expansion_factor: usize) -> Vec<Vec<char>> {
-    print_image(image);
-
-    let mut expanded_hor: Vec<Vec<char>> = vec![vec!['.'; image[0].len() * expansion_factor]; image.len() * expansion_factor];
+fn expand_universe(image: &Universe, expansion_factor: usize) -> Universe {
+    let mut expanded_hor: Universe = Universe::new(image.width * expansion_factor, image.height * expansion_factor);
     // Expand horizontally
     let mut ye = 0;
-    for y in 0..image.len() {
-        // Find if line is all empty
-        let mut all_empty = true;
-        for x in 0..image[0].len() {
-            if image[y][x] == '#' {
-                all_empty = false;
-                break;
-            }
-        }
-
-        if all_empty {
+    for y in 0..image.height {
+        if image.is_row_empty(y) {
             // expand
             ye += expansion_factor;
         } else {
-            for x in 0..image[0].len() {
-                expanded_hor[ye][x] = image[y][x];
+            for x in 0..image.width {
+                if image.get(y, x).is_some() {
+                    expanded_hor.set(ye, x);
+                }
             }
             ye += 1;
         }
     }
-    expanded_hor.truncate(ye);
-    print_image(&expanded_hor);
+    expanded_hor.height = ye;
+    // expanded_hor.print();
 
-    let mut expanded: Vec<Vec<char>> = vec![vec!['.'; image[0].len() * expansion_factor]; expanded_hor.len()];
-
+    let mut expanded: Universe = Universe::new(image.width * expansion_factor, expanded_hor.height);
     // Expand vertically
     let mut xe = 0;
-    for x in 0..image[0].len() {
-        // Find if line is all empty
-        let mut all_empty = true;
-        for y in 0..expanded_hor.len() {
-            if expanded_hor[y][x] == '#' {
-                all_empty = false;
-                break;
-            }
-        }
-
-        if all_empty {
+    for x in 0..image.width {
+        if image.is_col_empty(x) {
             // expand
             xe += expansion_factor;
         } else {
-            for y in 0..expanded_hor.len() {
-                expanded[y][xe] = expanded_hor[y][x];
+            for y in 0..expanded_hor.height {
+                if expanded_hor.get(y, x).is_some() {
+                    expanded.set(y, xe);
+                }
             }
             xe += 1;
         }
     }
-    for y in 0..expanded.len() {
-        expanded[y].truncate(xe);
-    }
-    print_image(&expanded);
+    expanded.width = xe;
+    // expanded.print();
+
+    // This makes them comparable
+    expanded.galaxies.sort();
+
     expanded
 }
 
-fn shortest_path(image: &Vec<Vec<char>>, g1: Position, g2: Position) -> usize {
+fn shortest_path(g1: Position, g2: Position) -> usize {
     g1.x.abs_diff(g2.x) + g1.y.abs_diff(g2.y)
 }
 
-fn sum_of_shortest_paths(image: &Vec<Vec<char>>) -> usize {
-    let mut galaxies: Vec<Position> = Vec::new();
-    // How to do this with an iterator?
-    for (y, row) in image.iter().enumerate() {
-        for (x, el) in row.iter().enumerate() {
-            if *el == '#' {
-                galaxies.push(Position::new(y, x));
-            }
-        }
-    }
-    // println!("{:#?}", galaxies);
-
+fn sum_of_shortest_paths(image: &Universe) -> usize {
     let mut galaxy_pairs: Vec<(Position, Position)> = Vec::new();
-    for g1 in 0..galaxies.len() {
-        for g2 in g1 + 1..galaxies.len() {
-            galaxy_pairs.push((galaxies[g1], galaxies[g2]));
+    for g1 in 0..image.galaxies.len() {
+        for g2 in g1 + 1..image.galaxies.len() {
+            galaxy_pairs.push((image.galaxies[g1], image.galaxies[g2]));
         }
     }
-    // println!("{:#?}", galaxy_pairs);
-
     galaxy_pairs
         .iter()
-        .map(|pair| shortest_path(image, pair.0, pair.1))
+        .map(|pair| shortest_path(pair.0, pair.1))
         .sum()
 }
 
@@ -163,19 +161,18 @@ fn main() {
     let universe: Universe = Universe::build(&mut stdin.lock());
     universe.print();
 
-    // let expanded = expand_universe(&image, 2);
+    let expanded = expand_universe(&universe, 2);
 
-    // println!("Part 1: {}", sum_of_shortest_paths(&expanded));
+    println!("Part 1: {}", sum_of_shortest_paths(&expanded));
 }
 
-/*
 #[test]
 fn test_expand_universe() {
     let mut reader = BufReader::new(File::open("resources/input_test1").unwrap());
-    let image: Vec<Vec<char>> = build_image(&mut reader);
+    let image: Universe = Universe::build(&mut reader);
 
     let mut reader_expanded = BufReader::new(File::open("resources/test1_expanded").unwrap());
-    let image_expanded: Vec<Vec<char>> = build_image(&mut reader_expanded);
+    let image_expanded: Universe = Universe::build(&mut reader_expanded);
 
     assert_eq!(expand_universe(&image, 2), image_expanded);
 }
@@ -183,7 +180,7 @@ fn test_expand_universe() {
 fn part1(filename: &str, expansion_factor: usize) -> usize {
     let file = File::open(filename).unwrap();
     let mut reader = BufReader::new(file);
-    let image: Vec<Vec<char>> = build_image(&mut reader);
+    let image: Universe = Universe::build(&mut reader);
     let expanded = expand_universe(&image, expansion_factor);
     sum_of_shortest_paths(&expanded)
 }
@@ -194,4 +191,3 @@ fn test_part1() {
     assert_eq!(part1("resources/input_test1", 10), 1030);
     assert_eq!(part1("resources/input_test1", 100), 8410);
 }
- */
