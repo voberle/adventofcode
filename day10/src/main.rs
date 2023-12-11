@@ -6,14 +6,7 @@
 // Part 2 test 4: 4
 // Part 2 test 5: 8
 // Part 2 test 6: 10
-
-// S in main input
-// LJL
-// FSF
-// |LJ
-// We can find the type of S by looking at the tiles around.
-// In example above: 7
-// Pipes never cross, so it's easy to find main one.
+// Part 2: 563 => TOO LOW
 
 use std::{
     collections::HashSet,
@@ -138,7 +131,14 @@ fn intersec_with(set: &mut HashSet<Pipe>, with: [Pipe; 3]) -> HashSet<Pipe> {
     set.intersection(&with.into()).cloned().collect()
 }
 
-// Find which pipe is on the start position, by looking at the pipes around it
+// Find which pipe is on the start position, by looking at the pipes around it.
+// S in main input
+// LJL
+// FSF
+// |LJ
+// We can find the type of S by looking at the tiles around.
+// In example above: 7
+// Pipes never cross, so it's easy to find main one.
 fn guess_start(grid: &Vec<Vec<Pipe>>, pos: Position) -> Pipe {
     let mut set: HashSet<Pipe> = [
         Pipe::Vertical,
@@ -274,35 +274,12 @@ fn count_enclosed_area_one_way(
     // Follow the line one direction and save all the dots on the left of the line
     // from that direction's perspective
 
-    // we start from top left corner, so we know the direction and side
-    let min_y = loop_pipe.iter().map(|p| p.y).min().unwrap();
-    let min_x = loop_pipe
-        .iter()
-        .filter(|p| p.y == min_y)
-        .map(|p| p.x)
-        .min()
-        .unwrap();
-    let start = Position::new(min_y, min_x);
-    println!("Start {:?}", start);
-    // normally start should always be a SouthEast one
-    assert_eq!(grid[start.y][start.x], Pipe::SouthEast);
-
+    // All the enclosed dots we have found so far
     let mut set: HashSet<Position> = HashSet::new();
 
-    let mut prev: Position = start;
-    let mut started = false;
-    for p in loop_pipe.iter().cycle() {
-        if !started {
-            if *p != start {
-                continue;
-            } else {
-                started = true;
-            }
-        } else if *p == start {
-            break;
-        }
-        // println!("p {:?}", p);
-
+    // We can start from anywhere on the loop
+    let mut prev: Position = *loop_pipe.last().unwrap();
+    for p in loop_pipe.iter() {
         let pipe = grid[p.y][p.x];
         if (pipe == Pipe::Horizontal || pipe == Pipe::SouthWest || pipe == Pipe::SouthEast)
             && prev.x < p.x
