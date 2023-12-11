@@ -92,6 +92,38 @@ impl Position {
     fn new(y: usize, x: usize) -> Self {
         Self { y, x }
     }
+
+    fn north(&self) -> Result<Self, &'static str> {
+        if self.y > 0 {
+            Ok(Position::new(self.y - 1, self.x))
+        } else {
+            Err("Position at max north")
+        }
+    }
+
+    fn south(&self, line_len: usize) -> Result<Self, &'static str> {
+        if self.y < line_len - 1 {
+            Ok(Position::new(self.y + 1, self.x))
+        } else {
+            Err("Position at max south")
+        }
+    }
+
+    fn west(&self) -> Result<Self, &'static str> {
+        if self.x > 0 {
+            Ok(Position::new(self.y, self.x - 1))
+        } else {
+            Err("Position at max east")
+        }
+    }
+
+    fn east(&self, line_len: usize) -> Result<Self, &'static str> {
+        if self.x < line_len - 1 {
+            Ok(Position::new(self.y, self.x + 1))
+        } else {
+            Err("Position at max west")
+        }
+    }
 }
 
 // Finds the position of the S pipe
@@ -279,65 +311,50 @@ fn count_enclosed_area_one_way(
 
     // We can start from anywhere on the loop
     let mut prev: Position = *loop_pipe.last().unwrap();
+    let mut next: Position;
     for p in loop_pipe.iter() {
         let pipe = grid[p.y][p.x];
         // If the pipe cannot go north, look for possible are north
-        if [Pipe::Horizontal, Pipe::SouthWest, Pipe::SouthEast].contains(&pipe)
-            && prev.x < p.x
-            && p.y > 0
-        {
+        if [Pipe::Horizontal, Pipe::SouthWest, Pipe::SouthEast].contains(&pipe) && prev.x < p.x {
             // look north
-            let mut y = p.y - 1;
-            while !in_loop(loop_pipe, Position::new(y, p.x)) {
-                // println!("{}, {}: North {},{}", p.y, p.x, y, p.x);
-                set.insert(Position::new(y, p.x));
-                if y == 0 {
-                    return Err("Wrong dir");
+            if let Ok(next_p) = p.north() {
+                next = next_p;
+                while !in_loop(loop_pipe, next) {
+                    set.insert(next);
+                    next = next.north()?; // if we reach the border, it means we are looping in wrong direction
                 }
-                y -= 1;
             }
         } else if [Pipe::Horizontal, Pipe::NorthEast, Pipe::NorthWest].contains(&pipe)
             && prev.x > p.x
-            && p.y < grid.len() - 1
         {
             // look south
-            let mut y = p.y + 1;
-            while !in_loop(loop_pipe, Position::new(y, p.x)) {
-                // println!("{}, {}: South {},{}", p.y, p.x, y, p.x);
-                set.insert(Position::new(y, p.x));
-                if y == grid.len() - 1 {
-                    return Err("Wrong dir");
+            if let Ok(next_p) = p.south(grid.len()) {
+                next = next_p;
+                while !in_loop(loop_pipe, next) {
+                    // println!("{}, {}: South {}", p.y, p.x, next);
+                    set.insert(next);
+                    next = next.south(grid.len())?;
                 }
-                y += 1;
             }
         }
-        if [Pipe::Vertical, Pipe::NorthWest, Pipe::SouthWest].contains(&pipe)
-            && prev.y < p.y
-            && p.x < grid[0].len() - 1
-        {
+        if [Pipe::Vertical, Pipe::NorthWest, Pipe::SouthWest].contains(&pipe) && prev.y < p.y {
             // look east
-            let mut x = p.x + 1;
-            while !in_loop(loop_pipe, Position::new(p.y, x)) {
-                // println!("{}, {}: East {},{}", p.y, p.x, p.y, x);
-                set.insert(Position::new(p.y, x));
-                if x == grid[0].len() - 1 {
-                    return Err("Wrong dir");
+            if let Ok(next_p) = p.east(grid[0].len()) {
+                next = next_p;
+                while !in_loop(loop_pipe, next) {
+                    set.insert(next);
+                    next = next.east(grid[0].len())?;
                 }
-                x += 1;
             }
-        } else if [Pipe::Vertical, Pipe::SouthEast, Pipe::NorthEast].contains(&pipe)
-            && prev.y > p.y
-            && p.x > 0
+        } else if [Pipe::Vertical, Pipe::SouthEast, Pipe::NorthEast].contains(&pipe) && prev.y > p.y
         {
             // look west
-            let mut x = p.x - 1;
-            while !in_loop(loop_pipe, Position::new(p.y, x)) {
-                // println!("{}, {}: West {},{}", p.y, p.x, p.y, x);
-                set.insert(Position::new(p.y, x));
-                if x == 0 {
-                    return Err("Wrong dir");
+            if let Ok(next_p) = p.west() {
+                next = next_p;
+                while !in_loop(loop_pipe, next) {
+                    set.insert(next);
+                    next = next.west()?;
                 }
-                x -= 1;
             }
         }
         prev = *p;
