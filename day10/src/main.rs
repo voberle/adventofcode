@@ -124,6 +124,19 @@ impl Position {
             Err("Position at max west")
         }
     }
+
+    fn all_dirs(
+        &self,
+        vert_line_len: usize,
+        hor_line_len: usize,
+    ) -> [Result<Self, &'static str>; 4] {
+        [
+            self.north(),
+            self.south(vert_line_len),
+            self.west(),
+            self.east(hor_line_len),
+        ]
+    }
 }
 
 // Finds the position of the S pipe
@@ -231,16 +244,21 @@ where
         .collect()
 }
 
-// TODO uses slices
-fn print_grid(grid: &Vec<Vec<Pipe>>, highlight_pos: &[Position]) {
+fn print_grid(grid: &Vec<Vec<Pipe>>, loop_pos: &[Position], area_pos: &[Position]) {
     for (y, row) in grid.iter().enumerate() {
         for (x, el) in row.iter().enumerate() {
-            if highlight_pos
+            if loop_pos
                 .iter()
                 .find(|p| **p == Position::new(y, x))
                 .is_some()
             {
                 print!("\x1b[92m{}\x1b[0m", *el);
+            } else if area_pos
+               .iter()
+                .find(|p| **p == Position::new(y, x))
+                .is_some()
+            {
+            print!("\x1b[93m{}\x1b[0m", *el);
             } else {
                 print!("{}", *el);
             }
@@ -324,14 +342,12 @@ fn count_enclosed_area_one_way(
                     next = next.north()?; // if we reach the border, it means we are looping in wrong direction
                 }
             }
-        } else if [Pipe::Horizontal, Pipe::NorthEast, Pipe::NorthWest].contains(&pipe)
-            && prev.x > p.x
-        {
+        }
+        if [Pipe::Horizontal, Pipe::NorthEast, Pipe::NorthWest].contains(&pipe) && prev.x > p.x {
             // look south
             if let Ok(next_p) = p.south(grid.len()) {
                 next = next_p;
                 while !in_loop(loop_pipe, next) {
-                    // println!("{}, {}: South {}", p.y, p.x, next);
                     set.insert(next);
                     next = next.south(grid.len())?;
                 }
@@ -346,8 +362,8 @@ fn count_enclosed_area_one_way(
                     next = next.east(grid[0].len())?;
                 }
             }
-        } else if [Pipe::Vertical, Pipe::SouthEast, Pipe::NorthEast].contains(&pipe) && prev.y > p.y
-        {
+        }
+        if [Pipe::Vertical, Pipe::SouthEast, Pipe::NorthEast].contains(&pipe) && prev.y > p.y {
             // look west
             if let Ok(next_p) = p.west() {
                 next = next_p;
@@ -366,23 +382,18 @@ fn count_enclosed_area_one_way(
     // so let's add the missing pieces
     let v: Vec<_> = set.clone().into_iter().collect();
     for p in v {
-        if p.x > 0 && !in_loop(loop_pipe, Position::new(p.y, p.x - 1)) {
-            set.insert(Position::new(p.y, p.x - 1));
-        }
-        if p.x < grid[0].len() - 1 && !in_loop(loop_pipe, Position::new(p.y, p.x + 1)) {
-            set.insert(Position::new(p.y, p.x + 1));
-        }
-        if p.y > 0 && !in_loop(loop_pipe, Position::new(p.y - 1, p.x)) {
-            set.insert(Position::new(p.y - 1, p.x));
-        }
-        if p.y < grid.len() - 1 && !in_loop(loop_pipe, Position::new(p.y + 1, p.x)) {
-            set.insert(Position::new(p.y + 1, p.x));
+        for r in p.all_dirs(grid.len(), grid[0].len()) {
+            if let Ok(next) = r {
+                if !in_loop(loop_pipe, next) {
+                    set.insert(next);
+                }
+            }
         }
     }
     println!("Enclosed area after adjustment: {}", set.len());
 
     let total = set.len();
-    // print_grid(grid, &Vec::from_iter(set));
+    print_grid(grid, &loop_pipe, &Vec::from_iter(set));
     Ok(total)
 }
 
@@ -395,8 +406,7 @@ fn main() {
     let loop_pipe: Vec<Position> = find_loop(&grid, start);
     println!("Part 1: {}", loop_pipe.len() / 2);
 
-    print_grid(&grid, &loop_pipe);
-    // loop_pipe.reverse();
+    // print_grid(&grid, &loop_pipe, &[]);
     println!("Part 2: {}", count_enclosed_area(&grid, &loop_pipe));
 }
 
@@ -455,6 +465,8 @@ fn part2(filename: &str) -> usize {
 
 #[test]
 fn test_part2() {
+    assert_eq!(part2("resources/input_test1"), 1);
+    assert_eq!(part2("resources/input_test2"), 1);
     assert_eq!(part2("resources/input_test3"), 4);
     assert_eq!(part2("resources/input_test4"), 4);
     assert_eq!(part2("resources/input_test5"), 8);
