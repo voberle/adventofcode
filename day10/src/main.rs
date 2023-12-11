@@ -6,7 +6,7 @@
 // Part 2 test 4: 4
 // Part 2 test 5: 8
 // Part 2 test 6: 10
-// Part 2: 563 => TOO LOW
+// Part 2: 567
 
 use std::{
     collections::HashSet,
@@ -124,19 +124,6 @@ impl Position {
         } else {
             Err("Position at max west")
         }
-    }
-
-    fn all_dirs(
-        &self,
-        vert_line_len: usize,
-        hor_line_len: usize,
-    ) -> [Result<Self, &'static str>; 4] {
-        [
-            self.north(),
-            self.south(vert_line_len),
-            self.west(),
-            self.east(hor_line_len),
-        ]
     }
 }
 
@@ -324,19 +311,20 @@ fn count_enclosed_area_one_way(
     loop_pipe: &[Position],
     start: &Position,
 ) -> Result<usize, &'static str> {
-    // Follow the line one direction and save all the dots on the left of the line
-    // from that direction's perspective
+    // Follow the line in one direction and save all the dots on one side of the line.
 
     // All the enclosed dots we have found so far
     let mut set: HashSet<Position> = HashSet::new();
 
-    // We can start from anywhere on the loop
     let mut prev: Position = *loop_pipe.last().unwrap();
     let mut next: Position;
     for p in loop_pipe.iter() {
         let pipe = grid[p.y][p.x];
-        // If the pipe cannot go north, look for possible are north
-        if [Pipe::Horizontal, Pipe::SouthWest, Pipe::SouthEast].contains(&pipe) && prev.x < p.x {
+        // If the pipe cannot go north, look for possible are north.
+        // The second line is when we hit a turn and go opposite site of where we are counting.
+        if ([Pipe::Horizontal, Pipe::SouthWest, Pipe::SouthEast].contains(&pipe) && prev.x < p.x)
+            || ([Pipe::SouthEast].contains(&pipe) && prev.x == p.x)
+        {
             // look north
             if let Ok(next_p) = p.north() {
                 next = next_p;
@@ -346,7 +334,9 @@ fn count_enclosed_area_one_way(
                 }
             }
         }
-        if [Pipe::Horizontal, Pipe::NorthEast, Pipe::NorthWest].contains(&pipe) && prev.x > p.x {
+        if ([Pipe::Horizontal, Pipe::NorthEast, Pipe::NorthWest].contains(&pipe) && prev.x > p.x)
+            || ([Pipe::NorthWest].contains(&pipe) && prev.x == p.x)
+        {
             // look south
             if let Ok(next_p) = p.south(grid.len()) {
                 next = next_p;
@@ -356,7 +346,9 @@ fn count_enclosed_area_one_way(
                 }
             }
         }
-        if [Pipe::Vertical, Pipe::NorthWest, Pipe::SouthWest].contains(&pipe) && prev.y < p.y {
+        if ([Pipe::Vertical, Pipe::NorthWest, Pipe::SouthWest].contains(&pipe) && prev.y < p.y)
+            || ([Pipe::SouthWest].contains(&pipe) && prev.y == p.y)
+        {
             // look east
             if let Ok(next_p) = p.east(grid[0].len()) {
                 next = next_p;
@@ -366,7 +358,9 @@ fn count_enclosed_area_one_way(
                 }
             }
         }
-        if [Pipe::Vertical, Pipe::SouthEast, Pipe::NorthEast].contains(&pipe) && prev.y > p.y {
+        if ([Pipe::Vertical, Pipe::SouthEast, Pipe::NorthEast].contains(&pipe) && prev.y > p.y)
+            || ([Pipe::NorthEast].contains(&pipe) && prev.y == p.y)
+        {
             // look west
             if let Ok(next_p) = p.west() {
                 next = next_p;
@@ -378,23 +372,6 @@ fn count_enclosed_area_one_way(
         }
         prev = *p;
     }
-
-    println!("Enclosed area before adjustment: {}", set.len());
-
-    // here we seem to have the areas, but incomplete (not sure why)
-    // so let's add the missing pieces
-    let v: Vec<_> = set.clone().into_iter().collect();
-    for p in v {
-        for r in p.all_dirs(grid.len(), grid[0].len()) {
-            if let Ok(next) = r {
-                if !in_loop(loop_pipe, next) {
-                    set.insert(next);
-                }
-            }
-        }
-    }
-    println!("Enclosed area after adjustment: {}", set.len());
-
     let total = set.len();
     print_grid(grid, &loop_pipe, &Vec::from_iter(set), start);
     Ok(total)
@@ -474,4 +451,5 @@ fn test_part2() {
     assert_eq!(part2("resources/input_test4"), 4);
     assert_eq!(part2("resources/input_test5"), 8);
     assert_eq!(part2("resources/input_test6"), 10);
+    assert_eq!(part2("resources/input_puzzle"), 567);
 }
