@@ -69,16 +69,17 @@ impl fmt::Display for Pipe {
             f,
             "{}",
             match *self {
-                Self::Vertical => '|',
-                Self::Horizontal => '-',
-                Self::NorthEast => 'L',
-                Self::NorthWest => 'J',
-                Self::SouthWest => '7',
-                Self::SouthEast => 'F',
+                Self::Vertical => '┃',
+                Self::Horizontal => '━',
+                Self::NorthEast => '┗',
+                Self::NorthWest => '┛',
+                Self::SouthWest => '┓',
+                Self::SouthEast => '┏',
                 Self::Ground => '.',
                 Self::StartingPos => 'S',
             }
         )
+        // "-|F7LJ" => "━┃┏┓┗┛"
     }
 }
 
@@ -244,26 +245,27 @@ where
         .collect()
 }
 
-fn print_grid(grid: &Vec<Vec<Pipe>>, loop_pos: &[Position], area_pos: &[Position]) {
+fn print_grid(
+    grid: &Vec<Vec<Pipe>>,
+    loop_pos: &[Position],
+    area_pos: &[Position],
+    start: &Position,
+) {
     for (y, row) in grid.iter().enumerate() {
         for (x, el) in row.iter().enumerate() {
-            if loop_pos
-                .iter()
-                .find(|p| **p == Position::new(y, x))
-                .is_some()
-            {
+            let pos = Position::new(y, x);
+            // Colors from https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal/287944#287944
+            if *start == pos {
+                print!("\x1b[91m{}\x1b[0m", *el);
+            } else if loop_pos.iter().find(|p| **p == pos).is_some() {
                 print!("\x1b[92m{}\x1b[0m", *el);
-            } else if area_pos
-               .iter()
-                .find(|p| **p == Position::new(y, x))
-                .is_some()
-            {
-            print!("\x1b[93m{}\x1b[0m", *el);
+            } else if area_pos.iter().find(|p| **p == pos).is_some() {
+                print!("\x1b[93m{}\x1b[0m", *el);
             } else {
                 print!("{}", *el);
             }
         }
-        println!("");
+        println!("\t{y}");
     }
 }
 
@@ -302,14 +304,14 @@ fn in_loop(loop_pipe: &[Position], pos: Position) -> bool {
     loop_pipe.iter().find(|p| **p == pos).is_some()
 }
 
-fn count_enclosed_area(grid: &Vec<Vec<Pipe>>, loop_pipe: &[Position]) -> usize {
+fn count_enclosed_area(grid: &Vec<Vec<Pipe>>, loop_pipe: &[Position], start: &Position) -> usize {
     // We don't which way to take the loop, so try one way and if it fails, try the other way
-    if let Ok(enclosed_area_total) = count_enclosed_area_one_way(grid, loop_pipe) {
+    if let Ok(enclosed_area_total) = count_enclosed_area_one_way(grid, loop_pipe, start) {
         enclosed_area_total
     } else {
         let mut rev_loop_pipe: Vec<Position> = loop_pipe.into();
         rev_loop_pipe.reverse();
-        if let Ok(enclosed_area_total) = count_enclosed_area_one_way(grid, &rev_loop_pipe) {
+        if let Ok(enclosed_area_total) = count_enclosed_area_one_way(grid, &rev_loop_pipe, start) {
             enclosed_area_total
         } else {
             panic!("Neither direction worked");
@@ -320,6 +322,7 @@ fn count_enclosed_area(grid: &Vec<Vec<Pipe>>, loop_pipe: &[Position]) -> usize {
 fn count_enclosed_area_one_way(
     grid: &Vec<Vec<Pipe>>,
     loop_pipe: &[Position],
+    start: &Position,
 ) -> Result<usize, &'static str> {
     // Follow the line one direction and save all the dots on the left of the line
     // from that direction's perspective
@@ -393,7 +396,7 @@ fn count_enclosed_area_one_way(
     println!("Enclosed area after adjustment: {}", set.len());
 
     let total = set.len();
-    print_grid(grid, &loop_pipe, &Vec::from_iter(set));
+    print_grid(grid, &loop_pipe, &Vec::from_iter(set), start);
     Ok(total)
 }
 
@@ -407,7 +410,7 @@ fn main() {
     println!("Part 1: {}", loop_pipe.len() / 2);
 
     // print_grid(&grid, &loop_pipe, &[]);
-    println!("Part 2: {}", count_enclosed_area(&grid, &loop_pipe));
+    println!("Part 2: {}", count_enclosed_area(&grid, &loop_pipe, &start));
 }
 
 #[test]
@@ -460,7 +463,7 @@ fn part2(filename: &str) -> usize {
     let start = find_and_update_start(&mut grid);
 
     let loop_pipe: Vec<Position> = find_loop(&grid, start);
-    count_enclosed_area(&grid, &loop_pipe)
+    count_enclosed_area(&grid, &loop_pipe, &start)
 }
 
 #[test]
