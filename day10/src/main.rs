@@ -281,28 +281,29 @@ fn count_enclosed_area_one_way(
     let mut prev: Position = *loop_pipe.last().unwrap();
     for p in loop_pipe.iter() {
         let pipe = grid[p.y][p.x];
-        if (pipe == Pipe::Horizontal || pipe == Pipe::SouthWest || pipe == Pipe::SouthEast)
+        // If the pipe cannot go north, look for possible are north
+        if [Pipe::Horizontal, Pipe::SouthWest, Pipe::SouthEast].contains(&pipe)
             && prev.x < p.x
             && p.y > 0
         {
-            // look up
+            // look north
             let mut y = p.y - 1;
             while !in_loop(loop_pipe, Position::new(y, p.x)) {
-                // println!("{}, {}: Up {},{}", p.y, p.x, y, p.x);
+                // println!("{}, {}: North {},{}", p.y, p.x, y, p.x);
                 set.insert(Position::new(y, p.x));
                 if y == 0 {
                     return Err("Wrong dir");
                 }
                 y -= 1;
             }
-        } else if (pipe == Pipe::Horizontal || pipe == Pipe::NorthEast || pipe == Pipe::NorthWest)
+        } else if [Pipe::Horizontal, Pipe::NorthEast, Pipe::NorthWest].contains(&pipe)
             && prev.x > p.x
             && p.y < grid.len() - 1
         {
-            // look below
+            // look south
             let mut y = p.y + 1;
             while !in_loop(loop_pipe, Position::new(y, p.x)) {
-                // println!("{}, {}: Below {},{}", p.y, p.x, y, p.x);
+                // println!("{}, {}: South {},{}", p.y, p.x, y, p.x);
                 set.insert(Position::new(y, p.x));
                 if y == grid.len() - 1 {
                     return Err("Wrong dir");
@@ -310,28 +311,28 @@ fn count_enclosed_area_one_way(
                 y += 1;
             }
         }
-        if (pipe == Pipe::Vertical || pipe == Pipe::NorthWest || pipe == Pipe::SouthWest)
+        if [Pipe::Vertical, Pipe::NorthWest, Pipe::SouthWest].contains(&pipe)
             && prev.y < p.y
             && p.x < grid[0].len() - 1
         {
-            // look right
+            // look east
             let mut x = p.x + 1;
             while !in_loop(loop_pipe, Position::new(p.y, x)) {
-                // println!("{}, {}: Right {},{}", p.y, p.x, p.y, x);
+                // println!("{}, {}: East {},{}", p.y, p.x, p.y, x);
                 set.insert(Position::new(p.y, x));
                 if x == grid[0].len() - 1 {
                     return Err("Wrong dir");
                 }
                 x += 1;
             }
-        } else if (pipe == Pipe::Vertical || pipe == Pipe::SouthEast || pipe == Pipe::NorthEast)
+        } else if [Pipe::Vertical, Pipe::SouthEast, Pipe::NorthEast].contains(&pipe)
             && prev.y > p.y
             && p.x > 0
         {
-            // look left
+            // look west
             let mut x = p.x - 1;
             while !in_loop(loop_pipe, Position::new(p.y, x)) {
-                // println!("{}, {}: Left {},{}", p.y, p.x, p.y, x);
+                // println!("{}, {}: West {},{}", p.y, p.x, p.y, x);
                 set.insert(Position::new(p.y, x));
                 if x == 0 {
                     return Err("Wrong dir");
@@ -341,6 +342,8 @@ fn count_enclosed_area_one_way(
         }
         prev = *p;
     }
+
+    println!("Enclosed area before adjustment: {}", set.len());
 
     // here we seem to have the areas, but incomplete (not sure why)
     // so let's add the missing pieces
@@ -359,9 +362,10 @@ fn count_enclosed_area_one_way(
             set.insert(Position::new(p.y + 1, p.x));
         }
     }
+    println!("Enclosed area after adjustment: {}", set.len());
 
     let total = set.len();
-    print_grid(grid, &Vec::from_iter(set));
+    // print_grid(grid, &Vec::from_iter(set));
     Ok(total)
 }
 
