@@ -18,7 +18,8 @@
 use std::{
     collections::HashSet,
     fmt,
-    io::{self, BufRead},
+    fs::File,
+    io::{self, BufRead, BufReader},
 };
 
 const TO_NORTH: (i32, i32) = (-1, 0);
@@ -171,6 +172,23 @@ fn guess_start(grid: &Vec<Vec<Pipe>>, pos: Position) -> Pipe {
     *set.iter().next().unwrap()
 }
 
+// Finds the location of the start position, figure out what pipe it is,
+// and change it to the correct pipe in the grid.
+fn find_and_update_start(grid: &mut Vec<Vec<Pipe>>) -> Position {
+    // Find position of starting pipe
+    let start: Position = find_start(&grid).unwrap();
+    // print_grid(&grid, &vec![start]);
+
+    // and replace that spot in the grid with the real pipe
+    let guessed_start: Pipe = guess_start(&grid, start);
+    println!(
+        "Guessed start for ({},{}) is {}",
+        start.y, start.x, guessed_start
+    );
+    grid[start.y][start.x] = guessed_start;
+    start
+}
+
 fn build_grid<R>(reader: &mut R) -> Vec<Vec<Pipe>>
 where
     R: BufRead,
@@ -185,7 +203,11 @@ where
 fn print_grid(grid: &Vec<Vec<Pipe>>, highlight_pos: &Vec<Position>) {
     for (y, row) in grid.iter().enumerate() {
         for (x, el) in row.iter().enumerate() {
-            if highlight_pos.iter().find(|p| **p == Position::new(y, x)).is_some() {
+            if highlight_pos
+                .iter()
+                .find(|p| **p == Position::new(y, x))
+                .is_some()
+            {
                 print!("\x1b[92m{}\x1b[0m", *el);
             } else {
                 print!("{}", *el);
@@ -193,6 +215,35 @@ fn print_grid(grid: &Vec<Vec<Pipe>>, highlight_pos: &Vec<Position>) {
         }
         println!("");
     }
+}
+
+// Find the loop (part 1)
+fn find_loop(grid: &Vec<Vec<Pipe>>, start: Position) -> Vec<Position> {
+    // We could move in both direction to do only half the iterations,
+    // but it adds in complexity for minimal gain.
+    let mut prev: Position = start;
+    let mut curr: Position = next_pipes(&grid, &prev)[0];
+    // Starting at 1, as curr is already set to next pipe
+    // let mut count: usize = 1;
+    let mut loop_pipe: Vec<Position> = Vec::new();
+    loop_pipe.push(curr); // start will be put at the end
+
+    while curr != start {
+        let next_pipes1 = next_pipes(&grid, &curr);
+        // println!("------");
+        // print_grid(&grid, curr);
+
+        for n in next_pipes1 {
+            if n != prev {
+                prev = curr;
+                curr = n;
+                break;
+            }
+        }
+        loop_pipe.push(curr);
+        // count += 1;
+    }
+    loop_pipe
 }
 
 fn in_loop(loop_pipe: &Vec<Position>, pos: Position) -> bool {
@@ -205,14 +256,19 @@ fn count_enclosed_area(grid: &Vec<Vec<Pipe>>, loop_pipe: &Vec<Position>) -> usiz
 
     // we start from top left corner, so we know the direction and side
     let min_y = loop_pipe.iter().map(|p| p.y).min().unwrap();
-    let min_x = loop_pipe.iter().filter(|p| p.y == min_y).map(|p| p.x).min().unwrap();
+    let min_x = loop_pipe
+        .iter()
+        .filter(|p| p.y == min_y)
+        .map(|p| p.x)
+        .min()
+        .unwrap();
     let start = Position::new(min_y, min_x);
     println!("Start {:?}", start);
     // normally start should always be a SouthEast one
     assert_eq!(grid[start.y][start.x], Pipe::SouthEast);
-    
+
     let mut set: HashSet<Position> = HashSet::new();
-    
+
     let mut prev: Position = start;
     let mut started = false;
     for p in loop_pipe.iter().cycle() {
@@ -228,48 +284,76 @@ fn count_enclosed_area(grid: &Vec<Vec<Pipe>>, loop_pipe: &Vec<Position>) -> usiz
         // println!("p {:?}", p);
 
         let pipe = grid[p.y][p.x];
-        if (pipe == Pipe::Horizontal || pipe == Pipe::SouthWest || pipe == Pipe::SouthEast) && prev.x < p.x && p.y > 0 {
+        if (pipe == Pipe::Horizontal || pipe == Pipe::SouthWest || pipe == Pipe::SouthEast)
+            && prev.x < p.x
+            && p.y > 0
+        {
             // look up
             let mut s: HashSet<Position> = HashSet::new();
             let mut y = p.y - 1;
             while !in_loop(loop_pipe, Position::new(y, p.x)) {
                 // println!("{}, {}: Up {},{}", p.y, p.x, y, p.x);
                 s.insert(Position::new(y, p.x));
-                if y == 0 { panic!("Wrong dir");  s.clear(); break; }
+                if y == 0 {
+                    panic!("Wrong dir");
+                    s.clear();
+                    break;
+                }
                 y -= 1;
             }
             set = &set | &s;
-        } else if (pipe == Pipe::Horizontal || pipe == Pipe::NorthEast || pipe == Pipe::NorthWest) && prev.x > p.x && p.y < grid.len() - 1 {
+        } else if (pipe == Pipe::Horizontal || pipe == Pipe::NorthEast || pipe == Pipe::NorthWest)
+            && prev.x > p.x
+            && p.y < grid.len() - 1
+        {
             // look below
             let mut s: HashSet<Position> = HashSet::new();
             let mut y = p.y + 1;
             while !in_loop(loop_pipe, Position::new(y, p.x)) {
                 // println!("{}, {}: Below {},{}", p.y, p.x, y, p.x);
                 s.insert(Position::new(y, p.x));
-                if y == grid.len() - 1 { panic!("Wrong dir");  s.clear(); break; }
+                if y == grid.len() - 1 {
+                    panic!("Wrong dir");
+                    s.clear();
+                    break;
+                }
                 y += 1;
             }
             set = &set | &s;
         }
-        if (pipe == Pipe::Vertical || pipe == Pipe::NorthWest || pipe == Pipe::SouthWest) && prev.y < p.y && p.x < grid[0].len() - 1 {
+        if (pipe == Pipe::Vertical || pipe == Pipe::NorthWest || pipe == Pipe::SouthWest)
+            && prev.y < p.y
+            && p.x < grid[0].len() - 1
+        {
             // look right
             let mut s: HashSet<Position> = HashSet::new();
             let mut x = p.x + 1;
             while !in_loop(loop_pipe, Position::new(p.y, x)) {
                 // println!("{}, {}: Right {},{}", p.y, p.x, p.y, x);
                 s.insert(Position::new(p.y, x));
-                if x == grid[0].len() - 1 { panic!("Wrong dir");  s.clear(); break; }
+                if x == grid[0].len() - 1 {
+                    panic!("Wrong dir");
+                    s.clear();
+                    break;
+                }
                 x += 1;
             }
             set = &set | &s;
-        } else if (pipe == Pipe::Vertical || pipe == Pipe::SouthEast || pipe == Pipe::NorthEast) && prev.y > p.y && p.x > 0 {
+        } else if (pipe == Pipe::Vertical || pipe == Pipe::SouthEast || pipe == Pipe::NorthEast)
+            && prev.y > p.y
+            && p.x > 0
+        {
             // look left
             let mut s: HashSet<Position> = HashSet::new();
             let mut x = p.x - 1;
             while !in_loop(loop_pipe, Position::new(p.y, x)) {
                 // println!("{}, {}: Left {},{}", p.y, p.x, p.y, x);
                 s.insert(Position::new(p.y, x));
-                if x == 0 { panic!("Wrong dir"); s.clear(); break; }
+                if x == 0 {
+                    panic!("Wrong dir");
+                    s.clear();
+                    break;
+                }
                 x -= 1;
             }
             set = &set | &s;
@@ -304,48 +388,14 @@ fn main() {
     let stdin = io::stdin();
     let mut grid: Vec<Vec<Pipe>> = build_grid(&mut stdin.lock());
 
-    // Find position of starting pipe
-    let start: Position = find_start(&grid).unwrap();
-    // print_grid(&grid, &vec![start]);
+    let start = find_and_update_start(&mut grid);
 
-    // and replace that spot in the grid with the real pipe
-    let guessed_start: Pipe = guess_start(&grid, start);
-    println!(
-        "Guessed start for ({},{}) is {}",
-        start.y, start.x, guessed_start
-    );
-    grid[start.y][start.x] = guessed_start;
+    let loop_pipe: Vec<Position> = find_loop(&grid, start);
+    println!("Part 1: {}", loop_pipe.len() / 2);
 
-    // We could move in both direction to do only half the iterations,
-    // but it adds in complexity for minimal gain.
-    let mut prev: Position = start;
-    let mut curr: Position = next_pipes(&grid, &prev)[0];
-    // Starting at 1, as curr is already set to next pipe
-    let mut count: usize = 1;
-    let mut loop_pipe: Vec<Position> = Vec::new();
-    loop_pipe.push(curr); // start will be put at the end
-
-    while curr != start {
-        let next_pipes1 = next_pipes(&grid, &curr);
-        // println!("------");
-        // print_grid(&grid, curr);
-
-        for n in next_pipes1 {
-            if n != prev {
-                prev = curr;
-                curr = n;
-                break;
-            }
-        }
-        loop_pipe.push(curr);
-        count += 1;
-    }
-
-    println!("Part 1: {}", count / 2);
-    
-    print_grid(&grid, &loop_pipe);
+    // print_grid(&grid, &loop_pipe);
     // loop_pipe.reverse();
-    println!("Part 2: {}", count_enclosed_area(&grid, &loop_pipe));
+    // println!("Part 2: {}", count_enclosed_area(&grid, &loop_pipe));
 }
 
 #[test]
@@ -372,4 +422,37 @@ L|-JF" as &[u8];
         next_pipes(&grid, &Position::new(3, 1)),
         [Position::new(2, 1), Position::new(3, 2)]
     );
+}
+
+fn part1(filename: &str) -> usize {
+    let file = File::open(filename).unwrap();
+    let mut reader = BufReader::new(file);
+    let mut grid: Vec<Vec<Pipe>> = build_grid(&mut reader);
+    let start = find_and_update_start(&mut grid);
+
+    let loop_pipe: Vec<Position> = find_loop(&grid, start);
+    loop_pipe.len() / 2
+}
+
+#[test]
+fn test_part1() {
+    assert_eq!(part1("resources/input_test1"), 4);
+    assert_eq!(part1("resources/input_test2"), 8);
+    assert_eq!(part1("resources/input_puzzle"), 6754);
+}
+
+fn part2(filename: &str) -> usize {
+    let file = File::open(filename).unwrap();
+    let mut reader = BufReader::new(file);
+    let mut grid: Vec<Vec<Pipe>> = build_grid(&mut reader);
+    let start = find_and_update_start(&mut grid);
+
+    let loop_pipe: Vec<Position> = find_loop(&grid, start);
+    count_enclosed_area(&grid, &loop_pipe)
+}
+
+#[test]
+fn test_part2() {
+    assert_eq!(part2("resources/input_test3"), 4);
+    assert_eq!(part2("resources/input_test4"), 4);
 }
