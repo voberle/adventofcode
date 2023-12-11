@@ -58,9 +58,7 @@ fn expand_universe(image: &Vec<Vec<char>>, expansion_factor: usize) -> Vec<Vec<c
 
         if all_empty {
             // expand
-            for _ in 0..expansion_factor {
-                ye += 1;
-            }
+            ye += expansion_factor;
         } else {
             for x in 0..image[0].len() {
                 expanded_hor[ye][x] = image[y][x];
@@ -87,9 +85,7 @@ fn expand_universe(image: &Vec<Vec<char>>, expansion_factor: usize) -> Vec<Vec<c
 
         if all_empty {
             // expand
-            for _ in 0..expansion_factor {
-                xe += 1;
-            }
+            xe += expansion_factor;
         } else {
             for y in 0..expanded_hor.len() {
                 expanded[y][xe] = expanded_hor[y][x];
