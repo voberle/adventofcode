@@ -246,11 +246,31 @@ fn find_loop(grid: &Vec<Vec<Pipe>>, start: Position) -> Vec<Position> {
     loop_pipe
 }
 
+// The animal can be anywhere that is not under our loop, not only under grounds,
+// but also under pipes that are not part of the loop.
 fn in_loop(loop_pipe: &[Position], pos: Position) -> bool {
     loop_pipe.iter().find(|p| **p == pos).is_some()
 }
 
 fn count_enclosed_area(grid: &Vec<Vec<Pipe>>, loop_pipe: &[Position]) -> usize {
+    // We don't which way to take the loop, so try one way and if it fails, try the other way
+    if let Ok(enclosed_area_total) = count_enclosed_area_one_way(grid, loop_pipe) {
+        enclosed_area_total
+    } else {
+        let mut rev_loop_pipe: Vec<Position> = loop_pipe.into();
+        rev_loop_pipe.reverse();
+        if let Ok(enclosed_area_total) = count_enclosed_area_one_way(grid, &rev_loop_pipe) {
+            enclosed_area_total
+        } else {
+            panic!("Neither direction worked");
+        }
+    }
+}
+
+fn count_enclosed_area_one_way(
+    grid: &Vec<Vec<Pipe>>,
+    loop_pipe: &[Position],
+) -> Result<usize, &'static str> {
     // Follow the line one direction and save all the dots on the left of the line
     // from that direction's perspective
 
@@ -289,74 +309,58 @@ fn count_enclosed_area(grid: &Vec<Vec<Pipe>>, loop_pipe: &[Position]) -> usize {
             && p.y > 0
         {
             // look up
-            let mut s: HashSet<Position> = HashSet::new();
             let mut y = p.y - 1;
             while !in_loop(loop_pipe, Position::new(y, p.x)) {
                 // println!("{}, {}: Up {},{}", p.y, p.x, y, p.x);
-                s.insert(Position::new(y, p.x));
+                set.insert(Position::new(y, p.x));
                 if y == 0 {
-                    panic!("Wrong dir");
-                    s.clear();
-                    break;
+                    return Err("Wrong dir");
                 }
                 y -= 1;
             }
-            set = &set | &s;
         } else if (pipe == Pipe::Horizontal || pipe == Pipe::NorthEast || pipe == Pipe::NorthWest)
             && prev.x > p.x
             && p.y < grid.len() - 1
         {
             // look below
-            let mut s: HashSet<Position> = HashSet::new();
             let mut y = p.y + 1;
             while !in_loop(loop_pipe, Position::new(y, p.x)) {
                 // println!("{}, {}: Below {},{}", p.y, p.x, y, p.x);
-                s.insert(Position::new(y, p.x));
+                set.insert(Position::new(y, p.x));
                 if y == grid.len() - 1 {
-                    panic!("Wrong dir");
-                    s.clear();
-                    break;
+                    return Err("Wrong dir");
                 }
                 y += 1;
             }
-            set = &set | &s;
         }
         if (pipe == Pipe::Vertical || pipe == Pipe::NorthWest || pipe == Pipe::SouthWest)
             && prev.y < p.y
             && p.x < grid[0].len() - 1
         {
             // look right
-            let mut s: HashSet<Position> = HashSet::new();
             let mut x = p.x + 1;
             while !in_loop(loop_pipe, Position::new(p.y, x)) {
                 // println!("{}, {}: Right {},{}", p.y, p.x, p.y, x);
-                s.insert(Position::new(p.y, x));
+                set.insert(Position::new(p.y, x));
                 if x == grid[0].len() - 1 {
-                    panic!("Wrong dir");
-                    s.clear();
-                    break;
+                    return Err("Wrong dir");
                 }
                 x += 1;
             }
-            set = &set | &s;
         } else if (pipe == Pipe::Vertical || pipe == Pipe::SouthEast || pipe == Pipe::NorthEast)
             && prev.y > p.y
             && p.x > 0
         {
             // look left
-            let mut s: HashSet<Position> = HashSet::new();
             let mut x = p.x - 1;
             while !in_loop(loop_pipe, Position::new(p.y, x)) {
                 // println!("{}, {}: Left {},{}", p.y, p.x, p.y, x);
-                s.insert(Position::new(p.y, x));
+                set.insert(Position::new(p.y, x));
                 if x == 0 {
-                    panic!("Wrong dir");
-                    s.clear();
-                    break;
+                    return Err("Wrong dir");
                 }
                 x -= 1;
             }
-            set = &set | &s;
         }
         prev = *p;
     }
@@ -381,7 +385,7 @@ fn count_enclosed_area(grid: &Vec<Vec<Pipe>>, loop_pipe: &[Position]) -> usize {
 
     let total = set.len();
     print_grid(grid, &Vec::from_iter(set));
-    total
+    Ok(total)
 }
 
 fn main() {
@@ -455,4 +459,6 @@ fn part2(filename: &str) -> usize {
 fn test_part2() {
     assert_eq!(part2("resources/input_test3"), 4);
     assert_eq!(part2("resources/input_test4"), 4);
+    assert_eq!(part2("resources/input_test5"), 8);
+    assert_eq!(part2("resources/input_test6"), 10);
 }
