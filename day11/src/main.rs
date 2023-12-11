@@ -1,5 +1,6 @@
 // https://adventofcode.com/2023/day/11
 // Part 1: 9521550
+// Part 2: 298932923702
 
 use std::{
     fs::File,
@@ -159,11 +160,13 @@ fn sum_of_shortest_paths(image: &Universe) -> usize {
 fn main() {
     let stdin = io::stdin();
     let universe: Universe = Universe::build(&mut stdin.lock());
-    universe.print();
+    // universe.print();
 
     let expanded = expand_universe(&universe, 2);
-
     println!("Part 1: {}", sum_of_shortest_paths(&expanded));
+
+    let expanded_massive = expand_universe(&universe, 1_000_000);
+    println!("Part 2: {}", sum_of_shortest_paths(&expanded_massive));
 }
 
 #[test]
