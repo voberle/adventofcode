@@ -1,8 +1,19 @@
 // https://adventofcode.com/2023/day/11
-// Part 1: 
+// Part 1: 9521550
 
 use std::{io::{self, BufRead, BufReader}, fs::File};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct Position {
+    y: usize,
+    x: usize,
+}
+
+impl Position {
+    fn new(y: usize, x: usize) -> Self {
+        Self { y, x }
+    }
+}
 
 fn build_image<R>(reader: &mut R) -> Vec<Vec<char>>
 where
@@ -74,17 +85,40 @@ fn expand_universe(image: &Vec<Vec<char>>) -> Vec<Vec<char>> {
     expanded
 }
 
+fn shortest_path(image: &Vec<Vec<char>>, g1: Position, g2: Position) -> usize {
+    g1.x.abs_diff(g2.x) + g1.y.abs_diff(g2.y)
+}
+
 fn sum_of_shortest_paths(image: &Vec<Vec<char>>) -> usize {
-    374
+    let mut galaxies: Vec<Position> = Vec::new();
+    // How to do this with an iterator?
+    for (y, row) in image.iter().enumerate() {
+        for (x, el) in row.iter().enumerate() {
+            if *el == '#' {
+                galaxies.push(Position::new(y, x));
+            }
+        }
+    }
+    // println!("{:#?}", galaxies);
+
+    let mut galaxy_pairs: Vec<(Position, Position)> = Vec::new();
+    for g1 in 0..galaxies.len() {
+        for g2 in g1+1 .. galaxies.len() {
+            galaxy_pairs.push((galaxies[g1], galaxies[g2]));
+        }
+    }
+    // println!("{:#?}", galaxy_pairs);
+
+    galaxy_pairs.iter().map(|pair| shortest_path(image, pair.0, pair.1)).sum()
 }
 
 fn main() {
     let stdin = io::stdin();
     let image: Vec<Vec<char>> = build_image(&mut stdin.lock());
 
-    expand_universe(&image);
+    let expanded = expand_universe(&image);
 
-    println!("Part 1: {}", sum_of_shortest_paths(&image));
+    println!("Part 1: {}", sum_of_shortest_paths(&expanded));
 }
 
 #[test]
@@ -102,7 +136,8 @@ fn part1(filename: &str) -> usize {
     let file = File::open(filename).unwrap();
     let mut reader = BufReader::new(file);
     let image: Vec<Vec<char>> = build_image(&mut reader);
-    sum_of_shortest_paths(&image)
+    let expanded = expand_universe(&image);
+    sum_of_shortest_paths(&expanded)
 }
 
 #[test]
