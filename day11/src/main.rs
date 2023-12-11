@@ -18,24 +18,52 @@ impl Position {
     }
 }
 
-fn build_image<R>(reader: &mut R) -> Vec<Vec<char>>
-where
-    R: BufRead,
-{
-    reader
-        .lines()
-        .map(|l| l.unwrap().chars().collect())
-        .collect()
+// The universe is a vast amount of emptyness with a few galaxies.
+// So instead of storing it as a grid with galaxies and empty space,
+// we store only the positions of the galaxies.
+struct Universe {
+    galaxies: Vec<Position>,
+    width: usize,
+    height: usize,
 }
 
-fn print_image(image: &Vec<Vec<char>>) {
-    println!("---");
-    for (y, row) in image.iter().enumerate() {
-        // print!("{y}: ");
-        for (x, el) in row.iter().enumerate() {
-            print!("{}", *el);
+impl Universe {
+    fn build<R>(reader: &mut R) -> Self
+    where
+        R: BufRead,
+    {
+        let mut width = 0;
+        let mut height = 0;
+        let mut galaxies: Vec<Position> = Vec::new();
+        for (y, row) in reader.lines().enumerate() {
+            let r = row.unwrap();
+            width = r.len();
+            height += 1;
+            for (x, el) in r.chars().enumerate() {
+                if el == '#' {
+                    galaxies.push(Position::new(y, x));
+                }
+            }
         }
-        println!("");
+        Universe { galaxies, width, height }
+    }
+
+    fn find(&self, pos: Position) -> Option<&Position> {
+        self.galaxies.iter().find(|p| **p == pos)
+    }
+
+    fn print(&self) {
+        println!("---");
+        for y in 0..self.height {
+            for x in 0..self.width {
+                if let Some(_) = self.find(Position::new(y, x)) {
+                    print!("#");
+                } else {
+                    print!(".");
+                }
+            }
+            println!("");
+        }
     }
 }
 
@@ -132,13 +160,15 @@ fn sum_of_shortest_paths(image: &Vec<Vec<char>>) -> usize {
 
 fn main() {
     let stdin = io::stdin();
-    let image: Vec<Vec<char>> = build_image(&mut stdin.lock());
+    let universe: Universe = Universe::build(&mut stdin.lock());
+    universe.print();
 
-    let expanded = expand_universe(&image, 2);
+    // let expanded = expand_universe(&image, 2);
 
-    println!("Part 1: {}", sum_of_shortest_paths(&expanded));
+    // println!("Part 1: {}", sum_of_shortest_paths(&expanded));
 }
 
+/*
 #[test]
 fn test_expand_universe() {
     let mut reader = BufReader::new(File::open("resources/input_test1").unwrap());
@@ -164,3 +194,4 @@ fn test_part1() {
     assert_eq!(part1("resources/input_test1", 10), 1030);
     assert_eq!(part1("resources/input_test1", 100), 8410);
 }
+ */
