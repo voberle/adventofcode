@@ -1,7 +1,10 @@
 // https://adventofcode.com/2023/day/11
 // Part 1: 9521550
 
-use std::{io::{self, BufRead, BufReader}, fs::File};
+use std::{
+    fs::File,
+    io::{self, BufRead, BufReader},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Position {
@@ -52,15 +55,16 @@ fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
 }
 
 // any rows or columns that contain no galaxies should all actually be twice as big
-fn expand_universe(image: &Vec<Vec<char>>) -> Vec<Vec<char>> {
+fn expand_universe(image: &Vec<Vec<char>>, expansion_factor: usize) -> Vec<Vec<char>> {
     // print_image(image);
     let mut expanded_horizontally: Vec<Vec<char>> = Vec::new();
     // Expand horizontally
     for l in image {
         if l.iter().all(|c| *c == '.') {
-            let big_line = vec!['.'; l.len() * 2];
-            expanded_horizontally.push(big_line.clone());
-            expanded_horizontally.push(big_line);
+            let big_line = vec!['.'; l.len() * expansion_factor];
+            for _ in 0..expansion_factor {
+                expanded_horizontally.push(big_line.clone());
+            }
         } else {
             expanded_horizontally.push(l.clone());
         }
@@ -73,9 +77,10 @@ fn expand_universe(image: &Vec<Vec<char>>) -> Vec<Vec<char>> {
     let mut expanded_transposed: Vec<Vec<char>> = Vec::new();
     for l in transposed {
         if l.iter().all(|c| *c == '.') {
-            let big_col = vec!['.'; l.len() * 2];
-            expanded_transposed.push(big_col.clone());
-            expanded_transposed.push(big_col);
+            let big_col = vec!['.'; l.len() * expansion_factor];
+            for _ in 0..expansion_factor {
+                expanded_transposed.push(big_col.clone());
+            }
         } else {
             expanded_transposed.push(l.clone());
         }
@@ -103,20 +108,23 @@ fn sum_of_shortest_paths(image: &Vec<Vec<char>>) -> usize {
 
     let mut galaxy_pairs: Vec<(Position, Position)> = Vec::new();
     for g1 in 0..galaxies.len() {
-        for g2 in g1+1 .. galaxies.len() {
+        for g2 in g1 + 1..galaxies.len() {
             galaxy_pairs.push((galaxies[g1], galaxies[g2]));
         }
     }
     // println!("{:#?}", galaxy_pairs);
 
-    galaxy_pairs.iter().map(|pair| shortest_path(image, pair.0, pair.1)).sum()
+    galaxy_pairs
+        .iter()
+        .map(|pair| shortest_path(image, pair.0, pair.1))
+        .sum()
 }
 
 fn main() {
     let stdin = io::stdin();
     let image: Vec<Vec<char>> = build_image(&mut stdin.lock());
 
-    let expanded = expand_universe(&image);
+    let expanded = expand_universe(&image, 2);
 
     println!("Part 1: {}", sum_of_shortest_paths(&expanded));
 }
@@ -128,19 +136,21 @@ fn test_expand_universe() {
 
     let mut reader_expanded = BufReader::new(File::open("resources/test1_expanded").unwrap());
     let image_expanded: Vec<Vec<char>> = build_image(&mut reader_expanded);
-    
-    assert_eq!(expand_universe(&image), image_expanded);
+
+    assert_eq!(expand_universe(&image, 2), image_expanded);
 }
 
-fn part1(filename: &str) -> usize {
+fn part1(filename: &str, expansion_factor: usize) -> usize {
     let file = File::open(filename).unwrap();
     let mut reader = BufReader::new(file);
     let image: Vec<Vec<char>> = build_image(&mut reader);
-    let expanded = expand_universe(&image);
+    let expanded = expand_universe(&image, expansion_factor);
     sum_of_shortest_paths(&expanded)
 }
 
 #[test]
 fn test_part1() {
-    assert_eq!(part1("resources/input_test1"), 374);
+    assert_eq!(part1("resources/input_test1", 2), 374);
+    assert_eq!(part1("resources/input_test1", 10), 1030);
+    assert_eq!(part1("resources/input_test1", 100), 8410);
 }
