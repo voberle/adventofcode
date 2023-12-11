@@ -200,7 +200,7 @@ where
 }
 
 // TODO uses slices
-fn print_grid(grid: &Vec<Vec<Pipe>>, highlight_pos: &Vec<Position>) {
+fn print_grid(grid: &Vec<Vec<Pipe>>, highlight_pos: &[Position]) {
     for (y, row) in grid.iter().enumerate() {
         for (x, el) in row.iter().enumerate() {
             if highlight_pos
@@ -246,11 +246,11 @@ fn find_loop(grid: &Vec<Vec<Pipe>>, start: Position) -> Vec<Position> {
     loop_pipe
 }
 
-fn in_loop(loop_pipe: &Vec<Position>, pos: Position) -> bool {
+fn in_loop(loop_pipe: &[Position], pos: Position) -> bool {
     loop_pipe.iter().find(|p| **p == pos).is_some()
 }
 
-fn count_enclosed_area(grid: &Vec<Vec<Pipe>>, loop_pipe: &Vec<Position>) -> usize {
+fn count_enclosed_area(grid: &Vec<Vec<Pipe>>, loop_pipe: &[Position]) -> usize {
     // Follow the line one direction and save all the dots on the left of the line
     // from that direction's perspective
 
@@ -393,9 +393,9 @@ fn main() {
     let loop_pipe: Vec<Position> = find_loop(&grid, start);
     println!("Part 1: {}", loop_pipe.len() / 2);
 
-    // print_grid(&grid, &loop_pipe);
+    print_grid(&grid, &loop_pipe);
     // loop_pipe.reverse();
-    // println!("Part 2: {}", count_enclosed_area(&grid, &loop_pipe));
+    println!("Part 2: {}", count_enclosed_area(&grid, &loop_pipe));
 }
 
 #[test]
