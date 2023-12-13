@@ -84,7 +84,12 @@ Starting to use `BufRead` and traits so that the input parsing code can be used 
 
 ### Day 12: [Hot Springs](https://adventofcode.com/2023/day/12)
 
-
+That was the hardest one so far probably. For now, I managed to do only part 1.
+The first approach was to find all possible records arrangements and check if they are valid.
+But this doesn't work even for the smaller records of part 1, as it breaks down if the record contains a lot of unknowns.
+I found a better approach by searching all the possible way of placing the contiguous groups, and checking if they were valid.
+As there were much less combinations, and checking validaty was fast, this runs in about 10 seconds for part 1.
+Sadly, the approach is completely unusable for part 2
 
 ### Day 13: [Point of Incidence](https://adventofcode.com/2023/day/13)
 

@@ -110,6 +110,8 @@ impl Record {
             .collect()
     }
 
+    // This version works in theory, but uses way to much memory as soon as there a few more UNKNOWN.
+    // It cannot be used for even part 1.
     fn arrangements_count(&self) -> usize {
         let known_operation_count = self.states.chars().filter(|c| *c == OPERATIONAL).count();
         let known_damaged_count = self.states.chars().filter(|c| *c == DAMAGED).count();
@@ -135,13 +137,6 @@ impl Record {
         t
     }
 
-    fn operational_combinations_iter(n: usize, k: usize) -> Vec<Vec<usize>> {
-        itertools::repeat_n((0..=n), k).multi_cartesian_product()
-            .filter(|comb| comb[1..comb.len()-1].iter().any(|n| *n != 0))
-            .filter(|comb| comb.iter().sum::<usize>() == n)
-            .collect()
-    }
-
     fn create_string(operational_sizes: &Vec<usize>, damaged_sizes: &Vec<usize>) -> String {
         assert_eq!(operational_sizes.len(), damaged_sizes.len() + 1);
         std::iter::zip(operational_sizes, damaged_sizes)
@@ -162,23 +157,20 @@ impl Record {
             })
     }
 
+    // In this version, we create the damaged "strings" and look for all the possible ways
+    // to place them. This is done by finding all combination of spaces between the strings,
+    // and checking the ones that are valid.
+    // It works and isn't too slow for part 1 (around 10 secs), but breaks down on records with a lot of unknowns.
     fn arrangements_count_2(&self) -> usize {
         let n = self.operational_count();
         let k = self.damaged_cont_group_sizes.len() + 1;
-        // println!("n={n} k={k}");
-        let v: Vec<_> = 
-        itertools::repeat_n((0..=n), k).multi_cartesian_product()
+        itertools::repeat_n(0..=n, k).multi_cartesian_product()
             .filter(|comb| comb[1..comb.len()-1].iter().any(|n| *n != 0))
             .filter(|comb| comb.iter().sum::<usize>() == n)
             .map(|operational_sizes| Self::create_string(&operational_sizes, &self.damaged_cont_group_sizes))
             .filter(|s| self.compare_string_against_state(s))
             .filter(|s| Self::calc_state_group_sizes(s) == self.damaged_cont_group_sizes)
-            .collect()
-        ;
-        // println!("{}: {:#?}", v.len(), v);
-        // TODO replace with it.count()
-        println!("Sum for {}: {}", self.to_string(), v.len());
-        v.len()
+            .count()
     }
 }
 
@@ -210,11 +202,6 @@ fn test_adjust_states() {
     );
 }
 
-// #[test]
-fn test_arrangements_count() {
-    assert!(Record::build("??????#???????? 7,2").arrangements_count() > 0);
-}
-
 #[test]
 fn test_create_string() {
     assert_eq!(Record::create_string(&vec![0, 1, 5], &vec![7, 2]), "#######.##.....");
@@ -227,32 +214,6 @@ fn test_compare_string_against_state() {
     let r = Record::build("??????#???????? 7,2");
     assert!(r.compare_string_against_state("#######.##....."));
     assert!(!r.compare_string_against_state(".##.....#######"));
-}
-
-#[test]
-fn test_t() {
-    Record::build("??????#???????? 7,2").t();
-    assert!(false);
-}
-fn cartesian_product() {
-    let v: Vec<_> = 
-    // (0..6).combinations_with_replacement(3)
-    // (0..6).permutations(3)
-    itertools::repeat_n((0..=6), 3).multi_cartesian_product()
-    .filter(|comb| comb[1..comb.len()-1].iter().any(|n| *n != 0))
-    .filter(|comb| comb.iter().sum::<usize>() == 6)
-    .collect();
-    println!("{}: {:?}", v.len(), v);
-    assert!(false);
-
-// itertools::assert_equal(it, vec![
-//     vec![1, 1],
-//     vec![1, 2],
-//     vec![1, 3],
-//     vec![2, 2],
-//     vec![2, 3],
-//     vec![3, 3],
-// ]);
 }
 
 fn sum_of_arrangements(records: &Vec<Record>) -> usize {
@@ -273,16 +234,12 @@ fn main() {
     let stdin = io::stdin();
 
     let records: Vec<Record> = build_records(&mut stdin.lock());
-
-    // Record::build("??????#???????? 7,2").t();
     // for r in &records {
     //     println!("{}: {}/{}", r.to_string(), r.damaged_count(), r.spring_count());
     // }
+
     println!("Part 1: {}", sum_of_arrangements(&records));
 }
-
-#[test]
-fn test_sum() {}
 
 fn part1(filename: &str) -> usize {
     let file = File::open(filename).unwrap();
