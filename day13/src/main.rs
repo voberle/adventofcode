@@ -4,6 +4,21 @@
 use std::io::{self, BufRead};
 
 #[derive(Debug)]
+enum Reflection {
+    Vertical(usize),
+    Horizontal(usize),
+}
+
+impl Reflection {
+    fn summary(&self) -> usize {
+        match self {
+            Reflection::Vertical(col) => col + 1,
+            Reflection::Horizontal(row) => (row + 1) * 100,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 struct Pattern {
     // String would be better for printing, but harder for index accessing
     arr: Vec<char>,
@@ -26,7 +41,6 @@ impl Pattern {
 
     fn line(&self, row: usize) -> &[char] {
         let idx = row * self.width;
-        // println!("{idx} .. {}", idx + self.width);
         &self.arr[idx..idx + self.width]
     }
 
@@ -55,22 +69,47 @@ impl Pattern {
         }
     }
 
-    fn find_vertical_reflexion(&self) -> Option<usize> {
+    fn find_vertical_reflexion(&self, refl_to_ignore: &Option<Reflection>) -> Option<usize> {
         let mut to_check: Vec<usize> = (0..self.width - 1).collect::<Vec<_>>();
         for row in 0..self.height {
-            to_check = find_reflexions_for_line(&self.line(row), &to_check);
+            to_check = find_reflexions_for_line(self.line(row), &to_check);
         }
-        assert!(to_check.len() <= 1);
-        to_check.first().copied()
+        if let Some(Reflection::Vertical(refl)) = refl_to_ignore {
+            to_check.iter().filter(|val| *val != refl).next().copied()
+        } else {
+            to_check.first().copied()
+        }
     }
 
-    fn find_horizontal_reflexion(&self) -> Option<usize> {
+    fn find_horizontal_reflexion(&self, refl_to_ignore: &Option<Reflection>) -> Option<usize> {
         let mut to_check: Vec<usize> = (0..self.height - 1).collect::<Vec<_>>();
         for col in 0..self.width {
             to_check = find_reflexions_for_line(&self.row(col), &to_check);
         }
-        assert!(to_check.len() <= 1);
-        to_check.first().copied()
+        if let Some(Reflection::Horizontal(refl)) = refl_to_ignore {
+            to_check.iter().filter(|val| *val != refl).next().copied()
+        } else {
+            to_check.first().copied()
+        }
+    }
+
+    fn find_reflection(&self) -> Option<Reflection> {
+        self.find_reflection_with_ignore(&None)
+    }
+
+    // In part 2, the original reflection may still be valid, so we need to ignore it
+    // in order to find the other one always.
+    fn find_reflection_with_ignore(
+        &self,
+        refl_to_ignore: &Option<Reflection>,
+    ) -> Option<Reflection> {
+        if let Some(c) = self.find_vertical_reflexion(refl_to_ignore) {
+            return Some(Reflection::Vertical(c));
+        }
+        if let Some(r) = self.find_horizontal_reflexion(refl_to_ignore) {
+            return Some(Reflection::Horizontal(r));
+        }
+        None
     }
 }
 
@@ -171,21 +210,26 @@ where
     patterns
 }
 
-fn find_summary(patterns: &Vec<Pattern>) -> usize {
+fn find_summary(patterns: &[Pattern]) -> usize {
+    patterns
+        .iter()
+        .map(|p| p.find_reflection())
+        .map(|e| e.map_or(0, |r| r.summary()))
+        .sum()
+}
+
+fn find_summary_with_smudges(patterns: &[Pattern]) -> usize {
     patterns
         .iter()
         .map(|p| {
-            // p.println();
-            if let Some(c) = p.find_vertical_reflexion() {
-                // println!("Found vertical reflection {}", c);
-                return c + 1;
-            } else if let Some(r) = p.find_horizontal_reflexion() {
-                // println!("Found horizontal reflection {}", r);
-                return (r + 1) * 100;
-            }
-            // println!("No reflection found");
-            0
+            let original_reflection = p.find_reflection();
+            p.arr.iter().enumerate().find_map(|(i, smudge)| {
+                let mut repaired: Pattern = p.clone();
+                repaired.arr[i] = if *smudge == '.' { '#' } else { '.' };
+                repaired.find_reflection_with_ignore(&original_reflection)
+            })
         })
+        .map(|o| o.unwrap().summary())
         .sum()
 }
 
@@ -201,15 +245,17 @@ fn main() {
     // println!("{:?}", patterns);
 
     println!("Part 1: {}", find_summary(&patterns));
+    println!("Part 2: {}", find_summary_with_smudges(&patterns));
 }
 
 #[cfg(test)]
 use std::{fs::File, io::BufReader};
 
 #[test]
-fn test_part1() {
+fn test_data() {
     let file = File::open("resources/input_test").unwrap();
     let mut reader = BufReader::new(file);
     let records: Vec<Pattern> = build_patterns(&mut reader);
     assert_eq!(find_summary(&records), 405);
+    assert_eq!(find_summary_with_smudges(&records), 400);
 }

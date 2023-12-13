@@ -91,3 +91,6 @@ Starting to use `BufRead` and traits so that the input parsing code can be used 
 For part 1, I implemented a brute force approach but relatively optimized, and it runs nicely fast.
 Used a `Vec<char>` for the two-dimensional array this time. This is great for getting the lines,
 but the columns require a copy and it's far less optimal.
+Part 2 still worked with the same approach, of trying all possible smudge changes, it remained fast enough.
+Main challenge here was understanding the task correctly, that the original reflection could still be valid 
+and simply needed to be ignored.
