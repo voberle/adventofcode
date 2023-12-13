@@ -3,7 +3,7 @@
 use itertools::Itertools;
 use std::{
     fs::File,
-    io::{self, BufRead, BufReader},
+    io::{self, BufRead, BufReader}, usize,
 };
 
 const OPERATIONAL: char = '.';
@@ -115,24 +115,70 @@ impl Record {
         let known_damaged_count = self.states.chars().filter(|c| *c == DAMAGED).count();
         let unknown_operation_count = self.operational_count() - known_operation_count;
         let unknown_damaged_count = self.damaged_count() - known_damaged_count;
+        println!("{OPERATIONAL} known={known_operation_count} unknow={unknown_operation_count}");
+        println!("{DAMAGED} known={known_damaged_count} unknow={unknown_damaged_count}");
+
         let mut v = vec![OPERATIONAL; unknown_operation_count];
         v.extend(vec![DAMAGED; unknown_damaged_count]);
+        println!("{:?}", v);
 
         let t = v
             .iter()
             .permutations(unknown_operation_count + unknown_damaged_count)
             .unique()
-            .map(|rep| {
+            .filter(|rep| {
                 let adj_s = Self::adjust_states(&self.states, &rep);
-                if Self::calc_state_group_sizes(&adj_s) == self.damaged_cont_group_sizes {
-                    1
-                } else {
-                    0
-                }
+                Self::calc_state_group_sizes(&adj_s) == self.damaged_cont_group_sizes
             })
-            .sum();
+            .count();
         println!("Sum for {}: {}", self.to_string(), t);
         t
+    }
+
+    fn operational_combinations_iter(n: usize, k: usize) -> Vec<Vec<usize>> {
+        itertools::repeat_n((0..=n), k).multi_cartesian_product()
+            .filter(|comb| comb[1..comb.len()-1].iter().any(|n| *n != 0))
+            .filter(|comb| comb.iter().sum::<usize>() == n)
+            .collect()
+    }
+
+    fn create_string(operational_sizes: &Vec<usize>, damaged_sizes: &Vec<usize>) -> String {
+        assert_eq!(operational_sizes.len(), damaged_sizes.len() + 1);
+        std::iter::zip(operational_sizes, damaged_sizes)
+            .map(|(o, d)| OPERATIONAL.to_string().repeat(*o) + &DAMAGED.to_string().repeat(*d))
+            .join("")
+        + &OPERATIONAL.to_string().repeat(*operational_sizes.last().unwrap())    
+    }
+
+    fn compare_string_against_state(&self, s: &str) -> bool {
+        assert_eq!(self.states.len(), s.len());
+        std::iter::zip(self.states.chars(), s.chars())
+            .all(|(state, c)| {
+                if state == UNKNOWN {
+                    true
+                } else {
+                    state == c
+                }
+            })
+    }
+
+    fn arrangements_count_2(&self) -> usize {
+        let n = self.operational_count();
+        let k = self.damaged_cont_group_sizes.len() + 1;
+        // println!("n={n} k={k}");
+        let v: Vec<_> = 
+        itertools::repeat_n((0..=n), k).multi_cartesian_product()
+            .filter(|comb| comb[1..comb.len()-1].iter().any(|n| *n != 0))
+            .filter(|comb| comb.iter().sum::<usize>() == n)
+            .map(|operational_sizes| Self::create_string(&operational_sizes, &self.damaged_cont_group_sizes))
+            .filter(|s| self.compare_string_against_state(s))
+            .filter(|s| Self::calc_state_group_sizes(s) == self.damaged_cont_group_sizes)
+            .collect()
+        ;
+        // println!("{}: {:#?}", v.len(), v);
+        // TODO replace with it.count()
+        println!("Sum for {}: {}", self.to_string(), v.len());
+        v.len()
     }
 }
 
@@ -164,8 +210,53 @@ fn test_adjust_states() {
     );
 }
 
+// #[test]
+fn test_arrangements_count() {
+    assert!(Record::build("??????#???????? 7,2").arrangements_count() > 0);
+}
+
+#[test]
+fn test_create_string() {
+    assert_eq!(Record::create_string(&vec![0, 1, 5], &vec![7, 2]), "#######.##.....");
+    assert_eq!(Record::create_string(&vec![0, 6, 0], &vec![7, 2]), "#######......##");
+    assert_eq!(Record::create_string(&vec![2, 3, 1], &vec![7, 2]), "..#######...##.");
+}
+
+#[test]
+fn test_compare_string_against_state() {
+    let r = Record::build("??????#???????? 7,2");
+    assert!(r.compare_string_against_state("#######.##....."));
+    assert!(!r.compare_string_against_state(".##.....#######"));
+}
+
+#[test]
+fn test_t() {
+    Record::build("??????#???????? 7,2").t();
+    assert!(false);
+}
+fn cartesian_product() {
+    let v: Vec<_> = 
+    // (0..6).combinations_with_replacement(3)
+    // (0..6).permutations(3)
+    itertools::repeat_n((0..=6), 3).multi_cartesian_product()
+    .filter(|comb| comb[1..comb.len()-1].iter().any(|n| *n != 0))
+    .filter(|comb| comb.iter().sum::<usize>() == 6)
+    .collect();
+    println!("{}: {:?}", v.len(), v);
+    assert!(false);
+
+// itertools::assert_equal(it, vec![
+//     vec![1, 1],
+//     vec![1, 2],
+//     vec![1, 3],
+//     vec![2, 2],
+//     vec![2, 3],
+//     vec![3, 3],
+// ]);
+}
+
 fn sum_of_arrangements(records: &Vec<Record>) -> usize {
-    records.iter().map(Record::arrangements_count).sum()
+    records.iter().map(Record::arrangements_count_2).sum()
 }
 
 fn build_records<R>(reader: &mut R) -> Vec<Record>
@@ -182,8 +273,10 @@ fn main() {
     let stdin = io::stdin();
 
     let records: Vec<Record> = build_records(&mut stdin.lock());
+
+    // Record::build("??????#???????? 7,2").t();
     // for r in &records {
-    //     println!("{}", r.to_string());
+    //     println!("{}: {}/{}", r.to_string(), r.damaged_count(), r.spring_count());
     // }
     println!("Part 1: {}", sum_of_arrangements(&records));
 }
@@ -198,7 +291,7 @@ fn part1(filename: &str) -> usize {
     sum_of_arrangements(&records)
 }
 
-#[test]
+// #[test]
 fn test_part1() {
     assert_eq!(part1("resources/input_test1"), 6);
     assert_eq!(part1("resources/input_test2"), 21);
