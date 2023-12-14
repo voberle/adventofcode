@@ -94,3 +94,7 @@ but the columns require a copy and it's far less optimal.
 Part 2 still worked with the same approach, of trying all possible smudge changes, it remained fast enough.
 Main challenge here was understanding the task correctly, that the original reflection could still be valid 
 and simply needed to be ignored.
+
+### Day 14: [Parabolic Reflector Dish](https://adventofcode.com/2023/day/14)
+
+TODO: Make the array management code reusable, in a library.
