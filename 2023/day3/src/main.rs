@@ -1,8 +1,6 @@
 // https://adventofcode.com/2023/day/3
 // Part 1: Test 4361
-// Part 1: 529618
 // Part 2: Test 467835
-// Part 2: 77509019
 
 use std::{
     collections::{HashMap, HashSet},

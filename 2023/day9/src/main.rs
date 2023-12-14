@@ -1,8 +1,6 @@
 // https://adventofcode.com/2023/day/9
 // Part 1 test: 114
-// Part 1: 1974232246
 // Part 2 test: 2
-// Part 2: 928
 
 use std::io;
 

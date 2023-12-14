@@ -1,6 +1,5 @@
 // https://adventofcode.com/2023/day/7
 // Part 2 test: 5905
-// Part 2:
 
 use std::{cmp::Ordering, collections::HashMap, io};
 use strum::IntoEnumIterator;

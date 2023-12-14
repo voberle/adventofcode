@@ -1,12 +1,10 @@
 // https://adventofcode.com/2023/day/10
 // Part 1 test 1: 4
 // Part 1 test 2: 8
-// Part 1: 6754
 // Part 2 test 3: 4
 // Part 2 test 4: 4
 // Part 2 test 5: 8
 // Part 2 test 6: 10
-// Part 2: 567
 
 use std::{
     collections::HashSet,

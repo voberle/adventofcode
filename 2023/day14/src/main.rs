@@ -1,6 +1,4 @@
 // https://adventofcode.com/2023/day/14
-// Part 1: 113486
-// Part 2: 104409
 
 use std::io::{self, BufRead};
 

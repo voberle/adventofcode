@@ -1,8 +1,6 @@
 // https://adventofcode.com/2023/day/4
 // Part 1 test: 13
-// Part 1: 21158
 // Part 2 test: 30
-// Part 2: 6050769
 
 use std::{collections::HashSet, io, usize, ops::AddAssign};
 

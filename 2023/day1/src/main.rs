@@ -1,8 +1,6 @@
 // https://adventofcode.com/2023/day/1
 // input_test: 142
 // input_test2: 281
-// input part 1: 54990
-// input part 2: 54473
 
 fn main() {
     let stdin = std::io::stdin();

@@ -1,6 +1,4 @@
 // https://adventofcode.com/2023/day/11
-// Part 1: 9521550
-// Part 2: 298932923702
 
 use std::{
     fs::File,

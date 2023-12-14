@@ -1,8 +1,6 @@
 // https://adventofcode.com/2023/day/8
 // Part 1 test 1: 2
 // Part 1 test 2: 6
-// Part 1: 12643
-// Part 2: 13133452426987
 
 use regex::Regex;
 use std::{collections::HashMap, io};
