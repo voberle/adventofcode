@@ -112,3 +112,7 @@ I ran the first few thousands and indeed it was periodic. I thought at implement
 
 One thing to notice is that I had very similar array management code as to day 13.
 This code could be made more reusable and put in a library.
+
+### Day 15: [Lens Library](https://adventofcode.com/2023/day/15)
+
+Part 1 was one of the easiest since a few days, with a clean use of iterator `fold`.
