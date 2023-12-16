@@ -136,3 +136,8 @@ This code could be made more reusable and put in a library.
 
 Part 1 was one of the easiest since a few days, with a clean use of iterator `fold`.
 Part 2 required just properly following the instructions.
+
+### Day 16: [The Floor Will Be Lava](https://adventofcode.com/2023/day/16)
+
+Part 1 works as a recursive approach where we save which position and direction
+have already been taken.
