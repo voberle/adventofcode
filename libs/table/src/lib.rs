@@ -3,14 +3,15 @@
 use std::{fmt, io::BufRead};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Table {
-    pub arr: Vec<char>,
+pub struct Table<T> where T: Clone, T: From<char> {
+    pub arr: Vec<T>,
     pub width: usize,
     pub height: usize,
 }
 
-impl Table {
-    pub fn new(arr: Vec<char>, width: usize, height: usize) -> Self {
+impl<T> Table<T> where T: Clone, T: From<char> {
+    pub fn new(arr: Vec<T>, width: usize, height: usize) -> Self {
+        assert_eq!(arr.len(), width * height);
         Self { arr, width, height }
     }
 
@@ -18,30 +19,34 @@ impl Table {
         Self::new(Vec::new(), 0, 0)
     }
 
-    pub fn row(&self, row: usize) -> &[char] {
+    pub fn elt(&self, row: usize, col: usize) -> &T {
+        &self.arr[row * self.width + col]
+    }
+
+    pub fn row(&self, row: usize) -> &[T] {
         let idx = row * self.width;
         &self.arr[idx..idx + self.width]
     }
 
-    pub fn col(&self, col: usize) -> Vec<char> {
+    pub fn col(&self, col: usize) -> Vec<T> {
         // Much less efficient than line unfortunately
         self.arr
             .iter()
             .skip(col)
             .step_by(self.width)
             .cloned()
-            .collect::<Vec<_>>()
+            .collect::<Vec<T>>()
     }
 
     /// Builds a Table with each table line on a separate line.
-    pub fn build<R>(reader: &mut R) -> Self
+    pub fn build<R>(reader: &mut R) -> Table<T>
     where
         R: BufRead,
     {
         let mut p = Table::empty();
         for l in reader.lines() {
             let line = l.unwrap();
-            p.arr.extend(line.chars());
+            p.arr.extend(line.chars().map(|c| c.into()));
             p.width = line.len();
             p.height += 1;
         }
@@ -49,7 +54,7 @@ impl Table {
     }
 }
 
-impl fmt::Display for Table {
+impl<T> fmt::Display for Table<T> where T: Clone, T: From<char>, String: for<'a> FromIterator<&'a T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Cols={}; Rows={}", self.height, self.width)?;
         for row in 0..self.height {
@@ -67,12 +72,12 @@ impl fmt::Display for Table {
 ///     use std::{fs::File, io::BufReader};
 ///     let file = File::open("tests/files/input_test").unwrap();
 ///     let mut reader = BufReader::new(file);
-///     let tables: Vec<Table> = build_tables(&mut reader);
-pub fn build_tables<R>(reader: &mut R) -> Vec<Table>
+///     let tables: Vec<Table<char>> = build_tables(&mut reader);
+pub fn build_tables<R, T>(reader: &mut R) -> Vec<Table<T>>
 where
-    R: BufRead,
+    R: BufRead, T: Clone, T: From<char>
 {
-    let mut patterns: Vec<Table> = Vec::new();
+    let mut patterns: Vec<Table<T>> = Vec::new();
     let mut p = Table::empty();
     for l in reader.lines() {
         let line = l.unwrap();
@@ -80,7 +85,7 @@ where
             patterns.push(p);
             p = Table::empty();
         } else {
-            p.arr.extend(line.chars());
+            p.arr.extend(line.chars().map(|c| c.into()));
             p.width = line.len();
             p.height += 1;
         }
@@ -92,6 +97,13 @@ where
 #[cfg(test)]
 pub mod tests {
     use super::*;
+
+    #[test]
+    fn test_elt() {
+        let p = Table::new("123456789qwertyuioasdfghjkl".chars().collect(), 9, 3);
+        assert_eq!(*p.elt(0, 2), '3');
+        assert_eq!(*p.elt(1, 4), 't');
+    }
 
     #[test]
     fn test_line() {
