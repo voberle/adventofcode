@@ -5,13 +5,38 @@ use table::Table;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Position {
-    row: usize,
-    col: usize,
+    row: i32,
+    col: i32,
 }
 
 impl Position {
-    fn new(row: usize, col: usize) -> Self {
+    fn new(row: i32, col: i32) -> Self {
         Self { row, col }
+    }
+
+    fn from_usize(row: usize, col: usize) -> Self {
+        Self { row: row as i32, col: col as i32}
+    }
+
+    // Allows to create a position just outside the table.
+    fn negative(idx: usize, dir: DirectionCb, dims: &Position) -> Self {
+        match dir {
+            RIGHT => Self::new(idx as i32, -1),
+            LEFT => Self::new(idx as i32, dims.col),
+            DOWN => Self::new(-1, idx as i32),
+            UP => Self::new(dims.row, idx as i32),
+            _ => {
+                panic!("Invalid direction {:?}", dir);
+            }
+        }
+    }
+
+    fn row(&self) -> usize {
+        self.row as usize
+    }
+
+    fn col(&self) -> usize {
+        self.col as usize
     }
 }
 
@@ -127,28 +152,32 @@ fn move_beam(
     dir_pos: DirectedPos,
     energized_points: &mut HashSet<DirectedPos>,
 ) {
-    if energized_points.contains(&dir_pos) {
-        return;
-    }
-    energized_points.insert(dir_pos);
+    let dims = Position::from_usize(cave.height, cave.width);
 
-    let dims = Position::new(cave.height, cave.width);
     let mut position = dir_pos.position;
     let mut directions: Vec<DirectionCb> = vec![dir_pos.direction];
     assert!(!directions.is_empty());
 
     while let Some(next_pos) = directions[0](&position, &dims) {
         position = next_pos;
-        let next_elt = cave.elt(position.row, position.col);
+        let next_elt = cave.elt(position.row(), position.col());
         directions = next_directions(*next_elt, directions[0]);
         assert!(!directions.is_empty());
 
         if directions.len() == 1 {
             // If we have only one direction, we add it and go next, no recursion
-            energized_points.insert(DirectedPos::new(position, directions[0]));
+            let dp = DirectedPos::new(position, directions[0]);
+            if energized_points.contains(&dp) {
+                break;
+            }
+            energized_points.insert(dp);
         } else {
             for d in directions {
-                move_beam(cave, DirectedPos::new(position, d), energized_points);
+                let dp = DirectedPos::new(position, d);
+                if !energized_points.contains(&dp) {
+                    energized_points.insert(dp);
+                    move_beam(cave, dp, energized_points);
+                }
             }
             break;
         }
@@ -156,14 +185,8 @@ fn move_beam(
 }
 
 fn energized_count(cave: &Table<char>) -> usize {
-    let start = Position::new(0, 0);
-    let direction_after_start: Vec<DirectionCb> = next_directions(*cave.elt(0, 0), RIGHT)
-        .iter()
-        .filter(|d| **d == RIGHT || **d == DOWN)
-        .cloned()
-        .collect();
-    assert_eq!(direction_after_start.len(), 1);
-    let initial_dir_pos = DirectedPos::new(start, direction_after_start[0]);
+    let dims = Position::from_usize(cave.height, cave.width);
+    let initial_dir_pos = DirectedPos::new(Position::negative(0, RIGHT, &dims), RIGHT);
 
     let mut energized_points: HashSet<DirectedPos> = HashSet::new();
     move_beam(cave, initial_dir_pos, &mut energized_points);
@@ -184,7 +207,7 @@ fn print_cave(cave: &Table<char>, energized_points: &HashSet<DirectedPos>) {
             let el = cave.elt(row, col);
             if energized_points
                 .iter()
-                .find(|&dp| dp.position.row == row && dp.position.col == col)
+                .find(|&dp| dp.position.row() == row && dp.position.col() == col)
                 .is_some()
             {
                 print!("\x1b[91m{}\x1b[0m", *el);
@@ -201,7 +224,7 @@ fn print_energized_cave(cave: &Table<char>, energized_points: &HashSet<DirectedP
         for col in 0..cave.width {
             if energized_points
                 .iter()
-                .find(|&dp| dp.position.row == row && dp.position.col == col)
+                .find(|&dp| dp.position.row() == row && dp.position.col() == col)
                 .is_some()
             {
                 print!("\x1b[91m#\x1b[0m");
