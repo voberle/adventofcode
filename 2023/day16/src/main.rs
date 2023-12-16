@@ -15,7 +15,10 @@ impl Position {
     }
 
     fn from_usize(row: usize, col: usize) -> Self {
-        Self { row: row as i32, col: col as i32}
+        Self {
+            row: row as i32,
+            col: col as i32,
+        }
     }
 
     // Allows to create a position just outside the table.
@@ -184,10 +187,7 @@ fn move_beam(
     }
 }
 
-fn energized_count(cave: &Table<char>) -> usize {
-    let dims = Position::from_usize(cave.height, cave.width);
-    let initial_dir_pos = DirectedPos::new(Position::negative(0, RIGHT, &dims), RIGHT);
-
+fn energized_count_from(cave: &Table<char>, initial_dir_pos: DirectedPos) -> usize {
     let mut energized_points: HashSet<DirectedPos> = HashSet::new();
     move_beam(cave, initial_dir_pos, &mut energized_points);
     // print_cave(&cave, &energized_points);
@@ -199,6 +199,32 @@ fn energized_count(cave: &Table<char>) -> usize {
         .map(|dp| dp.position)
         .collect::<HashSet<Position>>()
         .len()
+}
+
+fn energized_count(cave: &Table<char>) -> usize {
+    let dims = Position::from_usize(cave.height, cave.width);
+    let initial_dir_pos = DirectedPos::new(Position::negative(0, RIGHT, &dims), RIGHT);
+    energized_count_from(cave, initial_dir_pos)
+}
+
+fn highest_energized_count(cave: &Table<char>) -> usize {
+    let dims = Position::from_usize(cave.height, cave.width);
+
+    let mut initial_dp: Vec<DirectedPos> = Vec::new();
+    for row in 0..cave.height {
+        initial_dp.push(DirectedPos::new(Position::negative(row, RIGHT, &dims), RIGHT));
+        initial_dp.push(DirectedPos::new(Position::negative(row, LEFT, &dims), LEFT));
+    }
+    for col in 0..cave.width {
+        initial_dp.push(DirectedPos::new(Position::negative(col, DOWN, &dims), DOWN));
+        initial_dp.push(DirectedPos::new(Position::negative(col, UP, &dims), UP));
+    }
+
+    initial_dp
+        .iter()
+        .map(|dp| energized_count_from(cave, *dp))
+        .max()
+        .unwrap()
 }
 
 fn print_cave(cave: &Table<char>, energized_points: &HashSet<DirectedPos>) {
@@ -241,6 +267,7 @@ fn main() {
     let cave = Table::build(&mut stdin.lock());
 
     println!("Part 1: {}", energized_count(&cave));
+    println!("Part 2: {}", highest_energized_count(&cave));
 }
 
 #[cfg(test)]
