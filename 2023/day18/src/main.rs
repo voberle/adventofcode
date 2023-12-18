@@ -1,8 +1,8 @@
 // https://adventofcode.com/2023/day/18
 
-use std::io::{self, BufRead};
+use std::{io::{self, BufRead}, collections::{VecDeque, HashSet}};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Pos {
     row: i32,
     col: i32,
@@ -11,6 +11,23 @@ struct Pos {
 impl Pos {
     fn new(row: i32, col: i32) -> Self {
         Self { row, col }
+    }
+
+    fn left(&self) -> Self {
+        // coords can be negative, no boundary check needed
+        Pos::new(self.row, self.col - 1)
+    }
+
+    fn right(&self) -> Self {
+        Pos::new(self.row, self.col + 1)
+    }
+
+    fn up(&self) -> Self {
+        Pos::new(self.row - 1, self.col)
+    }
+
+    fn down(&self) -> Self {
+        Pos::new(self.row + 1, self.col)
     }
 }
 
@@ -88,88 +105,61 @@ fn print_trench(trench: &[Pos]) {
     for row in min.row..max.row + 1 {
         for col in min.col..max.col + 1 {
             let p = Pos::new(row, col);
-            print!("{}", if trench.contains(&p) { "#" } else { "." });
+            // if p == Pos::new(0, 100) {
+            //     print!("\x1b[92m{}\x1b[0m", "X");
+            // } else {
+                print!("{}", if trench.contains(&p) { "#" } else { "." });
+            // }
         }
         println!();
     }
 }
 
-fn line_surface_old(limits: &[i32]) -> i32 {
-    // limits is assumed to be ordered
-    let mut normalized_limits: Vec<i32> = Vec::new();
-    normalized_limits.push(*limits.first().unwrap());
-    normalized_limits.extend(limits.windows(3).filter_map(|window| {
-        if window[2] - window[0] != 2 {
-            return Some(window[1]);
-        }
-        None
-    }));
-    normalized_limits.push(*limits.last().unwrap());
-    println!("{:?} => {:?}", limits, normalized_limits);
-    let add_extra = if normalized_limits.len() % 2 == 1 {
-        normalized_limits.pop();
-        1
-    } else {
-        0
-    };
-    normalized_limits.chunks(2).map(|c| c[1] - c[0] + 1).sum::<i32>() + add_extra
+struct FillItem {
+    pos: Pos,
+    inside: bool,
+    visited: bool,
 }
 
-fn line_surface(limits: &[i32]) -> i32 {
-    // limits is assumed to be ordered and having 2 elements at least
-    assert!(limits.len() >= 2);
-    let mut surface = 1;
-    let mut add = true;
-    let mut prev_c = limits[0];
-    for c in limits.into_iter().skip(1) {
-        if c - prev_c > 1 {
-            // We encountered an empty section
-            if add {
-                surface += c - prev_c;
-            }
-            add ^= add;
-        } else if c - prev_c == 1 {
-            surface += 1;
-        }
-        // println!("c={c}, add={add}, surface={surface}");
-        prev_c = *c;
+impl FillItem {
+    fn new(pos: Pos) -> Self {
+        Self { pos: pos, inside: false, visited: false }
     }
-    surface
-}
 
-#[test]
-fn test_line_surface() {
-    // #######
-    assert_eq!(line_surface(&[0, 1, 2, 3, 4, 5, 6]), 7);
-    // #.....#
-    assert_eq!(line_surface(&[0, 6]), 7);
-    // ###...#
-    assert_eq!(line_surface(&[0, 1, 2, 6]), 7);
-    // ..#...#
-    assert_eq!(line_surface(&[2, 6]), 5);
-    // ###.###
-    assert_eq!(line_surface(&[0, 1, 2, 4, 5, 6]), 7);
+    fn inside(pos: Pos) -> Self {
+        Self { pos: pos, inside: false, visited: false }
+    }
 }
 
 fn trench_surface(trench: &Vec<Pos>) -> u32 {
-    // let mut filled_trench: Vec<Pos> = Vec::new();
-    let (min, max) = min_max_of_trench(trench);
-    let surface = (min.row..max.row + 1).into_iter().map(|row| {
-        // Collect the walls on this line
-        let mut limits: Vec<i32> = Vec::new();
-        for col in min.col..max.col + 1 {
-            let p = Pos::new(row, col);
-            if trench.contains(&p) {
-                limits.push(col);
+    // Flood-fill approach
+    let start = Pos::new(1, 1);
+    // let start = Pos::new(0, 100);
+
+    let trench_set: HashSet<Pos> = HashSet::from_iter(trench.iter().cloned());
+    let mut filled_trench: HashSet<Pos> = HashSet::new();
+
+    let mut queue: VecDeque<Pos> = VecDeque::new();
+    queue.push_back(start);
+
+    while !queue.is_empty() {
+        let item = queue.pop_front().unwrap();
+        // assert!(!item.visited);
+
+        // println!("Item {:?}", item);
+        filled_trench.insert(item.clone());
+
+        for n in [item.left(), item.right(), item.up(), item.down()] {
+            if !trench_set.contains(&n) && !filled_trench.contains(&n) {
+                if !queue.contains(&n) {
+                    // println!("  To queue {:?}", n);
+                    queue.push_back(n);
+                }
             }
         }
-        let s = line_surface(&limits);
-        // println!("{}: {:?} => {}", row, limits, s);
-        s
-    })
-    .sum::<i32>();
-    assert!(surface > 0);
-    surface as u32
+    }
+
+    (filled_trench.len() + trench.len()) as u32
 }
 
 fn build_dig_plan<R>(reader: &mut R) -> Vec<Instruction>
@@ -191,7 +181,7 @@ fn main() {
     // println!("{:?}", dig_plan);
 
     let trench = dig(&dig_plan);
-    // print_trench(&trench);
+    print_trench(&trench);
 
     println!("Part 1: {}", trench_surface(&trench));
 }
