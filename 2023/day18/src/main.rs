@@ -69,13 +69,24 @@ fn dig(dig_plan: &Vec<Instruction>) -> Vec<Pos> {
     trench
 }
 
+fn min_max_of_trench(trench: &[Pos]) -> (Pos, Pos) {
+    assert!(!trench.is_empty());
+    (
+        Pos::new(
+            trench.iter().map(|p| p.row).min().unwrap(),
+            trench.iter().map(|p| p.col).min().unwrap()
+        ),
+        Pos::new(
+            trench.iter().map(|p| p.row).max().unwrap(),
+            trench.iter().map(|p| p.col).max().unwrap()
+        ),
+    )
+}
+
 fn print_trench(trench: &[Pos]) {
-    let min_row = trench.iter().map(|p| p.row).min().unwrap();
-    let min_col = trench.iter().map(|p| p.col).min().unwrap();
-    let max_row = trench.iter().map(|p| p.row).max().unwrap();
-    let max_col = trench.iter().map(|p| p.col).max().unwrap();
-    for row in min_row..max_row + 1 {
-        for col in min_col..max_col + 1 {
+    let (min, max) = min_max_of_trench(trench);
+    for row in min.row..max.row + 1 {
+        for col in min.col..max.col + 1 {
             let p = Pos::new(row, col);
             print!("{}", if trench.contains(&p) { "#" } else { "." });
         }
@@ -83,8 +94,82 @@ fn print_trench(trench: &[Pos]) {
     }
 }
 
-fn capacity(dig_plan: &Vec<Instruction>) -> u32 {
-    0
+fn line_surface_old(limits: &[i32]) -> i32 {
+    // limits is assumed to be ordered
+    let mut normalized_limits: Vec<i32> = Vec::new();
+    normalized_limits.push(*limits.first().unwrap());
+    normalized_limits.extend(limits.windows(3).filter_map(|window| {
+        if window[2] - window[0] != 2 {
+            return Some(window[1]);
+        }
+        None
+    }));
+    normalized_limits.push(*limits.last().unwrap());
+    println!("{:?} => {:?}", limits, normalized_limits);
+    let add_extra = if normalized_limits.len() % 2 == 1 {
+        normalized_limits.pop();
+        1
+    } else {
+        0
+    };
+    normalized_limits.chunks(2).map(|c| c[1] - c[0] + 1).sum::<i32>() + add_extra
+}
+
+fn line_surface(limits: &[i32]) -> i32 {
+    // limits is assumed to be ordered and having 2 elements at least
+    assert!(limits.len() >= 2);
+    let mut surface = 1;
+    let mut add = true;
+    let mut prev_c = limits[0];
+    for c in limits.into_iter().skip(1) {
+        if c - prev_c > 1 {
+            // We encountered an empty section
+            if add {
+                surface += c - prev_c;
+            }
+            add ^= add;
+        } else if c - prev_c == 1 {
+            surface += 1;
+        }
+        // println!("c={c}, add={add}, surface={surface}");
+        prev_c = *c;
+    }
+    surface
+}
+
+#[test]
+fn test_line_surface() {
+    // #######
+    assert_eq!(line_surface(&[0, 1, 2, 3, 4, 5, 6]), 7);
+    // #.....#
+    assert_eq!(line_surface(&[0, 6]), 7);
+    // ###...#
+    assert_eq!(line_surface(&[0, 1, 2, 6]), 7);
+    // ..#...#
+    assert_eq!(line_surface(&[2, 6]), 5);
+    // ###.###
+    assert_eq!(line_surface(&[0, 1, 2, 4, 5, 6]), 7);
+}
+
+fn trench_surface(trench: &Vec<Pos>) -> u32 {
+    // let mut filled_trench: Vec<Pos> = Vec::new();
+    let (min, max) = min_max_of_trench(trench);
+    let surface = (min.row..max.row + 1).into_iter().map(|row| {
+        // Collect the walls on this line
+        let mut limits: Vec<i32> = Vec::new();
+        for col in min.col..max.col + 1 {
+            let p = Pos::new(row, col);
+            if trench.contains(&p) {
+                limits.push(col);
+            }
+        }
+        let s = line_surface(&limits);
+        // println!("{}: {:?} => {}", row, limits, s);
+        s
+    })
+    .sum::<i32>();
+    assert!(surface > 0);
+    surface as u32
 }
 
 fn build_dig_plan<R>(reader: &mut R) -> Vec<Instruction>
@@ -106,9 +191,9 @@ fn main() {
     // println!("{:?}", dig_plan);
 
     let trench = dig(&dig_plan);
-    print_trench(&trench);
+    // print_trench(&trench);
 
-    println!("Part 1: {}", capacity(&dig_plan));
+    println!("Part 1: {}", trench_surface(&trench));
 }
 
 #[cfg(test)]
@@ -120,6 +205,7 @@ pub mod tests {
     fn test_part1() {
         let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
         let dig_plan = build_dig_plan(&mut reader);
-        assert_eq!(capacity(&dig_plan), 62);
+        let trench = dig(&dig_plan);
+        assert_eq!(trench_surface(&trench), 62);
     }
 }
