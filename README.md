@@ -67,3 +67,8 @@ Iterator `fold`.
 ### Day 16: [The Floor Will Be Lava](2023/day16/README.md)
 
 Recursion.
+
+
+# Day 18: [Lavaduct Lagoon](2023/day18/README.md)
+
+Shoelace algorithm.
