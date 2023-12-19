@@ -22,6 +22,7 @@ members = [
     "day15",
     "day16",
     "day18",
+    "day19",
 ]
 
 [workspace.package]
