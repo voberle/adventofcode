@@ -145,7 +145,175 @@ fn sum_ratings_all_accepted_parts(
             }
             panic!("Workflow walking failed")
         })
+        // .map(|i| { println!("{}", i); i })
         .sum()
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct RatingRange {
+    // Indexed by Category enum values
+    // Pair first value is beginning, second is end. Both are inclusive.
+    values: [(u32, u32); 4],
+}
+
+
+impl RatingRange {
+    const ZERO: RatingRange = RatingRange { values: [(0, 0); 4] };
+
+    fn new() -> Self {
+        Self { values: [(1, 4000); 4] }
+    }
+
+    fn combinations_count(&self) -> u64 {
+        println!("Calc count for range X={:?} M={:?} A={:?} S={:?}", self.values[0], self.values[1], self.values[2], self.values[3]);
+        self.values.iter().map(|r| {
+            assert!(r.1 > r.0);
+            (r.1 - r.0 + 1) as u64
+        }).product()
+    }
+
+    // fn range_counts(&self) -> [u32; 4] {
+    //     [
+    //         self.values[0].1 - self.values[0].0,
+    //         self.values[1].1 - self.values[1].0,
+    //         self.values[2].1 - self.values[2].0,
+    //         self.values[3].1 - self.values[3].0,
+    //     ]
+    // }
+
+    // Split the ranges for this category.
+    fn split(&self, category: &Category, limit: u32, put_limit_in_higher: bool) -> (RatingRange, RatingRange) {
+        let r = self.values[category.clone() as usize];
+        // TODO if limit is on the border itself, there could be an issue
+        if limit < r.0 {
+            return (Self::ZERO, self.clone());
+        } else if r.1 < limit {
+            return (self.clone(), Self::ZERO);
+        }
+        let mut lower = self.clone();
+        let mut higher = self.clone();
+        lower.values[category.clone() as usize].1 = if put_limit_in_higher { limit - 1 } else { limit };
+        higher.values[category.clone() as usize].0 = if put_limit_in_higher { limit } else { limit + 1 };
+        (lower, higher)
+    }
+
+    fn trim_begin(&mut self, category: &Category, limit: u32) {
+        let r = self.values[category.clone() as usize];
+        if r.0 < limit && limit < r.1 {
+            self.values[category.clone() as usize].0 = limit;
+        }
+    }
+
+    fn trim_end(&mut self, category: &Category, limit: u32) {
+        let r = self.values[category.clone() as usize];
+        if r.0 < limit && limit < r.1 {
+            self.values[category.clone() as usize].1 = limit;
+        }
+    }
+}
+
+// fn add_range_counts(a: &mut [u32; 4], b: &[u32; 4]) {
+//     a[0] = a[0] + b[0];
+//     a[1] = a[1] + b[1];
+//     a[2] = a[2] + b[2];
+//     a[3] = a[3] + b[3];
+// }
+
+// const ZERO_RANGE_COUNT: [u32; 4] = [0; 4];
+
+fn get_rating_range(workflows: &HashMap<String, Workflow>, name: &str, range: &RatingRange) -> Vec<RatingRange> {
+    let mut rating_ranges = Vec::new();
+    if let Some(workflow) = workflows.get(name) {
+        let mut new_range = range.clone();
+        println!("{}: {:?}", name, new_range);
+        for rule in &workflow.rules {
+            match rule {
+                Rule::Bigger(category, value, next) => {
+                    let higher: RatingRange;
+                    (new_range, higher) = new_range.split(category, *value, false);
+                    println!("{}: after {}>{}: {:?} {:?}", name, category, value, new_range, higher);
+
+                    match Workflow::build_next(next) {
+                        Rule::Rejected => {},
+                        Rule::Accepted => {
+                            if higher != RatingRange::ZERO {
+                                println!("{}: > ADD: {:?}", name, higher);
+                                rating_ranges.push(higher.clone());
+                            }
+                        },
+                        Rule::Next(_) => {
+                            if higher != RatingRange::ZERO {
+                                rating_ranges.extend(
+                                    get_rating_range(workflows, next, &higher)
+                                );
+                            }
+                        },
+                        _ => panic!("Unsupported decision"),
+                    }
+                }
+                Rule::Smaller(category, value, next) => {
+                    let lower: RatingRange;
+                    (lower, new_range) = new_range.split(category, *value, true);
+                    println!("{}: after {}<{}: {:?} {:?}", name, category, value, lower, new_range);
+
+                    match Workflow::build_next(next) {
+                        Rule::Rejected => {},
+                        Rule::Accepted => {
+                            if lower != RatingRange::ZERO {
+                                println!("{}: < ADD: {:?}", name, lower);
+                                rating_ranges.push(lower.clone());
+                            }
+                        },
+                        Rule::Next(_) => {
+                            if lower != RatingRange::ZERO {
+                                rating_ranges.extend(
+                                    get_rating_range(workflows, next, &lower)
+                                );
+                            }
+                        },
+                        _ => panic!("Unsupported decision"),
+                    }
+                }
+                Rule::Next(next) => {
+                    if new_range != RatingRange::ZERO {
+                        rating_ranges.extend(
+                            get_rating_range(workflows, next, &new_range)
+                        );
+                    }
+                },
+                Rule::Rejected => {},
+                Rule::Accepted => {
+                    if new_range != RatingRange::ZERO {
+                        rating_ranges.push(new_range.clone());
+                        println!("{}: Solo ADD: {:?}", name, new_range);
+                    }
+                },
+            };
+        }
+    }
+    rating_ranges
+}
+
+fn distinct_combinations(workflows: &HashMap<String, Workflow>) -> u64 {
+    let initial_range = RatingRange::new();
+    let rating_ranges = get_rating_range(workflows, FIRST_INS, &initial_range);
+    // result_range.combinations_count()
+
+    for r in &rating_ranges {
+        println!("{:?}", r);
+        // let c = r.combinations_count();
+    }
+
+    let mut comb_counts: Vec<u64> = rating_ranges.iter().map(RatingRange::combinations_count).collect();
+    comb_counts.sort();
+    comb_counts.reverse();
+
+    println!("{:?}", comb_counts);
+
+    comb_counts.iter().sum()
+    // comb_counts.iter().skip(1).fold(comb_counts[0], |acc, c| acc + (c - acc))
+    // 0
+    // range_count.iter().map(|c| *c as u64).product()
 }
 
 fn build_workflows_ratings<R>(reader: &mut R) -> (HashMap<String, Workflow>, Vec<Rating>)
@@ -238,6 +406,8 @@ fn main() {
         "Part 1: {}",
         sum_ratings_all_accepted_parts(&workflows, &ratings)
     );
+
+    println!("Part 2: {}", distinct_combinations(&workflows));
 }
 
 #[cfg(test)]
