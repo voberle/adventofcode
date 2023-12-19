@@ -69,6 +69,10 @@ Iterator `fold`.
 Recursion.
 
 
-# Day 18: [Lavaduct Lagoon](2023/day18/README.md)
+### Day 18: [Lavaduct Lagoon](2023/day18/README.md)
 
 Shoelace algorithm.
+
+### Day 19: [Aplenty](2023/day19/README.md)
+
+Bigger parsing; Recursion.
