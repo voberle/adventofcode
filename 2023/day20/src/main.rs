@@ -14,8 +14,16 @@ use std::{
 use lazy_static::lazy_static;
 use regex::Regex;
 
+const LOW: bool = false;
+const HIGH: bool = true;
+
 trait Module: Debug {
+    // Returns the name of the module.
     fn get_name(&self) -> &str;
+
+    // Executes a pulse, received as ("sender", "low/high") pairs.
+    // Returns the list of pulses sent as pairs ("destination", "low/high")
+    fn exec(&mut self, from: (String, bool)) -> Vec<(String, bool)>;
 }
 
 #[derive(Debug)]
@@ -29,7 +37,7 @@ impl FlipFlop {
     fn new(name: String, next: String) -> Self {
         Self {
             name,
-            state: false,
+            state: LOW,
             next,
         }
     }
@@ -42,20 +50,49 @@ impl FlipFlop {
         let captures = FLIPFLOP.captures(line).unwrap();
         Self::new(captures[1].to_string(), captures[2].to_string())
     }
+
+    fn flip(&mut self) {
+        self.state ^= true;
+    }
 }
 
 impl Module for FlipFlop {
     fn get_name(&self) -> &str {
         &self.name
     }
+
+    fn exec(&mut self, from: (String, bool)) -> Vec<(String, bool)> {
+        if from.1 == HIGH {
+            // HIGH: ignore it
+            Vec::new()
+        } else {
+            // LOW: flip and sends pulse matching state
+            self.flip();
+            vec![(self.next.clone(), self.state)]
+        }
+    }
 }
 
 #[test]
 fn test_flipflop() {
-    let m = FlipFlop::build("%a -> b");
+    let mut m = FlipFlop::build("%a -> b");
     assert_eq!(m.get_name(), "a");
     assert_eq!(m.next, "b");
-    assert_eq!(m.state, false);
+    assert_eq!(m.state, LOW);
+    assert_eq!(m.exec(("irrelevant".to_string(), HIGH)), Vec::new());
+    assert_eq!(
+        m.exec(("irrelevant".to_string(), LOW)),
+        [("b".to_string(), HIGH)]
+    );
+    assert_eq!(
+        m.exec(("irrelevant".to_string(), LOW)),
+        [("b".to_string(), LOW)]
+    );
+    assert_eq!(m.exec(("irrelevant".to_string(), HIGH)), Vec::new());
+    assert_eq!(
+        m.exec(("irrelevant".to_string(), LOW)),
+        [("b".to_string(), HIGH)]
+    );
 }
 
 #[derive(Debug)]
@@ -63,6 +100,7 @@ struct Conjunction {
     name: String,
     previous_pulse: HashMap<String, bool>,
     next: String,
+    // Queue should be a pair "connected input module" => "pulse"
 }
 
 impl Conjunction {
@@ -88,26 +126,44 @@ impl Module for Conjunction {
     fn get_name(&self) -> &str {
         &self.name
     }
+
+    fn exec(&mut self, from: (String, bool)) -> Vec<(String, bool)> {
+        // Update that memory to this input
+        self.previous_pulse
+            .entry(from.0)
+            .and_modify(|mem| *mem = from.1)
+            .or_insert(from.1);
+        // If previous_pulse map is empty, it means we haven't received anything yet, so assuming all inputs are low
+        if !self.previous_pulse.is_empty() && self.previous_pulse.values().all(|mem| *mem) {
+            // if all input are high, send low pulse
+            vec![(self.next.clone(), LOW)]
+        } else {
+            // else send high pulse
+            vec![(self.next.clone(), HIGH)]
+        }
+    }
 }
 
 #[test]
 fn test_conjunction() {
-    let m = Conjunction::build("&inv -> b");
+    let mut m = Conjunction::build("&inv -> b");
     assert_eq!(m.get_name(), "inv");
     assert_eq!(m.next, "b");
     assert!(m.previous_pulse.is_empty());
+    assert_eq!(m.exec(("a".to_string(), HIGH)), [("b".to_string(), LOW)]);
+    assert_eq!(m.exec(("c".to_string(), LOW)), [("b".to_string(), HIGH)]);
 }
 
 #[derive(Debug)]
 struct Broadcast {
-    next: Vec<String>,
+    next_modules: Vec<String>,
 }
 
 impl Broadcast {
     const NAME: &str = "broadcaster";
 
     fn new(next: Vec<String>) -> Self {
-        Self { next }
+        Self { next_modules: next }
     }
 
     fn build(line: &str) -> Self {
@@ -130,16 +186,35 @@ impl Module for Broadcast {
     fn get_name(&self) -> &str {
         &Self::NAME
     }
+
+    fn exec(&mut self, from: (String, bool)) -> Vec<(String, bool)> {
+        self.next_modules
+            .iter()
+            .map(|n| (n.clone(), from.1))
+            .collect()
+    }
 }
 
 #[test]
 fn test_broadcast() {
-    let m = Broadcast::build("broadcaster -> a, b, c");
+    let mut m = Broadcast::build("broadcaster -> a, b, c");
     assert_eq!(m.get_name(), "broadcaster");
-    assert_eq!(m.next, vec!["a", "b", "c"]);
+    assert_eq!(m.next_modules, vec!["a", "b", "c"]);
+    assert_eq!(
+        m.exec(("irrelevant".to_string(), HIGH)),
+        [
+            ("a".to_string(), HIGH),
+            ("b".to_string(), HIGH),
+            ("c".to_string(), HIGH)
+        ]
+    );
 }
 
 type Configuration = HashMap<String, Box<dyn Module>>;
+
+fn press_button(configuration: &Configuration) {
+    // configuration.get(Broadcast::NAME).unwrap().send(false);
+}
 
 fn total_pulses_count_product(configuration: &Configuration) -> u64 {
     0
