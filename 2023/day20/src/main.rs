@@ -1,54 +1,101 @@
 // https://adventofcode.com/2023/day/20
 
-// Traits:
-// exec -> Returns bool if something was executed
-//          Allows to loop through all modules and know if any did something
-// is_original -> Tells if module is in original state
-
 use std::{
-    collections::HashMap,
+    collections::{HashMap, VecDeque},
     fmt::Debug,
     io::{self, BufRead},
 };
 
-use lazy_static::lazy_static;
-use regex::Regex;
-
 const LOW: bool = false;
 const HIGH: bool = true;
 
-trait Module: Debug {
-    // Returns the name of the module.
-    fn get_name(&self) -> &str;
+// Information about a pulse: Sender, receiver and value.
+#[derive(Debug, PartialEq)]
+struct Pulse {
+    from: String,
+    value: bool,
+    to: String,
+}
 
-    // Executes a pulse, received as ("sender", "low/high") pairs.
-    // Returns the list of pulses sent as pairs ("destination", "low/high")
-    fn exec(&mut self, from: (String, bool)) -> Vec<(String, bool)>;
+impl Pulse {
+    fn new(from: &str, value: bool, to: &str) -> Self {
+        Self {
+            from: from.to_string(),
+            value,
+            to: to.to_string(),
+        }
+    }
+}
+
+// Interface shared by all the modules.
+trait Module: Debug {
+    fn get_type(&self) -> &str;
+
+    fn get_common(&self) -> &ModuleCommon;
+
+    fn get_name(&self) -> &str {
+        &self.get_common().name
+    }
+
+    fn get_next_modules(&self) -> &[String] {
+        &self.get_common().next_modules
+    }
+
+    // Executes a pulse.
+    // Returns the list of pulses sent.
+    fn exec(&mut self, pulse: &Pulse) -> Vec<Pulse>;
+
+    // Checks if the module is in its initial state.
+    fn is_initial_state(&self) -> bool;
+
+    // Only needed by Conjunction module
+    fn update_previous_pulse(&mut self, _previous_pulse: HashMap<String, bool>) {}
+}
+
+// Implementation shared by all modules.
+#[derive(Debug)]
+struct ModuleCommon {
+    name: String,
+    next_modules: Vec<String>,
+}
+
+impl ModuleCommon {
+    fn new(name: String, next_modules: Vec<String>) -> Self {
+        Self { name, next_modules }
+    }
+
+    fn build(line: &str) -> Self {
+        // module -> a, b, c
+        let src_dest: Vec<String> = line.split(" -> ").map(|s| s.to_string()).collect();
+        Self::new(
+            src_dest[0].clone(),
+            src_dest[1]
+                .split(", ")
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>(),
+        )
+    }
+
+    fn pulses_to_send(&self, pulse: bool) -> Vec<Pulse> {
+        self.next_modules
+            .iter()
+            .map(|n| Pulse::new(&self.name, pulse, n))
+            .collect()
+    }
 }
 
 #[derive(Debug)]
 struct FlipFlop {
-    name: String,
+    common: ModuleCommon,
     state: bool,
-    next: String,
 }
 
 impl FlipFlop {
-    fn new(name: String, next: String) -> Self {
-        Self {
-            name,
-            state: LOW,
-            next,
-        }
-    }
-
     fn build(line: &str) -> Self {
-        lazy_static! {
-            // %a -> b
-            static ref FLIPFLOP: Regex = Regex::new(r"%(\w+) -> (\w+)").expect("Error parsing regex");
+        Self {
+            common: ModuleCommon::build(&line[1..]),
+            state: false,
         }
-        let captures = FLIPFLOP.captures(line).unwrap();
-        Self::new(captures[1].to_string(), captures[2].to_string())
     }
 
     fn flip(&mut self) {
@@ -57,90 +104,98 @@ impl FlipFlop {
 }
 
 impl Module for FlipFlop {
-    fn get_name(&self) -> &str {
-        &self.name
+    fn get_type(&self) -> &str {
+        "FlipFlop"
     }
 
-    fn exec(&mut self, from: (String, bool)) -> Vec<(String, bool)> {
-        if from.1 == HIGH {
+    fn get_common(&self) -> &ModuleCommon {
+        &self.common
+    }
+
+    fn exec(&mut self, pulse: &Pulse) -> Vec<Pulse> {
+        if pulse.value {
             // HIGH: ignore it
             Vec::new()
         } else {
             // LOW: flip and sends pulse matching state
             self.flip();
-            vec![(self.next.clone(), self.state)]
+            self.common.pulses_to_send(self.state)
         }
+    }
+
+    fn is_initial_state(&self) -> bool {
+        !self.state
     }
 }
 
 #[test]
 fn test_flipflop() {
+    const IR: &str = "irrelevant";
     let mut m = FlipFlop::build("%a -> b");
     assert_eq!(m.get_name(), "a");
-    assert_eq!(m.next, "b");
+    assert_eq!(m.common.next_modules, ["b"]);
     assert_eq!(m.state, LOW);
-    assert_eq!(m.exec(("irrelevant".to_string(), HIGH)), Vec::new());
+    assert_eq!(m.exec(&Pulse::new(IR, HIGH, "a")), Vec::new());
+    assert!(m.is_initial_state());
     assert_eq!(
-        m.exec(("irrelevant".to_string(), LOW)),
-        [("b".to_string(), HIGH)]
+        m.exec(&Pulse::new(IR, LOW, "a")),
+        [Pulse::new("a", HIGH, "b")]
     );
     assert_eq!(
-        m.exec(("irrelevant".to_string(), LOW)),
-        [("b".to_string(), LOW)]
+        m.exec(&Pulse::new(IR, LOW, "a")),
+        [Pulse::new("a", LOW, "b")]
     );
-    assert_eq!(m.exec(("irrelevant".to_string(), HIGH)), Vec::new());
+    assert!(m.is_initial_state());
+    assert_eq!(m.exec(&Pulse::new(IR, HIGH, "a")), Vec::new());
     assert_eq!(
-        m.exec(("irrelevant".to_string(), LOW)),
-        [("b".to_string(), HIGH)]
+        m.exec(&Pulse::new(IR, LOW, "a")),
+        [Pulse::new("a", HIGH, "b")]
     );
 }
 
 #[derive(Debug)]
 struct Conjunction {
-    name: String,
+    common: ModuleCommon,
     previous_pulse: HashMap<String, bool>,
-    next: String,
-    // Queue should be a pair "connected input module" => "pulse"
 }
 
 impl Conjunction {
-    fn new(name: String, next: String) -> Self {
-        Self {
-            name,
-            previous_pulse: HashMap::new(),
-            next,
-        }
-    }
-
     fn build(line: &str) -> Self {
-        lazy_static! {
-            // &inv -> a
-            static ref CONJUNCTION: Regex = Regex::new(r"&(\w+) -> (\w+)").expect("Error parsing regex");
+        Self {
+            common: ModuleCommon::build(&line[1..]),
+            previous_pulse: HashMap::new(),
         }
-        let captures = CONJUNCTION.captures(line).unwrap();
-        Self::new(captures[1].to_string(), captures[2].to_string())
     }
 }
 
 impl Module for Conjunction {
-    fn get_name(&self) -> &str {
-        &self.name
+    fn get_type(&self) -> &str {
+        "Conjunction"
     }
 
-    fn exec(&mut self, from: (String, bool)) -> Vec<(String, bool)> {
+    fn get_common(&self) -> &ModuleCommon {
+        &self.common
+    }
+
+    fn exec(&mut self, pulse: &Pulse) -> Vec<Pulse> {
         // Update that memory to this input
-        self.previous_pulse
-            .entry(from.0)
-            .and_modify(|mem| *mem = from.1)
-            .or_insert(from.1);
-        // If previous_pulse map is empty, it means we haven't received anything yet, so assuming all inputs are low
-        if !self.previous_pulse.is_empty() && self.previous_pulse.values().all(|mem| *mem) {
+        self.previous_pulse.insert(pulse.from.clone(), pulse.value);
+
+        if self.previous_pulse.values().all(|mem| *mem) {
             // if all input are high, send low pulse
-            vec![(self.next.clone(), LOW)]
+            self.common.pulses_to_send(LOW)
         } else {
             // else send high pulse
-            vec![(self.next.clone(), HIGH)]
+            self.common.pulses_to_send(HIGH)
         }
+    }
+
+    fn is_initial_state(&self) -> bool {
+        self.previous_pulse.is_empty() || self.previous_pulse.values().all(|mem| !*mem)
+    }
+
+    fn update_previous_pulse(&mut self, previous_pulse: HashMap<String, bool>) {
+        self.previous_pulse = previous_pulse;
     }
 }
 
@@ -148,50 +203,56 @@ impl Module for Conjunction {
 fn test_conjunction() {
     let mut m = Conjunction::build("&inv -> b");
     assert_eq!(m.get_name(), "inv");
-    assert_eq!(m.next, "b");
+    assert_eq!(m.common.next_modules, ["b"]);
     assert!(m.previous_pulse.is_empty());
-    assert_eq!(m.exec(("a".to_string(), HIGH)), [("b".to_string(), LOW)]);
-    assert_eq!(m.exec(("c".to_string(), LOW)), [("b".to_string(), HIGH)]);
+    assert!(m.is_initial_state());
+    assert_eq!(
+        m.exec(&Pulse::new("a", HIGH, "inv")),
+        [Pulse::new("inv", LOW, "b")]
+    );
+    assert_eq!(
+        m.exec(&Pulse::new("c", LOW, "inv")),
+        [Pulse::new("inv", HIGH, "b")]
+    );
+    assert!(!m.is_initial_state());
+
+    assert_eq!(
+        m.exec(&Pulse::new("a", LOW, "inv")),
+        [Pulse::new("inv", HIGH, "b")]
+    );
+    assert!(m.is_initial_state());
 }
 
 #[derive(Debug)]
 struct Broadcast {
-    next_modules: Vec<String>,
+    common: ModuleCommon,
 }
 
 impl Broadcast {
     const NAME: &str = "broadcaster";
 
-    fn new(next: Vec<String>) -> Self {
-        Self { next_modules: next }
-    }
-
     fn build(line: &str) -> Self {
-        lazy_static! {
-            // broadcaster -> a, b, c
-            static ref BROADCAST: Regex = Regex::new(r"broadcaster -> (.+)").expect("Error parsing regex");
+        Self {
+            common: ModuleCommon::build(line),
         }
-        let captures = BROADCAST.captures(line).unwrap();
-        Self::new(
-            captures[1]
-                .to_string()
-                .split(", ")
-                .map(|s| s.to_string())
-                .collect::<Vec<String>>(),
-        )
     }
 }
 
 impl Module for Broadcast {
-    fn get_name(&self) -> &str {
-        &Self::NAME
+    fn get_type(&self) -> &str {
+        "Broadcast"
     }
 
-    fn exec(&mut self, from: (String, bool)) -> Vec<(String, bool)> {
-        self.next_modules
-            .iter()
-            .map(|n| (n.clone(), from.1))
-            .collect()
+    fn get_common(&self) -> &ModuleCommon {
+        &self.common
+    }
+
+    fn exec(&mut self, pulse: &Pulse) -> Vec<Pulse> {
+        self.common.pulses_to_send(pulse.value)
+    }
+
+    fn is_initial_state(&self) -> bool {
+        true
     }
 }
 
@@ -199,25 +260,134 @@ impl Module for Broadcast {
 fn test_broadcast() {
     let mut m = Broadcast::build("broadcaster -> a, b, c");
     assert_eq!(m.get_name(), "broadcaster");
-    assert_eq!(m.next_modules, vec!["a", "b", "c"]);
+    assert_eq!(m.common.next_modules, ["a", "b", "c"]);
+    assert!(m.is_initial_state());
     assert_eq!(
-        m.exec(("irrelevant".to_string(), HIGH)),
+        m.exec(&Pulse::new("irrelevant", HIGH, "broadcaster")),
         [
-            ("a".to_string(), HIGH),
-            ("b".to_string(), HIGH),
-            ("c".to_string(), HIGH)
+            Pulse::new("broadcaster", HIGH, "a"),
+            Pulse::new("broadcaster", HIGH, "b"),
+            Pulse::new("broadcaster", HIGH, "c")
         ]
     );
+    assert!(m.is_initial_state());
+}
+
+#[derive(Debug)]
+struct Button {
+    common: ModuleCommon,
+}
+
+impl Button {
+    const NAME: &str = "button";
+
+    fn new() -> Self {
+        Self {
+            common: ModuleCommon {
+                name: Self::NAME.to_string(),
+                next_modules: vec![Broadcast::NAME.to_string()],
+            },
+        }
+    }
+}
+
+impl Module for Button {
+    fn get_type(&self) -> &str {
+        "Button"
+    }
+
+    fn get_common(&self) -> &ModuleCommon {
+        &self.common
+    }
+
+    fn exec(&mut self, _pulse: &Pulse) -> Vec<Pulse> {
+        self.common.pulses_to_send(LOW)
+    }
+
+    fn is_initial_state(&self) -> bool {
+        true
+    }
+}
+
+#[test]
+fn test_button() {
+    let mut m = Button::new();
+    assert_eq!(m.get_name(), "button");
+    assert_eq!(
+        m.exec(&Pulse::new("irrelevant", HIGH, "button")),
+        [Pulse::new("button", LOW, "broadcaster")]
+    );
+    assert!(m.is_initial_state());
 }
 
 type Configuration = HashMap<String, Box<dyn Module>>;
 
-fn press_button(configuration: &Configuration) {
-    // configuration.get(Broadcast::NAME).unwrap().send(false);
+fn is_config_in_initial_state(configuration: &Configuration) -> bool {
+    configuration.values().all(|m| m.is_initial_state())
 }
 
-fn total_pulses_count_product(configuration: &Configuration) -> u64 {
-    0
+const DEBUG: bool = false;
+
+fn run_once(configuration: &mut Configuration) -> (u64, u64) {
+    let mut pulses_to_exec: VecDeque<Pulse> = VecDeque::new();
+
+    // Press button
+    pulses_to_exec.push_back(Pulse::new("", LOW, Button::NAME)); // LOW/HIGH irrelevant here
+    if DEBUG {
+        println!("-------------------------");
+    }
+
+    let mut count_low = 0;
+    let mut count_high = 0;
+    while !pulses_to_exec.is_empty() {
+        // ("destination module", "pulse")
+        let received_pulse: Pulse = pulses_to_exec.pop_front().unwrap();
+        if let Some(module) = configuration.get_mut(&received_pulse.to) {
+            let sent_pulses = module.exec(&received_pulse);
+            for sent in sent_pulses {
+                if sent.value {
+                    count_high += 1
+                } else {
+                    count_low += 1
+                }
+                if DEBUG {
+                    println!(
+                        "{} -{}-> {}",
+                        received_pulse.to,
+                        if sent.value { "high" } else { "low" },
+                        sent.to
+                    );
+                }
+                pulses_to_exec.push_back(sent);
+            }
+        } else {
+            // if dest module is not found, nothing to execute
+            // if received_pulse.1 { count_high += 1 } else { count_low += 1 }
+        }
+    }
+
+    if DEBUG {
+        println!(
+            "__ In initial state: {}",
+            is_config_in_initial_state(configuration)
+        );
+    }
+    (count_low, count_high)
+}
+
+const PRESS_COUNT: usize = 1000;
+// const PRESS_COUNT: usize = 4;
+
+fn total_pulses_count_product(configuration: &mut Configuration) -> u64 {
+    // Optimization option: We can press the button only the number of times
+    // required to get back to the initial stage (see `is_config_in_initial_state()`)
+    // and if 1000 can divide that total, just multiply it by `1000 / press_count`.
+
+    let (sum_low, sum_high) = (0..PRESS_COUNT)
+        .map(|_| run_once(configuration))
+        .fold((0, 0), |acc, x| (acc.0 + x.0, acc.1 + x.1));
+    println!("Total low pulse: {}, high pulses {}", sum_low, sum_high);
+    sum_low * sum_high
 }
 
 fn build_configuration<R>(reader: &mut R) -> Configuration
@@ -225,7 +395,6 @@ where
     R: BufRead,
 {
     let mut configuration: Configuration = HashMap::new();
-
     for l in reader.lines() {
         let line = l.unwrap();
         let m: Box<dyn Module> = if line.starts_with('%') {
@@ -235,21 +404,51 @@ where
         } else if line.starts_with(Broadcast::NAME) {
             Box::new(Broadcast::build(&line))
         } else {
-            // Note that Button module is not listed in the configuration
             panic!("Invalid line: {}", line)
         };
         configuration.insert(m.get_name().to_string(), m);
     }
+    // Button module is not listed in the configuration, adding manually
+    let m = Box::new(Button::new());
+    configuration.insert(m.get_name().to_string(), m);
+    // Conjunction setup needs to be finished once we know all the modules
+    finish_conjunction_setup(&mut configuration);
+
     configuration
+}
+
+fn finish_conjunction_setup(configuration: &mut Configuration) {
+    // Find all inputs for each Conjunction.
+    // We need a temporary map to avoid borrowed as mutable trouble.
+    let conj_to_inputs: HashMap<String, HashMap<String, bool>> = configuration
+        .values()
+        .filter(|m| m.get_type() == "Conjunction")
+        .map(|m| {
+            let con = m.get_name().to_string();
+            (
+                con.clone(),
+                configuration
+                    .iter()
+                    .filter(|(_, v)| v.get_next_modules().contains(&con))
+                    .map(|(k, _)| (k.clone(), false))
+                    .collect::<HashMap<String, bool>>(),
+            )
+        })
+        .collect();
+
+    for c_i in conj_to_inputs {
+        let m = configuration.get_mut(&c_i.0).unwrap();
+        m.update_previous_pulse(c_i.1);
+    }
 }
 
 fn main() {
     let stdin = io::stdin();
 
-    let configuration = build_configuration(&mut stdin.lock());
-    println!("{:#?}", configuration);
+    let mut configuration = build_configuration(&mut stdin.lock());
+    // println!("{:#?}", configuration);
 
-    println!("Part 1: {}", total_pulses_count_product(&configuration));
+    println!("Part 1: {}", total_pulses_count_product(&mut configuration));
 }
 
 #[cfg(test)]
@@ -259,14 +458,14 @@ pub mod tests {
 
     #[test]
     fn test_part1() {
-        let mut reader1 = BufReader::new(File::open("resources/input_test_1").unwrap());
-        let configuration1 = build_configuration(&mut reader1);
+        let mut reader1 = BufReader::new(File::open("resources/input_test1").unwrap());
+        let mut configuration1 = build_configuration(&mut reader1);
 
-        assert_eq!(total_pulses_count_product(&configuration1), 32000000);
+        assert_eq!(total_pulses_count_product(&mut configuration1), 32000000);
 
-        let mut reader2 = BufReader::new(File::open("resources/input_test_2").unwrap());
-        let configuration2 = build_configuration(&mut reader2);
+        let mut reader2 = BufReader::new(File::open("resources/input_test2").unwrap());
+        let mut configuration2 = build_configuration(&mut reader2);
 
-        assert_eq!(total_pulses_count_product(&configuration2), 11687500);
+        assert_eq!(total_pulses_count_product(&mut configuration2), 11687500);
     }
 }
