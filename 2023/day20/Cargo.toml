@@ -1,0 +1,12 @@
+[package]
+name = "day20"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lazy_static = "1.4.0"
+regex = "1.10.2"

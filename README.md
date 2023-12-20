@@ -76,3 +76,6 @@ Shoelace algorithm.
 ### Day 19: [Aplenty](2023/day19/README.md)
 
 Bigger parsing; Recursion.
+
+### Day 20: [Pulse Propagation](2023/day20/README.md)
+
