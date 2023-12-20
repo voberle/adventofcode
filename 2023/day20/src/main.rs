@@ -50,6 +50,9 @@ trait Module: Debug {
 
     // Only needed by Conjunction module
     fn update_previous_pulse(&mut self, _previous_pulse: HashMap<String, bool>) {}
+
+    // Sets the module back to its initial state
+    fn reset(&mut self);
 }
 
 // Implementation shared by all modules.
@@ -126,6 +129,11 @@ impl Module for FlipFlop {
     fn is_initial_state(&self) -> bool {
         !self.state
     }
+
+    fn reset(&mut self) {
+        self.state = false;
+        assert!(self.is_initial_state());
+    }
 }
 
 #[test]
@@ -197,6 +205,11 @@ impl Module for Conjunction {
     fn update_previous_pulse(&mut self, previous_pulse: HashMap<String, bool>) {
         self.previous_pulse = previous_pulse;
     }
+
+    fn reset(&mut self) {
+        self.previous_pulse.values_mut().for_each(|val| *val = false);
+        assert!(self.is_initial_state());
+    }
 }
 
 #[test]
@@ -254,6 +267,10 @@ impl Module for Broadcast {
     fn is_initial_state(&self) -> bool {
         true
     }
+
+    fn reset(&mut self) {
+        assert!(self.is_initial_state());
+    }
 }
 
 #[test]
@@ -307,6 +324,10 @@ impl Module for Button {
     fn is_initial_state(&self) -> bool {
         true
     }
+
+    fn reset(&mut self) {
+        assert!(self.is_initial_state());
+    }
 }
 
 #[test]
@@ -328,7 +349,7 @@ fn is_config_in_initial_state(configuration: &Configuration) -> bool {
 
 const DEBUG: bool = false;
 
-fn run_once(configuration: &mut Configuration) -> (u64, u64) {
+fn run_once_with_module_detection(configuration: &mut Configuration, module_to_detect: &Option<String>) -> (u64, u64) {
     let mut pulses_to_exec: VecDeque<Pulse> = VecDeque::new();
 
     // Press button
@@ -349,6 +370,13 @@ fn run_once(configuration: &mut Configuration) -> (u64, u64) {
                     count_high += 1
                 } else {
                     count_low += 1
+                }
+                if let Some(mod_to_catch) = module_to_detect {
+                    if *mod_to_catch == sent.to && sent.value == LOW {
+                        println!("{} got a LOW, stopping", mod_to_catch);
+                        // Hack to allow caller to detect we interrupted because we found the module
+                        return (u64::MIN, u64::MIN);
+                    }
                 }
                 if DEBUG {
                     println!(
@@ -375,9 +403,14 @@ fn run_once(configuration: &mut Configuration) -> (u64, u64) {
     (count_low, count_high)
 }
 
+fn run_once(configuration: &mut Configuration) -> (u64, u64) {
+    run_once_with_module_detection(configuration, &None)
+}
+
 const PRESS_COUNT: usize = 1000;
 // const PRESS_COUNT: usize = 4;
 
+// Part 1
 fn total_pulses_count_product(configuration: &mut Configuration) -> u64 {
     // Optimization option: We can press the button only the number of times
     // required to get back to the initial stage (see `is_config_in_initial_state()`)
@@ -388,6 +421,27 @@ fn total_pulses_count_product(configuration: &mut Configuration) -> u64 {
         .fold((0, 0), |acc, x| (acc.0 + x.0, acc.1 + x.1));
     println!("Total low pulse: {}, high pulses {}", sum_low, sum_high);
     sum_low * sum_high
+}
+
+// Part 2
+// Fewest number of button presses required to deliver a single low pulse to the module named rx.
+fn pulse_count_for_low_to_rx(configuration: &mut Configuration) -> u32 {
+    let mut count = 0;
+    let rx = Some("rx".to_string());
+    loop {
+        let res = run_once_with_module_detection(configuration, &rx);
+        count += 1;
+        if is_config_in_initial_state(configuration) {
+            println!("We are back in initial state after {} runs", count);
+        }
+        if res == (u64::MIN, u64::MIN) {
+            break;
+        }
+        if count % 100_000 == 0 {
+            println!("{} runs..", count);
+        }
+    }
+    count
 }
 
 fn build_configuration<R>(reader: &mut R) -> Configuration
@@ -442,6 +496,12 @@ fn finish_conjunction_setup(configuration: &mut Configuration) {
     }
 }
 
+fn reset_configuration(configuration: &mut Configuration) {
+    // Note that just cloning Configuration before changing it, as the trait Module
+    // isn't object-safe.
+    configuration.values_mut().for_each(|m| m.reset());
+}
+
 fn main() {
     let stdin = io::stdin();
 
@@ -449,6 +509,9 @@ fn main() {
     // println!("{:#?}", configuration);
 
     println!("Part 1: {}", total_pulses_count_product(&mut configuration));
+
+    reset_configuration(&mut configuration);
+    println!("Part 2: {}", pulse_count_for_low_to_rx(&mut configuration));
 }
 
 #[cfg(test)]
