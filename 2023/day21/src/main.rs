@@ -11,6 +11,17 @@ enum Direction {
 }
 use Direction::*;
 
+impl Direction {
+    fn index(&self) -> usize {
+        match self {
+            North => 0,
+            East => 1,
+            South => 2,
+            West => 3,
+        }
+    }
+}
+
 const ALL_DIRECTIONS: [Direction; 4] = [North, East, South, West];
 
 #[derive(Debug, Clone, PartialEq)]
@@ -29,13 +40,12 @@ impl Grid {
         let values: Vec<_> = reader
             .lines()
             .filter_map(|result| result.ok())
-            .map(|l| {
+            .flat_map(|l| {
                 rows += 1;
                 l.chars()
                     // .map(|c| c)
                     .collect::<Vec<_>>()
             })
-            .flatten()
             .collect();
         assert_eq!(values.len() % rows, 0);
         let cols = values.len() / rows;
@@ -55,6 +65,14 @@ impl Grid {
 
     fn pos(&self, row: usize, col: usize) -> usize {
         row * self.cols + col
+    }
+
+    fn col(&self, index: usize) -> usize {
+        index % self.cols
+    }
+
+    fn row(&self, index: usize) -> usize {
+        index / self.cols
     }
 
     // Check we don't go outside grid.
@@ -95,6 +113,10 @@ fn test_grid() {
     assert_eq!(grid.rows, 2);
     assert_eq!(grid.pos(0, 1), 1);
     assert_eq!(grid.pos(1, 2), 5);
+    assert_eq!(grid.row(5), 1);
+    assert_eq!(grid.col(5), 2);
+    assert_eq!(grid.row(1), 0);
+    assert_eq!(grid.col(1), 1);
 
     assert!(grid.allowed(5, North));
     assert_eq!(grid.next_pos(5, North), 2);
@@ -104,19 +126,23 @@ fn test_grid() {
     assert!(!grid.allowed(5, South));
 }
 
-fn walk_one_step(before: &Grid, after: &mut Grid) {
-    for i in 0..before.values.len() {
-        if before.values[i] != 'O' {
-            continue;
-        }
-        for d in ALL_DIRECTIONS {
-            if let Some(n) = before.try_next_pos(i, d) {
-                if before.values[n] == '.' {
-                    after.values[n] = 'O';
+fn walk_one_step(grid: &mut Grid) {
+    grid.values
+        .iter()
+        .enumerate()
+        .filter_map(|(i, v)| if *v == 'O' { Some(i) } else { None })
+        .collect::<Vec<usize>>()
+        .iter_mut()
+        .for_each(|i| {
+            for d in ALL_DIRECTIONS {
+                if let Some(n) = grid.try_next_pos(*i, d) {
+                    if grid.values[n] == '.' {
+                        grid.values[n] = 'O';
+                    }
                 }
             }
-        }
-    }
+            grid.values[*i] = '.';
+        });
 }
 
 #[test]
@@ -144,11 +170,8 @@ fn test_walk_one_step() {
 .##..##.##.
 ...........";
     let mut grid = Grid::build(&mut s.as_bytes());
-    let mut after = grid.clone();
-    after.values.iter_mut().filter(|v| **v == 'O').for_each(|v| *v = '.');
-    after.print();
-    walk_one_step(&mut grid, &mut after);
-    assert_eq!(after, Grid::build(&mut r.as_bytes()));
+    walk_one_step(&mut grid);
+    assert_eq!(grid, Grid::build(&mut r.as_bytes()));
 }
 
 fn get_initial_pos(grid: &Grid) -> Option<usize> {
@@ -159,64 +182,49 @@ fn prep_grid(grid: &mut Grid, pos: usize) {
     grid.values[pos] = 'O';
 }
 
-fn clean_grid(grid: &mut Grid, pos: usize) {
-    grid.values[pos] = '.';
-}
-
 fn plots_count(grid: &Grid) -> usize {
     grid.values.iter().filter(|v| **v == 'O').count()
 }
 
-fn find_filled_grid(grid: &Grid, target_step_count: u64) -> (u64, u64, u64) {
-    let initial_pos = get_initial_pos(grid).unwrap();
+fn find_filled_grid(grid: &mut Grid, target_step_count: u64) -> (u64, u64, u64) {
+    let mut counts: Vec<usize> = Vec::new();
 
-    let mut before = grid.clone();
-    prep_grid(&mut before, initial_pos);
-
-    let mut saved_counts: Vec<usize> = Vec::new();
-
-    let mut step_count: u64 = 0;
+    let mut steps: u64 = 0;
     loop {
-        if step_count == target_step_count {
+        if steps == target_step_count {
             break;
         }
-        step_count += 1;
+        steps += 1;
 
-        let mut after = grid.clone();
-        clean_grid(&mut after, initial_pos);
+        walk_one_step(grid);
 
-        walk_one_step(&before, &mut after);
-
-        std::mem::swap(&mut before, &mut after);
-        // println!("{} steps", step_count + 1);
-        // before.print();
-
-        let plot_count = plots_count(&before);
-        let maybe_second_last = saved_counts.len().checked_sub(2).map(|i| saved_counts[i]);
-        saved_counts.push(plot_count);
+        let plot_count = plots_count(grid);
+        let maybe_second_last = counts.len().checked_sub(2).map(|i| counts[i]);
+        counts.push(plot_count);
 
         if let Some(last) = maybe_second_last {
             // println!("------- Last {}, curr {}", last, plot_count);
             if plot_count == last {
-                println!("Found period after {} steps", step_count + 1);
+                println!("Found period after {} steps", steps + 1);
                 break;
             }
         }
+        grid.print();
     }
     // println!("{:?}", saved_counts);
-    let plot_count = *saved_counts.last().unwrap();
-    let other_count = saved_counts
-        .len()
-        .checked_sub(2)
-        .map(|i| saved_counts[i])
-        .unwrap();
+    let plot_count = *counts.last().unwrap();
+    let other_count = counts.len().checked_sub(2).map(|i| counts[i]).unwrap();
 
-    (step_count, plot_count as u64, other_count as u64)
+    (steps, plot_count as u64, other_count as u64)
 }
 
 fn garden_plots_count_after(grid: &Grid, target_step_count: u64) -> u64 {
+    let initial_pos = get_initial_pos(grid).unwrap();
+    let mut initial = grid.clone();
+    prep_grid(&mut initial, initial_pos);
+
     let (mut step_count, mut plot_count, mut other_count) =
-        find_filled_grid(grid, target_step_count);
+        find_filled_grid(&mut initial, target_step_count);
 
     loop {
         if step_count == target_step_count {
