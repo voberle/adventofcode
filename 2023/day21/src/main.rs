@@ -123,7 +123,7 @@ fn get_initial_pos(grid: &Grid) -> Option<usize> {
     grid.values.iter().position(|v| *v == 'S')
 }
 
-fn initial_step(grid: &mut Grid, pos: usize) {
+fn prep_grid(grid: &mut Grid, pos: usize) {
     grid.values[pos] = 'O';
 }
 
@@ -131,27 +131,69 @@ fn clean_grid(grid: &mut Grid, pos: usize) {
     grid.values[pos] = '.';
 }
 
-fn garden_plots_count(grid: &Grid, target_step_count: u32) -> usize {
+fn plots_count(grid: &Grid) -> usize {
+    grid.values.iter().filter(|v| **v == 'O').count()
+}
+
+fn garden_plots_count_after(grid: &Grid, target_step_count: u32) -> usize {
     let initial_pos = get_initial_pos(grid).unwrap();
 
     let mut before = grid.clone();
-    initial_step(&mut before, initial_pos);
+    prep_grid(&mut before, initial_pos);
 
-    for _ in 0..target_step_count {
+    let mut saved_counts: Vec<usize> = Vec::new();
+
+    let mut step_count = 0;
+    loop {
+        if step_count == target_step_count {
+            break;
+        }
+        step_count += 1;
+
         let mut after = grid.clone();
         clean_grid(&mut after, initial_pos);
 
         walk_one_step(&before, &mut after);
 
         std::mem::swap(&mut before, &mut after);
+        // println!("{} steps", step_count + 1);
+        before.print();
+
+        let plot_count = plots_count(&before);
+        let maybe_second_last = saved_counts.len().checked_sub(2).map(|i| saved_counts[i]);
+        saved_counts.push(plot_count);
+
+        if let Some(last) = maybe_second_last {
+            // println!("------- Last {}, curr {}", last, plot_count);
+            if plot_count == last {
+                println!("Found period after {} steps", step_count + 1);
+                break;
+            }
+        }
+    }
+    println!("{:?}", saved_counts);
+
+    let mut plot_count = *saved_counts.last().unwrap();
+    let mut other_count = saved_counts
+        .len()
+        .checked_sub(2)
+        .map(|i| saved_counts[i])
+        .unwrap();
+
+    loop {
+        if step_count == target_step_count {
+            break;
+        }
+        step_count += 1;
+        std::mem::swap(&mut plot_count, &mut other_count);
     }
 
-    before.print();
-    before.values.iter().filter(|v| **v == 'O').count()
+    plot_count
+    // plots_count(&before)
 }
 
-// const STEPS_COUNT_TEST: u32 = 6;
-const STEPS_COUNT_TEST: u32 = 64;
+const STEPS_COUNT_TEST: u32 = 6;
+const STEPS_COUNT_PART1: u32 = 64;
 
 fn main() {
     let stdin = io::stdin();
@@ -159,7 +201,10 @@ fn main() {
     let grid = Grid::build(&mut stdin.lock());
     grid.print();
 
-    println!("Part 1: {}", garden_plots_count(&grid, STEPS_COUNT_TEST));
+    println!(
+        "Part 1: {}",
+        garden_plots_count_after(&grid, STEPS_COUNT_PART1)
+    );
 }
 
 #[cfg(test)]
@@ -172,6 +217,7 @@ pub mod tests {
         let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
         let grid = Grid::build(&mut reader);
 
-        assert_eq!(garden_plots_count(&grid, STEPS_COUNT_TEST), 16);
+        assert_eq!(garden_plots_count_after(&grid, STEPS_COUNT_TEST), 16);
+        assert_eq!(garden_plots_count_after(&grid, STEPS_COUNT_PART1), 42);
     }
 }
