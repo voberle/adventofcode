@@ -135,7 +135,7 @@ fn plots_count(grid: &Grid) -> usize {
     grid.values.iter().filter(|v| **v == 'O').count()
 }
 
-fn garden_plots_count_after(grid: &Grid, target_step_count: u32) -> usize {
+fn find_filled_grid(grid: &Grid, target_step_count: u64) -> (u64, u64, u64) {
     let initial_pos = get_initial_pos(grid).unwrap();
 
     let mut before = grid.clone();
@@ -143,7 +143,7 @@ fn garden_plots_count_after(grid: &Grid, target_step_count: u32) -> usize {
 
     let mut saved_counts: Vec<usize> = Vec::new();
 
-    let mut step_count = 0;
+    let mut step_count: u64 = 0;
     loop {
         if step_count == target_step_count {
             break;
@@ -157,7 +157,7 @@ fn garden_plots_count_after(grid: &Grid, target_step_count: u32) -> usize {
 
         std::mem::swap(&mut before, &mut after);
         // println!("{} steps", step_count + 1);
-        before.print();
+        // before.print();
 
         let plot_count = plots_count(&before);
         let maybe_second_last = saved_counts.len().checked_sub(2).map(|i| saved_counts[i]);
@@ -171,14 +171,20 @@ fn garden_plots_count_after(grid: &Grid, target_step_count: u32) -> usize {
             }
         }
     }
-    println!("{:?}", saved_counts);
-
-    let mut plot_count = *saved_counts.last().unwrap();
-    let mut other_count = saved_counts
+    // println!("{:?}", saved_counts);
+    let plot_count = *saved_counts.last().unwrap();
+    let other_count = saved_counts
         .len()
         .checked_sub(2)
         .map(|i| saved_counts[i])
         .unwrap();
+
+    (step_count, plot_count as u64, other_count as u64)
+}
+
+fn garden_plots_count_after(grid: &Grid, target_step_count: u64) -> u64 {
+    let (mut step_count, mut plot_count, mut other_count) =
+        find_filled_grid(grid, target_step_count);
 
     loop {
         if step_count == target_step_count {
@@ -187,19 +193,17 @@ fn garden_plots_count_after(grid: &Grid, target_step_count: u32) -> usize {
         step_count += 1;
         std::mem::swap(&mut plot_count, &mut other_count);
     }
-
     plot_count
-    // plots_count(&before)
 }
 
-const STEPS_COUNT_TEST: u32 = 6;
-const STEPS_COUNT_PART1: u32 = 64;
+const STEPS_COUNT_TEST: u64 = 6;
+const STEPS_COUNT_PART1: u64 = 64;
 
 fn main() {
     let stdin = io::stdin();
 
     let grid = Grid::build(&mut stdin.lock());
-    grid.print();
+    // grid.print();
 
     println!(
         "Part 1: {}",
