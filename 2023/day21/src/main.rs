@@ -119,6 +119,38 @@ fn walk_one_step(before: &Grid, after: &mut Grid) {
     }
 }
 
+#[test]
+fn test_walk_one_step() {
+    let s = "...........
+.....###.#.
+.###.##..#.
+..#.#O..#..
+....#.#....
+.##O.O####.
+.##.O#...#.
+.......##..
+.##.#.####.
+.##..##.##.
+...........";
+    let r = "...........
+.....###.#.
+.###.##..#.
+..#.#.O.#..
+...O#O#....
+.##.O.####.
+.##O.#...#.
+....O..##..
+.##.#.####.
+.##..##.##.
+...........";
+    let mut grid = Grid::build(&mut s.as_bytes());
+    let mut after = grid.clone();
+    after.values.iter_mut().filter(|v| **v == 'O').for_each(|v| *v = '.');
+    after.print();
+    walk_one_step(&mut grid, &mut after);
+    assert_eq!(after, Grid::build(&mut r.as_bytes()));
+}
+
 fn get_initial_pos(grid: &Grid) -> Option<usize> {
     grid.values.iter().position(|v| *v == 'S')
 }
