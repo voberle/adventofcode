@@ -79,3 +79,19 @@ Bigger parsing; Recursion.
 
 ### Day 20: [Pulse Propagation](2023/day20/README.md)
 
+Traits.
+
+Special pattern in the data.
+
+### Day 21: [Step Counter](2023/day21/README.md)
+
+
+
+### TODO
+
+Missing days:
+- Day 17, both parts: Pathfinding with custom coordinates.
+- Day 20 part 2: Special pattern in data.
+
+Ideas:
+- Remove table lib, replace it with pieces of customizable code.
