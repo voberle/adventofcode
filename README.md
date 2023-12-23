@@ -87,6 +87,10 @@ Special pattern in the data.
 
 
 
+### Day 23: [A Long Walk](2023/day23/README.md)
+
+Path-finding.
+
 ### TODO
 
 Missing days:
