@@ -154,11 +154,22 @@ fn test_grid() {
     assert!(!grid.allowed(5, South));
 }
 
+fn slopes_to_dir(c: char) -> Direction {
+    match c {
+        '<' => West,
+        '>' => East,
+        // Observation: ^ is never found in the input.
+        '^' => North,
+        'v' => South,
+        _ => panic!("Invalid char {}", c),
+    }
+}
+
 // Walk until we reach an intersection.
 // Returns the intersection position and the distance to get there.
 // None means we got blocked.
 // Exit of the grid is considered an intersection.
-fn walk(grid: &Grid, from: usize, towards: Direction) -> Option<(usize, u32)> {
+fn walk<const IGNORE_SLOPES: bool>(grid: &Grid, from: usize, towards: Direction) -> Option<(usize, u32)> {
     let mut pos = from;
     let mut opp_dir = towards.opposite();
     let mut steps = 0;
@@ -177,40 +188,23 @@ fn walk(grid: &Grid, from: usize, towards: Direction) -> Option<(usize, u32)> {
                     // Not allowed to go back
                     None
                 } else if let Some(npos) = grid.try_next_pos(pos, d) {
-                    // println!("{pos} {:?}, c={}", d, grid.values[npos]);
-                    match grid.values[npos] {
+                    let c = grid.values[npos];
+                    // println!("{pos} {:?}, c={}", d, c);
+                    match c {
                         '#' => None,    // Not allowed to go into forest
                         '.' => Some(d), // Paths are ok
-                        '<' => {
-                            if d == West {
+                        '<' | '>' | '^' | 'v' => {
+                            if IGNORE_SLOPES {
                                 Some(d)
                             } else {
-                                None
+                                if d == slopes_to_dir(c) {
+                                    Some(d)
+                                } else {
+                                    None
+                                }
                             }
                         }
-                        '>' => {
-                            if d == East {
-                                Some(d)
-                            } else {
-                                None
-                            }
-                        }
-                        // Observation: ^ is never found in the input.
-                        '^' => {
-                            if d == North {
-                                Some(d)
-                            } else {
-                                None
-                            }
-                        }
-                        'v' => {
-                            if d == South {
-                                Some(d)
-                            } else {
-                                None
-                            }
-                        }
-                        _ => panic!("Invalid char in map {}", grid.values[npos]),
+                        _ => panic!("Invalid char in map {}", c),
                     }
                 } else {
                     // Exit detection is ugly, could be improved.
@@ -267,7 +261,7 @@ impl PartialOrd for Node {
 }
 
 // Dijkstra's algorithm
-fn longest_hike_step_count(grid: &Grid) -> u32 {
+fn longest_hike_step_count<const IGNORE_SLOPES: bool>(grid: &Grid) -> u32 {
     let start = 1;
     let end = grid.pos(grid.rows - 1, grid.cols - 2);
     // println!("Start: {}; End: {}", start, end);
@@ -297,8 +291,8 @@ fn longest_hike_step_count(grid: &Grid) -> u32 {
         queue.extend(ALL_DIRECTIONS.iter().filter_map(|&d| {
             // TODO optimization to avoid walking back
             // println!("Walking towards {:?}", d);
-            if let Some((npos, steps)) = walk(grid, pos, d) {
-                // println!(" reached {} after {} steps", npos, steps);
+            if let Some((npos, steps)) = walk::<IGNORE_SLOPES>(grid, pos, d) {
+                println!("{:?}: reached {} after {} steps", d, npos, steps);
                 let nkey = npos;
                 let ncost = cost + steps;
                 if visited.contains(&nkey) {
@@ -328,7 +322,9 @@ fn main() {
     let grid = Grid::build(&mut stdin.lock());
     // grid.print();
 
-    println!("Part 1: {}", longest_hike_step_count(&grid));
+    // println!("Part 1: {}", longest_hike_step_count::<false>(&grid));
+
+    println!("Part 2: {}", longest_hike_step_count::<true>(&grid));
 }
 
 #[cfg(test)]
@@ -344,13 +340,13 @@ pub mod tests {
     #[test]
     fn test_walk() {
         let grid = get_grid();
-        assert_eq!(walk(&grid, 1, South), Some((grid.pos(5, 3), 15)));
-        assert_eq!(walk(&grid, 1, North), None);
-        assert_eq!(walk(&grid, 1, East), None);
-        assert_eq!(walk(&grid, 1, West), None);
+        assert_eq!(walk::<false>(&grid, 1, South), Some((grid.pos(5, 3), 15)));
+        assert_eq!(walk::<false>(&grid, 1, North), None);
+        assert_eq!(walk::<false>(&grid, 1, East), None);
+        assert_eq!(walk::<false>(&grid, 1, West), None);
         // 312, goes to exit
         assert_eq!(
-            walk(&grid, grid.pos(13, 13), South),
+            walk::<false>(&grid, grid.pos(13, 13), South),
             Some((grid.pos(22, 21), 25))
         );
     }
@@ -358,6 +354,6 @@ pub mod tests {
     #[test]
     fn test_part1() {
         let grid = get_grid();
-        assert_eq!(longest_hike_step_count(&grid), 94);
+        assert_eq!(longest_hike_step_count::<false>(&grid), 94);
     }
 }
