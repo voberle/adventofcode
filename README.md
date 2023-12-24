@@ -91,11 +91,18 @@ Special pattern in the data.
 
 Path-finding.
 
+### Day 24: [Never Tell Me The Odds](2023/day24/README.md)
+
+Maths.
+
 ### TODO
 
 Missing days:
 - Day 17, both parts: Pathfinding with custom coordinates.
 - Day 20 part 2: Special pattern in data.
+- Day 21 part 2: Again special pattern in data.
+- Day 22: One bug somewhere.
+- Day 23: Needs to be rebuilt with longest path finding.
 
 Ideas:
 - Remove table lib, replace it with pieces of customizable code.
