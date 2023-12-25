@@ -95,6 +95,10 @@ Path-finding.
 
 Maths.
 
+### Day 25: [Snowverload](2023/day25/README.md)
+
+Graphviz.
+
 ### TODO
 
 Missing days:
