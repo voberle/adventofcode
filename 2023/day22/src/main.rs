@@ -131,14 +131,14 @@ impl Brick {
                 return false;
             }
             // https://stackoverflow.com/a/3269471
-            return a.p1.val_dir(d) <= b.p2.val_dir(d) && b.p1.val_dir(d) <= a.p2.val_dir(d);
+            a.p1.val_dir(d) <= b.p2.val_dir(d) && b.p1.val_dir(d) <= a.p2.val_dir(d)
         } else {
             // Perpendicular bricks
             // println!("Perpendicular");
-            return a.p1.val_dir(&a.dir) <= b.p1.val_dir(&a.dir)
+            a.p1.val_dir(&a.dir) <= b.p1.val_dir(&a.dir)
                 && b.p1.val_dir(&a.dir) <= a.p2.val_dir(&a.dir)
                 && b.p1.val_dir(&b.dir) <= a.p1.val_dir(&b.dir)
-                && a.p1.val_dir(&b.dir) <= b.p2.val_dir(&b.dir);
+                && a.p1.val_dir(&b.dir) <= b.p2.val_dir(&b.dir)
         }
     }
 
@@ -308,9 +308,13 @@ fn move_bricks_downward(snapshot: &Snapshot, z_to_start_at: usize) -> Snapshot {
     s
 }
 
+// Tries to disintegrate all bricks, and returns the ones that were safe to do so,
+// and for the others how many bricks it caused it to fall.
 // Requires a snapshot with bricks moved downwards
-fn safely_disintegrate(snapshot: &Snapshot) -> u32 {
+fn try_disintegrate_all(snapshot: &Snapshot) -> (u32, u32) {
     let mut safe_to_disintegrate = 0;
+    let mut bricks_that_would_fall_total = 0;
+
     // Brute force: We try disintegrating each brick, and see if any remaining brick would move downwards.
     for i in 0..snapshot.bricks.len() {
         let mut s = snapshot.clone();
@@ -319,25 +323,32 @@ fn safely_disintegrate(snapshot: &Snapshot) -> u32 {
         let d = move_bricks_downward(&s, z_of_brick_disintegrated);
         // Compare bricks only, not full snapshots (the hashmaps don't need to be compared)
         if d.bricks == s.bricks {
-            // println!("Brick at {} IS SAFE to disintegrate", i);
             safe_to_disintegrate += 1;
+        } else {
+            // Some brick fell, count how many
+            for i in 0..s.bricks.len() {
+                if d.bricks[i].p1.z != s.bricks[i].p1.z {
+                    bricks_that_would_fall_total += 1;
+                }
+            }
         }
     }
-    safe_to_disintegrate
+    (safe_to_disintegrate, bricks_that_would_fall_total)
 }
 
-fn safely_disintegrated_count(snapshot: &Snapshot) -> u32 {
-    let final_snapshot = move_bricks_downward(&snapshot, 1);
+fn disintegrate_all_counts(snapshot: &Snapshot) -> (u32, u32) {
+    let final_snapshot = move_bricks_downward(snapshot, 1);
     // final_snapshot.print();
-    // println!("{:#?}", final_snapshot);
-    safely_disintegrate(&final_snapshot)
+    try_disintegrate_all(&final_snapshot)
 }
 
 fn main() {
     let stdin = stdin();
     let snapshot = Snapshot::build(&mut stdin.lock());
 
-    println!("Part 1: {}", safely_disintegrated_count(&snapshot));
+    let (safe_to_disintegrate, bricks_that_would_fall_total) = disintegrate_all_counts(&snapshot);
+    println!("Part 1: {}", safe_to_disintegrate);
+    println!("Part 2: {}", bricks_that_would_fall_total);
 }
 
 #[cfg(test)]
@@ -346,10 +357,13 @@ pub mod tests {
     use std::{fs::File, io::BufReader};
 
     #[test]
-    fn test_part1() {
+    fn test_part1_2() {
         let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
         let snapshot = Snapshot::build(&mut reader);
 
-        assert_eq!(safely_disintegrated_count(&snapshot), 5);
+        let (safe_to_disintegrate, bricks_that_would_fall_total) =
+            disintegrate_all_counts(&snapshot);
+        assert_eq!(safe_to_disintegrate, 5);
+        assert_eq!(bricks_that_would_fall_total, 7);
     }
 }

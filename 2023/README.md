@@ -17,7 +17,6 @@ Missing days:
 - Day 17: Pathfinding with custom coordinates.
 - Day 20 part 2: Special pattern in data.
 - Day 21 part 2: Again special pattern in data.
-- Day 22: One bug somewhere.
 - Day 24 part 2: No idea how to do part 2.
 - Day 25 part 2: Press button.
 
@@ -112,8 +111,9 @@ Special pattern in the data for part 2.
 
 Special pattern in the data for part 2.
 
-### Day 22: Sand Slabs
+### Day 22: [Sand Slabs](day22/README.md) 🌟🌟
 
+3D coords, brute-forced.
 
 ### Day 23: [A Long Walk](day23/README.md) 🌟🌟
 
