@@ -1,7 +1,7 @@
 // https://adventofcode.com/2023/day/23
 
 use std::{
-    collections::{BinaryHeap, HashMap, HashSet},
+    collections::{HashMap, HashSet},
     io::{self, BufRead},
 };
 
@@ -77,11 +77,11 @@ impl Grid {
         }
     }
 
-    fn print_with_pos(&self, pos: usize) {
+    fn print_with_pos(&self, positions: &[usize]) {
         for row in 0..self.rows {
             for p in row * self.cols..(row + 1) * self.cols {
                 let c = self.values[p];
-                if p == pos {
+                if positions.contains(&p) {
                     print!("\x1b[91m{}\x1b[0m", c);
                 } else {
                     print!("{}", c);
@@ -91,7 +91,7 @@ impl Grid {
         }
     }
 
-    fn pos(&self, row: usize, col: usize) -> usize {
+    const fn pos(&self, row: usize, col: usize) -> usize {
         row * self.cols + col
     }
 
@@ -165,166 +165,270 @@ fn slopes_to_dir(c: char) -> Direction {
     }
 }
 
-// Walk until we reach an intersection.
+// Checks if it's possible to go towards that direction from that position.
+fn can_go_towards<const IGNORE_SLOPES: bool>(grid: &Grid, pos: usize, d: Direction) -> bool {
+    if let Some(npos) = grid.try_next_pos(pos, d) {
+        let c = grid.values[npos];
+        match c {
+            '#' => false, // Not allowed to go into forest
+            '.' => true,  // Paths are ok
+            '<' | '>' | '^' | 'v' => {
+                if IGNORE_SLOPES {
+                    true
+                } else {
+                    d == slopes_to_dir(c)
+                }
+            }
+            _ => panic!("Invalid char in map {}", c),
+        }
+    } else {
+        // Falling out of the grid.
+        false
+    }
+}
+
+// Indicates if it's an intersection, meaning 3 or 4 paths from here.
+fn is_intersection(grid: &Grid, pos: usize) -> bool {
+    let c = grid.values[pos];
+    if c == '#' {
+        return false;
+    }
+    ALL_DIRECTIONS
+        .iter()
+        .filter_map(|&d| {
+            if can_go_towards::<true>(grid, pos, d) {
+                Some(d)
+            } else {
+                None
+            }
+        })
+        .count()
+        > 2
+}
+
+// Walk until we reach an intersection, taking the specified towards direction.
 // Returns the intersection position and the distance to get there.
 // None means we got blocked.
 // Exit of the grid is considered an intersection.
-fn walk<const IGNORE_SLOPES: bool>(grid: &Grid, from: usize, towards: Direction) -> Option<(usize, u32)> {
-    let mut pos = from;
-    let mut opp_dir = towards.opposite();
-    let mut steps = 0;
-    let mut exit = false;
+fn walk<const IGNORE_SLOPES: bool>(
+    grid: &Grid,
+    from: usize,
+    towards: Direction,
+) -> Option<(usize, u32)> {
+    // First direction is forced, no choice.
+    if !can_go_towards::<IGNORE_SLOPES>(grid, from, towards) {
+        return None;
+    }
+
+    let mut pos = grid.next_pos(from, towards);
+    let mut steps = 1;
+    let mut forbidden_dir = towards.opposite();
     loop {
-        // Finds the direction we are allowed to walk
+        // Find all the directions we are allowed to walk
         let dirs: Vec<Direction> = ALL_DIRECTIONS
             .iter()
             .filter_map(|&d| {
-                if steps == 0 && d != towards {
-                    // On first step, we want to go into a specific direction
-                    return None;
-                }
-
-                if d == opp_dir {
+                if d == forbidden_dir {
                     // Not allowed to go back
                     None
-                } else if let Some(npos) = grid.try_next_pos(pos, d) {
-                    let c = grid.values[npos];
-                    // println!("{pos} {:?}, c={}", d, c);
-                    match c {
-                        '#' => None,    // Not allowed to go into forest
-                        '.' => Some(d), // Paths are ok
-                        '<' | '>' | '^' | 'v' => {
-                            if IGNORE_SLOPES {
-                                Some(d)
-                            } else {
-                                if d == slopes_to_dir(c) {
-                                    Some(d)
-                                } else {
-                                    None
-                                }
-                            }
-                        }
-                        _ => panic!("Invalid char in map {}", c),
-                    }
-                } else {
-                    // Exit detection is ugly, could be improved.
-                    if steps > 0 {
-                        // We found the exit!
-                        // println!("Exit found! {}, steps={}", pos, steps);
-                        exit = true;
+                } else if grid.allowed(pos, d) {
+                    // Not at the border
+                    if can_go_towards::<IGNORE_SLOPES>(grid, pos, d) {
                         Some(d)
                     } else {
                         None
                     }
+                } else {
+                    // Start / end
+                    Some(d)
                 }
             })
             .collect();
 
-        if exit {
-            return Some((pos, steps));
-        }
-
         if dirs.is_empty() {
             // dead-end
             return None;
-        } else if dirs.len() == 1 {
-            // continue walking
-            pos = grid.next_pos(pos, dirs[0]);
-            // grid.print_with_pos(pos);
-            opp_dir = dirs[0].opposite();
+        }
+
+        if is_intersection(grid, pos) {
+            // intersection
+            return Some((pos, steps));
+        }
+
+        // continue walking
+        assert_eq!(dirs.len(), 1);
+        if let Some(npos) = grid.try_next_pos(pos, dirs[0]) {
+            pos = npos;
+            forbidden_dir = dirs[0].opposite();
             steps += 1;
         } else {
-            // intersection
-            // println!("Intersection: steps={}, pos={}, dirs={:?}", steps, pos, dirs);
-            // grid.print_with_pos(pos);
+            // fell out of the grid, so we are at start or end
             return Some((pos, steps));
         }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-struct Node {
-    pos: usize,
-    cost: u32,
+// Nodes for a graph of intersections
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum Node {
+    Start,
+    End,
+    Intersection(usize),
 }
 
-impl Ord for Node {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.cost.cmp(&self.cost)
-    }
-}
-
-impl PartialOrd for Node {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-// Dijkstra's algorithm
-fn longest_hike_step_count<const IGNORE_SLOPES: bool>(grid: &Grid) -> u32 {
-    let start = 1;
-    let end = grid.pos(grid.rows - 1, grid.cols - 2);
-    // println!("Start: {}; End: {}", start, end);
-
-    let mut visited: HashSet<usize> = HashSet::new();
-    let mut distance: HashMap<usize, u32> = HashMap::new();
-
-    let mut queue: BinaryHeap<Node> = BinaryHeap::new();
-    queue.push(Node {
-        pos: start,
-        cost: 0,
-    });
-
-    let mut answer = u32::MIN;
-
-    while let Some(Node { pos, cost }) = queue.pop() {
-        if pos == end {
-            answer = u32::max(answer, cost);
-            // println!("On End {} ({}, {}), cost {}, answer {}", pos, grid.row(pos), grid.col(pos), cost, answer);
-            continue;
+impl Node {
+    fn new(pos: usize, start: usize, end: usize) -> Self {
+        if pos == start {
+            Node::Start
+        } else if pos == end {
+            Node::End
+        } else {
+            Node::Intersection(pos)
         }
-
-        visited.insert(pos);
-        // println!("Visiting {} ({}, {})", pos, grid.row(pos), grid.col(pos));
-        // grid.print_with_pos(pos);
-
-        queue.extend(ALL_DIRECTIONS.iter().filter_map(|&d| {
-            // TODO optimization to avoid walking back
-            // println!("Walking towards {:?}", d);
-            if let Some((npos, steps)) = walk::<IGNORE_SLOPES>(grid, pos, d) {
-                println!("{:?}: reached {} after {} steps", d, npos, steps);
-                let nkey = npos;
-                let ncost = cost + steps;
-                if visited.contains(&nkey) {
-                    return None;
-                }
-                if let Some(prevcost) = distance.get(&nkey) {
-                    if *prevcost > ncost {
-                        return None;
-                    }
-                }
-                distance.insert(nkey, ncost);
-                Some(Node {
-                    pos: npos,
-                    cost: ncost,
-                })
-            } else {
-                None
-            }
-        }));
     }
-    // println!("{:#?}", distance);
-    answer
+
+    fn name(&self) -> String {
+        match self {
+            Node::Start => "start".to_string(),
+            Node::End => "end".to_string(),
+            Node::Intersection(pos) => pos.to_string(),
+        }
+    }
+}
+
+// Values are an array corresponding to the 4 directions.
+type Graph = HashMap<Node, [Option<(Node, u32)>; 4]>;
+
+// Go through the grid and build the graph of intersections
+fn build_graph<const IGNORE_SLOPES: bool>(grid: &Grid, start: usize, end: usize) -> Graph {
+    let mut graph: Graph = HashMap::new();
+
+    // Add all the nodes to the graph
+    for pos in 0..grid.values.len() {
+        if pos == start {
+            graph.insert(Node::Start, [None; 4]);
+        } else if pos == end {
+            graph.insert(Node::End, [None; 4]);
+        } else if is_intersection(grid, pos) {
+            graph.insert(Node::Intersection(pos), [None; 4]);
+        }
+    }
+
+    // Connect the nodes
+    graph.iter_mut().for_each(|(key, val)| {
+        // println!("Connecting nodes for {:?}", key);
+        match key {
+            Node::Start => {
+                let dir = Direction::South;
+                if let Some((pos, steps)) = walk::<IGNORE_SLOPES>(grid, start, dir) {
+                    let node = Node::new(pos, start, end);
+                    val[dir.index()] = Some((node, steps));
+                }
+            }
+            Node::End => {
+                let dir = Direction::North;
+                if let Some((pos, steps)) = walk::<IGNORE_SLOPES>(grid, end, dir) {
+                    let node = Node::new(pos, start, end);
+                    val[dir.index()] = Some((node, steps));
+                }
+            }
+            Node::Intersection(from) => ALL_DIRECTIONS.iter().for_each(|&dir| {
+                if let Some((pos, steps)) = walk::<IGNORE_SLOPES>(grid, *from, dir) {
+                    let node = Node::new(pos, start, end);
+                    // println!(" {:?}: intersection towards {:?} => {} - {:?}", key, dir, pos, node);
+                    val[dir.index()] = Some((node, steps));
+                }
+            }),
+        }
+    });
+    graph
+}
+
+fn get_intersections(graph: &Graph) -> Vec<usize> {
+    graph
+        .keys()
+        .filter_map(|n| match n {
+            Node::Intersection(pos) => Some(*pos),
+            _ => None,
+        })
+        .collect()
+}
+
+// Prints the graph in Graphviz Dot format
+// dot -Tpdf -Ksfdp resources/input_test.graph > resources/input_test.pdf
+fn print_graph_as_graphviz<const IGNORE_SLOPES: bool>(graph: &Graph) {
+    let edgeop = if IGNORE_SLOPES { "--" } else { "->" };
+    println!("digraph Maze {{");
+    for (key, val) in graph.iter() {
+        for node in val.iter().flatten() {
+            println!(
+                "    {} {} {} [label=\"{}\"];",
+                key.name(),
+                edgeop,
+                node.0.name(),
+                node.1
+            );
+        }
+    }
+    println!("}}");
+}
+
+fn traverse_graph(graph: &Graph) {
+    let start = Node::Start;
+
+    // DFS (Depth First Search)
+    let mut discovered: HashSet<Node> = HashSet::new();
+    let mut stack: Vec<Node> = Vec::new();
+    stack.push(start);
+    while !stack.is_empty() {
+        let node = stack.pop().unwrap();
+        if !discovered.contains(&node) {
+            println!("-> {:?}", node);
+            discovered.insert(node);
+
+            let edge_nodes = graph.get(&node).unwrap();
+            // println!("edge_nodes {:?}", edge_nodes);
+            edge_nodes
+                .iter()
+                .filter_map(|node_len| {
+                    if let Some(n) = node_len {
+                        // println!("---- {:?}", n.0);
+                        Some(n.0)
+                    } else {
+                        None
+                    }
+                })
+                .for_each(|next| {
+                    // println!("push {:?}", next);
+                    stack.push(next);
+                });
+        }
+    }
+}
+
+fn longest_hike_step_count<const IGNORE_SLOPES: bool>(grid: &Grid) -> u32 {
+    0
 }
 
 fn main() {
     let stdin = io::stdin();
     let grid = Grid::build(&mut stdin.lock());
     // grid.print();
+    let start = 1;
+    let end = grid.pos(grid.rows - 1, grid.cols - 2);
+
+    let graph = build_graph::<false>(&grid, start, end);
+    let intersections = get_intersections(&graph);
+    println!("{:?}", intersections);
+    grid.print_with_pos(&intersections);
+
+    print_graph_as_graphviz::<false>(&graph);
+
+    traverse_graph(&graph);
 
     // println!("Part 1: {}", longest_hike_step_count::<false>(&grid));
 
-    println!("Part 2: {}", longest_hike_step_count::<true>(&grid));
+    // println!("Part 2: {}", longest_hike_step_count::<true>(&grid));
 }
 
 #[cfg(test)]
@@ -335,6 +439,14 @@ pub mod tests {
     fn get_grid() -> Grid {
         let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
         Grid::build(&mut reader)
+    }
+
+    #[test]
+    fn test_is_intersection() {
+        let grid = get_grid();
+        assert!(!is_intersection(&grid, 1));
+        assert!(is_intersection(&grid, 312));
+        assert!(!is_intersection(&grid, 313));
     }
 
     #[test]
