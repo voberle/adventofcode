@@ -2,6 +2,12 @@
 
 ## Part 1
 
+**UPDATE:** [Feedback from Reddit AoC](https://www.reddit.com/r/adventofcode/comments/18qbsxs/2023_day_25_solutions/keuz4si/?context=3) was that Neato engine does a much better job at visualizing the graph.
+
+    dot -Tpdf -Kneato input.graph > input.pdf
+
+---
+
 I solved this one without any code, but just using Graphviz.
 
 First I changed the input data to make it compatible with Graphviz format.
