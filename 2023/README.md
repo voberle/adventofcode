@@ -18,7 +18,6 @@ Missing days:
 - Day 20 part 2: Special pattern in data.
 - Day 21 part 2: Again special pattern in data.
 - Day 22: One bug somewhere.
-- Day 23: Needs to be rebuilt with longest path finding.
 - Day 24 part 2: No idea how to do part 2.
 - Day 25 part 2: Press button.
 
@@ -116,9 +115,9 @@ Special pattern in the data for part 2.
 ### Day 22: Sand Slabs
 
 
-### Day 23: [A Long Walk](day23/README.md) 🌟
+### Day 23: [A Long Walk](day23/README.md) 🌟🌟
 
-Longest path-finding.
+Longest path-finding, graph building, acyclic and cyclic graphs, DFS.
 
 ### Day 24: [Never Tell Me The Odds](day24/README.md) 🌟
 

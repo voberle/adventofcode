@@ -1,7 +1,7 @@
 // https://adventofcode.com/2023/day/23
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BinaryHeap, HashMap, HashSet},
     io::{self, BufRead},
 };
 
@@ -373,6 +373,7 @@ fn print_graph_as_graphviz<const IGNORE_SLOPES: bool>(graph: &Graph) {
     println!("}}");
 }
 
+// Graph traversal, as example how to do DFS.
 fn traverse_graph(graph: &Graph) {
     let start = Node::Start;
 
@@ -386,34 +387,72 @@ fn traverse_graph(graph: &Graph) {
             println!("-> {:?}", node);
             discovered.insert(node);
 
-            let edge_nodes = graph.get(&node).unwrap();
-            // println!("edge_nodes {:?}", edge_nodes);
-            edge_nodes
+            graph
+                .get(&node)
+                .unwrap()
                 .iter()
                 .filter_map(|node_len| {
                     if let Some(n) = node_len {
-                        // println!("---- {:?}", n.0);
                         Some(n.0)
                     } else {
                         None
                     }
                 })
                 .for_each(|next| {
-                    // println!("push {:?}", next);
                     stack.push(next);
                 });
         }
     }
 }
 
-fn longest_hike_step_count<const IGNORE_SLOPES: bool>(grid: &Grid) -> u32 {
-    0
+// Recursive traversal of the graph to find the longest path.
+fn longest_path_rec(
+    graph: &Graph,
+    longest_path: &mut HashMap<Node, u32>, // longest path from start node
+    discovered: &mut HashSet<Node>,
+    node: &Node,
+    curr_sum: u32,
+) {
+    if discovered.contains(&node) {
+        return;
+    }
+    discovered.insert(*node);
+
+    // if the found path is longer, save it
+    longest_path
+        .entry(*node)
+        .and_modify(|e| {
+            if *e < curr_sum {
+                *e = curr_sum
+            }
+        })
+        .or_insert(0);
+
+    // call the method on the neighbour nodes
+    graph.get(node).unwrap().iter().for_each(|val| {
+        if let Some(node_len) = val {
+            let length = curr_sum + node_len.1;
+            longest_path_rec(graph, longest_path, discovered, &node_len.0, length);
+        }
+    });
+
+    discovered.remove(node);
 }
 
-fn main() {
-    let stdin = io::stdin();
-    let grid = Grid::build(&mut stdin.lock());
-    // grid.print();
+fn longest_hike_step_count<const IGNORE_SLOPES: bool>(grid: &Grid) -> u32 {
+    let start = 1;
+    let end = grid.pos(grid.rows - 1, grid.cols - 2);
+
+    let graph = build_graph::<IGNORE_SLOPES>(&grid, start, end);
+
+    let mut discovered: HashSet<Node> = HashSet::new();
+    let mut longest_path: HashMap<Node, u32> = HashMap::new();
+    longest_path_rec(&graph, &mut longest_path, &mut discovered, &Node::Start, 0);
+
+    *longest_path.get(&Node::End).unwrap()
+}
+
+fn debug_graph(grid: &Grid) {
     let start = 1;
     let end = grid.pos(grid.rows - 1, grid.cols - 2);
 
@@ -421,14 +460,15 @@ fn main() {
     let intersections = get_intersections(&graph);
     println!("{:?}", intersections);
     grid.print_with_pos(&intersections);
-
     print_graph_as_graphviz::<false>(&graph);
+}
 
-    traverse_graph(&graph);
+fn main() {
+    let stdin = io::stdin();
+    let grid = Grid::build(&mut stdin.lock());
 
-    // println!("Part 1: {}", longest_hike_step_count::<false>(&grid));
-
-    // println!("Part 2: {}", longest_hike_step_count::<true>(&grid));
+    println!("Part 1: {}", longest_hike_step_count::<false>(&grid));
+    println!("Part 2: {}", longest_hike_step_count::<true>(&grid));
 }
 
 #[cfg(test)]
@@ -451,21 +491,23 @@ pub mod tests {
 
     #[test]
     fn test_walk() {
-        let grid = get_grid();
-        assert_eq!(walk::<false>(&grid, 1, South), Some((grid.pos(5, 3), 15)));
-        assert_eq!(walk::<false>(&grid, 1, North), None);
-        assert_eq!(walk::<false>(&grid, 1, East), None);
-        assert_eq!(walk::<false>(&grid, 1, West), None);
-        // 312, goes to exit
-        assert_eq!(
-            walk::<false>(&grid, grid.pos(13, 13), South),
-            Some((grid.pos(22, 21), 25))
-        );
+        let g = get_grid();
+        assert_eq!(walk::<false>(&g, 1, South), Some((g.pos(5, 3), 15)));
+        assert_eq!(walk::<false>(&g, 1, North), None);
+        assert_eq!(walk::<false>(&g, 1, East), None);
+        assert_eq!(walk::<false>(&g, 1, West), None);
+        let p = g.pos(13, 13); // 312
+        assert_eq!(walk::<false>(&g, p, South), Some((g.pos(19, 13), 10)));
+        // 456, goes to exit
+        let p1 = g.pos(19, 19);
+        assert_eq!(walk::<false>(&g, p1, South), Some((g.pos(22, 21), 5)));
     }
 
     #[test]
-    fn test_part1() {
+    fn test_part1_2() {
         let grid = get_grid();
         assert_eq!(longest_hike_step_count::<false>(&grid), 94);
+
+        assert_eq!(longest_hike_step_count::<true>(&grid), 154);
     }
 }

@@ -1,9 +1,7 @@
 # Day 23: [A Long Walk](https://adventofcode.com/2023/day/23)
 
-Got part 1 solved by implementing Dijkstra's algorithm, but it turns out that was a lucky hit, and using something called *shortest* path algorithm to find the longest path isn't the best idea. For part 2 it doesn't work at all and needs to be redone.
+Initially I got part 1 solved by implementing Dijkstra's algorithm, but it worked only because it was an acyclic graph. As a general method, a *shortest* path algorithm to find the longest path doesn't work.
 
-Two options:
-* Pure brute force: Graph isn't that big so should work.
-* Another algorigthm.
+I then refactored the whole thing to transform the maze into a graph that was easier to process. I validated that the graph was right by printing it out in Graphviz format and visualizing it.
 
-In either case would be good to convert the map into a proper graph, as this would avoid having to walk and count the steps all the time.
+A simple iterative DFS (Depth First Search) didn't work however, it had to be brute forced. However this turned out to be fast, around 2 seconds execution time.
