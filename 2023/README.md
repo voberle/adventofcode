@@ -14,7 +14,6 @@ Each exercise has its own README linked below, indicating here only a few keywor
 
 Missing days:
 
-- Day 17: Pathfinding with custom coordinates.
 - Day 21 part 2: Again special pattern in data.
 - Day 24 part 2: No idea how to do part 2.
 - Day 25 part 2: Press button.
@@ -87,9 +86,9 @@ Iterator `fold`.
 
 Recursion.
 
-## Day 17: Clumsy Crucible
+## Day 17: [Clumsy Crucible](day17/README.md)
 
-In progress: Not enough time on day 17 to finish it and couldn't catch up with it later.
+Shortest past finding with custom coordinates.
 
 ### Day 18: [Lavaduct Lagoon](day18/README.md) 🌟🌟
 
