@@ -5,12 +5,18 @@ use std::{
     ops::RangeInclusive,
 };
 
+#[derive(Debug, PartialEq)]
 struct Pos {
     x: i64,
     y: i64,
     z: i64,
 }
 
+impl Pos {
+    fn new(x: i64, y: i64, z: i64) -> Self {
+        Self { x, y, z }
+    }
+}
 struct Vel {
     x: i64,
     y: i64,
@@ -104,6 +110,15 @@ impl Hailstone {
             false
         }
     }
+
+    // Returns the position of the hailstone at the specified time
+    fn pos_at(&self, at: i64) -> Pos {
+        Pos {
+            x: self.p.x + at * self.v.x,
+            y: self.p.y + at * self.v.y,
+            z: self.p.z + at * self.v.z,
+        }
+    }
 }
 
 #[test]
@@ -184,6 +199,73 @@ fn count_crossing_hailstones(hailstones: &Vec<Hailstone>, area: &RangeInclusive<
         }
     }
     count
+}
+
+// Returns the vector for these two points.
+// https://math.stackexchange.com/questions/947555/how-to-determine-if-3-points-on-a-3-d-graph-are-collinear
+fn vector_for(a: &Pos, b: &Pos) -> Pos {
+    Pos {
+        x: b.x - a.x,
+        y: b.y - a.y,
+        z: b.z - a.z,
+    }
+}
+
+// Check if the cross-product of the two vectors is 0. This means the vectors are on the same line.
+// https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
+fn is_vector_cross_product_zero(ab: &Pos, ac: &Pos) -> bool {
+    let (a1, a2, a3) = (ab.x, ab.y, ab.z);
+    let (b1, b2, b3) = (ac.x, ac.y, ac.z);
+    let s1 = a2 * b3 - a3 * b2;
+    let s2 = a3 * b1 - a1 * b3;
+    let s3 = a1 * b2 - a2 * b1;
+    s1 == 0 && s2 == 0 && s3 == 0
+}
+
+// Check if the list of points are on the same line.
+fn are_points_aligned(points: &[Pos]) -> bool {
+    assert!(points.len() > 2);
+    let a = &points[0];
+    let b = &points[1];
+    let ab = vector_for(&a, &b);
+    for _ in 2..points.len() {
+        let c = &points[2];
+        let ac = vector_for(&a, &c);
+        if !is_vector_cross_product_zero(&ab, &ac) {
+            return false;
+        }
+    }
+    true
+}
+
+#[test]
+fn test_collision() {
+    let a = Hailstone::new(19, 13, 30, -2, 1, -2);
+    let a_f = a.pos_at(5);
+    assert_eq!(a_f, Pos::new(9, 18, 20));
+
+    let b = Hailstone::new(18, 19, 22, -1, -1, -2);
+    let b_f = b.pos_at(3);
+    assert_eq!(b_f, Pos::new(15, 16, 16));
+
+    let c = Hailstone::new(20, 25, 34, -2, -2, -4);
+    let c_f = c.pos_at(4);
+    assert_eq!(c_f, Pos::new(12, 17, 18));
+
+    let d = Hailstone::new(12, 31, 28, -1, -2, -1);
+    let d_f = d.pos_at(6);
+    assert_eq!(d_f, Pos::new(6, 19, 22));
+
+    let e = Hailstone::new(20, 19, 15, 1, -5, -3);
+    let e_f = e.pos_at(1);
+    assert_eq!(e_f, Pos::new(21, 14, 12));
+
+    let ab = vector_for(&a_f, &b_f);
+    let ac = vector_for(&a_f, &c_f);
+    assert!(is_vector_cross_product_zero(&ab, &ac));
+
+    let points = [a_f, b_f, c_f, d_f, e_f];
+    assert!(are_points_aligned(&points));
 }
 
 fn build_hailstones<R>(reader: &mut R) -> Vec<Hailstone>
