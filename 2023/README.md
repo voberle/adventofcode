@@ -90,6 +90,8 @@ Recursion.
 
 Shortest past finding with custom coordinates.
 
+FxHash.
+
 ### Day 18: [Lavaduct Lagoon](day18/README.md) 🌟🌟
 
 Shoelace algorithm.
