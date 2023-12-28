@@ -50,27 +50,33 @@ fn main() {
 
     // Part 2
     {
-        let keys: Vec<String> = network.keys().filter(|k| k.ends_with('A')).cloned().collect();
-        let steps: Vec<u64> = keys.iter().map(|k| {
-            let mut steps_count = 0;
-            let mut key = k;
-            for i in instructions.chars().cycle() {
-                //println!("'{i}' {key}");
-                let current_node = network.get(key).unwrap();
-                steps_count += 1;
+        let keys: Vec<String> = network
+            .keys()
+            .filter(|k| k.ends_with('A'))
+            .cloned()
+            .collect();
+        let steps: Vec<u64> = keys
+            .iter()
+            .map(|k| {
+                let mut steps_count = 0;
+                let mut key = k;
+                for i in instructions.chars().cycle() {
+                    //println!("'{i}' {key}");
+                    let current_node = network.get(key).unwrap();
+                    steps_count += 1;
 
-                key = if i == 'L' {
-                    &current_node.0
-                } else {
-                    &current_node.1
-                };
-                if key.ends_with("Z") {
-                    break;
+                    key = if i == 'L' {
+                        &current_node.0
+                    } else {
+                        &current_node.1
+                    };
+                    if key.ends_with("Z") {
+                        break;
+                    }
                 }
-            }
-            steps_count
-        })
-        .collect();
+                steps_count
+            })
+            .collect();
 
         // I don't know why it's so..
         let total_steps: u64 = steps.iter().fold(1, |n, i| num_integer::lcm(n, *i));

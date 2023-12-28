@@ -25,15 +25,21 @@ fn main() {
                 let cube_color = x[1];
                 match cube_color {
                     "red" => {
-                        if cube_count > 12 { test = false; }
+                        if cube_count > 12 {
+                            test = false;
+                        }
                         red_count = u32::max(red_count, cube_count);
                     }
                     "green" => {
-                        if cube_count > 13 { test = false; }
+                        if cube_count > 13 {
+                            test = false;
+                        }
                         green_count = u32::max(green_count, cube_count);
                     }
                     "blue" => {
-                        if cube_count > 14 { test = false; }
+                        if cube_count > 14 {
+                            test = false;
+                        }
                         blue_count = u32::max(blue_count, cube_count);
                     }
                     _ => {}

@@ -79,8 +79,11 @@ fn find_nb_ways(input: &str) -> u64 {
         .map(|(t, d)| Race::new(t, d))
         .collect();
     //println!("{:#?}", games);
-    
-    games.iter().map(Race::count_ways_to_win).fold(1, |n, i| n * i)
+
+    games
+        .iter()
+        .map(Race::count_ways_to_win)
+        .fold(1, |n, i| n * i)
 }
 
 #[test]

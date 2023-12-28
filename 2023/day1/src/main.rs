@@ -27,17 +27,14 @@ fn main() {
             while i < s.len() {
                 for pair in strings {
                     if s[i..].starts_with(pair.0) {
-                        s.replace_range(i..i+1, &pair.1.to_string());
+                        s.replace_range(i..i + 1, &pair.1.to_string());
                     }
                 }
                 i += 1;
             }
             dbg!(&s);
         }
-        let d: Vec<u32> = s
-            .chars()
-            .filter_map(|c| c.to_digit(10))
-            .collect();
+        let d: Vec<u32> = s.chars().filter_map(|c| c.to_digit(10)).collect();
         if !d.is_empty() {
             let d1 = d.first().unwrap();
             let d2 = d.last().unwrap();

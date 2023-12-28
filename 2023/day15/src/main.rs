@@ -141,7 +141,7 @@ fn main() {
 
 #[cfg(test)]
 pub mod tests {
-    use std::{io::BufReader, fs::File};
+    use std::{fs::File, io::BufReader};
 
     use super::*;
 

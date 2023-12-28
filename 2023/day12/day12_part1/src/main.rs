@@ -3,7 +3,8 @@
 use itertools::Itertools;
 use std::{
     fs::File,
-    io::{self, BufRead, BufReader}, usize,
+    io::{self, BufRead, BufReader},
+    usize,
 };
 
 const OPERATIONAL: char = '.';
@@ -142,19 +143,20 @@ impl Record {
         std::iter::zip(operational_sizes, damaged_sizes)
             .map(|(o, d)| OPERATIONAL.to_string().repeat(*o) + &DAMAGED.to_string().repeat(*d))
             .join("")
-        + &OPERATIONAL.to_string().repeat(*operational_sizes.last().unwrap())    
+            + &OPERATIONAL
+                .to_string()
+                .repeat(*operational_sizes.last().unwrap())
     }
 
     fn compare_string_against_state(&self, s: &str) -> bool {
         assert_eq!(self.states.len(), s.len());
-        std::iter::zip(self.states.chars(), s.chars())
-            .all(|(state, c)| {
-                if state == UNKNOWN {
-                    true
-                } else {
-                    state == c
-                }
-            })
+        std::iter::zip(self.states.chars(), s.chars()).all(|(state, c)| {
+            if state == UNKNOWN {
+                true
+            } else {
+                state == c
+            }
+        })
     }
 
     // In this version, we create the damaged "strings" and look for all the possible ways
@@ -164,10 +166,13 @@ impl Record {
     fn arrangements_count_2(&self) -> usize {
         let n = self.operational_count();
         let k = self.damaged_cont_group_sizes.len() + 1;
-        itertools::repeat_n(0..=n, k).multi_cartesian_product()
-            .filter(|comb| comb[1..comb.len()-1].iter().any(|n| *n != 0))
+        itertools::repeat_n(0..=n, k)
+            .multi_cartesian_product()
+            .filter(|comb| comb[1..comb.len() - 1].iter().any(|n| *n != 0))
             .filter(|comb| comb.iter().sum::<usize>() == n)
-            .map(|operational_sizes| Self::create_string(&operational_sizes, &self.damaged_cont_group_sizes))
+            .map(|operational_sizes| {
+                Self::create_string(&operational_sizes, &self.damaged_cont_group_sizes)
+            })
             .filter(|s| self.compare_string_against_state(s))
             .filter(|s| Self::calc_state_group_sizes(s) == self.damaged_cont_group_sizes)
             .count()
@@ -204,9 +209,18 @@ fn test_adjust_states() {
 
 #[test]
 fn test_create_string() {
-    assert_eq!(Record::create_string(&vec![0, 1, 5], &vec![7, 2]), "#######.##.....");
-    assert_eq!(Record::create_string(&vec![0, 6, 0], &vec![7, 2]), "#######......##");
-    assert_eq!(Record::create_string(&vec![2, 3, 1], &vec![7, 2]), "..#######...##.");
+    assert_eq!(
+        Record::create_string(&vec![0, 1, 5], &vec![7, 2]),
+        "#######.##....."
+    );
+    assert_eq!(
+        Record::create_string(&vec![0, 6, 0], &vec![7, 2]),
+        "#######......##"
+    );
+    assert_eq!(
+        Record::create_string(&vec![2, 3, 1], &vec![7, 2]),
+        "..#######...##."
+    );
 }
 
 #[test]

@@ -44,13 +44,13 @@ impl Card {
 
 #[derive(PartialOrd, Ord, PartialEq, Eq, Debug)]
 enum HandType {
-    HighCard, // where all cards' labels are distinct: 23456
+    HighCard,     // where all cards' labels are distinct: 23456
     OnePair, // where two cards share one label, and the other three cards have a different label from the pair and each other: A23A4
     TwoPair, // where two cards share one label, two other cards share a second label, and the remaining card has a third label: 23432
     ThreeOfAKind, // where three cards have the same label, and the remaining two cards are each different from any other card in the hand: TTT98
     FullHouse, // where three cards have the same label, and the remaining two cards share a different label: 23332
-    FourOfAKind,  // where four cards have the same label and one card has a different label: AA8AA
-    FiveOfAKind,  // where all five cards have the same label: AAAAA
+    FourOfAKind, // where four cards have the same label and one card has a different label: AA8AA
+    FiveOfAKind, // where all five cards have the same label: AAAAA
 }
 
 impl HandType {

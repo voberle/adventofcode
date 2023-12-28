@@ -26,7 +26,11 @@ struct Universe {
 
 impl Universe {
     fn new(width: usize, height: usize) -> Self {
-        Self { galaxies: Vec::new(), width, height }
+        Self {
+            galaxies: Vec::new(),
+            width,
+            height,
+        }
     }
 
     fn build<R>(reader: &mut R) -> Self
@@ -47,7 +51,11 @@ impl Universe {
             }
         }
         galaxies.sort();
-        Universe { galaxies, width, height }
+        Universe {
+            galaxies,
+            width,
+            height,
+        }
     }
 
     fn find(&self, pos: Position) -> Option<&Position> {
@@ -91,7 +99,10 @@ impl Universe {
 
 // any rows or columns that contain no galaxies should all actually be twice as big
 fn expand_universe(image: &Universe, expansion_factor: usize) -> Universe {
-    let mut expanded_hor: Universe = Universe::new(image.width * expansion_factor, image.height * expansion_factor);
+    let mut expanded_hor: Universe = Universe::new(
+        image.width * expansion_factor,
+        image.height * expansion_factor,
+    );
     // Expand horizontally
     let mut ye = 0;
     for y in 0..image.height {
@@ -168,7 +179,7 @@ fn main() {
 pub mod tests {
     use super::*;
     use std::{fs::File, io::BufReader};
-    
+
     #[test]
     fn test_expand_universe() {
         let mut reader = BufReader::new(File::open("resources/input_test1").unwrap());

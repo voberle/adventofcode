@@ -2,7 +2,7 @@
 // Part 1 test: 13
 // Part 2 test: 30
 
-use std::{collections::HashSet, io, usize, ops::AddAssign};
+use std::{collections::HashSet, io, ops::AddAssign, usize};
 
 fn set_or_inc<T: AddAssign>(v: &mut Vec<T>, i: usize, val: T) {
     if v.get(i).is_some() {

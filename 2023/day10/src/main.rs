@@ -389,8 +389,8 @@ fn main() {
 
 #[cfg(test)]
 pub mod tests {
-    use std::{io::BufReader, fs::File};
     use super::*;
+    use std::{fs::File, io::BufReader};
 
     #[test]
     fn check_guess_start() {

@@ -1,6 +1,9 @@
 // https://adventofcode.com/2023/day/24
 
-use std::{ops::RangeInclusive, io::{self, BufRead}};
+use std::{
+    io::{self, BufRead},
+    ops::RangeInclusive,
+};
 
 struct Pos {
     x: i64,
@@ -21,7 +24,14 @@ struct Hailstone {
 
 impl Hailstone {
     fn new(x: i64, y: i64, z: i64, vx: i64, vy: i64, vz: i64) -> Self {
-        Self { p: Pos { x, y, z }, v: Vel { x: vx, y: vy, z: vz } }
+        Self {
+            p: Pos { x, y, z },
+            v: Vel {
+                x: vx,
+                y: vy,
+                z: vz,
+            },
+        }
     }
 
     //  y - y1 = m(x - x1)
@@ -49,7 +59,7 @@ impl Hailstone {
         } else {
             Some((
                 Self::round_to_3((b1 * c2 - b2 * c1) / den),
-                Self::round_to_3((c1 * a2 - c2 * a1) / den)
+                Self::round_to_3((c1 * a2 - c2 * a1) / den),
             ))
         }
     }
@@ -62,7 +72,12 @@ impl Hailstone {
         Self::intersection(self, b)
     }
 
-    fn crosses_in_area(&self, b: &Hailstone, x_area: &RangeInclusive<f64>, y_area: &RangeInclusive<f64>) -> bool {
+    fn crosses_in_area(
+        &self,
+        b: &Hailstone,
+        x_area: &RangeInclusive<f64>,
+        y_area: &RangeInclusive<f64>,
+    ) -> bool {
         if let Some((x, y)) = Self::intersection(self, b) {
             x_area.contains(&x) && y_area.contains(&y)
         } else {
@@ -72,15 +87,17 @@ impl Hailstone {
 
     fn crosses_in_future(&self, b: &Hailstone, cross: &(f64, f64)) -> bool {
         (cross.0 - self.p.x as f64) * self.v.x as f64 > 0.0
-        &&
-        (cross.1 - self.p.y as f64) * self.v.y as f64 > 0.0
-        &&
-        (cross.0 - b.p.x as f64) * b.v.x as f64 > 0.0
-        &&
-        (cross.1 - b.p.y as f64) * b.v.y as f64 > 0.0
+            && (cross.1 - self.p.y as f64) * self.v.y as f64 > 0.0
+            && (cross.0 - b.p.x as f64) * b.v.x as f64 > 0.0
+            && (cross.1 - b.p.y as f64) * b.v.y as f64 > 0.0
     }
 
-    fn crosses_in_area_and_future(&self, b: &Hailstone, x_area: &RangeInclusive<f64>, y_area: &RangeInclusive<f64>) -> bool {
+    fn crosses_in_area_and_future(
+        &self,
+        b: &Hailstone,
+        x_area: &RangeInclusive<f64>,
+        y_area: &RangeInclusive<f64>,
+    ) -> bool {
         if let Some((x, y)) = Self::intersection(self, b) {
             x_area.contains(&x) && y_area.contains(&y) && self.crosses_in_future(b, &(x, y))
         } else {
@@ -160,7 +177,7 @@ fn test_intersection() {
 fn count_crossing_hailstones(hailstones: &Vec<Hailstone>, area: &RangeInclusive<f64>) -> i64 {
     let mut count = 0;
     for i in 0..hailstones.len() {
-        for j in i+1..hailstones.len() {
+        for j in i + 1..hailstones.len() {
             if hailstones[i].crosses_in_area_and_future(&hailstones[j], &area, &area) {
                 count += 1;
             }
@@ -177,9 +194,17 @@ where
     for l in reader.lines() {
         let line = l.unwrap();
         let pv: Vec<&str> = line.split(" @ ").collect();
-        let pos: Vec<i64> = pv[0].split(", ").map(|v| v.trim().parse().unwrap()).collect();
-        let vel: Vec<i64> = pv[1].split(", ").map(|v| v.trim().parse::<i64>().unwrap()).collect();
-        hailstones.push(Hailstone::new(pos[0], pos[1], pos[2], vel[0], vel[1], vel[2]));
+        let pos: Vec<i64> = pv[0]
+            .split(", ")
+            .map(|v| v.trim().parse().unwrap())
+            .collect();
+        let vel: Vec<i64> = pv[1]
+            .split(", ")
+            .map(|v| v.trim().parse::<i64>().unwrap())
+            .collect();
+        hailstones.push(Hailstone::new(
+            pos[0], pos[1], pos[2], vel[0], vel[1], vel[2],
+        ));
     }
     hailstones
 }

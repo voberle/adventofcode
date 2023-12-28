@@ -58,16 +58,14 @@ fn convert(maps: &HashMap<(String, String), Vec<RangeMapping>>, seed: u64) -> u6
 }
 
 #[derive(Debug)]
-struct SeedRanges{
+struct SeedRanges {
     ranges: Vec<Range<u64>>,
 }
 
 #[allow(dead_code)]
 impl SeedRanges {
     fn new(ranges: Vec<Range<u64>>) -> Self {
-        let mut s = Self {
-            ranges
-        };
+        let mut s = Self { ranges };
         s.ranges.sort_by_key(|r| r.start);
         s
     }
@@ -79,7 +77,13 @@ impl SeedRanges {
     fn add(&self, val: u64, to_add: u64) -> Result<u64, &'static str> {
         let mut res = val;
         let mut inc = to_add;
-        let mut idx: usize = self.ranges.iter().enumerate().find(|(_, r)| r.contains(&val)).unwrap().0;
+        let mut idx: usize = self
+            .ranges
+            .iter()
+            .enumerate()
+            .find(|(_, r)| r.contains(&val))
+            .unwrap()
+            .0;
         // println!("{val}");
         while !self.ranges[idx].contains(&(res + inc)) {
             inc -= self.ranges[idx].end - res;
@@ -96,7 +100,7 @@ impl SeedRanges {
 
 #[test]
 fn check_seed_range() {
-    let ranges = vec![79..(79+14), 55..(55+13)];
+    let ranges = vec![79..(79 + 14), 55..(55 + 13)];
     let s = SeedRanges::new(ranges);
     assert_eq!(s.first(), 55);
     assert_eq!(s.add(55, 2), Ok(57));
@@ -150,7 +154,6 @@ fn main() {
         .unwrap();
     println!("Part 1: {}", location_part_1);
 
-
     let mut seed_ranges: Vec<Range<u64>> = seeds.chunks(2).map(|c| (c[0]..c[0] + c[1])).collect();
     seed_ranges.sort_by_key(|r| r.start);
     println!("Seed ranges {:#?}", seed_ranges);
@@ -162,24 +165,25 @@ fn main() {
     const STEP: u64 = 100000;
     // const STEP: u64 = 1;
     let mut lowest_seed_idx = 0;
-    seed_ranges.iter().enumerate()
-    // .filter(|(i, _)| *i == 9)
-    .for_each(|(i, range)| {
-        let mut seed = range.start;
-        while seed < range.end {
-            let r = convert(&maps, seed);
-            if r < location {
-                lowest_seed_idx = i;
-                location = r;
-                println!("In {:?} found {}", range, location);
+    seed_ranges
+        .iter()
+        .enumerate()
+        // .filter(|(i, _)| *i == 9)
+        .for_each(|(i, range)| {
+            let mut seed = range.start;
+            while seed < range.end {
+                let r = convert(&maps, seed);
+                if r < location {
+                    lowest_seed_idx = i;
+                    location = r;
+                    println!("In {:?} found {}", range, location);
+                }
+                seed += STEP;
             }
-            seed += STEP;
-        }
-    });
+        });
     println!("Idx: {}: {}", lowest_seed_idx, location);
 
     println!("Part 2: {}", location);
-
 }
 
 #[test]
