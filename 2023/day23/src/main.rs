@@ -355,7 +355,7 @@ fn get_intersections(graph: &Graph) -> Vec<usize> {
 }
 
 // Prints the graph in Graphviz Dot format
-// dot -Tpdf -Ksfdp resources/input_test.graph > resources/input_test.pdf
+// dot -Tpdf -Ksfdp resources/input_test.gv > resources/input_test.pdf
 fn print_graph_as_graphviz<const IGNORE_SLOPES: bool>(graph: &Graph) {
     let edgeop = if IGNORE_SLOPES { "--" } else { "->" };
     println!("digraph Maze {{");
