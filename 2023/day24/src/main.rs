@@ -5,7 +5,7 @@ use std::{
     ops::RangeInclusive,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 struct Pos {
     x: i64,
     y: i64,
@@ -17,12 +17,14 @@ impl Pos {
         Self { x, y, z }
     }
 }
+#[derive(Debug, Clone)]
 struct Vel {
     x: i64,
     y: i64,
     z: i64,
 }
 
+#[derive(Debug, Clone)]
 struct Hailstone {
     p: Pos,
     v: Vel,
@@ -189,7 +191,7 @@ fn test_intersection() {
     assert!(!a.crosses_in_area_and_future(&b, &x_area, &y_area));
 }
 
-fn count_crossing_hailstones(hailstones: &Vec<Hailstone>, area: &RangeInclusive<f64>) -> i64 {
+fn count_crossing_hailstones(hailstones: &[Hailstone], area: &RangeInclusive<f64>) -> i64 {
     let mut count = 0;
     for i in 0..hailstones.len() {
         for j in i + 1..hailstones.len() {
@@ -214,11 +216,17 @@ fn vector_for(a: &Pos, b: &Pos) -> Pos {
 // Check if the cross-product of the two vectors is 0. This means the vectors are on the same line.
 // https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
 fn is_vector_cross_product_zero(ab: &Pos, ac: &Pos) -> bool {
-    let (a1, a2, a3) = (ab.x, ab.y, ab.z);
-    let (b1, b2, b3) = (ac.x, ac.y, ac.z);
-    let s1 = a2 * b3 - a3 * b2;
-    let s2 = a3 * b1 - a1 * b3;
-    let s3 = a1 * b2 - a2 * b1;
+    let ab_x = ab.x as i128;
+    let ab_y = ab.y as i128;
+    let ab_z = ab.z as i128;
+    let ac_x = ac.x as i128;
+    let ac_y = ac.y as i128;
+    let ac_z = ac.z as i128;
+    let (a1, a2, a3) = (ab_x, ab_y, ab_z);
+    let (b1, b2, b3) = (ac_x, ac_y, ac_z);
+    let s1 = a2.clone() * b3.clone() - a3.clone() * b2.clone();
+    let s2 = a3.clone() * b1.clone() - a1.clone() * b3.clone();
+    let s3 = a1.clone() * b2.clone() - a2.clone() * b1.clone();
     s1 == 0 && s2 == 0 && s3 == 0
 }
 
@@ -236,6 +244,71 @@ fn are_points_aligned(points: &[Pos]) -> bool {
         }
     }
     true
+}
+
+fn are_points_ref_aligned(points: &[&Pos]) -> bool {
+    assert!(points.len() > 2);
+    let a = points[0];
+    let b = points[1];
+    let ab = vector_for(&a, &b);
+    for _ in 2..points.len() {
+        let c = points[2];
+        let ac = vector_for(&a, &c);
+        if !is_vector_cross_product_zero(&ab, &ac) {
+            return false;
+        }
+    }
+    true
+}
+
+// Theory: We only need to find when 3 hailstones would be aligned
+fn find_alignment<const MAX: i64>(hailstones: &[Hailstone]) -> Option<([Pos; 3], [i64; 3])> {
+    assert_eq!(hailstones.len(), 3);
+    for ta in 0..MAX {
+        println!("Progress {ta}");
+        let a = hailstones[0].pos_at(ta as i64);
+        for tb in 0..MAX {
+            let b = hailstones[1].pos_at(tb as i64);
+            for tc in 0..MAX {
+                let c = hailstones[2].pos_at(tc as i64);
+                let p = [&a, &b, &c];
+                // println!("Checking {:?} at times {:?}", p, (ta, tb, tc));
+                if are_points_ref_aligned(&p) {
+                    println!("Found aligned {:?} at times {:?}", p, (ta, tb, tc));
+                    return Some(([a, b, c], [ta, tb, tc]));
+                }
+            }
+        }
+    }
+    None
+}
+
+fn perfect_colision_initial_pos(hailstones: &[Hailstone]) -> i64 {
+    // let a = Hailstone::new(81036585584730, 57155609328680, 97064111364402, 148, 211, 304);
+    // let b = Hailstone::new(87348042064677, 28402136204210, 217221456953281, 105, 205, 165);
+    // let c = Hailstone::new(279724917845922, 250956079438084, 6340365342173, 220, 327, 891);
+    // let subset = [a, b, c];
+    let subset = &hailstones[0..3];
+    println!("{:?}", subset);
+
+    if let Some(result) = find_alignment::<2000>(&subset) {
+        println!("{:?}", result);
+        return 0;
+    }
+    0
+}
+
+#[test]
+fn test_find_alignment() {
+    let a = Hailstone::new(19, 13, 30, -2, 1, -2);
+    let b = Hailstone::new(18, 19, 22, -1, -1, -2);
+    let c = Hailstone::new(20, 25, 34, -2, -2, -4);
+
+    let a_f = Pos::new(9, 18, 20);
+    let b_f = Pos::new(15, 16, 16);
+    let c_f = Pos::new(12, 17, 18);
+
+    assert_eq!(find_alignment::<20>(&[a, b, c]), Some(([a_f, b_f, c_f], [5, 3, 4])));
 }
 
 #[test]
@@ -296,7 +369,11 @@ fn main() {
     let hailstones = build_hailstones(&mut stdin.lock());
     let area = 200000000000000f64..=400000000000000f64;
 
+    // hailstones.sort_by_key(|h| h.p.x);
+
     println!("Part 1: {}", count_crossing_hailstones(&hailstones, &area));
+
+    println!("Part 2: {}", perfect_colision_initial_pos(&hailstones));
 }
 
 #[cfg(test)]
