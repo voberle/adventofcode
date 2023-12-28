@@ -7,5 +7,4 @@ Part 2 was obviously not going to work in a pure brute force way, but I went thi
 I ran the first few thousands and indeed it was periodic. I thought at implementing caching using this, but even with caching,
 1 billion iterations is a lot. So instead I used some simple math to jump ahead with the iterations using the period.
 
-One thing to notice is that I had very similar array management code as to day 13.
-This code could be made more reusable and put in a library.
+Very similar array management code as to day 13.

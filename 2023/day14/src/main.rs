@@ -1,7 +1,104 @@
 // https://adventofcode.com/2023/day/14
 
 use std::io;
-use table::Table;
+use std::{fmt, io::BufRead};
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Table<T>
+where
+    T: Clone,
+    T: From<char>,
+{
+    pub arr: Vec<T>,
+    pub width: usize,
+    pub height: usize,
+}
+
+impl<T> Table<T>
+where
+    T: Clone,
+    T: From<char>,
+{
+    pub fn new(arr: Vec<T>, width: usize, height: usize) -> Self {
+        assert_eq!(arr.len(), width * height);
+        Self { arr, width, height }
+    }
+
+    pub fn empty() -> Self {
+        Self::new(Vec::new(), 0, 0)
+    }
+
+    pub fn elt(&self, row: usize, col: usize) -> &T {
+        &self.arr[row * self.width + col]
+    }
+
+    pub fn row(&self, row: usize) -> &[T] {
+        let idx = row * self.width;
+        &self.arr[idx..idx + self.width]
+    }
+
+    pub fn col(&self, col: usize) -> Vec<T> {
+        // Much less efficient than line unfortunately
+        self.arr
+            .iter()
+            .skip(col)
+            .step_by(self.width)
+            .cloned()
+            .collect::<Vec<T>>()
+    }
+
+    pub fn build<R>(reader: &mut R) -> Table<T>
+    where
+        R: BufRead,
+    {
+        let mut p = Table::empty();
+        for l in reader.lines() {
+            let line = l.unwrap();
+            p.arr.extend(line.chars().map(|c| c.into()));
+            p.width = line.len();
+            p.height += 1;
+        }
+        p
+    }
+}
+
+impl<T> fmt::Display for Table<T>
+where
+    T: Clone,
+    T: From<char>,
+    String: for<'a> FromIterator<&'a T>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Cols={}; Rows={}", self.height, self.width)?;
+        for row in 0..self.height {
+            writeln!(f, "{}", self.row(row).iter().collect::<String>())?;
+        }
+        Ok(())
+    }
+}
+
+pub fn build_tables<R, T>(reader: &mut R) -> Vec<Table<T>>
+where
+    R: BufRead,
+    T: Clone,
+    T: From<char>,
+{
+    let mut patterns: Vec<Table<T>> = Vec::new();
+    let mut p = Table::empty();
+    for l in reader.lines() {
+        let line = l.unwrap();
+        if line.is_empty() {
+            patterns.push(p);
+            p = Table::empty();
+        } else {
+            p.arr.extend(line.chars().map(|c| c.into()));
+            p.width = line.len();
+            p.height += 1;
+        }
+    }
+    patterns.push(p); // not forgetting last one
+    patterns
+}
 
 fn collapse_north(table: &Table<char>) -> Table<char> {
     let collapsed_columns: Vec<Vec<char>> = (0..table.height)
@@ -44,14 +141,14 @@ fn collapse_south(table: &Table<char>) -> Table<char> {
 
 fn collapse_west(table: &Table<char>) -> Table<char> {
     let collapsed_columns: Vec<Vec<char>> = (0..table.width)
-        .map(|r| collapse_down(&table.row(r)))
+        .map(|r| collapse_down(table.row(r)))
         .collect();
 
     let mut result = Table::empty();
     result.width = table.width;
     result.height = table.height;
-    for i in 0..table.width {
-        result.arr.extend(collapsed_columns[i].iter());
+    for item in collapsed_columns.iter().take(table.width) {
+        result.arr.extend(item);
     }
     result
 }
@@ -61,7 +158,7 @@ fn collapse_east(table: &Table<char>) -> Table<char> {
         .map(|r| {
             let row = &mut table.row(r).to_vec();
             row.reverse();
-            let mut collapsed = collapse_down(&row);
+            let mut collapsed = collapse_down(row);
             collapsed.reverse();
             collapsed
         })
@@ -100,14 +197,14 @@ fn collapse_down(s: &[char]) -> Vec<char> {
     let mut res: Vec<char> = Vec::with_capacity(s.len());
 
     let mut dot_cnt = 0;
-    let mut O_cnt = 0;
+    let mut o_cnt = 0;
     for c in s {
         match c {
             '#' => {
-                for _ in 0..O_cnt {
+                for _ in 0..o_cnt {
                     res.push('O')
                 }
-                O_cnt = 0;
+                o_cnt = 0;
                 for _ in 0..dot_cnt {
                     res.push('.')
                 }
@@ -118,12 +215,12 @@ fn collapse_down(s: &[char]) -> Vec<char> {
                 dot_cnt += 1;
             }
             'O' => {
-                O_cnt += 1;
+                o_cnt += 1;
             }
             _ => {}
         }
     }
-    for _ in 0..O_cnt {
+    for _ in 0..o_cnt {
         res.push('O')
     }
     for _ in 0..dot_cnt {
