@@ -1,10 +1,10 @@
 // https://adventofcode.com/2023/day/17
 
+use fxhash::{FxHashMap, FxHashSet};
 use std::{
     collections::BinaryHeap,
     io::{self, BufRead},
 };
-use fxhash::{FxHashMap, FxHashSet};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Direction {
@@ -169,7 +169,7 @@ impl PartialOrd for Node {
 type HashKey = (usize, Option<Direction>, usize);
 
 // Dijkstra shortest path
-fn find_shortest_path(grid: &Grid, start: usize, end: usize) -> u32 {
+fn find_shortest_path<const ULTRA_CRUCIBLE: bool>(grid: &Grid, start: usize, end: usize) -> u32 {
     let mut visited: FxHashSet<HashKey> = FxHashSet::default();
     let mut distance: FxHashMap<HashKey, u32> = FxHashMap::default();
     let mut previous: FxHashMap<HashKey, HashKey> = FxHashMap::default();
@@ -213,15 +213,35 @@ fn find_shortest_path(grid: &Grid, start: usize, end: usize) -> u32 {
                 None => (true, false), // For starting position
             };
 
-            if !grid.allowed(pos, d) // going outside grid
-                || is_opposite_direction // going back
-                || (is_same_direction && line_len > 2) // too long straight
-            {
+            // Not allowed: Going outside grid or going back
+            if !grid.allowed(pos, d) || is_opposite_direction {
                 return None;
+            }
+
+            if !ULTRA_CRUCIBLE {
+                // Not allowed: Going too long straight
+                if is_same_direction && line_len > 2 {
+                    return None;
+                }
+            } else {
+                // Must move a min of 4 blocks straight, before turning, or even before it can stop at the end.
+                if !is_same_direction && line_len < 4 {
+                    return None;
+                }
+                // And max of 10 before having to turn.
+                if is_same_direction && line_len > 9 {
+                    return None;
+                }
             }
 
             let next_pos = grid.next_pos(pos, d);
             let next_line_len = if is_same_direction { line_len + 1 } else { 1 };
+            if ULTRA_CRUCIBLE {
+                // Cannot stop at the end if has not moved a min of 4 blocks straight.
+                if next_pos == end && next_line_len < 4 {
+                    return None;
+                }
+            }
 
             let next_key = (next_pos, Some(d), next_line_len);
             if visited.contains(&next_key) {
@@ -255,7 +275,7 @@ fn find_shortest_path(grid: &Grid, start: usize, end: usize) -> u32 {
         .unwrap();
 
     let path_back = path_back(&previous, end_key, start);
-    // grid.print_with_pos(&path_back);
+    grid.print_with_pos(&path_back);
 
     assert_eq!(shortest_distance, *distance.get(end_key).unwrap());
     shortest_distance
@@ -276,20 +296,21 @@ fn path_back(previous: &FxHashMap<HashKey, HashKey>, from: &HashKey, to: usize) 
     path_back
 }
 
-fn minimal_heat_loss(grid: &Grid) -> u32 {
+fn minimal_heat_loss<const ULTRA_CRUCIBLE: bool>(grid: &Grid) -> u32 {
     let start = 0;
     let end = grid.pos(grid.rows - 1, grid.cols - 1);
     // println!("Start: {}; End: {}", start, end);
     // grid.print_with_pos(&[start, end]);
 
-    find_shortest_path(grid, start, end)
+    find_shortest_path::<ULTRA_CRUCIBLE>(grid, start, end)
 }
 
 fn main() {
     let stdin = io::stdin();
     let grid = Grid::build(&mut stdin.lock());
 
-    println!("Part 1: {}", minimal_heat_loss(&grid));
+    println!("Part 1: {}", minimal_heat_loss::<false>(&grid));
+    println!("Part 2: {}", minimal_heat_loss::<true>(&grid));
 }
 
 #[cfg(test)]
@@ -297,14 +318,21 @@ pub mod tests {
     use super::*;
     use std::{fs::File, io::BufReader};
 
-    fn get_grid() -> Grid {
-        let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
-        Grid::build(&mut reader)
+    #[test]
+    fn test_part1() {
+        let mut reader = BufReader::new(File::open("resources/input_test_1").unwrap());
+        let grid = Grid::build(&mut reader);
+        assert_eq!(minimal_heat_loss::<false>(&grid), 102);
     }
 
     #[test]
-    fn test_part1() {
-        let grid = get_grid();
-        assert_eq!(minimal_heat_loss(&grid), 102);
+    fn test_part2() {
+        let mut reader1 = BufReader::new(File::open("resources/input_test_1").unwrap());
+        let grid1 = Grid::build(&mut reader1);
+        assert_eq!(minimal_heat_loss::<true>(&grid1), 94);
+
+        let mut reader2 = BufReader::new(File::open("resources/input_test_2").unwrap());
+        let grid2 = Grid::build(&mut reader2);
+        assert_eq!(minimal_heat_loss::<true>(&grid2), 71);
     }
 }

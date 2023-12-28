@@ -20,7 +20,6 @@ Missing days:
 
 Also:
 
-- Test [FxHash](https://github.com/cbreeden/fxhash)
 - Extract reusable code into "utils".
 
 ## Days
@@ -87,7 +86,7 @@ Iterator `fold`.
 
 Recursion.
 
-## Day 17: [Clumsy Crucible](day17/README.md)
+## Day 17: [Clumsy Crucible](day17/README.md) 🌟🌟
 
 Shortest past finding with custom coordinates.
 
