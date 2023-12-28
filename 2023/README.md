@@ -101,11 +101,11 @@ Shoelace algorithm.
 
 Bigger parsing; Recursion.
 
-### Day 20: [Pulse Propagation](day20/README.md) 🌟
+### Day 20: [Pulse Propagation](day20/README.md) 🌟🌟
 
 Traits.
 
-Special pattern in the data for part 2.
+Special pattern in the data for part 2. LCM.
 
 ### Day 21: [Step Counter](day21/README.md) 🌟
 

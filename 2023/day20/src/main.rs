@@ -207,7 +207,9 @@ impl Module for Conjunction {
     }
 
     fn reset(&mut self) {
-        self.previous_pulse.values_mut().for_each(|val| *val = false);
+        self.previous_pulse
+            .values_mut()
+            .for_each(|val| *val = false);
         assert!(self.is_initial_state());
     }
 }
@@ -349,7 +351,10 @@ fn is_config_in_initial_state(configuration: &Configuration) -> bool {
 
 const DEBUG: bool = false;
 
-fn run_once_with_module_detection(configuration: &mut Configuration, module_to_detect: &Option<String>) -> (u64, u64) {
+fn run_once_with_module_detection(
+    configuration: &mut Configuration,
+    module_to_detect: &Option<String>,
+) -> (u64, u64) {
     let mut pulses_to_exec: VecDeque<Pulse> = VecDeque::new();
 
     // Press button
@@ -373,7 +378,7 @@ fn run_once_with_module_detection(configuration: &mut Configuration, module_to_d
                 }
                 if let Some(mod_to_catch) = module_to_detect {
                     if *mod_to_catch == sent.to && sent.value == LOW {
-                        println!("{} got a LOW, stopping", mod_to_catch);
+                        // println!("{} got a LOW, stopping", mod_to_catch);
                         // Hack to allow caller to detect we interrupted because we found the module
                         return (u64::MIN, u64::MIN);
                     }
@@ -412,22 +417,21 @@ const PRESS_COUNT: usize = 1000;
 
 // Part 1
 fn total_pulses_count_product(configuration: &mut Configuration) -> u64 {
-    // Optimization option: We can press the button only the number of times
-    // required to get back to the initial stage (see `is_config_in_initial_state()`)
-    // and if 1000 can divide that total, just multiply it by `1000 / press_count`.
+    reset_configuration(configuration);
 
     let (sum_low, sum_high) = (0..PRESS_COUNT)
         .map(|_| run_once(configuration))
         .fold((0, 0), |acc, x| (acc.0 + x.0, acc.1 + x.1));
-    println!("Total low pulse: {}, high pulses {}", sum_low, sum_high);
+    // println!("Total low pulse: {}, high pulses {}", sum_low, sum_high);
     sum_low * sum_high
 }
 
-// Part 2
-// Fewest number of button presses required to deliver a single low pulse to the module named rx.
-fn pulse_count_for_low_to_rx(configuration: &mut Configuration) -> u32 {
+// Fewest number of button presses required to deliver a single low pulse to specified module.
+fn pulse_count_for_low_to(configuration: &mut Configuration, module: &str) -> u64 {
+    reset_configuration(configuration);
+
     let mut count = 0;
-    let rx = Some("rx".to_string());
+    let rx = Some(module.to_string());
     loop {
         let res = run_once_with_module_detection(configuration, &rx);
         count += 1;
@@ -442,6 +446,20 @@ fn pulse_count_for_low_to_rx(configuration: &mut Configuration) -> u32 {
         }
     }
     count
+}
+
+// Part 2
+// Fewest number of button presses required to deliver a single low pulse to the module named rx.
+// This requires to get the 4 nodes listed below in low state at the same time.
+fn pulse_count_for_low_to_rx(configuration: &mut Configuration) -> u64 {
+    [
+        pulse_count_for_low_to(configuration, "dl"),
+        pulse_count_for_low_to(configuration, "ks"),
+        pulse_count_for_low_to(configuration, "pm"),
+        pulse_count_for_low_to(configuration, "vk"),
+    ]
+    .iter()
+    .fold(1, |n, i| num_integer::lcm(n, *i))
 }
 
 fn build_configuration<R>(reader: &mut R) -> Configuration
@@ -504,13 +522,11 @@ fn reset_configuration(configuration: &mut Configuration) {
 
 fn main() {
     let stdin = io::stdin();
-
     let mut configuration = build_configuration(&mut stdin.lock());
     // println!("{:#?}", configuration);
 
     println!("Part 1: {}", total_pulses_count_product(&mut configuration));
 
-    reset_configuration(&mut configuration);
     println!("Part 2: {}", pulse_count_for_low_to_rx(&mut configuration));
 }
 
