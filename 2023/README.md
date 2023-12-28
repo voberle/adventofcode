@@ -20,6 +20,7 @@ Missing days:
 
 Also:
 
+- Test [FxHash](https://github.com/cbreeden/fxhash)
 - Extract reusable code into "utils".
 
 ## Days
