@@ -1,7 +1,104 @@
 // https://adventofcode.com/2023/day/16
 
 use std::{collections::HashSet, io};
-use table::Table;
+use std::{fmt, io::BufRead};
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Table<T>
+where
+    T: Clone,
+    T: From<char>,
+{
+    pub arr: Vec<T>,
+    pub width: usize,
+    pub height: usize,
+}
+
+impl<T> Table<T>
+where
+    T: Clone,
+    T: From<char>,
+{
+    pub fn new(arr: Vec<T>, width: usize, height: usize) -> Self {
+        assert_eq!(arr.len(), width * height);
+        Self { arr, width, height }
+    }
+
+    pub fn empty() -> Self {
+        Self::new(Vec::new(), 0, 0)
+    }
+
+    pub fn elt(&self, row: usize, col: usize) -> &T {
+        &self.arr[row * self.width + col]
+    }
+
+    pub fn row(&self, row: usize) -> &[T] {
+        let idx = row * self.width;
+        &self.arr[idx..idx + self.width]
+    }
+
+    pub fn col(&self, col: usize) -> Vec<T> {
+        // Much less efficient than line unfortunately
+        self.arr
+            .iter()
+            .skip(col)
+            .step_by(self.width)
+            .cloned()
+            .collect::<Vec<T>>()
+    }
+
+    pub fn build<R>(reader: &mut R) -> Table<T>
+    where
+        R: BufRead,
+    {
+        let mut p = Table::empty();
+        for l in reader.lines() {
+            let line = l.unwrap();
+            p.arr.extend(line.chars().map(|c| c.into()));
+            p.width = line.len();
+            p.height += 1;
+        }
+        p
+    }
+}
+
+impl<T> fmt::Display for Table<T>
+where
+    T: Clone,
+    T: From<char>,
+    String: for<'a> FromIterator<&'a T>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Cols={}; Rows={}", self.height, self.width)?;
+        for row in 0..self.height {
+            writeln!(f, "{}", self.row(row).iter().collect::<String>())?;
+        }
+        Ok(())
+    }
+}
+
+pub fn build_tables<R, T>(reader: &mut R) -> Vec<Table<T>>
+where
+    R: BufRead,
+    T: Clone,
+    T: From<char>,
+{
+    let mut patterns: Vec<Table<T>> = Vec::new();
+    let mut p = Table::empty();
+    for l in reader.lines() {
+        let line = l.unwrap();
+        if line.is_empty() {
+            patterns.push(p);
+            p = Table::empty();
+        } else {
+            p.arr.extend(line.chars().map(|c| c.into()));
+            p.width = line.len();
+            p.height += 1;
+        }
+    }
+    patterns.push(p); // not forgetting last one
+    patterns
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Position {
@@ -212,7 +309,10 @@ fn highest_energized_count(cave: &Table<char>) -> usize {
 
     let mut initial_dp: Vec<DirectedPos> = Vec::new();
     for row in 0..cave.height {
-        initial_dp.push(DirectedPos::new(Position::negative(row, RIGHT, &dims), RIGHT));
+        initial_dp.push(DirectedPos::new(
+            Position::negative(row, RIGHT, &dims),
+            RIGHT,
+        ));
         initial_dp.push(DirectedPos::new(Position::negative(row, LEFT, &dims), LEFT));
     }
     for col in 0..cave.width {
@@ -227,38 +327,38 @@ fn highest_energized_count(cave: &Table<char>) -> usize {
         .unwrap()
 }
 
+#[allow(dead_code)]
 fn print_cave(cave: &Table<char>, energized_points: &HashSet<DirectedPos>) {
     for row in 0..cave.height {
         for col in 0..cave.width {
             let el = cave.elt(row, col);
             if energized_points
                 .iter()
-                .find(|&dp| dp.position.row() == row && dp.position.col() == col)
-                .is_some()
+                .any(|&dp| dp.position.row() == row && dp.position.col() == col)
             {
                 print!("\x1b[91m{}\x1b[0m", *el);
             } else {
                 print!("{}", *el);
             }
         }
-        println!("");
+        println!();
     }
 }
 
+#[allow(dead_code)]
 fn print_energized_cave(cave: &Table<char>, energized_points: &HashSet<DirectedPos>) {
     for row in 0..cave.height {
         for col in 0..cave.width {
             if energized_points
                 .iter()
-                .find(|&dp| dp.position.row() == row && dp.position.col() == col)
-                .is_some()
+                .any(|&dp| dp.position.row() == row && dp.position.col() == col)
             {
                 print!("\x1b[91m#\x1b[0m");
             } else {
                 print!(".");
             }
         }
-        println!("");
+        println!();
     }
 }
 
