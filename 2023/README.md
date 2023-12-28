@@ -15,14 +15,12 @@ Each exercise has its own README linked below, indicating here only a few keywor
 Missing days:
 
 - Day 17: Pathfinding with custom coordinates.
-- Day 20 part 2: Special pattern in data.
 - Day 21 part 2: Again special pattern in data.
 - Day 24 part 2: No idea how to do part 2.
 - Day 25 part 2: Press button.
 
 Also:
 
-- Remove table lib, replace it with pieces of customizable code.
 - Extract reusable code into "utils".
 
 ## Days

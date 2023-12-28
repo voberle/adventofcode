@@ -67,9 +67,6 @@ version = "0.1.0"
 [[package]]
 name = "day14"
 version = "0.1.0"
-dependencies = [
- "table",
-]
 
 [[package]]
 name = "day15"
@@ -78,9 +75,6 @@ version = "0.1.0"
 [[package]]
 name = "day16"
 version = "0.1.0"
-dependencies = [
- "table",
-]
 
 [[package]]
 name = "day18"
@@ -379,10 +373,6 @@ dependencies = [
  "quote",
  "unicode-ident",
 ]
-
-[[package]]
-name = "table"
-version = "0.1.0"
 
 [[package]]
 name = "unicode-ident"
