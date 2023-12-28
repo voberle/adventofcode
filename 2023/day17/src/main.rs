@@ -1,9 +1,10 @@
 // https://adventofcode.com/2023/day/17
 
 use std::{
-    collections::{BinaryHeap, HashMap, HashSet},
+    collections::BinaryHeap,
     io::{self, BufRead},
 };
+use fxhash::{FxHashMap, FxHashSet};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Direction {
@@ -169,9 +170,9 @@ type HashKey = (usize, Option<Direction>, usize);
 
 // Dijkstra shortest path
 fn find_shortest_path(grid: &Grid, start: usize, end: usize) -> u32 {
-    let mut visited: HashSet<HashKey> = HashSet::default();
-    let mut distance: HashMap<HashKey, u32> = HashMap::default();
-    let mut previous: HashMap<HashKey, HashKey> = HashMap::new();
+    let mut visited: FxHashSet<HashKey> = FxHashSet::default();
+    let mut distance: FxHashMap<HashKey, u32> = FxHashMap::default();
+    let mut previous: FxHashMap<HashKey, HashKey> = FxHashMap::default();
     let mut shortest_distance = u32::MAX;
 
     let mut queue: BinaryHeap<Node> = BinaryHeap::new();
@@ -254,13 +255,13 @@ fn find_shortest_path(grid: &Grid, start: usize, end: usize) -> u32 {
         .unwrap();
 
     let path_back = path_back(&previous, end_key, start);
-    grid.print_with_pos(&path_back);
+    // grid.print_with_pos(&path_back);
 
     assert_eq!(shortest_distance, *distance.get(end_key).unwrap());
     shortest_distance
 }
 
-fn path_back(previous: &HashMap<HashKey, HashKey>, from: &HashKey, to: usize) -> Vec<usize> {
+fn path_back(previous: &FxHashMap<HashKey, HashKey>, from: &HashKey, to: usize) -> Vec<usize> {
     let mut path_back: Vec<usize> = Vec::new();
     let mut p = *from;
     while p != (to, None, 0) {
