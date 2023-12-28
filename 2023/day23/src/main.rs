@@ -1,7 +1,7 @@
 // https://adventofcode.com/2023/day/23
 
 use std::{
-    collections::{BinaryHeap, HashMap, HashSet},
+    collections::{HashMap, HashSet},
     io::{self, BufRead},
 };
 
@@ -45,6 +45,7 @@ struct Grid {
     cols: usize,
 }
 
+#[allow(dead_code)]
 impl Grid {
     fn build<R>(reader: &mut R) -> Self
     where
@@ -374,6 +375,7 @@ fn print_graph_as_graphviz<const IGNORE_SLOPES: bool>(graph: &Graph) {
 }
 
 // Graph traversal, as example how to do DFS.
+#[allow(dead_code)]
 fn traverse_graph(graph: &Graph) {
     let start = Node::Start;
 
@@ -452,6 +454,7 @@ fn longest_hike_step_count<const IGNORE_SLOPES: bool>(grid: &Grid) -> u32 {
     *longest_path.get(&Node::End).unwrap()
 }
 
+#[allow(dead_code)]
 fn debug_graph(grid: &Grid) {
     let start = 1;
     let end = grid.pos(grid.rows - 1, grid.cols - 2);

@@ -62,6 +62,7 @@ struct SeedRanges{
     ranges: Vec<Range<u64>>,
 }
 
+#[allow(dead_code)]
 impl SeedRanges {
     fn new(ranges: Vec<Range<u64>>) -> Self {
         let mut s = Self {

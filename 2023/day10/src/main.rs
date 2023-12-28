@@ -9,8 +9,7 @@
 use std::{
     collections::HashSet,
     fmt,
-    fs::File,
-    io::{self, BufRead, BufReader},
+    io::{self, BufRead},
 };
 
 const TO_NORTH: (i32, i32) = (-1, 0);
@@ -388,66 +387,72 @@ fn main() {
     println!("Part 2: {}", count_enclosed_area(&grid, &loop_pipe, &start));
 }
 
-#[test]
-fn check_guess_start() {
-    let mut g = b"\
+#[cfg(test)]
+pub mod tests {
+    use std::{io::BufReader, fs::File};
+    use super::*;
+
+    #[test]
+    fn check_guess_start() {
+        let mut g = b"\
 LJL
 FSF
 |LJ" as &[u8];
-    let grid = build_grid(&mut g);
-    assert_eq!(guess_start(&grid, Position::new(1, 1)), Pipe::new('7'));
-}
+        let grid = build_grid(&mut g);
+        assert_eq!(guess_start(&grid, Position::new(1, 1)), Pipe::new('7'));
+    }
 
-#[test]
-fn check_next_pipes() {
-    let mut g = b"\
+    #[test]
+    fn check_next_pipes() {
+        let mut g = b"\
 -L|F7
 7S-7|
 L|7||
 -L-J|
 L|-JF" as &[u8];
-    let grid = build_grid(&mut g);
+        let grid = build_grid(&mut g);
 
-    assert_eq!(
-        next_pipes(&grid, &Position::new(3, 1)),
-        [Position::new(2, 1), Position::new(3, 2)]
-    );
-}
+        assert_eq!(
+            next_pipes(&grid, &Position::new(3, 1)),
+            [Position::new(2, 1), Position::new(3, 2)]
+        );
+    }
 
-fn part1(filename: &str) -> usize {
-    let file = File::open(filename).unwrap();
-    let mut reader = BufReader::new(file);
-    let mut grid: Vec<Vec<Pipe>> = build_grid(&mut reader);
-    let start = find_and_update_start(&mut grid);
+    fn part1(filename: &str) -> usize {
+        let file = File::open(filename).unwrap();
+        let mut reader = BufReader::new(file);
+        let mut grid: Vec<Vec<Pipe>> = build_grid(&mut reader);
+        let start = find_and_update_start(&mut grid);
 
-    let loop_pipe: Vec<Position> = find_loop(&grid, start);
-    loop_pipe.len() / 2
-}
+        let loop_pipe: Vec<Position> = find_loop(&grid, start);
+        loop_pipe.len() / 2
+    }
 
-#[test]
-fn test_part1() {
-    assert_eq!(part1("resources/input_test1"), 4);
-    assert_eq!(part1("resources/input_test2"), 8);
-    assert_eq!(part1("resources/input_puzzle"), 6754);
-}
+    #[test]
+    fn test_part1() {
+        assert_eq!(part1("resources/input_test1"), 4);
+        assert_eq!(part1("resources/input_test2"), 8);
+        assert_eq!(part1("resources/input_puzzle"), 6754);
+    }
 
-fn part2(filename: &str) -> usize {
-    let file = File::open(filename).unwrap();
-    let mut reader = BufReader::new(file);
-    let mut grid: Vec<Vec<Pipe>> = build_grid(&mut reader);
-    let start = find_and_update_start(&mut grid);
+    fn part2(filename: &str) -> usize {
+        let file = File::open(filename).unwrap();
+        let mut reader = BufReader::new(file);
+        let mut grid: Vec<Vec<Pipe>> = build_grid(&mut reader);
+        let start = find_and_update_start(&mut grid);
 
-    let loop_pipe: Vec<Position> = find_loop(&grid, start);
-    count_enclosed_area(&grid, &loop_pipe, &start)
-}
+        let loop_pipe: Vec<Position> = find_loop(&grid, start);
+        count_enclosed_area(&grid, &loop_pipe, &start)
+    }
 
-#[test]
-fn test_part2() {
-    assert_eq!(part2("resources/input_test1"), 1);
-    assert_eq!(part2("resources/input_test2"), 1);
-    assert_eq!(part2("resources/input_test3"), 4);
-    assert_eq!(part2("resources/input_test4"), 4);
-    assert_eq!(part2("resources/input_test5"), 8);
-    assert_eq!(part2("resources/input_test6"), 10);
-    assert_eq!(part2("resources/input_puzzle"), 567);
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2("resources/input_test1"), 1);
+        assert_eq!(part2("resources/input_test2"), 1);
+        assert_eq!(part2("resources/input_test3"), 4);
+        assert_eq!(part2("resources/input_test4"), 4);
+        assert_eq!(part2("resources/input_test5"), 8);
+        assert_eq!(part2("resources/input_test6"), 10);
+        assert_eq!(part2("resources/input_puzzle"), 567);
+    }
 }

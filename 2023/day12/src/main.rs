@@ -3,9 +3,7 @@
 use memoize::memoize;
 use std::{
     fmt,
-    fs::File,
-    io::{self, BufRead, BufReader},
-    usize,
+    io::{self, BufRead},
 };
 
 const OPERATIONAL: char = '.';
@@ -214,15 +212,20 @@ fn main() {
     println!("Part 2: {}", sum_of_unfolded_arrangements(&records));
 }
 
-fn part1(filename: &str) -> usize {
-    let file = File::open(filename).unwrap();
-    let mut reader = BufReader::new(file);
-    let records: Vec<Record> = build_records(&mut reader);
-    sum_of_arrangements(&records)
-}
+#[cfg(test)]
+pub mod tests {
+    use super::*;
+    use std::{fs::File, io::BufReader};
 
-#[test]
-fn test_part1() {
-    assert_eq!(part1("day12_part1/resources/input_test1"), 6);
-    assert_eq!(part1("day12_part1/resources/input_test2"), 21);
+    fn part1(filename: &str) -> usize {
+        let mut reader = BufReader::new(File::open(filename).unwrap());
+        let records: Vec<Record> = build_records(&mut reader);
+        sum_of_arrangements(&records)
+    }
+
+    #[test]
+    fn test_part1() {
+        assert_eq!(part1("day12_part1/resources/input_test1"), 6);
+        assert_eq!(part1("day12_part1/resources/input_test2"), 21);
+    }
 }

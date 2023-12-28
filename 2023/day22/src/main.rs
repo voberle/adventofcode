@@ -108,6 +108,7 @@ impl Brick {
         panic!("Something went wrong building Brick")
     }
 
+    #[cfg(test)]
     fn from(c1x: usize, c1y: usize, c1z: usize, c2x: usize, c2y: usize, c2z: usize) -> Self {
         Brick::new(Coord::new(c1x, c1y, c1z), Coord::new(c2x, c2y, c2z))
     }

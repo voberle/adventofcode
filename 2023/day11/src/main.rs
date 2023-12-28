@@ -1,9 +1,6 @@
 // https://adventofcode.com/2023/day/11
 
-use std::{
-    fs::File,
-    io::{self, BufRead, BufReader},
-};
+use std::io::{self, BufRead};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct Position {
@@ -167,28 +164,34 @@ fn main() {
     println!("Part 2: {}", sum_of_shortest_paths(&expanded_massive));
 }
 
-#[test]
-fn test_expand_universe() {
-    let mut reader = BufReader::new(File::open("resources/input_test1").unwrap());
-    let image: Universe = Universe::build(&mut reader);
+#[cfg(test)]
+pub mod tests {
+    use super::*;
+    use std::{fs::File, io::BufReader};
+    
+    #[test]
+    fn test_expand_universe() {
+        let mut reader = BufReader::new(File::open("resources/input_test1").unwrap());
+        let image: Universe = Universe::build(&mut reader);
 
-    let mut reader_expanded = BufReader::new(File::open("resources/test1_expanded").unwrap());
-    let image_expanded: Universe = Universe::build(&mut reader_expanded);
+        let mut reader_expanded = BufReader::new(File::open("resources/test1_expanded").unwrap());
+        let image_expanded: Universe = Universe::build(&mut reader_expanded);
 
-    assert_eq!(expand_universe(&image, 2), image_expanded);
-}
+        assert_eq!(expand_universe(&image, 2), image_expanded);
+    }
 
-fn part1(filename: &str, expansion_factor: usize) -> usize {
-    let file = File::open(filename).unwrap();
-    let mut reader = BufReader::new(file);
-    let image: Universe = Universe::build(&mut reader);
-    let expanded = expand_universe(&image, expansion_factor);
-    sum_of_shortest_paths(&expanded)
-}
+    fn part1(filename: &str, expansion_factor: usize) -> usize {
+        let file = File::open(filename).unwrap();
+        let mut reader = BufReader::new(file);
+        let image: Universe = Universe::build(&mut reader);
+        let expanded = expand_universe(&image, expansion_factor);
+        sum_of_shortest_paths(&expanded)
+    }
 
-#[test]
-fn test_part1() {
-    assert_eq!(part1("resources/input_test1", 2), 374);
-    assert_eq!(part1("resources/input_test1", 10), 1030);
-    assert_eq!(part1("resources/input_test1", 100), 8410);
+    #[test]
+    fn test_part1() {
+        assert_eq!(part1("resources/input_test1", 2), 374);
+        assert_eq!(part1("resources/input_test1", 10), 1030);
+        assert_eq!(part1("resources/input_test1", 100), 8410);
+    }
 }

@@ -1,10 +1,6 @@
 // https://adventofcode.com/2023/day/15
 
-use std::{
-    fs::File,
-    io::{self, BufRead, BufReader},
-    usize,
-};
+use std::io::{self, BufRead};
 
 fn ascii(c: char) -> u32 {
     c as u32
@@ -12,14 +8,6 @@ fn ascii(c: char) -> u32 {
 
 fn hash(s: &str) -> u32 {
     s.chars().fold(0, |acc, c| (ascii(c) + acc) * 17 % 256)
-}
-
-#[test]
-fn test_hash() {
-    assert_eq!(hash("HASH"), 52);
-    assert_eq!(hash("rn"), 0);
-    assert_eq!(hash("cm"), 0);
-    assert_eq!(hash("qp"), 1);
 }
 
 fn build_records<R>(reader: &mut R) -> Vec<String>
@@ -33,13 +21,6 @@ where
 
 fn sum_hashes(steps: &Vec<String>) -> u32 {
     steps.iter().map(|s| hash(s)).sum()
-}
-
-#[test]
-fn test_part1() {
-    let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
-    let records: Vec<String> = build_records(&mut reader);
-    assert_eq!(sum_hashes(&records), 1320);
 }
 
 // Part 2 stuff
@@ -156,4 +137,26 @@ fn main() {
             .map(|(i, b)| b.focusing_power(i))
             .sum::<u64>()
     );
+}
+
+#[cfg(test)]
+pub mod tests {
+    use std::{io::BufReader, fs::File};
+
+    use super::*;
+
+    #[test]
+    fn test_hash() {
+        assert_eq!(hash("HASH"), 52);
+        assert_eq!(hash("rn"), 0);
+        assert_eq!(hash("cm"), 0);
+        assert_eq!(hash("qp"), 1);
+    }
+
+    #[test]
+    fn test_part1() {
+        let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
+        let records: Vec<String> = build_records(&mut reader);
+        assert_eq!(sum_hashes(&records), 1320);
+    }
 }
