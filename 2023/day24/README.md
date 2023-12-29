@@ -6,3 +6,6 @@ Part 1 was mainly about remembering the equations of a line in 2D, and calculati
 
 ## Part 2
 
+Part 2 was too difficult for me.
+
+On AoC Reddit, I learned about the trick of changing the reference frame so that the rock doesn't move. Also the [solution from encse](https://aoc.csokavar.hu/?day=24) helped understand how to reuse part 1 to implement it, by projecting the coordinates on XY and then on XZ.

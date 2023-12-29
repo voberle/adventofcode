@@ -15,7 +15,6 @@ Each exercise has its own README linked below, indicating here only a few keywor
 Missing days:
 
 - Day 21 part 2: Again special pattern in data.
-- Day 24 part 2: No idea how to do part 2.
 - Day 25 part 2: Press button.
 
 Also:
@@ -118,9 +117,11 @@ Special pattern in the data for part 2.
 
 Longest path-finding, graph building, acyclic and cyclic graphs, DFS.
 
-### Day 24: [Never Tell Me The Odds](day24/README.md) 🌟
+### Day 24: [Never Tell Me The Odds](day24/README.md) 🌟🌟
 
 Maths.
+
+Hardest one this year.
 
 ### Day 25: [Snowverload](day25/README.md) 🌟
 

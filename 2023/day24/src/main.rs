@@ -13,6 +13,7 @@ struct Pos {
     z: i128,
 }
 
+#[cfg(test)]
 impl Pos {
     fn new(x: i128, y: i128, z: i128) -> Self {
         Self { x, y, z }
@@ -44,26 +45,31 @@ impl Hailstone {
         }
     }
 
-    // Returns the position of the hailstone at the specified time
-    fn pos_at(&self, at: i128) -> Pos {
-        Pos {
-            x: self.p.x + at * self.v.x,
-            y: self.p.y + at * self.v.y,
-            z: self.p.z + at * self.v.z,
+    // Project the hailstone as one on the X-Y plane
+    fn project_xy(&self) -> Hailstone2d {
+        Hailstone2d {
+            p: Pos2d {
+                x: self.p.x,
+                y: self.p.y,
+            },
+            v: Vel2d {
+                x: self.v.x,
+                y: self.v.y,
+            },
         }
     }
 
-    fn projectXY(&self) -> Hailstone2d {
-        Hailstone2d { 
-            p: Pos2d { x: self.p.x, y: self.p.y }, 
-            v: Vel2d { x: self.v.x, y: self.v.y }
-        }
-    }
-
-    fn projectXZ(&self) -> Hailstone2d {
-        Hailstone2d { 
-            p: Pos2d { x: self.p.x, y: self.p.z }, 
-            v: Vel2d { x: self.v.x, y: self.v.z }
+    // Project the hailstone as one on the X-Z plane
+    fn project_xz(&self) -> Hailstone2d {
+        Hailstone2d {
+            p: Pos2d {
+                x: self.p.x,
+                y: self.p.z,
+            },
+            v: Vel2d {
+                x: self.v.x,
+                y: self.v.z,
+            },
         }
     }
 }
@@ -74,12 +80,6 @@ impl Hailstone {
 struct Pos2d {
     x: i128,
     y: i128,
-}
-
-impl Pos2d {
-    fn new(x: i128, y: i128) -> Self {
-        Self { x, y }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -129,10 +129,12 @@ impl Hailstone2d {
         (v * 1000.0).round() / 1000.0
     }
 
+    #[cfg(test)]
     fn crosses(&self, b: &Hailstone2d) -> Option<(f64, f64)> {
         Self::intersection(self, b)
     }
 
+    #[cfg(test)]
     fn crosses_in_area(
         &self,
         b: &Hailstone2d,
@@ -179,83 +181,83 @@ fn test_intersection() {
     let x_area = 7f64..=27f64;
     let y_area = 7f64..=27f64;
 
-    let mut a = Hailstone::new(19, 13, 30, -2, 1, -2).projectXY();
-    let mut b = Hailstone::new(18, 19, 22, -1, -1, -2).projectXY();
+    let mut a = Hailstone::new(19, 13, 30, -2, 1, -2).project_xy();
+    let mut b = Hailstone::new(18, 19, 22, -1, -1, -2).project_xy();
     // Hailstones' paths will cross inside the test area (at x=14.333, y=15.333).
     assert_eq!(a.crosses(&b), Some((14.333, 15.333)));
     assert!(a.crosses_in_area(&b, &x_area, &y_area));
     assert!(a.crosses_in_area_and_future(&b, &x_area, &y_area));
 
-    a = Hailstone::new(19, 13, 30, -2, 1, -2).projectXY();
-    b = Hailstone::new(20, 25, 34, -2, -2, -4).projectXY();
+    a = Hailstone::new(19, 13, 30, -2, 1, -2).project_xy();
+    b = Hailstone::new(20, 25, 34, -2, -2, -4).project_xy();
     // Hailstones' paths will cross inside the test area (at x=11.667, y=16.667).
     assert_eq!(a.crosses(&b), Some((11.667, 16.667)));
     assert!(a.crosses_in_area(&b, &x_area, &y_area));
     assert!(a.crosses_in_area_and_future(&b, &x_area, &y_area));
 
-    a = Hailstone::new(19, 13, 30, -2, 1, -2).projectXY();
-    b = Hailstone::new(12, 31, 28, -1, -2, -1).projectXY();
+    a = Hailstone::new(19, 13, 30, -2, 1, -2).project_xy();
+    b = Hailstone::new(12, 31, 28, -1, -2, -1).project_xy();
     // Hailstones' paths will cross outside the test area (at x=6.2, y=19.4).
     assert_eq!(a.crosses(&b), Some((6.2, 19.4)));
     assert!(!a.crosses_in_area(&b, &x_area, &y_area));
     assert!(!a.crosses_in_area_and_future(&b, &x_area, &y_area));
 
-    a = Hailstone::new(19, 13, 30, -2, 1, -2).projectXY();
-    b = Hailstone::new(20, 19, 15, 1, -5, -3).projectXY();
+    a = Hailstone::new(19, 13, 30, -2, 1, -2).project_xy();
+    b = Hailstone::new(20, 19, 15, 1, -5, -3).project_xy();
     // Hailstones' paths crossed in the past for hailstone A.
     assert!(!a.crosses_in_area_and_future(&b, &x_area, &y_area));
 
-    a = Hailstone::new(18, 19, 22, -1, -1, -2).projectXY();
-    b = Hailstone::new(20, 25, 34, -2, -2, -4).projectXY();
+    a = Hailstone::new(18, 19, 22, -1, -1, -2).project_xy();
+    b = Hailstone::new(20, 25, 34, -2, -2, -4).project_xy();
     // Hailstones' paths are parallel; they never intersect.
     assert_eq!(a.crosses(&b), None);
     assert!(!a.crosses_in_area_and_future(&b, &x_area, &y_area));
 
-    a = Hailstone::new(18, 19, 22, -1, -1, -2).projectXY();
-    b = Hailstone::new(12, 31, 28, -1, -2, -1).projectXY();
+    a = Hailstone::new(18, 19, 22, -1, -1, -2).project_xy();
+    b = Hailstone::new(12, 31, 28, -1, -2, -1).project_xy();
     // Hailstones' paths will cross outside the test area (at x=-6, y=-5).
     assert_eq!(a.crosses(&b), Some((-6.0, -5.0)));
     assert!(!a.crosses_in_area(&b, &x_area, &y_area));
     assert!(!a.crosses_in_area_and_future(&b, &x_area, &y_area));
 
-    a = Hailstone::new(18, 19, 22, -1, -1, -2).projectXY();
-    b = Hailstone::new(20, 19, 15, 1, -5, -3).projectXY();
+    a = Hailstone::new(18, 19, 22, -1, -1, -2).project_xy();
+    b = Hailstone::new(20, 19, 15, 1, -5, -3).project_xy();
     // Hailstones' paths crossed in the past for both hailstones.
     assert!(!a.crosses_in_area_and_future(&b, &x_area, &y_area));
 
-    a = Hailstone::new(20, 25, 34, -2, -2, -4).projectXY();
-    b = Hailstone::new(12, 31, 28, -1, -2, -1).projectXY();
+    a = Hailstone::new(20, 25, 34, -2, -2, -4).project_xy();
+    b = Hailstone::new(12, 31, 28, -1, -2, -1).project_xy();
     // Hailstones' paths will cross outside the test area (at x=-2, y=3).
     assert_eq!(a.crosses(&b), Some((-2.0, 3.0)));
     assert!(!a.crosses_in_area(&b, &x_area, &y_area));
     assert!(!a.crosses_in_area_and_future(&b, &x_area, &y_area));
 
-    a = Hailstone::new(20, 25, 34, -2, -2, -4).projectXY();
-    b = Hailstone::new(20, 19, 15, 1, -5, -3).projectXY();
+    a = Hailstone::new(20, 25, 34, -2, -2, -4).project_xy();
+    b = Hailstone::new(20, 19, 15, 1, -5, -3).project_xy();
     // Hailstones' paths crossed in the past for hailstone B.
     assert!(!a.crosses_in_area_and_future(&b, &x_area, &y_area));
 
-    a = Hailstone::new(12, 31, 28, -1, -2, -1).projectXY();
-    b = Hailstone::new(20, 19, 15, 1, -5, -3).projectXY();
+    a = Hailstone::new(12, 31, 28, -1, -2, -1).project_xy();
+    b = Hailstone::new(20, 19, 15, 1, -5, -3).project_xy();
     // Hailstones' paths crossed in the past for both hailstones.
     assert!(!a.crosses_in_area_and_future(&b, &x_area, &y_area));
 }
 
-fn projectXY(hailstones: &[Hailstone]) -> Vec<Hailstone2d> {
-    hailstones.iter().map(Hailstone::projectXY).collect()
+fn project_xy(hailstones: &[Hailstone]) -> Vec<Hailstone2d> {
+    hailstones.iter().map(Hailstone::project_xy).collect()
 }
 
-fn projectXZ(hailstones: &[Hailstone]) -> Vec<Hailstone2d> {
-    hailstones.iter().map(Hailstone::projectXZ).collect()
+fn project_xz(hailstones: &[Hailstone]) -> Vec<Hailstone2d> {
+    hailstones.iter().map(Hailstone::project_xz).collect()
 }
 
 // Part 1
 fn count_crossing_hailstones(hailstones: &[Hailstone], area: &RangeInclusive<f64>) -> i128 {
-    let hailstones2d = projectXY(hailstones);
+    let hailstones2d = project_xy(hailstones);
     let mut count = 0;
     for i in 0..hailstones.len() {
         for j in i + 1..hailstones.len() {
-            if hailstones2d[i].crosses_in_area_and_future(&hailstones2d[j], &area, &area) {
+            if hailstones2d[i].crosses_in_area_and_future(&hailstones2d[j], area, area) {
                 count += 1;
             }
         }
@@ -263,71 +265,16 @@ fn count_crossing_hailstones(hailstones: &[Hailstone], area: &RangeInclusive<f64
     count
 }
 
-// Returns the vector for these two points.
-// https://math.stackexchange.com/questions/947555/how-to-determine-if-3-points-on-a-3-d-graph-are-collinear
-fn vector_for(a: &Pos, b: &Pos) -> Pos {
-    Pos {
-        x: b.x - a.x,
-        y: b.y - a.y,
-        z: b.z - a.z,
-    }
-}
-
-// Check if the cross-product of the two vectors is 0. This means the vectors are on the same line.
-// https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
-fn is_vector_cross_product_zero(ab: &Pos, ac: &Pos) -> bool {
-    let ab_x = ab.x as i128;
-    let ab_y = ab.y as i128;
-    let ab_z = ab.z as i128;
-    let ac_x = ac.x as i128;
-    let ac_y = ac.y as i128;
-    let ac_z = ac.z as i128;
-    let (a1, a2, a3) = (ab_x, ab_y, ab_z);
-    let (b1, b2, b3) = (ac_x, ac_y, ac_z);
-    let s1 = a2.clone() * b3.clone() - a3.clone() * b2.clone();
-    let s2 = a3.clone() * b1.clone() - a1.clone() * b3.clone();
-    let s3 = a1.clone() * b2.clone() - a2.clone() * b1.clone();
-    s1 == 0 && s2 == 0 && s3 == 0
-}
-
-// Check if the list of points are on the same line.
-fn are_points_aligned(points: &[Pos]) -> bool {
-    assert!(points.len() > 2);
-    let a = &points[0];
-    let b = &points[1];
-    let ab = vector_for(&a, &b);
-    for _ in 2..points.len() {
-        let c = &points[2];
-        let ac = vector_for(&a, &c);
-        if !is_vector_cross_product_zero(&ab, &ac) {
-            return false;
-        }
-    }
-    true
-}
-
-fn are_points_ref_aligned(points: &[&Pos]) -> bool {
-    assert!(points.len() > 2);
-    let a = points[0];
-    let b = points[1];
-    let ab = vector_for(&a, &b);
-    for _ in 2..points.len() {
-        let c = points[2];
-        let ac = vector_for(&a, &c);
-        if !is_vector_cross_product_zero(&ab, &ac) {
-            return false;
-        }
-    }
-    true
-}
-
-fn change_hailstone_to_rock_still_reference(hailstone: &Hailstone2d, velocity: &Vel2d) -> Hailstone2d {
-    Hailstone2d { 
-        p: hailstone.p.clone(), 
-        v: Vel2d { 
-            x: hailstone.v.x - velocity.x, 
-            y: hailstone.v.y - velocity.y, 
-        }
+fn change_hailstone_to_rock_still_reference(
+    hailstone: &Hailstone2d,
+    velocity: &Vel2d,
+) -> Hailstone2d {
+    Hailstone2d {
+        p: hailstone.p.clone(),
+        v: Vel2d {
+            x: hailstone.v.x - velocity.x,
+            y: hailstone.v.y - velocity.y,
+        },
     }
 }
 
@@ -340,10 +287,13 @@ fn find_collision_in_2d<const RANGE: i128>(hailstones: &[Hailstone2d]) -> Pos2d 
                 &change_hailstone_to_rock_still_reference(&hailstones[0], &vel),
                 &change_hailstone_to_rock_still_reference(&hailstones[1], &vel),
             ) {
-                let rock = Pos2d { x: inter.0 as i128, y: inter.1 as i128 };
-    
+                let rock = Pos2d {
+                    x: inter.0 as i128,
+                    y: inter.1 as i128,
+                };
+
                 if hailstones.iter().all(|h| {
-                    let h_rock_ref = change_hailstone_to_rock_still_reference(&h, &vel);
+                    let h_rock_ref = change_hailstone_to_rock_still_reference(h, &vel);
                     h_rock_ref.crosses_pos(&rock)
                 }) {
                     return rock;
@@ -355,43 +305,13 @@ fn find_collision_in_2d<const RANGE: i128>(hailstones: &[Hailstone2d]) -> Pos2d 
 }
 
 fn perfect_collision_initial_pos(hailstones: &[Hailstone]) -> i128 {
-    let hailstones_on_xy = projectXY(hailstones);
+    let hailstones_on_xy = project_xy(hailstones);
     let rock_xy = find_collision_in_2d::<500>(&hailstones_on_xy);
 
-    let hailstones_on_xz = projectXZ(hailstones);
+    let hailstones_on_xz = project_xz(hailstones);
     let rock_xz = find_collision_in_2d::<500>(&hailstones_on_xz);
 
     rock_xy.x + rock_xy.y + rock_xz.y
-}
-
-#[test]
-fn test_collision() {
-    let a = Hailstone::new(19, 13, 30, -2, 1, -2);
-    let a_f = a.pos_at(5);
-    assert_eq!(a_f, Pos::new(9, 18, 20));
-
-    let b = Hailstone::new(18, 19, 22, -1, -1, -2);
-    let b_f = b.pos_at(3);
-    assert_eq!(b_f, Pos::new(15, 16, 16));
-
-    let c = Hailstone::new(20, 25, 34, -2, -2, -4);
-    let c_f = c.pos_at(4);
-    assert_eq!(c_f, Pos::new(12, 17, 18));
-
-    let d = Hailstone::new(12, 31, 28, -1, -2, -1);
-    let d_f = d.pos_at(6);
-    assert_eq!(d_f, Pos::new(6, 19, 22));
-
-    let e = Hailstone::new(20, 19, 15, 1, -5, -3);
-    let e_f = e.pos_at(1);
-    assert_eq!(e_f, Pos::new(21, 14, 12));
-
-    let ab = vector_for(&a_f, &b_f);
-    let ac = vector_for(&a_f, &c_f);
-    assert!(is_vector_cross_product_zero(&ab, &ac));
-
-    let points = [a_f, b_f, c_f, d_f, e_f];
-    assert!(are_points_aligned(&points));
 }
 
 fn build_hailstones<R>(reader: &mut R) -> Vec<Hailstone>
@@ -433,10 +353,12 @@ pub mod tests {
     use std::{fs::File, io::BufReader};
 
     #[test]
-    fn test_part1() {
+    fn test_part1_2() {
         let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
         let hailstones = build_hailstones(&mut reader);
         let area = 7f64..=27f64;
         assert_eq!(count_crossing_hailstones(&hailstones, &area), 2);
+
+        assert_eq!(perfect_collision_initial_pos(&hailstones), 47);
     }
 }
