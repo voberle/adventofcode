@@ -6,20 +6,11 @@ My Rust implementations of [Advent of Code 2023](https://adventofcode.com/2023).
 
 I was learning Rust in the process, so my goal for the exercises was not always to do it the most concise or fastest, but also to try out things.
 
-Overall I managed to get 41 stars in the 25 days. Until the last week I was doing great, but then it got harder and I had less time due to Christmas preparations, so I couldn't finish them all by 25th. But still planning to work on them.
+Overall I managed to get 41 stars in the 25 days. Until the last week I was doing great, but then it got harder and I had less time due to Christmas preparations, so I couldn't finish them all by 25th.
+
+In the following weeks I finished the remaining ones. I had to use the Reddit AoC for some hints in some cases, like when there was special patterns in the data, and for the crazy part 2 of day 24.
 
 Each exercise has its own README linked below, indicating here only a few keywords about the exercise.
-
-### TODO
-
-Missing days:
-
-- Day 21 part 2: Again special pattern in data.
-- Day 25 part 2: Press button.
-
-Also:
-
-- Extract reusable code into "utils".
 
 ## Days
 
@@ -105,9 +96,9 @@ Traits.
 
 Special pattern in the data for part 2. LCM.
 
-### Day 21: [Step Counter](day21/README.md) 🌟
+### Day 21: [Step Counter](day21/README.md) 🌟🌟
 
-Special pattern in the data for part 2.
+Special pattern in the data for part 2. Geometric approach.
 
 ### Day 22: [Sand Slabs](day22/README.md) 🌟🌟
 

@@ -186,6 +186,7 @@ fn find_filled_grid(grid: &mut Grid, target_step_count: u64) -> (u64, u64, u64) 
     (steps, plot_count as u64, other_count as u64)
 }
 
+// Part 1
 fn garden_plots_count_after(grid: &Grid, target_step_count: u64) -> u64 {
     let initial_pos = get_initial_pos(grid).unwrap();
     let mut initial = grid.clone();
@@ -204,6 +205,53 @@ fn garden_plots_count_after(grid: &Grid, target_step_count: u64) -> u64 {
     plot_count
 }
 
+// Part 2
+// Works only for real input, taking into account its patterns.
+fn mega_garden_count() -> u64 {
+    // Once the input is full, we have following number of plots in base square
+    // depending on number of steps:
+    let base_count_even_nb_steps: u64 = 7688;
+    let base_count_odd_nb_steps: u64 = 7656;
+
+    // Number of steps total: 26501365 = 65 + (202300 * 131)
+    let n: u64 = 202300;
+    // The total is odd, so the middle square will be base_count_odd_nb_steps
+
+    // Depending on n, we will have following number of big squares that are full:
+    // N=2: even: 1; odd: 4
+    // N=3: even: 4; odd: 9
+    // N=4: even: 9, odd: 16
+    // Those are square numbers.
+    // Or if we look at all big squares even if they are not full:
+    // N=2: even: 4; odd: 9
+    // N=3: even: 9, odd: 16
+    // The later is easier to manipulate, so:
+    let count_even_big_squares = n * n;
+    let count_odd_big_squares = (n + 1) * (n + 1);
+
+    // The corners now. There are corners to add and to remove.
+    // N=1: corner_add: 4, corner_remove: 8
+    // N=2: corner_add: 8, corner_remove: 12
+    // N=3: corner_add: 12, corner_remove: 16
+    let count_corners_add = n * 4;
+    let count_corners_remove = (n + 1) * 4;
+
+    // Also if n is even, corners to remove are from even squares, to add from odd squares.
+
+    // The corners to remove represent the plots that are more than 65 steps away in a base square.
+    let count_65_steps = 3877;
+    let corner_count_to_remove_group4 = base_count_odd_nb_steps - count_65_steps;
+    // and the ones to add is similar
+    let count_64_steps = 3768;
+    let corner_count_to_add_group4 = base_count_even_nb_steps - count_64_steps;
+
+    // Full formula
+    count_odd_big_squares * base_count_odd_nb_steps
+    + count_even_big_squares * base_count_even_nb_steps
+    - count_corners_remove / 4 * corner_count_to_remove_group4
+    + count_corners_add / 4 * corner_count_to_add_group4
+}
+
 fn main() {
     let stdin = io::stdin();
 
@@ -211,6 +259,7 @@ fn main() {
     // grid.print();
 
     println!("Part 1: {}", garden_plots_count_after(&grid, 64));
+    println!("Part 2: {}", mega_garden_count());
 }
 
 #[cfg(test)]
