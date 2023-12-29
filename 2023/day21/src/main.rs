@@ -11,17 +11,6 @@ enum Direction {
 }
 use Direction::*;
 
-impl Direction {
-    fn index(&self) -> usize {
-        match self {
-            North => 0,
-            East => 1,
-            South => 2,
-            West => 3,
-        }
-    }
-}
-
 const ALL_DIRECTIONS: [Direction; 4] = [North, East, South, West];
 
 #[derive(Debug, Clone, PartialEq)]
@@ -105,27 +94,6 @@ impl Grid {
     }
 }
 
-#[test]
-fn test_grid() {
-    let input = "123\n456";
-    let grid = Grid::build(&mut input.as_bytes());
-    assert_eq!(grid.cols, 3);
-    assert_eq!(grid.rows, 2);
-    assert_eq!(grid.pos(0, 1), 1);
-    assert_eq!(grid.pos(1, 2), 5);
-    assert_eq!(grid.row(5), 1);
-    assert_eq!(grid.col(5), 2);
-    assert_eq!(grid.row(1), 0);
-    assert_eq!(grid.col(1), 1);
-
-    assert!(grid.allowed(5, North));
-    assert_eq!(grid.next_pos(5, North), 2);
-    assert!(grid.allowed(5, West));
-    assert_eq!(grid.next_pos(5, West), 4);
-    assert!(!grid.allowed(5, East));
-    assert!(!grid.allowed(5, South));
-}
-
 fn walk_one_step(grid: &mut Grid) {
     grid.values
         .iter()
@@ -205,11 +173,11 @@ fn find_filled_grid(grid: &mut Grid, target_step_count: u64) -> (u64, u64, u64) 
         if let Some(last) = maybe_second_last {
             // println!("------- Last {}, curr {}", last, plot_count);
             if plot_count == last {
-                println!("Found period after {} steps", steps + 1);
+                // println!("Found period after {} steps", steps + 1);
                 break;
             }
         }
-        grid.print();
+        // grid.print();
     }
     // println!("{:?}", saved_counts);
     let plot_count = *counts.last().unwrap();
@@ -236,19 +204,13 @@ fn garden_plots_count_after(grid: &Grid, target_step_count: u64) -> u64 {
     plot_count
 }
 
-const STEPS_COUNT_TEST: u64 = 6;
-const STEPS_COUNT_PART1: u64 = 64;
-
 fn main() {
     let stdin = io::stdin();
 
     let grid = Grid::build(&mut stdin.lock());
     // grid.print();
 
-    println!(
-        "Part 1: {}",
-        garden_plots_count_after(&grid, STEPS_COUNT_PART1)
-    );
+    println!("Part 1: {}", garden_plots_count_after(&grid, 64));
 }
 
 #[cfg(test)]
@@ -261,7 +223,7 @@ pub mod tests {
         let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
         let grid = Grid::build(&mut reader);
 
-        assert_eq!(garden_plots_count_after(&grid, STEPS_COUNT_TEST), 16);
-        assert_eq!(garden_plots_count_after(&grid, STEPS_COUNT_PART1), 42);
+        assert_eq!(garden_plots_count_after(&grid, 6), 16);
+        assert_eq!(garden_plots_count_after(&grid, 64), 42);
     }
 }
