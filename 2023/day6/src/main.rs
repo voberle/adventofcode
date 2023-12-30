@@ -1,17 +1,8 @@
 // https://adventofcode.com/2023/day/6
 
-static INPUT1_TEST: &str = "\
-Time:      7  15   30
-Distance:  9  40  200\
-";
 
-static INPUT1: &str = "\
-Time:        58     81     96     76
-Distance:   434   1041   2219   1218\
-";
-
-static INPUT2_TEST: Race = Race::new(71530, 940200);
-static INPUT2: Race = Race::new(58819676, 434104122191218);
+static INPUT1: &str = include_str!("../resources/input_part1");
+static INPUT2: &str = include_str!("../resources/input_part2");
 
 #[derive(Debug)]
 struct Race {
@@ -86,17 +77,29 @@ fn find_nb_ways(input: &str) -> u64 {
         .fold(1, |n, i| n * i)
 }
 
-#[test]
-fn check_part1() {
-    assert_eq!(find_nb_ways(INPUT1_TEST), 288);
-}
-
-#[test]
-fn check_part2() {
-    assert_eq!(INPUT2_TEST.count_ways_to_win(), 71503);
-}
-
 fn main() {
     println!("Part 1: {}", find_nb_ways(INPUT1));
-    println!("Part 2: {}", INPUT2.count_ways_to_win());
+    println!("Part 2: {}", find_nb_ways(INPUT2));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    static INPUT1_TEST: &str = "\
+Time:      7  15   30
+Distance:  9  40  200\
+";
+
+    static INPUT2_TEST: Race = Race::new(71530, 940200);
+
+    #[test]
+    fn check_part1() {
+        assert_eq!(find_nb_ways(INPUT1_TEST), 288);
+    }
+
+    #[test]
+    fn check_part2() {
+        assert_eq!(INPUT2_TEST.count_ways_to_win(), 71503);
+    }
 }
