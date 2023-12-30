@@ -2,17 +2,16 @@ use std::io::{self, Read};
 
 use md5::Digest;
 
-fn starts_5_zeroes(digest: &Digest) -> bool {
-    format!("{:x}", digest).starts_with("00000")
+fn starts_with(digest: &Digest, start: &str) -> bool {
+    format!("{:x}", digest).starts_with(start)
 }
 
-fn part1(secret_key: &str) -> u32 {
+fn find_lowest_number<const MAX: u32>(secret_key: &str, start: &str) -> u32 {
     let mut lowest = u32::MAX;
-    for n in 1..10_000_000 {
+    for n in 1..MAX {
         let s = format!("{}{}", secret_key, n);
         let digest = md5::compute(s.as_bytes());
-        if starts_5_zeroes(&digest) {
-            // println!("{:x}", digest);
+        if starts_with(&digest, start) {
             if n < lowest {
                 lowest = n;
             }
@@ -21,8 +20,12 @@ fn part1(secret_key: &str) -> u32 {
     lowest
 }
 
-fn part2(input: &str) -> i64 {
-    0
+fn part1(input: &str) -> u32 {
+    find_lowest_number::<10_000_000>(input, "00000")
+}
+
+fn part2(input: &str) -> u32 {
+    find_lowest_number::<10_000_000>(input, "000000")
 }
 
 fn main() {
@@ -40,10 +43,5 @@ mod tests {
     fn test_part1() {
         assert_eq!(part1("abcdef"), 609043);
         assert_eq!(part1("pqrstuv"), 1048970);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(""), 0);
     }
 }

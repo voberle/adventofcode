@@ -14,5 +14,6 @@ Easy.
 
 Easy.
 
-### Day 4: [The Ideal Stocking Stuffer](day04/README.md) 🌟
+### Day 4: [The Ideal Stocking Stuffer](day04/README.md) 🌟🌟
 
+Easy but brute-force (MD5).

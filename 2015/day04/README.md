@@ -6,3 +6,4 @@ Brute-forced the part 1, looping until an arbitrary max (not sure why that max w
 
 ## Part 2
 
+Brute-forced as well, almost disappoined it just worked.
