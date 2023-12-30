@@ -2,22 +2,22 @@ use std::io::{self, Read};
 
 use md5::Digest;
 
+#[inline]
 fn starts_with(digest: &Digest, start: &str) -> bool {
     format!("{:x}", digest).starts_with(start)
 }
 
 fn find_lowest_number<const MAX: u32>(secret_key: &str, start: &str) -> u32 {
-    let mut lowest = u32::MAX;
-    for n in 1..MAX {
-        let s = format!("{}{}", secret_key, n);
-        let digest = md5::compute(s.as_bytes());
+    (1..MAX).filter_map(|n| {
+        let digest = md5::compute(format!("{}{}", secret_key, n).as_bytes());
         if starts_with(&digest, start) {
-            if n < lowest {
-                lowest = n;
-            }
+            Some(n)
+        } else {
+            None
         }
-    }
-    lowest
+    })
+    .min()
+    .unwrap()
 }
 
 fn part1(input: &str) -> u32 {
