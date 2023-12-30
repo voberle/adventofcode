@@ -2,4 +2,6 @@
 
 ## 2015
 
-### Day 1: [Not Quite Lisp](day01/README.md) 🌟
+### Day 1: [Not Quite Lisp](day01/README.md) 🌟🌟
+
+Trivial.

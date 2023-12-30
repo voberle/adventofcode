@@ -6,8 +6,19 @@ fn part1(input: &str) -> i64 {
     up_count as i64 - down_count as i64
 }
 
-fn part2(input: &str) -> i64 {
-    0
+fn part2(input: &str) -> usize {
+    let mut floor = 0;
+    for (i, c) in input.chars().enumerate() {
+        floor += match c {
+            '(' => 1,
+            ')' => -1,
+            _ => panic!("Invalid char {}", c),
+        };
+        if floor == -1 {
+            return i + 1;
+        }
+    }
+    panic!("It didn't work");
 }
 
 fn main() {
@@ -36,6 +47,7 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(""), 0);
+        assert_eq!(part2(")"), 1);
+        assert_eq!(part2("()())"), 5);
     }
 }
