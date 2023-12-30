@@ -43,12 +43,11 @@ impl Pos {
     }
 }
 
-fn build_directions(input: &str) -> Vec<Direction> {
+fn build(input: &str) -> Vec<Direction> {
     input.chars().map(Direction::new).collect()
 }
 
-fn at_least_one_present(input: &str) -> usize {
-    let dirs = build_directions(input);
+fn at_least_one_present(dirs: &Vec<Direction>) -> usize {
     let mut santa = Pos::new(0, 0);
     let mut visited: FxHashSet<Pos> = FxHashSet::default();
     visited.insert(santa);
@@ -59,8 +58,7 @@ fn at_least_one_present(input: &str) -> usize {
     visited.len()
 }
 
-fn with_robot_santa(input: &str) -> usize {
-    let dirs = build_directions(input);
+fn with_robot_santa(dirs: &Vec<Direction>) -> usize {
     let mut santa = Pos::new(0, 0);
     let mut robot = Pos::new(0, 0);
     let mut visited: FxHashSet<Pos> = FxHashSet::default();
@@ -83,8 +81,10 @@ fn with_robot_santa(input: &str) -> usize {
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    println!("Part 1: {}", at_least_one_present(&input));
-    println!("Part 2: {}", with_robot_santa(&input));
+    let dirs = build(&input);
+
+    println!("Part 1: {}", at_least_one_present(&dirs));
+    println!("Part 2: {}", with_robot_santa(&dirs));
 }
 
 #[cfg(test)]
@@ -93,15 +93,15 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(at_least_one_present(">"), 2);
-        assert_eq!(at_least_one_present("^>v<"), 4);
-        assert_eq!(at_least_one_present("^v^v^v^v^v"), 2);
+        assert_eq!(at_least_one_present(&build(">")), 2);
+        assert_eq!(at_least_one_present(&build("^>v<")), 4);
+        assert_eq!(at_least_one_present(&build("^v^v^v^v^v")), 2);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(with_robot_santa("^v"), 3);
-        assert_eq!(with_robot_santa("^>v<"), 3);
-        assert_eq!(with_robot_santa("^v^v^v^v^v"), 11);
+        assert_eq!(with_robot_santa(&build("^v")), 3);
+        assert_eq!(with_robot_santa(&build("^>v<")), 3);
+        assert_eq!(with_robot_santa(&build("^v^v^v^v^v")), 11);
     }
 }
