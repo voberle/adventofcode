@@ -1,0 +1,41 @@
+use std::io::{self, Read};
+
+fn part1(input: &str) -> i64 {
+    let up_count = input.chars().filter(|c| *c == '(').count();
+    let down_count = input.chars().filter(|c| *c == ')').count();
+    up_count as i64 - down_count as i64
+}
+
+fn part2(input: &str) -> i64 {
+    0
+}
+
+fn main() {
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    println!("Part 1: {}", part1(&input));
+    println!("Part 2: {}", part2(&input));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_part1() {
+        assert_eq!(part1("(())"), 0);
+        assert_eq!(part1("()()"), 0);
+        assert_eq!(part1("((("), 3);
+        assert_eq!(part1("(()(()("), 3);
+        assert_eq!(part1("))((((("), 3);
+        assert_eq!(part1("())"), -1);
+        assert_eq!(part1("))("), -1);
+        assert_eq!(part1(")))"), -3);
+        assert_eq!(part1(")())())"), -3);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(""), 0);
+    }
+}
