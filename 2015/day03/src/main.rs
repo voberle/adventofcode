@@ -59,15 +59,32 @@ fn at_least_one_present(input: &str) -> usize {
     visited.len()
 }
 
-fn part2(input: &str) -> i64 {
-    0
+fn with_robot_santa(input: &str) -> usize {
+    let dirs = build_directions(input);
+    let mut santa = Pos::new(0, 0);
+    let mut robot = Pos::new(0, 0);
+    let mut visited: FxHashSet<Pos> = FxHashSet::default();
+    visited.insert(santa);
+
+    let mut turn = false;
+    for d in dirs {
+        if !turn {
+            santa = santa.towards(&d);
+            visited.insert(santa);
+        } else {
+            robot = robot.towards(&d);
+            visited.insert(robot);
+        }
+        turn ^= true; // toggle the boolean
+    }
+    visited.len()
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     println!("Part 1: {}", at_least_one_present(&input));
-    println!("Part 2: {}", part2(&input));
+    println!("Part 2: {}", with_robot_santa(&input));
 }
 
 #[cfg(test)]
@@ -83,6 +100,8 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(""), 0);
+        assert_eq!(with_robot_santa("^v"), 3);
+        assert_eq!(with_robot_santa("^>v<"), 3);
+        assert_eq!(with_robot_santa("^v^v^v^v^v"), 11);
     }
 }

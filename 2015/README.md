@@ -10,4 +10,6 @@ Trivial.
 
 Easy.
 
-### Day 3: [Perfectly Spherical Houses in a Vacuum](day03/README.md) 🌟
+### Day 3: [Perfectly Spherical Houses in a Vacuum](day03/README.md) 🌟🌟
+
+Easy.

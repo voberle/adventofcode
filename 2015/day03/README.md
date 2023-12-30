@@ -6,3 +6,4 @@ Simple use of a set (used faster [FxHashSet](https://github.com/cbreeden/fxhash)
 
 ## Part 2
 
+Easy variation on part 1.
