@@ -1,5 +1,3 @@
-use std::io::BufRead;
-
 /// A 2D grid backed by a simple Vector
 
 use crate::direction::Direction::{*, self};
@@ -12,14 +10,10 @@ pub struct Grid {
 }
 
 impl Grid {
-    pub fn build<R>(reader: &mut R) -> Self
-    where
-        R: BufRead,
-    {
+    pub fn build(input: &str) -> Self {
         let mut rows = 0;
-        let values: Vec<_> = reader
+        let values: Vec<_> = input
             .lines()
-            .filter_map(|result| result.ok())
             .flat_map(|l| {
                 rows += 1;
                 l.chars()
@@ -92,23 +86,29 @@ impl Grid {
     }
 }
 
-#[test]
-fn test_grid() {
-    let input = "123\n456";
-    let grid = Grid::build(&mut input.as_bytes());
-    assert_eq!(grid.cols, 3);
-    assert_eq!(grid.rows, 2);
-    assert_eq!(grid.pos(0, 1), 1);
-    assert_eq!(grid.pos(1, 2), 5);
-    assert_eq!(grid.row(5), 1);
-    assert_eq!(grid.col(5), 2);
-    assert_eq!(grid.row(1), 0);
-    assert_eq!(grid.col(1), 1);
 
-    assert!(grid.allowed(5, North));
-    assert_eq!(grid.next_pos(5, North), 2);
-    assert!(grid.allowed(5, West));
-    assert_eq!(grid.next_pos(5, West), 4);
-    assert!(!grid.allowed(5, East));
-    assert!(!grid.allowed(5, South));
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_grid() {
+        let input = "123\n456";
+        let grid = Grid::build(input);
+        assert_eq!(grid.cols, 3);
+        assert_eq!(grid.rows, 2);
+        assert_eq!(grid.pos(0, 1), 1);
+        assert_eq!(grid.pos(1, 2), 5);
+        assert_eq!(grid.row(5), 1);
+        assert_eq!(grid.col(5), 2);
+        assert_eq!(grid.row(1), 0);
+        assert_eq!(grid.col(1), 1);
+
+        assert!(grid.allowed(5, North));
+        assert_eq!(grid.next_pos(5, North), 2);
+        assert!(grid.allowed(5, West));
+        assert_eq!(grid.next_pos(5, West), 4);
+        assert!(!grid.allowed(5, East));
+        assert!(!grid.allowed(5, South));
+    }
 }
