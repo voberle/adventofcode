@@ -7,7 +7,7 @@ fn build_dimensions(input: &str) -> Vec<Vec<u64>> {
         .collect()
 }
 
-fn part1(input: &str) -> u64 {
+fn wrapping_paper_total(input: &str) -> u64 {
     let dims = build_dimensions(input);
     dims.iter()
         .map(|b| -> u64 {
@@ -19,15 +19,23 @@ fn part1(input: &str) -> u64 {
         .sum::<u64>()
 }
 
-fn part2(input: &str) -> i64 {
-    0
+fn ribbon_total(input: &str) -> u64 {
+    let dims = build_dimensions(input);
+    dims.iter()
+        .map(|b| -> u64 {
+            let perimeters = [(b[0] + b[1]) * 2, (b[1] + b[2]) * 2, (b[0] + b[2]) * 2];
+            let around_length = perimeters.iter().min().unwrap();
+            let ribbon = b.iter().product::<u64>();
+            around_length + ribbon
+        })
+        .sum::<u64>()
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    println!("Part 1: {}", part1(&input));
-    println!("Part 2: {}", part2(&input));
+    println!("Part 1: {}", wrapping_paper_total(&input));
+    println!("Part 2: {}", ribbon_total(&input));
 }
 
 #[cfg(test)]
@@ -38,11 +46,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(part1(INPUT_TEST), 58 + 43);
+        assert_eq!(wrapping_paper_total(INPUT_TEST), 58 + 43);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(INPUT_TEST), 0);
+        assert_eq!(ribbon_total(INPUT_TEST), 34 + 14);
     }
 }

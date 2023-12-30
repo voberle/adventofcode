@@ -6,5 +6,6 @@
 
 Trivial.
 
-### Day 2: [I Was Told There Would Be No Math](day02/README.md) 🌟
+### Day 2: [I Was Told There Would Be No Math](day02/README.md) 🌟🌟
 
+Easy.
