@@ -20,5 +20,6 @@ Easy but brute-force (MD5).
 
 Rayon.
 
-## Day 5: [Doesn't He Have Intern-Elves For This?](day05/README.md) 🌟
+## Day 5: [Doesn't He Have Intern-Elves For This?](day05/README.md) 🌟🌟
 
+Doing without Regex.
