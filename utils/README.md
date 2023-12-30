@@ -38,3 +38,10 @@ Generate a PDF:
 
 - [FxHash](https://github.com/cbreeden/fxhash) for faster HashSet/HashMap.
 - [Memoization](https://en.wikipedia.org/wiki/Memoization) for caching recursion calls.
+- [Rayon](https://docs.rs/rayon/latest/rayon/) for using multiple threads easily with iterators for example.
+
+### Benchmarking
+
+Easy benchmarking with [hyperfine](https://github.com/sharkdp/hyperfine):
+
+    hyperfine --warmup 5 'cat input| ./day01'
