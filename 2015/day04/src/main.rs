@@ -1,6 +1,7 @@
 use std::io::{self, Read};
 
 use md5::Digest;
+use rayon::prelude::*;
 
 #[inline]
 fn starts_with(digest: &Digest, start: &str) -> bool {
@@ -8,16 +9,18 @@ fn starts_with(digest: &Digest, start: &str) -> bool {
 }
 
 fn find_lowest_number<const MAX: u32>(secret_key: &str, start: &str) -> u32 {
-    (1..MAX).filter_map(|n| {
-        let digest = md5::compute(format!("{}{}", secret_key, n).as_bytes());
-        if starts_with(&digest, start) {
-            Some(n)
-        } else {
-            None
-        }
-    })
-    .min()
-    .unwrap()
+    (1..MAX)
+        .into_par_iter()
+        .filter_map(|n| {
+            let digest = md5::compute(format!("{}{}", secret_key, n).as_bytes());
+            if starts_with(&digest, start) {
+                Some(n)
+            } else {
+                None
+            }
+        })
+        .min()
+        .unwrap()
 }
 
 fn part1(input: &str) -> u32 {

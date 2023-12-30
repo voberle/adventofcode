@@ -7,3 +7,4 @@ description.workspace = true
 
 [dependencies]
 md5 = "0.7.0"
+rayon = "1.8.0"

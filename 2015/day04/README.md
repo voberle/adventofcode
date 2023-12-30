@@ -7,3 +7,5 @@ Brute-forced the part 1, looping until an arbitrary max (not sure why that max w
 ## Part 2
 
 Brute-forced as well, almost disappoined it just worked.
+
+But it was a good occasion to finally use [Rayon](https://docs.rs/rayon/latest/rayon/). It was super easy to use and divided the execution time by 5.
