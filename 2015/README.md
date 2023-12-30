@@ -13,3 +13,6 @@ Easy.
 ### Day 3: [Perfectly Spherical Houses in a Vacuum](day03/README.md) 🌟🌟
 
 Easy.
+
+### Day 4: [The Ideal Stocking Stuffer](day04/README.md) 🌟
+
