@@ -5,3 +5,6 @@
 ### Day 1: [Not Quite Lisp](day01/README.md) 🌟🌟
 
 Trivial.
+
+### Day 2: [I Was Told There Would Be No Math](day02/README.md) 🌟
+
