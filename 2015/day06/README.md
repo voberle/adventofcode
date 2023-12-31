@@ -6,3 +6,4 @@ Nothing really special, just maybe a small use of closures.
 
 ## Part 2
 
+Used generics to change the type of the grid.

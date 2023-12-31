@@ -24,5 +24,6 @@ Rayon.
 
 Doing without Regex.
 
-## Day 6: [Probably a Fire Hazard](day06/README.md) 🌟
+## Day 6: [Probably a Fire Hazard](day06/README.md) 🌟🌟
 
+Easy.
