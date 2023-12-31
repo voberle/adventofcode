@@ -1,6 +1,5 @@
 /// A 2D grid backed by a simple Vector
-
-use crate::direction::Direction::{*, self};
+use crate::direction::Direction::{self, *};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Grid {
@@ -27,11 +26,13 @@ impl Grid {
     }
 
     pub fn print_with_pos(&self, positions: &[usize]) {
+        const RED: &str = "\x1b[31m";
+        const RESET: &str = "\x1b[0m";
         for row in 0..self.rows {
             for p in row * self.cols..(row + 1) * self.cols {
                 let c = self.values[p];
                 if positions.contains(&p) {
-                    print!("\x1b[91m{}\x1b[0m", c);
+                    print!("{RED}{}{RESET}", c);
                 } else {
                     print!("{}", c);
                 }
@@ -85,7 +86,6 @@ impl Grid {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

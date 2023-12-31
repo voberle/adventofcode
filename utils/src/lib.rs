@@ -2,6 +2,7 @@
 
 #![allow(dead_code)]
 
+mod ansi;
 mod direction;
 mod grid;
 mod pipe;
