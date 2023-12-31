@@ -23,3 +23,6 @@ Rayon.
 ## Day 5: [Doesn't He Have Intern-Elves For This?](day05/README.md) 🌟🌟
 
 Doing without Regex.
+
+## Day 6: [Probably a Fire Hazard](day06/README.md) 🌟
+
