@@ -32,3 +32,7 @@ Easy.
 
 Fun with Rust: Trait, Box, Type.
 Graphviz support.
+
+## Day 8: [Matchsticks](day08/README.md) 🌟
+
+Peekable iterator.
