@@ -114,6 +114,6 @@ Maths.
 
 Hardest one this year.
 
-### Day 25: [Snowverload](day25/README.md) 🌟
+### Day 25: [Snowverload](day25/README.md) 🌟🌟
 
 Graphviz.

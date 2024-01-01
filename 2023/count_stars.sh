@@ -1,1 +1,0 @@
-tr -d -c '🌟' < README.md | wc -m
