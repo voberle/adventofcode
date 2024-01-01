@@ -2,7 +2,6 @@ use std::{
     collections::HashMap,
     fmt::{self, Debug},
     io::{self, Read},
-    rc::Rc,
 };
 
 type Wire = String;
@@ -13,6 +12,10 @@ trait Gate: Debug {
     fn print_graphviz(&self, id: usize);
 
     fn exec(&self, signals: &ActiveSignals) -> Option<(Wire, Signal)>;
+
+    fn is_initial_to(&self, _target: &str) -> bool {
+        false
+    }
 }
 
 #[derive(Debug)]
@@ -197,9 +200,13 @@ impl Gate for Initial {
     fn exec(&self, _signals: &ActiveSignals) -> Option<(Wire, Signal)> {
         Some((self.target.clone(), self.signal))
     }
+
+    fn is_initial_to(&self, target: &str) -> bool {
+        self.target == target
+    }
 }
 
-type Circuit = Vec<Rc<dyn Gate>>;
+type Circuit = Vec<Box<dyn Gate>>;
 
 fn build(input: &str) -> Circuit {
     input
@@ -209,23 +216,23 @@ fn build(input: &str) -> Circuit {
             let parts: Vec<_> = line.split(" -> ").collect();
             if parts[0].contains(" AND ") {
                 let wires: Vec<_> = parts[0].split(" AND ").collect();
-                Rc::new(BinaryOp::<AND>::new(wires[0], wires[1], parts[1])) as _
+                Box::new(BinaryOp::<AND>::new(wires[0], wires[1], parts[1])) as _
             } else if parts[0].contains(" OR ") {
                 let wires: Vec<_> = parts[0].split(" OR ").collect();
-                Rc::new(BinaryOp::<OR>::new(wires[0], wires[1], parts[1])) as _
+                Box::new(BinaryOp::<OR>::new(wires[0], wires[1], parts[1])) as _
             } else if parts[0].contains(" LSHIFT ") {
                 let p: Vec<_> = parts[0].split(" LSHIFT ").collect();
-                Rc::new(Shift::<LEFT>::new(p[0], p[1].parse().unwrap(), parts[1])) as _
+                Box::new(Shift::<LEFT>::new(p[0], p[1].parse().unwrap(), parts[1])) as _
             } else if parts[0].contains(" RSHIFT ") {
                 let p: Vec<_> = parts[0].split(" RSHIFT ").collect();
-                Rc::new(Shift::<RIGHT>::new(p[0], p[1].parse().unwrap(), parts[1])) as _
+                Box::new(Shift::<RIGHT>::new(p[0], p[1].parse().unwrap(), parts[1])) as _
             } else if parts[0].starts_with("NOT ") {
                 let p = parts[0].trim_start_matches("NOT ");
-                Rc::new(Unary::<NOT>::new(p, parts[1])) as _
+                Box::new(Unary::<NOT>::new(p, parts[1])) as _
             } else if let Ok(signal) = parts[0].parse() {
-                Rc::new(Initial::new(signal, parts[1])) as _
+                Box::new(Initial::new(signal, parts[1])) as _
             } else {
-                Rc::new(Unary::<FORWARD>::new(parts[0], parts[1])) as _
+                Box::new(Unary::<FORWARD>::new(parts[0], parts[1])) as _
             }
         })
         .collect()
@@ -245,15 +252,13 @@ fn print_graphviz(circuit: &Circuit) {
 // Go through all the gates, asking if these signals produce something
 // If they do, add to the map
 // When a full loop hasn't produced anything, stop
-fn run_circuit(circuit: &Circuit, wire: &str) -> ActiveSignals {
-    let mut signals: ActiveSignals = HashMap::new();
-
+fn run_circuit(circuit: &Circuit, signals: &mut ActiveSignals, wire_to_monitor: &str) {
     let mut change = true;
-    while change || !signals.contains_key(wire) {
+    while change || !signals.contains_key(wire_to_monitor) {
         change = false;
         // println!("Looping.....");
         for gate in circuit {
-            if let Some(result) = gate.exec(&signals) {
+            if let Some(result) = gate.exec(signals) {
                 // println!("{:?}  => {:?}", gate, result);
                 if let Some(old_key) = signals.insert(result.0, result.1) {
                     if old_key != result.1 {
@@ -265,27 +270,42 @@ fn run_circuit(circuit: &Circuit, wire: &str) -> ActiveSignals {
             }
         }
     }
-    signals
+    // println!("{:?}", signals);
 }
 
-fn signal_to_wire(circuit: &Circuit, wire: &str) -> u16 {
-    let signals = run_circuit(circuit, wire);
-    *signals.get(wire).unwrap()
+fn signal_to_wire(circuit: &Circuit, wire_to_monitor: &str) -> Signal {
+    let mut signals: ActiveSignals = HashMap::new();
+    run_circuit(circuit, &mut signals, wire_to_monitor);
+    *signals.get(wire_to_monitor).unwrap()
 }
 
-fn part2(circuit: &Circuit) -> i64 {
-    0
+fn signal_to_wire_part2(
+    circuit: &mut Circuit,
+    signal_on_a: Signal,
+    wire_to_monitor: &str,
+) -> Signal {
+    const B_WIRE: &str = "b";
+    let b_idx = circuit
+        .iter()
+        .position(|g| g.is_initial_to(B_WIRE))
+        .unwrap();
+    circuit[b_idx] = Box::new(Initial::new(signal_on_a, B_WIRE));
+    signal_to_wire(circuit, wire_to_monitor)
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let circuit = build(&input);
+    let mut circuit = build(&input);
     // println!("{:#?}", circuit);
     // print_graphviz(&circuit);
 
-    println!("Part 1: {}", signal_to_wire(&circuit, "a"));
-    println!("Part 2: {}", part2(&circuit));
+    let signal_on_a = signal_to_wire(&circuit, "a");
+    println!("Part 1: {}", signal_on_a);
+    println!(
+        "Part 2: {}",
+        signal_to_wire_part2(&mut circuit, signal_on_a, "a")
+    );
 }
 
 #[cfg(test)]
@@ -297,7 +317,9 @@ mod tests {
     #[test]
     fn test_part1() {
         let circuit = build(INPUT_TEST);
-        let signals = run_circuit(&circuit, "d");
+        let mut signals: ActiveSignals = HashMap::new();
+        run_circuit(&circuit, &mut signals, "d");
+
         assert_eq!(*signals.get("x").unwrap(), 123);
         assert_eq!(*signals.get("d").unwrap(), 72);
         assert_eq!(*signals.get("y").unwrap(), 456);
@@ -307,10 +329,5 @@ mod tests {
         assert_eq!(*signals.get("g").unwrap(), 114);
         assert_eq!(*signals.get("i").unwrap(), 65079);
         assert_eq!(signal_to_wire(&circuit, "d"), 72);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
     }
 }

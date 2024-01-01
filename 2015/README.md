@@ -28,5 +28,7 @@ Doing without Regex.
 
 Easy.
 
-## Day 7: [Some Assembly Required](day07/README.md)
+## Day 7: [Some Assembly Required](day07/README.md) 🌟🌟
 
+Fun with Rust: Trait, Box, Type.
+Graphviz support.
