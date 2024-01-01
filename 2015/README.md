@@ -27,3 +27,6 @@ Doing without Regex.
 ## Day 6: [Probably a Fire Hazard](day06/README.md) 🌟🌟
 
 Easy.
+
+## Day 7: [Some Assembly Required](day07/README.md)
+
