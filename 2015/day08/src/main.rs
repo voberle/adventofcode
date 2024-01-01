@@ -1,7 +1,7 @@
 use std::io::{self, Read};
 
 fn total_string_code(input: &str) -> usize {
-    input.len() - input.chars().filter(|c| *c == '\n').count()
+    input.len() - input.chars().filter(|&c| c == '\n').count()
 }
 
 fn total_string_chars(input: &str) -> usize {
@@ -26,12 +26,24 @@ fn total_string_chars(input: &str) -> usize {
     count
 }
 
+fn newly_encoded_string_code_size(line: &str) -> usize {
+    // 2 is for the quotes at the beginning and end of each line
+    line.len() + 2 + line.chars().filter(|&c| c == '\\' || c == '"').count()
+}
+
+fn total_newly_encoded_string_code(input: &str) -> usize {
+    input
+        .lines()
+        .map(newly_encoded_string_code_size)
+        .sum()
+}
+
 fn part1(input: &str) -> usize {
     total_string_code(input) - total_string_chars(input)
 }
 
 fn part2(input: &str) -> usize {
-    0
+    total_newly_encoded_string_code(input) - total_string_code(input)
 }
 
 fn main() {
@@ -49,10 +61,10 @@ mod tests {
 
     #[test]
     fn test_total_string_chars() {
-        assert_eq!(total_string_chars(r#""#), 0);
-        assert_eq!(total_string_chars(r#"abc"#), 3);
-        assert_eq!(total_string_chars(r#"aaa\"aaa"#), 7);
-        assert_eq!(total_string_chars(r#"\x27"#), 1);
+        assert_eq!(total_string_chars(r#""""#), 0);
+        assert_eq!(total_string_chars(r#""abc""#), 3);
+        assert_eq!(total_string_chars(r#""aaa\"aaa""#), 7);
+        assert_eq!(total_string_chars(r#""\x27""#), 1);
     }
 
     #[test]
@@ -63,7 +75,16 @@ mod tests {
     }
 
     #[test]
+    fn test_total_newly_encoded_string_code() {
+        assert_eq!(newly_encoded_string_code_size(r#""""#), 6);
+        assert_eq!(newly_encoded_string_code_size(r#""abc""#), 9);
+        assert_eq!(newly_encoded_string_code_size(r#""aaa\"aaa""#), 16);
+        assert_eq!(newly_encoded_string_code_size(r#""\x27""#), 11);
+    }
+
+    #[test]
     fn test_part2() {
-        assert_eq!(part2(INPUT_TEST), 0);
+        assert_eq!(total_newly_encoded_string_code(INPUT_TEST), 42);
+        assert_eq!(part2(INPUT_TEST), 19);
     }
 }
