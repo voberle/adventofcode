@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 
 mod ansi;
+mod array;
 mod direction;
 mod grid;
 mod pipe;
