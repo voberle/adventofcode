@@ -6,3 +6,4 @@ Nothing special, a bit of calculation.
 
 ## Part 2
 
+Brute-forces easily.

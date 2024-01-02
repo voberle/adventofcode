@@ -57,5 +57,6 @@ Parsing JSON without really parsing it.
 
 Brute-forced: Permutations with itertools. Nice wrapping_index method.
 
-## Day 14: [Reindeer Olympics](day14/README.md) 🌟
+## Day 14: [Reindeer Olympics](day14/README.md) 🌟🌟
 
+Simple.

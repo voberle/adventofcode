@@ -48,8 +48,25 @@ fn max_dist_after(reindeers: &[Reindeer], time: u32) -> u32 {
     reindeers.iter().map(|r| dist_after(r, time)).max().unwrap()
 }
 
-fn part2(reindeers: &[Reindeer]) -> u32 {
-    0
+// Returns the index of the winner.
+fn winner_after(reindeers: &[Reindeer], time: u32) -> usize {
+    reindeers
+        .iter()
+        .enumerate()
+        .map(|(i, r)| (i, dist_after(r, time)))
+        .max_by_key(|(_, d)| *d)
+        .unwrap()
+        .0
+}
+
+fn new_scoring_winning_points(reindeers: &[Reindeer], time: u32) -> u32 {
+    // Scores by indexes, same ones as in the reindeers table.
+    let mut scores: Vec<u32> = vec![0; reindeers.len()];
+    for t in 1..time {
+        let winner_idx = winner_after(reindeers, t);
+        scores[winner_idx] += 1;
+    }
+    *scores.iter().max().unwrap()
 }
 
 fn main() {
@@ -58,7 +75,7 @@ fn main() {
     let reindeers = build(&input);
 
     println!("Part 1: {}", max_dist_after(&reindeers, 2503));
-    println!("Part 2: {}", part2(&reindeers));
+    println!("Part 2: {}", new_scoring_winning_points(&reindeers, 2503));
 }
 
 #[cfg(test)]
@@ -105,6 +122,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(new_scoring_winning_points(&build(INPUT_TEST), 1000), 689);
     }
 }
