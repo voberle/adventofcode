@@ -60,3 +60,7 @@ Brute-forced: Permutations with itertools. Nice wrapping_index method.
 ## Day 14: [Reindeer Olympics](day14/README.md) 🌟🌟
 
 Simple.
+
+## Day 15: [Science for Hungry People](day15/README.md)🌟
+
+Brute-forced: Permutations with itertools.
