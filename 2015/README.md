@@ -44,3 +44,7 @@ Graph traversal, DFS, recursion.
 ## Day 10: [Elves Look, Elves Say](day10/README.md) 🌟🌟
 
 Peekable iterator.
+
+## Day 11: [Corporate Policy](day11/README.md) 🌟🌟
+
+Password checks.
