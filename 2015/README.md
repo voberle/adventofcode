@@ -53,6 +53,6 @@ Password checks.
 
 Parsing JSON without really parsing it.
 
-## Day 13: [Knights of the Dinner Table](day13/README.md) 🌟
+## Day 13: [Knights of the Dinner Table](day13/README.md) 🌟🌟
 
 Brute-forced: Permutations with itertools. Nice wrapping_index method.

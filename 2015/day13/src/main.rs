@@ -40,17 +40,20 @@ fn test_wrapping_index() {
     assert_eq!(wrapping_index(6, 6), 0);
 }
 
-fn max_happiness_change(happiness_factors: &HappinessFactors) -> i32 {
-    let guests: Vec<_> = happiness_factors
+fn list_of_guests(happiness_factors: &HappinessFactors) -> Vec<String> {
+    happiness_factors
         .keys()
         .map(|(g1, _)| g1)
         .unique()
-        .collect();
+        .cloned()
+        .collect()
+}
 
+fn max_happiness_change(happiness_factors: &HappinessFactors) -> i32 {
     // Brute-forced by finding all possible permutations of guests
-    guests
+    list_of_guests(happiness_factors)
         .iter()
-        .permutations(guests.len())
+        .permutations(list_of_guests(happiness_factors).len())
         .unique()
         .map(|perm| {
             perm.iter()
@@ -71,17 +74,24 @@ fn max_happiness_change(happiness_factors: &HappinessFactors) -> i32 {
         .unwrap()
 }
 
-fn part2(happiness_factors: &HappinessFactors) -> i32 {
-    0
+fn happiness_with_me(happiness_factors: &mut HappinessFactors) -> i32 {
+    const ME: &str = "Vincent";
+    let guests = list_of_guests(happiness_factors);
+    guests.iter().for_each(|g| {
+        happiness_factors.insert((ME.to_string(), g.to_string()), 0);
+        happiness_factors.insert((g.to_string(), ME.to_string()), 0);
+    });
+
+    max_happiness_change(happiness_factors)
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let happiness_factors = build(&input);
+    let mut happiness_factors = build(&input);
 
     println!("Part 1: {}", max_happiness_change(&happiness_factors));
-    println!("Part 2: {}", part2(&happiness_factors));
+    println!("Part 2: {}", happiness_with_me(&mut happiness_factors));
 }
 
 #[cfg(test)]
@@ -97,6 +107,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(happiness_with_me(&mut build(INPUT_TEST)), 286);
     }
 }

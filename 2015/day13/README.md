@@ -8,3 +8,4 @@ Interesting is the nice `wrapping_index` function for getting the last element o
 
 ## Part 2
 
+Was easy.
