@@ -27,9 +27,10 @@ fn build(input: &str) -> Graph {
     graph
 }
 
-// Recursive traversal to find the shortest route.
-fn shortest_route_from(
+// Recursive traversal to find the shortest or longest route.
+fn best_route_from(
     graph: &Graph,
+    cmp: fn(u32, u32) -> bool,
     final_distances: &mut FxHashMap<Location, u32>, // has the distances once we've gone through all nodes
     route_so_far: &mut FxHashSet<Location>,
     node: &Location,
@@ -46,7 +47,7 @@ fn shortest_route_from(
         final_distances
             .entry(node.clone())
             .and_modify(|e| {
-                if *e > curr_distance {
+                if cmp(*e, curr_distance) {
                     *e = curr_distance
                 }
             })
@@ -56,7 +57,7 @@ fn shortest_route_from(
     // call the method on the neighbour nodes
     graph.get(node).unwrap().iter().for_each(|(loc, dist)| {
         let length = curr_distance + dist;
-        shortest_route_from(graph, final_distances, route_so_far, loc, length);
+        best_route_from(graph, cmp, final_distances, route_so_far, loc, length);
     });
 
     route_so_far.remove(node);
@@ -68,7 +69,14 @@ fn shortest_route(graph: &Graph) -> u32 {
         .map(|start| {
             let mut route_so_far = FxHashSet::default();
             let mut final_distances = FxHashMap::default();
-            shortest_route_from(graph, &mut final_distances, &mut route_so_far, start, 0);
+            best_route_from(
+                graph,
+                |a, b| a > b,
+                &mut final_distances,
+                &mut route_so_far,
+                start,
+                0,
+            );
 
             *final_distances.values().min().unwrap()
         })
@@ -76,8 +84,25 @@ fn shortest_route(graph: &Graph) -> u32 {
         .unwrap()
 }
 
-fn part2(graph: &Graph) -> u32 {
-    0
+fn longest_route(graph: &Graph) -> u32 {
+    graph
+        .keys()
+        .map(|start| {
+            let mut route_so_far = FxHashSet::default();
+            let mut final_distances = FxHashMap::default();
+            best_route_from(
+                graph,
+                |a, b| a < b,
+                &mut final_distances,
+                &mut route_so_far,
+                start,
+                0,
+            );
+
+            *final_distances.values().max().unwrap()
+        })
+        .max()
+        .unwrap()
 }
 
 fn main() {
@@ -87,7 +112,7 @@ fn main() {
     // println!("{:?}", graph);
 
     println!("Part 1: {}", shortest_route(&graph));
-    println!("Part 2: {}", part2(&graph));
+    println!("Part 2: {}", longest_route(&graph));
 }
 
 #[cfg(test)]
@@ -103,6 +128,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(longest_route(&build(INPUT_TEST)), 982);
     }
 }

@@ -37,6 +37,6 @@ Graphviz support.
 
 Peekable iterator.
 
-## Day 9: [All in a Single Night](day09/README.md) 🌟
+## Day 9: [All in a Single Night](day09/README.md) 🌟🌟
 
 Graph traversal, DFS, recursion.

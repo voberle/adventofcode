@@ -8,3 +8,4 @@ Modelisation of the graph is also a bit simple, as routes are not directed, I en
 
 ## Part 2
 
+Finding the longest instead of the shortest was easy.
