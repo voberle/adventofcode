@@ -61,6 +61,6 @@ Brute-forced: Permutations with itertools. Nice wrapping_index method.
 
 Simple.
 
-## Day 15: [Science for Hungry People](day15/README.md)🌟
+## Day 15: [Science for Hungry People](day15/README.md) 🌟🌟
 
 Brute-forced: Permutations with itertools.

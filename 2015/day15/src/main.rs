@@ -47,11 +47,26 @@ fn score(ingredients: &[Ingredient], spoons: &[i64]) -> i64 {
     .product()
 }
 
+fn calories_count(ingredients: &[Ingredient], spoons: &[i64]) -> i64 {
+    ingredients
+        .iter()
+        .zip(spoons)
+        .map(|(i, s)| i.calories * s)
+        .sum::<i64>()
+}
+
 // This method supports only 2 or 4 ingredients recipees.
-fn highest_score(ingredients: &[Ingredient]) -> i64 {
+fn highest_score<const CALORIES: i64>(ingredients: &[Ingredient]) -> i64 {
     if ingredients.len() == 2 {
         (0..100)
-            .map(|i| score(ingredients, &[i, 100 - i]))
+            .filter_map(|i| {
+                let spoons = &[i, 100 - i];
+                if CALORIES == 0 || calories_count(ingredients, spoons) == CALORIES {
+                    Some(score(ingredients, spoons))
+                } else {
+                    None
+                }
+            })
             .max()
             .unwrap()
     } else if ingredients.len() == 4 {
@@ -62,10 +77,12 @@ fn highest_score(ingredients: &[Ingredient]) -> i64 {
                 if sum > 100 {
                     return None;
                 }
-                Some(score(
-                    ingredients,
-                    &[perm[0], perm[1], perm[2], 100 - sum],
-                ))
+                let spoons = &[perm[0], perm[1], perm[2], 100 - sum];
+                if CALORIES == 0 || calories_count(ingredients, spoons) == CALORIES {
+                    Some(score(ingredients, spoons))
+                } else {
+                    None
+                }
             })
             .max()
             .unwrap()
@@ -74,16 +91,12 @@ fn highest_score(ingredients: &[Ingredient]) -> i64 {
     }
 }
 
-fn part2(ingredients: &[Ingredient]) -> i64 {
-    0
-}
-
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let ingredients = build(&input);
-    println!("Part 1: {}", highest_score(&ingredients));
-    println!("Part 2: {}", part2(&ingredients));
+    println!("Part 1: {}", highest_score::<0>(&ingredients));
+    println!("Part 2: {}", highest_score::<500>(&ingredients));
 }
 
 #[cfg(test)]
@@ -99,11 +112,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(highest_score(&build(INPUT_TEST)), 62842880);
+        assert_eq!(highest_score::<0>(&build(INPUT_TEST)), 62842880);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(highest_score::<500>(&build(INPUT_TEST)), 57600000);
     }
 }
