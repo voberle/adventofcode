@@ -36,3 +36,5 @@ Graphviz support.
 ## Day 8: [Matchsticks](day08/README.md) 🌟🌟
 
 Peekable iterator.
+
+## Day 9: [All in a Single Night](day09/README.md)
