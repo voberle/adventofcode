@@ -1,0 +1,9 @@
+[package]
+name = "day14"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+
+[dependencies]
+regex = "1.10.2"
