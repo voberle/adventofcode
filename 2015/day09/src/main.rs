@@ -3,6 +3,7 @@ use std::{
     io::{self, Read},
 };
 
+use fxhash::{FxHashMap, FxHashSet};
 use regex::Regex;
 
 type Location = String;
@@ -13,16 +14,66 @@ fn build(input: &str) -> Graph {
     let re = Regex::new(r"(\w+) to (\w+) = (\d+)").unwrap();
     input.lines().for_each(|line| {
         let caps = re.captures(line).unwrap();
+        let dist = caps[3].parse().unwrap();
         graph
             .entry(caps[1].to_string())
             .or_insert_with(Vec::new)
-            .push((caps[2].to_string(), caps[3].parse().unwrap()))
+            .push((caps[2].to_string(), dist));
+        graph
+            .entry(caps[2].to_string())
+            .or_insert_with(Vec::new)
+            .push((caps[1].to_string(), dist));
     });
     graph
 }
 
-fn part1(graph: &Graph) -> u32 {
-    0
+// Recursive traversal to find the shortest route.
+fn shortest_route_from(
+    graph: &Graph,
+    final_distances: &mut FxHashMap<Location, u32>, // has the distances once we've gone through all nodes
+    route_so_far: &mut FxHashSet<Location>,
+    node: &Location,
+    curr_distance: u32,
+) {
+    if route_so_far.contains(node) {
+        return;
+    }
+    route_so_far.insert(node.clone());
+
+    // If we have visited all locations
+    if route_so_far.len() == graph.len() {
+        // if the found path is shorter, save it
+        final_distances
+            .entry(node.clone())
+            .and_modify(|e| {
+                if *e > curr_distance {
+                    *e = curr_distance
+                }
+            })
+            .or_insert(curr_distance);
+    }
+
+    // call the method on the neighbour nodes
+    graph.get(node).unwrap().iter().for_each(|(loc, dist)| {
+        let length = curr_distance + dist;
+        shortest_route_from(graph, final_distances, route_so_far, loc, length);
+    });
+
+    route_so_far.remove(node);
+}
+
+fn shortest_route(graph: &Graph) -> u32 {
+    graph
+        .keys()
+        .map(|start| {
+            let mut route_so_far = FxHashSet::default();
+            let mut final_distances = FxHashMap::default();
+            shortest_route_from(graph, &mut final_distances, &mut route_so_far, start, 0);
+
+            *final_distances.values().min().unwrap()
+        })
+        .min()
+        .unwrap()
 }
 
 fn part2(graph: &Graph) -> u32 {
@@ -33,8 +84,9 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let graph = build(&input);
-    // println!("{:#?}", graph);
-    println!("Part 1: {}", part1(&graph));
+    // println!("{:?}", graph);
+
+    println!("Part 1: {}", shortest_route(&graph));
     println!("Part 2: {}", part2(&graph));
 }
 
@@ -46,7 +98,7 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(part1(&build(INPUT_TEST)), 605);
+        assert_eq!(shortest_route(&build(INPUT_TEST)), 605);
     }
 
     #[test]
