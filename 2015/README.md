@@ -48,3 +48,6 @@ Peekable iterator.
 ## Day 11: [Corporate Policy](day11/README.md) 🌟🌟
 
 Password checks.
+
+## Day 12: [JSAbacusFramework.io](day12/README.md) 🌟
+
