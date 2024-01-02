@@ -52,3 +52,6 @@ Password checks.
 ## Day 12: [JSAbacusFramework.io](day12/README.md) 🌟🌟
 
 Parsing JSON without really parsing it.
+
+## Day 13: [Knights of the Dinner Table](day13/README.md)
+
