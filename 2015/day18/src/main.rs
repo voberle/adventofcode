@@ -111,18 +111,17 @@ impl Grid {
     }
 }
 
-fn lights_count<const STEPS: usize>(grid: &Grid) -> usize {
-    let mut g = grid.clone();
+fn lights_count<const STEPS: usize>(grid: &mut Grid, block_corner_lights: bool) -> usize {
     for _ in 0..STEPS {
-        g.values = g
+        grid.values = grid
             .values
             .iter()
             .enumerate()
             .map(|(pos, val)| {
-                let neighbors_on = g
+                let neighbors_on = grid
                     .neighbors(pos)
                     .iter()
-                    .filter(|n| g.values[**n] == '#')
+                    .filter(|n| grid.values[**n] == '#')
                     .count();
                 if *val == '#' {
                     // ON
@@ -141,13 +140,34 @@ fn lights_count<const STEPS: usize>(grid: &Grid) -> usize {
                 }
             })
             .collect();
+        if block_corner_lights {
+            turn_corner_lights_on(grid);
+        }
     }
-    // g.print();
-    g.values.iter().filter(|e| **e == '#').count()
+    // grid.print();
+    grid.values.iter().filter(|e| **e == '#').count()
 }
 
-fn part2(grid: &Grid) -> i64 {
-    0
+fn lights_count_part1<const STEPS: usize>(grid: &Grid) -> usize {
+    let mut g = grid.clone();
+    lights_count::<STEPS>(&mut g, false)
+}
+
+fn pos(cols: usize, row: usize, col: usize) -> usize {
+    row * cols + col
+}
+
+fn turn_corner_lights_on(grid: &mut Grid) {
+    grid.values[0] = '#';
+    grid.values[pos(grid.cols, grid.rows - 1, 0)] = '#';
+    grid.values[pos(grid.cols, 0, grid.cols - 1)] = '#';
+    grid.values[pos(grid.cols, grid.rows - 1, grid.cols - 1)] = '#';
+}
+
+fn lights_count_part2<const STEPS: usize>(grid: &Grid) -> usize {
+    let mut g = grid.clone();
+    turn_corner_lights_on(&mut g);
+    lights_count::<STEPS>(&mut g, true)
 }
 
 fn main() {
@@ -156,8 +176,8 @@ fn main() {
     let grid = Grid::build(&input);
     // grid.print();
 
-    println!("Part 1: {}", lights_count::<100>(&grid));
-    println!("Part 2: {}", part2(&grid));
+    println!("Part 1: {}", lights_count_part1::<100>(&grid));
+    println!("Part 2: {}", lights_count_part2::<100>(&grid));
 }
 
 #[cfg(test)]
@@ -168,11 +188,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(lights_count::<4>(&Grid::build(INPUT_TEST)), 4);
+        assert_eq!(lights_count_part1::<4>(&Grid::build(INPUT_TEST)), 4);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        assert_eq!(lights_count_part2::<5>(&Grid::build(INPUT_TEST)), 17);
     }
 }

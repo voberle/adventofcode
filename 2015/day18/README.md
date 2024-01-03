@@ -6,3 +6,4 @@ I extended my template grid code to support 8 directions, and then it was a matt
 
 ## Part 2
 
+Part 2 required just to turn on the 4 corner lights at each step.
