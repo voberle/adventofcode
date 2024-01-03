@@ -4,11 +4,36 @@ fn build(input: &str) -> Vec<u32> {
     input.lines().map(|line| line.parse().unwrap()).collect()
 }
 
-fn containers_combination_count(containers: &Vec<u32>, total: u32) -> i64 {
-    0
+// Change-making problem.
+// https://en.wikipedia.org/wiki/Change-making_problem
+//
+// Recursive function.
+// In params we take the list of numbers still to look at and the sum so far.
+// Returns the number of matching combinations found so far.
+fn subset_sum<const TARGET: u32>(numbers: &[u32], sum: u32) -> u64 {
+    if sum == TARGET {
+        // found one
+        return 1;
+    }
+    if sum > TARGET {
+        // no point continuing
+        return 0;
+    }
+
+    let mut comb = 0;
+    for i in 0..numbers.len() {
+        let n = numbers[i];
+        let remaining = &numbers[i + 1..];
+        comb += subset_sum::<TARGET>(remaining, sum + n);
+    }
+    comb
 }
 
-fn part2(containers: &Vec<u32>) -> i64 {
+fn combination_count<const TARGET: u32>(containers: &[u32]) -> u64 {
+    subset_sum::<TARGET>(containers, 0)
+}
+
+fn part2(containers: &[u32]) -> i64 {
     0
 }
 
@@ -17,7 +42,7 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let containers = build(&input);
 
-    println!("Part 1: {}", containers_combination_count(&containers, 150));
+    println!("Part 1: {}", combination_count::<150>(&containers));
     println!("Part 2: {}", part2(&containers));
 }
 
@@ -29,7 +54,7 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(containers_combination_count(&build(INPUT_TEST), 25), 4);
+        assert_eq!(combination_count::<25>(&build(INPUT_TEST)), 4);
     }
 
     #[test]
