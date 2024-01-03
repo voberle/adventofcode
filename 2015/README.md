@@ -68,3 +68,6 @@ Brute-forced: Permutations with itertools.
 ## Day 16: [Aunt Sue](day16/README.md) 🌟🌟
 
 Nice comparison closure.
+
+## Day 17: [No Such Thing as Too Much](day17/README.md)
+
