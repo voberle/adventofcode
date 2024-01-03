@@ -76,3 +76,6 @@ Change-making problem.
 ## Day 18: [Like a GIF For Your Yard](day18/README.md) 🌟🌟
 
 Game of life. Grid, neighbors in 8 directions.
+
+## Day 19: [Medicine for Rudolph](day19/README.md) 
+
