@@ -6,3 +6,4 @@ This is the [Change-making problem](https://en.wikipedia.org/wiki/Change-making_
 
 ## Part 2
 
+Part 2 just required modifying the method to return the number of combinations by part counts.

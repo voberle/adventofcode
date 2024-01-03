@@ -69,6 +69,6 @@ Brute-forced: Permutations with itertools.
 
 Nice comparison closure.
 
-## Day 17: [No Such Thing as Too Much](day17/README.md) 🌟
+## Day 17: [No Such Thing as Too Much](day17/README.md) 🌟🌟
 
 Change-making problem.
