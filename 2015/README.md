@@ -72,3 +72,6 @@ Nice comparison closure.
 ## Day 17: [No Such Thing as Too Much](day17/README.md) 🌟🌟
 
 Change-making problem.
+
+## Day 18: [Like a GIF For Your Yard](day18/README.md) 
+
