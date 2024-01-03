@@ -46,16 +46,18 @@ fn build(input: &str) -> Vec<AuntSue> {
         .collect()
 }
 
-fn find_correct_sue(list: &[AuntSue]) -> usize {
-    let indices = mfcsam_msg();
-
+fn find_correct_sue_with_cmp(
+    list: &[AuntSue],
+    mfcsam_msg: &FxHashMap<String, u32>,
+    clue_check_fn: fn(&str, u32, u32) -> bool,
+) -> usize {
     let matching: Vec<usize> = list
         .iter()
         .enumerate()
         .filter(|(_, aunt)| {
-            aunt.iter().all(|clue| {
-                if let Some(v) = indices.get(&clue.0) {
-                    *v == clue.1
+            aunt.iter().all(|remember_item| {
+                if let Some(mfcsam_val) = mfcsam_msg.get(&remember_item.0) {
+                    clue_check_fn(&remember_item.0, remember_item.1, *mfcsam_val)
                 } else {
                     // don't remember, can't say.. so assuming true then
                     true
@@ -69,15 +71,36 @@ fn find_correct_sue(list: &[AuntSue]) -> usize {
     matching[0] + 1
 }
 
-fn part2(list: &[AuntSue]) -> i64 {
-    0
+fn clue_check_1(_remember_elt: &str, remember_val: u32, mfcsam_val: u32) -> bool {
+    mfcsam_val == remember_val
+}
+
+fn find_correct_sue(list: &[AuntSue], mfcsam_msg: &FxHashMap<String, u32>) -> usize {
+    find_correct_sue_with_cmp(list, mfcsam_msg, clue_check_1)
+}
+
+fn clue_check_2(remember_elt: &str, remember_val: u32, mfcsam_val: u32) -> bool {
+    if remember_elt == "cats" || remember_elt == "trees" {
+        // greater than:
+        mfcsam_val < remember_val
+    } else if remember_elt == "pomeranians" || remember_elt == "goldfish" {
+        // lower
+        mfcsam_val > remember_val
+    } else {
+        mfcsam_val == remember_val
+    }
+}
+
+fn real_correct_sue(list: &[AuntSue], mfcsam_msg: &FxHashMap<String, u32>) -> usize {
+    find_correct_sue_with_cmp(list, mfcsam_msg, clue_check_2)
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let list = build(&input);
+    let mfcsam_msg = mfcsam_msg();
 
-    println!("Part 1: {}", find_correct_sue(&list));
-    println!("Part 2: {}", part2(&list));
+    println!("Part 1: {}", find_correct_sue(&list, &mfcsam_msg));
+    println!("Part 2: {}", real_correct_sue(&list, &mfcsam_msg));
 }

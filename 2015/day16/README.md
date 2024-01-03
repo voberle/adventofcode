@@ -6,3 +6,4 @@ Main difficulty was correctly understanding the instructions.
 
 ## Part 2
 
+In part 2 it was fun to add a comparison closure.

@@ -65,5 +65,6 @@ Simple.
 
 Brute-forced: Permutations with itertools.
 
-## Day 16: [Aunt Sue](day16/README.md) 🌟
+## Day 16: [Aunt Sue](day16/README.md) 🌟🌟
 
+Nice comparison closure.
