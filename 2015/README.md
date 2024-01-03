@@ -64,3 +64,6 @@ Simple.
 ## Day 15: [Science for Hungry People](day15/README.md) 🌟🌟
 
 Brute-forced: Permutations with itertools.
+
+## Day 16: [Aunt Sue](day16/README.md) 🌟
+
