@@ -73,5 +73,6 @@ Nice comparison closure.
 
 Change-making problem.
 
-## Day 18: [Like a GIF For Your Yard](day18/README.md) 
+## Day 18: [Like a GIF For Your Yard](day18/README.md) 🌟
 
+Game of life. Grid, neighbors in 8 directions.
