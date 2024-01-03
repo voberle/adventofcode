@@ -1,5 +1,7 @@
 use std::io::{self, Read};
 
+use fxhash::FxHashSet;
+
 fn build(input: &str) -> (Vec<(String, String)>, String) {
     let mut replacements = Vec::new();
     let mut molecule = String::new();
@@ -18,8 +20,18 @@ fn build(input: &str) -> (Vec<(String, String)>, String) {
     (replacements, molecule)
 }
 
-fn distinct_molecules_count(replacements: &[(String, String)], molecule: &str) -> i64 {
-    0
+fn distinct_molecules_count(replacements: &[(String, String)], molecule: &str) -> usize {
+    let mut set: FxHashSet<String> = FxHashSet::default();
+    for r in replacements {
+        let source = &r.0;
+        let dest = &r.1;
+        molecule.match_indices(source).for_each(|(idx, _)| {
+            let mut new_mol = molecule.to_string();
+            new_mol.replace_range(idx..idx + source.len(), dest);
+            set.insert(new_mol);
+        })
+    }
+    set.len()
 }
 
 fn part2(replacements: &[(String, String)], molecule: &str) -> i64 {
@@ -30,10 +42,11 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let (replacements, molecule) = build(&input);
-    println!("{:?}", replacements);
-    println!("{:?}", molecule);
 
-    println!("Part 1: {}", distinct_molecules_count(&replacements, &molecule));
+    println!(
+        "Part 1: {}",
+        distinct_molecules_count(&replacements, &molecule)
+    );
     println!("Part 2: {}", part2(&replacements, &molecule));
 }
 
@@ -46,7 +59,7 @@ mod tests {
     #[test]
     fn test_part1() {
         let (replacements, molecule) = build(INPUT_TEST);
-        assert_eq!(distinct_molecules_count(&replacements, &molecule), 0);
+        assert_eq!(distinct_molecules_count(&replacements, &molecule), 4);
     }
 
     #[test]

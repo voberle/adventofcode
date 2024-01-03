@@ -77,5 +77,5 @@ Change-making problem.
 
 Game of life. Grid, neighbors in 8 directions.
 
-## Day 19: [Medicine for Rudolph](day19/README.md) 
+## Day 19: [Medicine for Rudolph](day19/README.md) 🌟
 

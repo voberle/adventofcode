@@ -2,6 +2,7 @@
 
 ## Part 1
 
+Nothing special, brute-forced by adding all possible results in a HashSet.
 
 ## Part 2
 
