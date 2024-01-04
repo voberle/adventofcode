@@ -1,6 +1,7 @@
 use std::io::{self, Read};
 
 use fxhash::FxHashSet;
+use rand::{seq::SliceRandom, thread_rng};
 
 fn build(input: &str) -> (Vec<(String, String)>, String) {
     let mut replacements = Vec::new();
@@ -34,41 +35,46 @@ fn distinct_molecules_count(replacements: &[(String, String)], molecule: &str) -
     set.len()
 }
 
-fn possible_replacements(replacements: &[(String, String)], elt: &str) -> Vec<String> {
-    replacements
-        .iter()
-        .filter(|(s, _)| s == elt)
-        .map(|(_, d)| d)
-        .cloned()
-        .collect()
+fn recursive_min_find(
+    dest_to_source: &Vec<(String, String)>,
+    input: &str,
+    steps_so_far: usize,
+) -> Option<usize> {
+    for (d, s) in dest_to_source.iter() {
+        if let Some(idx) = input.find(d) {
+            let mut new_mol = input.to_string();
+            new_mol.replace_range(idx..idx + d.len(), s);
+            if new_mol == "e" {
+                return Some(steps_so_far + 1);
+            }
+
+            // We just try one more replacement down
+            return recursive_min_find(dest_to_source, &new_mol, steps_so_far + 1);
+        }
+    }
+    None
 }
 
 fn min_steps_for_medicine(replacements: &[(String, String)], molecule: &str) -> usize {
-    let mut steps = 0;
-    // This vector contains all molecules generated on each step
-    let mut generated = vec!["e".to_string()];
-    loop {
-        steps += 1;
-        let mut set: FxHashSet<String> = FxHashSet::default();
-        generated.iter().for_each(|g| {
-            for r in replacements {
-                let source = &r.0;
-                let dest = &r.1;
-                g.match_indices(source).for_each(|(idx, _)| {
-                    let mut new_mol = g.to_string();
-                    new_mol.replace_range(idx..idx + source.len(), dest);
-                    set.insert(new_mol);
-                })
-            }
-        });
-        println!("{steps}: {:?}", set);
-        // println!("{steps}");
-        if set.contains(molecule) {
-            break;
-        }
-        generated = set.into_iter().collect();
-    }
-    steps
+    let mut dest_to_source_vec: Vec<(String, String)> = replacements
+        .iter()
+        .map(|(s, d)| (d.to_string(), s.to_string()))
+        .collect();
+    // That works also:
+    // dest_to_source_vec.sort_by_key(|k| k.0.clone());
+    // v.reverse();
+
+    // That's ugly but somehow finds the right answer :-(
+    // With the input in different order, in some case we get it, in some we don't.
+    // But in practice we always get the same one.
+    (0..1000)
+        .filter_map(|_| {
+            dest_to_source_vec.shuffle(&mut thread_rng());
+            recursive_min_find(&dest_to_source_vec, molecule, 0)
+        })
+        // .inspect(|v| println!("Result {v}"))
+        .min()
+        .unwrap()
 }
 
 fn main() {
