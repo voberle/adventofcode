@@ -84,3 +84,6 @@ Pattern in data. Random attempts, recursion.
 ## Day 20: [Infinite Elves and Infinite Houses](day20/README.md) 🌟🌟
 
 Brute-force.
+
+## Day 21: [RPG Simulator 20XX](day21/README.md) 
+
