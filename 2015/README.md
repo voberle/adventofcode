@@ -81,6 +81,6 @@ Game of life. Grid, neighbors in 8 directions.
 
 Pattern in data. Random attempts, recursion.
 
-## Day 20: [Infinite Elves and Infinite Houses](day20/README.md) 🌟
+## Day 20: [Infinite Elves and Infinite Houses](day20/README.md) 🌟🌟
 
 Brute-force.

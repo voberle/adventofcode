@@ -1,12 +1,12 @@
 use std::io::{self, Read};
 
-fn house_gets_presents_from_elf(house_nb: u32, elf_nb: u32) -> bool {
+fn house_gets_presents_from_elf(house_nb: usize, elf_nb: usize) -> bool {
     house_nb % elf_nb == 0
 }
 
-fn house_presents_count<const MULT: u32>(house_nb: u32) -> u32 {
+fn house_presents_count<const MULT: usize>(house_nb: usize) -> usize {
     // we can only do until half and add house nb at the end
-    let c = (1..=house_nb / 2)
+    (1..=house_nb / 2)
         .filter_map(|elf| {
             if house_gets_presents_from_elf(house_nb, elf) {
                 Some(elf * MULT)
@@ -14,13 +14,12 @@ fn house_presents_count<const MULT: u32>(house_nb: u32) -> u32 {
                 None
             }
         })
-        .sum::<u32>()
-        + house_nb * MULT;
+        .sum::<usize>()
+        + house_nb * MULT
     // if house_nb % 10_000 == 0 { println!("House {house_nb}: {c}"); }
-    c
 }
 
-fn lowest_house_to_get(presents_count: u32) -> u32 {
+fn lowest_house_to_get(presents_count: usize) -> usize {
     let present_count_adjusted = presents_count / 10;
     (1..)
         .find(|i| {
@@ -34,18 +33,42 @@ fn lowest_house_to_get(presents_count: u32) -> u32 {
         .unwrap()
 }
 
-fn part2(input: &str) -> i64 {
-    0
+fn house_presents_count_lazy_elfs<const MULT: usize>(
+    house_nb: usize,
+    elves: &mut [usize],
+) -> usize {
+    (1..=house_nb)
+        .filter_map(|elf| {
+            if elves[elf - 1] <= 50 && house_gets_presents_from_elf(house_nb, elf) {
+                elves[elf - 1] += 1;
+                Some(elf * MULT)
+            } else {
+                None
+            }
+        })
+        .sum::<usize>()
+    // if house_nb % 10_000 == 0 { println!("House {house_nb}: {c}"); }
+}
+
+fn lowest_house_to_get_lazy_elfs(presents_count: usize) -> usize {
+    // Tracks how many presents each elf delivered.
+    let mut elves: Vec<usize> = Vec::new();
+    (1..)
+        .find(|i| {
+            let house = *i;
+            elves.push(0);
+            house_presents_count_lazy_elfs::<11>(house, &mut elves) >= presents_count
+        })
+        .unwrap()
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    println!(
-        "Part 1: {}",
-        lowest_house_to_get(input.trim().parse().unwrap())
-    );
-    println!("Part 2: {}", part2(&input));
+    let presents_count = input.trim().parse().unwrap();
+
+    println!("Part 1: {}", lowest_house_to_get(presents_count));
+    println!("Part 2: {}", lowest_house_to_get_lazy_elfs(presents_count));
 }
 
 #[cfg(test)]
@@ -74,6 +97,10 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(""), 0);
+        // House 1 got 11 presents.
+        // House 2 got 11 + 22 = 33 presents.
+        // House 3 got 11 + 33 = 44 presents.
+        // House 4 got 11 + 22 + 44 = 77 presents.
+        assert_eq!(lowest_house_to_get_lazy_elfs(70), 4);
     }
 }

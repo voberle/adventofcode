@@ -6,3 +6,4 @@ Not too nice, but brute-forced it, with a few small optimizations. There is prob
 
 ## Part 2
 
+Brute-forced it too, but without optimizations even.
