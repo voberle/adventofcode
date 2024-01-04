@@ -80,3 +80,7 @@ Game of life. Grid, neighbors in 8 directions.
 ## Day 19: [Medicine for Rudolph](day19/README.md) 🌟🌟
 
 Pattern in data. Random attempts, recursion.
+
+## Day 20: [Infinite Elves and Infinite Houses](day20/README.md) 🌟
+
+Brute-force.
