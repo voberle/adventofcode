@@ -33,6 +33,20 @@ fn lowest_house_to_get(presents_count: usize) -> usize {
         .unwrap()
 }
 
+// Alternative algo found on Reddit
+// https://www.reddit.com/r/adventofcode/comments/3xjpp2/comment/cy59zd9/?utm_source=reddit&utm_medium=web2x&context=3
+#[allow(dead_code)]
+fn lowest_house_to_get_alt(n: usize) -> usize {
+    let n1 = n / 10;
+    let mut houses = vec![0; n1];
+    for elf in 1..=n1 {
+        for h in (elf..n1).step_by(elf) {
+            houses[h] += elf * 10;
+        }
+    }
+    houses.iter().enumerate().find(|(_, v)| **v >= n).unwrap().0
+}
+
 fn house_presents_count_lazy_elfs<const MULT: usize>(
     house_nb: usize,
     elves: &mut [usize],
@@ -66,6 +80,8 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let presents_count = input.trim().parse().unwrap();
+
+    // println!("Part 1 alt: {}", lowest_house_to_get_alt(presents_count));
 
     println!("Part 1: {}", lowest_house_to_get(presents_count));
     println!("Part 2: {}", lowest_house_to_get_lazy_elfs(presents_count));
