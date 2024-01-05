@@ -85,6 +85,6 @@ Pattern in data. Random attempts, recursion.
 
 Brute-force.
 
-## Day 21: [RPG Simulator 20XX](day21/README.md) 🌟
+## Day 21: [RPG Simulator 20XX](day21/README.md) 🌟🌟
 
 Itertools multi_cartesian_product.

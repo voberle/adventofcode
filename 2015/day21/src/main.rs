@@ -94,6 +94,7 @@ mod shop {
         // .for_each(|v| println!("{:?}", v));
     }
 }
+use shop::ShopItem;
 
 #[derive(Debug, Clone)]
 struct Character {
@@ -103,6 +104,14 @@ struct Character {
 }
 
 impl Character {
+    fn new(hit_points: u32, shop_item: &ShopItem) -> Self {
+        Character {
+            hit_points,
+            damage: shop_item.item.damage,
+            armor: shop_item.item.armor,
+        }
+    }
+
     fn attack(&self, other: &mut Character) {
         // at least 1 damage
         let damage_dealt = 1.max(self.damage.saturating_sub(other.armor));
@@ -150,16 +159,11 @@ fn play_round(player: &mut Character, boss: &mut Character) -> bool {
 
 fn least_gold_and_win(initial_boss: &Character, hit_points: u32) -> u32 {
     let options = shop::shopping_options();
-    // println!("Shopping options: {:?}", options);
 
     let mut cheapest_win = u32::MAX;
     // sorted in increasing cost, we look at most expensive first
     for option in options.into_iter().rev() {
-        let mut player = Character {
-            hit_points,
-            damage: option.item.damage,
-            armor: option.item.armor,
-        };
+        let mut player = Character::new(hit_points, &option);
         let mut boss: Character = initial_boss.clone();
         if play_round(&mut player, &mut boss) {
             // println!("{:?} won, spent {:?}", player, option);
@@ -169,8 +173,20 @@ fn least_gold_and_win(initial_boss: &Character, hit_points: u32) -> u32 {
     cheapest_win
 }
 
-fn part2(input: &str) -> i64 {
-    0
+fn most_gold_and_loose(initial_boss: &Character, hit_points: u32) -> u32 {
+    let options = shop::shopping_options();
+
+    let mut most_expensive_loss = u32::MAX;
+    // sorted in increasing cost, we look at cheapest expensive first
+    for option in options {
+        let mut player = Character::new(hit_points, &option);
+        let mut boss: Character = initial_boss.clone();
+        if !play_round(&mut player, &mut boss) {
+            // println!("{:?} lost, spent {:?}", player, option);
+            most_expensive_loss = option.item.cost;
+        }
+    }
+    most_expensive_loss
 }
 
 fn main() {
@@ -180,7 +196,7 @@ fn main() {
     println!("Boss {:?}", boss);
 
     println!("Part 1: {}", least_gold_and_win(&boss, 100));
-    println!("Part 2: {}", part2(&input));
+    println!("Part 2: {}", most_gold_and_loose(&boss, 100));
 }
 
 #[cfg(test)]
@@ -206,11 +222,6 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(least_gold_and_win(&build_boss(INPUT_TEST), 8), 0);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(INPUT_TEST), 0);
+        assert_eq!(least_gold_and_win(&build_boss(INPUT_TEST), 8), 65);
     }
 }

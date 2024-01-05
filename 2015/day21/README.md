@@ -8,3 +8,4 @@ I started by creating all the shop items as `const`, but this was rather annoyin
 
 ## Part 2
 
+Part 2 was then easy.
