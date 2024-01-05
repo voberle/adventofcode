@@ -88,3 +88,6 @@ Brute-force.
 ## Day 21: [RPG Simulator 20XX](day21/README.md) 🌟🌟
 
 Itertools multi_cartesian_product.
+
+## Day 22: [Wizard Simulator 20XX](day22/README.md) 
+
