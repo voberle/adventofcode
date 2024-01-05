@@ -6,3 +6,5 @@ authors.workspace = true
 description.workspace = true
 
 [dependencies]
+const_format = "0.2.32"
+itertools = "0.12.0"
