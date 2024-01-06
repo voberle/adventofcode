@@ -92,3 +92,7 @@ Itertools multi_cartesian_product.
 ## Day 22: [Wizard Simulator 20XX](day22/README.md) 🌟🌟
 
 Challenging. Recursion. Traits and fun implementation.
+
+## Day 23: [Opening the Turing Lock](day23/README.md) 🌟
+
+Little computer. Fun.
