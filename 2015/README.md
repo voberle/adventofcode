@@ -89,5 +89,6 @@ Brute-force.
 
 Itertools multi_cartesian_product.
 
-## Day 22: [Wizard Simulator 20XX](day22/README.md) 
+## Day 22: [Wizard Simulator 20XX](day22/README.md) 🌟🌟
 
+Challenging. Recursion. Traits and fun implementation.

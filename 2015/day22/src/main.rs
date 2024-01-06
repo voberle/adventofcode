@@ -290,13 +290,21 @@ impl Player {
 // Taking a player, its spells list and a boss, does the next round of fighting (player cast and boss attack),
 // and then calls this function again.
 // mana_spent is the the mana spent so far.
-fn fight_to_win(
+fn fight_to_win<const HARD: bool>(
     player: &mut Player,
     spells: &mut [Box<dyn Spell>],
     boss: &mut Boss,
     mana_spent: u32,
     mana_spent_for_wins: &mut Vec<u32>,
 ) {
+    // Hard mode
+    if HARD {
+        player.hit_points -= 1;
+        if player.is_dead() {
+            return;
+        }
+    }
+
     // Player's spell turn
     execute_spells_turn(spells, player, boss);
     assert!(!player.is_dead()); //  only the boss can die on spell turns
@@ -351,7 +359,7 @@ fn fight_to_win(
         }
 
         // nobody died, continue fighting
-        fight_to_win(
+        fight_to_win::<HARD>(
             &mut player_copy,
             &mut spells_copy,
             &mut boss_copy,
@@ -361,13 +369,13 @@ fn fight_to_win(
     }
 }
 
-fn least_mana_and_win(initial_boss: &Boss, hit_points: u32, mana: u32) -> u32 {
+fn least_mana_and_win<const HARD: bool>(initial_boss: &Boss, hit_points: u32, mana: u32) -> u32 {
     let mut player = Player::new(hit_points, mana);
     let mut spells = build_spells();
     let mut boss = initial_boss.clone();
 
     let mut mana_spent_for_wins: Vec<u32> = Vec::new();
-    fight_to_win(
+    fight_to_win::<HARD>(
         &mut player,
         &mut spells,
         &mut boss,
@@ -380,19 +388,14 @@ fn least_mana_and_win(initial_boss: &Boss, hit_points: u32, mana: u32) -> u32 {
         .expect("We didn't get any win?!?")
 }
 
-fn part2(input: &str) -> i64 {
-    0
-}
-
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let boss = Boss::build(&input);
     // println!("Boss {:?}", boss);
 
-    // println!("Part 1 test: {}", least_mana_and_win(&boss, 10, 250));
-    println!("Part 1: {}", least_mana_and_win(&boss, 50, 500));
-    println!("Part 2: {}", part2(&input));
+    println!("Part 1: {}", least_mana_and_win::<false>(&boss, 50, 500));
+    println!("Part 2: {}", least_mana_and_win::<true>(&boss, 50, 500));
 }
 
 #[cfg(test)]
@@ -541,6 +544,9 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(least_mana_and_win(&Boss::build(INPUT_TEST), 10, 250), 641);
+        assert_eq!(
+            least_mana_and_win::<false>(&Boss::build(INPUT_TEST), 10, 250),
+            641
+        );
     }
 }
