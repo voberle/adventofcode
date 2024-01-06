@@ -93,6 +93,6 @@ Itertools multi_cartesian_product.
 
 Challenging. Recursion. Traits and fun implementation.
 
-## Day 23: [Opening the Turing Lock](day23/README.md) 🌟
+## Day 23: [Opening the Turing Lock](day23/README.md) 🌟🌟
 
 Little computer. Fun.

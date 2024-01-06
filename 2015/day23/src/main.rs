@@ -10,8 +10,8 @@ struct Registers {
 }
 
 impl Registers {
-    fn new() -> Self {
-        Self { a: 0, b: 0 }
+    fn new(a: u32, b: u32) -> Self {
+        Self { a, b }
     }
 }
 
@@ -99,8 +99,7 @@ fn build(input: &str) -> Vec<Instruction> {
     input.lines().map(Instruction::build).collect()
 }
 
-fn execute_all(instructions: &[Instruction]) -> Registers {
-    let mut regs = Registers::new();
+fn execute_all(instructions: &[Instruction], mut regs: Registers) -> Registers {
     let mut ir = 0; // instruction register
     while ir < instructions.len() {
         // print!("{}: Exec {:?} for {:?}", ir, instructions[ir], regs);
@@ -110,22 +109,19 @@ fn execute_all(instructions: &[Instruction]) -> Registers {
     regs
 }
 
-fn value_in_at_end(instructions: &[Instruction], reg: char) -> u32 {
-    let regs = execute_all(instructions);
-    regs[reg]
-}
-
-fn part2(instructions: &[Instruction]) -> u32 {
-    0
-}
-
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let instructions = build(&input);
 
-    println!("Part 1: {}", value_in_at_end(&instructions, 'b'));
-    println!("Part 2: {}", part2(&instructions));
+    println!(
+        "Part 1: {}",
+        execute_all(&instructions, Registers::new(0, 0))['b']
+    );
+    println!(
+        "Part 2: {}",
+        execute_all(&instructions, Registers::new(1, 0))['b']
+    );
 }
 
 #[cfg(test)]
@@ -136,11 +132,17 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(value_in_at_end(&build(INPUT_TEST), 'a'), 2);
+        assert_eq!(
+            execute_all(&build(INPUT_TEST), Registers::new(0, 0))['a'],
+            2
+        );
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(
+            execute_all(&build(INPUT_TEST), Registers::new(1, 0))['a'],
+            7
+        );
     }
 }

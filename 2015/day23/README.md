@@ -6,3 +6,4 @@ Besides the need to read carefully the instructions (one, not odd..), it was an 
 
 ## Part 2
 
+Trivial.
