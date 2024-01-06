@@ -295,7 +295,7 @@ fn fight_to_win<const HARD: bool>(
     spells: &mut [Box<dyn Spell>],
     boss: &mut Boss,
     mana_spent: u32,
-    mana_spent_for_wins: &mut Vec<u32>,
+    min_mana_spent_for_win: &mut u32,
 ) {
     // Hard mode
     if HARD {
@@ -309,8 +309,7 @@ fn fight_to_win<const HARD: bool>(
     execute_spells_turn(spells, player, boss);
     assert!(!player.is_dead()); //  only the boss can die on spell turns
     if boss.is_dead() {
-        // println!("Boss died before spending, we won with {} mana spent", mana_spent);
-        mana_spent_for_wins.push(mana_spent);
+        *min_mana_spent_for_win = mana_spent.min(*min_mana_spent_for_win);
         return;
     }
 
@@ -329,8 +328,7 @@ fn fight_to_win<const HARD: bool>(
         let new_mana_spent = mana_spent + spells_copy[spell_to_cast].cost();
         assert!(!player_copy.is_dead()); //  only the boss can die on spell turns
         if boss_copy.is_dead() {
-            // println!("Boss died after cast, we won with {} mana spent", new_mana_spent);
-            mana_spent_for_wins.push(new_mana_spent);
+            *min_mana_spent_for_win = new_mana_spent.min(*min_mana_spent_for_win);
             continue;
         }
 
@@ -338,8 +336,7 @@ fn fight_to_win<const HARD: bool>(
         execute_spells_turn(&mut spells_copy, &mut player_copy, &mut boss_copy);
         assert!(!player_copy.is_dead()); //  only the boss can die on spell turns
         if boss_copy.is_dead() {
-            // println!("Boss died on boss turn, we won with {} mana spent", new_mana_spent);
-            mana_spent_for_wins.push(new_mana_spent);
+            *min_mana_spent_for_win = new_mana_spent.min(*min_mana_spent_for_win);
             continue;
         }
 
@@ -352,10 +349,8 @@ fn fight_to_win<const HARD: bool>(
         assert!(!boss_copy.is_dead() && !player_copy.is_dead());
 
         // Optimization: Don't do anything if new_mana_spent is bigger than min already
-        if let Some(min) = mana_spent_for_wins.iter().min() {
-            if *min < new_mana_spent {
-                continue;
-            }
+        if *min_mana_spent_for_win < new_mana_spent {
+            continue;
         }
 
         // nobody died, continue fighting
@@ -364,7 +359,7 @@ fn fight_to_win<const HARD: bool>(
             &mut spells_copy,
             &mut boss_copy,
             new_mana_spent,
-            mana_spent_for_wins,
+            min_mana_spent_for_win,
         );
     }
 }
@@ -374,18 +369,15 @@ fn least_mana_and_win<const HARD: bool>(initial_boss: &Boss, hit_points: u32, ma
     let mut spells = build_spells();
     let mut boss = initial_boss.clone();
 
-    let mut mana_spent_for_wins: Vec<u32> = Vec::new();
+    let mut min_mana_spent_for_win = u32::MAX;
     fight_to_win::<HARD>(
         &mut player,
         &mut spells,
         &mut boss,
         0,
-        &mut mana_spent_for_wins,
+        &mut min_mana_spent_for_win,
     );
-    *mana_spent_for_wins
-        .iter()
-        .min()
-        .expect("We didn't get any win?!?")
+    min_mana_spent_for_win
 }
 
 fn main() {
