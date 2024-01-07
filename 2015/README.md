@@ -97,6 +97,6 @@ Challenging. Recursion. Traits and fun implementation.
 
 Little computer. Fun.
 
-## Day 24: [It Hangs in the Balance](day24/README.md) 🌟
+## Day 24: [It Hangs in the Balance](day24/README.md) 🌟🌟
 
 Permutations, brute force, partition algorithm. Few assumptions on input.

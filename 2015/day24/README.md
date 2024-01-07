@@ -9,3 +9,4 @@ For checking the equal partitions, I used a dynamic programming implementation o
 
 ## Part 2
 
+Part 2 required using a 3-partition algorithm, which I got by first switching to an optimized version of the 2-partition one, and then converting the 2-partition into a 3-partition one.

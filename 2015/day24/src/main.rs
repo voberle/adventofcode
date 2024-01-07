@@ -150,6 +150,39 @@ fn find_partition_optimized(v: &[u32]) -> bool {
     part[part_len - 1]
 }
 
+// Idea from https://stackoverflow.com/a/4804123
+fn find_3partition(v: &[u32]) -> bool {
+    let sum = v.iter().map(|e| *e as i32).sum::<i32>();
+    if sum % 3 == 1 {
+        return false;
+    }
+
+    let rows = sum + 1;
+    let cols = rows;
+    let pos = |row: i32, col: i32| -> usize { (row * cols + col) as usize };
+
+    // part[pos(i, j)] tells whether first set can have sum i and second - sum j
+    let mut part = vec![false; (rows * cols) as usize];
+    part[0] = true;
+
+    // Fill the partition table in bottom up manner
+    for i in 0..v.len() {
+        let mut j = sum;
+        while j >= 0 {
+            let mut k = sum;
+            while k >= 0 {
+                if part[pos(j, k)] {
+                    part[pos(j + v[i] as i32, k)] = true;
+                    part[pos(j, k + v[i] as i32)] = true;
+                }
+                k -= 1;
+            }
+            j -= 1;
+        }
+    }
+    part[pos(sum / 3, sum / 3)]
+}
+
 // We only need to look at configurations that work with smallest group 1.
 // The smallest group we can make needs at least 5 items, and we know how much it should weight (512).
 // So we can try to find the 5 items group that weight 512, and see if the rest can be divided into 2 or 3.
@@ -169,6 +202,7 @@ fn group1_qe<const GROUP_COUNT: usize>(weights: &[u32]) -> u64 {
 
     // note that the max should be decreased there to a more reasonable value
     for group_1_size in min_group_1_size..weights.len() {
+        println!("Checking group size {}", group_1_size);
         let valid_group1s = ordered_valid_groups(weights, group_1_size, group_weight);
         if valid_group1s.is_empty() {
             println!("Group size {} doesn't work", group_1_size);
@@ -177,10 +211,20 @@ fn group1_qe<const GROUP_COUNT: usize>(weights: &[u32]) -> u64 {
         // let permutations_count = group_1_permutations_count(weights, group_1_size, group_weight);
         // println!("Number of permutations for group 1 with {} elements: {}", group_1_size, permutations_count);
 
+        println!(
+            "For group of size {} we have {} group candidates",
+            group_1_size,
+            valid_group1s.len()
+        );
         for perm in valid_group1s {
             let subset = subset(weights, &perm);
             if GROUP_COUNT - 1 == 2 {
                 if find_partition_optimized(&subset) {
+                    // Found it!
+                    return get_qe(&perm);
+                }
+            } else if GROUP_COUNT - 1 == 3 {
+                if find_3partition(&subset) {
                     // Found it!
                     return get_qe(&perm);
                 }
@@ -199,7 +243,7 @@ fn main() {
     let weights = build(&input);
 
     println!("Part 1: {}", group1_qe::<3>(&weights));
-    // println!("Part 2: {}", group1_qe::<4>(&weights));
+    println!("Part 2: {}", group1_qe::<4>(&weights));
 }
 
 #[cfg(test)]
@@ -211,5 +255,11 @@ mod tests {
         let v = vec![3, 1, 1, 2, 2, 1];
         assert!(find_partition(&v));
         assert!(find_partition_optimized(&v));
+    }
+
+    #[test]
+    fn test_find_3partition() {
+        let v = vec![3, 0, 1, 2, 2, 1];
+        assert!(find_3partition(&v));
     }
 }
