@@ -100,3 +100,7 @@ Little computer. Fun.
 ## Day 24: [It Hangs in the Balance](day24/README.md) 🌟🌟
 
 Permutations, brute force, partition algorithm. Few assumptions on input.
+
+## Day 25: [Let It Snow](day25/README.md) 🌟🌟
+
+Easy.
