@@ -1,6 +1,8 @@
 # Advent of Code 2015
 
-## 2015
+This is the second AoC year I did after 2023. Most days were easier than 2023, as most of them could be easily brute forced. A few were tricky, but they were spread around, not all grouped in the last week. Overall the tasks were really fun to do.
+
+## Days
 
 ### Day 1: [Not Quite Lisp](day01/README.md) 🌟🌟
 
