@@ -96,3 +96,7 @@ Challenging. Recursion. Traits and fun implementation.
 ## Day 23: [Opening the Turing Lock](day23/README.md) 🌟🌟
 
 Little computer. Fun.
+
+## Day 24: [It Hangs in the Balance](day24/README.md) 🌟
+
+Permutations, brute force, partition algorithm. Few assumptions on input.
