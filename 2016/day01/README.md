@@ -6,3 +6,4 @@ Nothing special to mention here, easy enough.
 
 ## Part 2
 
+More tricky, I used a HashSet to track the path, maybe there is a smarter way.
