@@ -1,16 +1,14 @@
 use std::io::{self, Read};
 
-type Input = str;
-
 fn build(input: &str) -> String {
     input.to_string()
 }
 
-fn part1(input: &Input) -> i64 {
+fn part1(input: &String) -> i64 {
     0
 }
 
-fn part2(input: &Input) -> i64 {
+fn part2(input: &String) -> i64 {
     0
 }
 
