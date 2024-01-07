@@ -88,6 +88,7 @@ fn subset(weights: &[u32], to_remove: &[u32]) -> Vec<u32> {
 // Looked at the implementation at https://www.geeksforgeeks.org/partition-problem-dp-18/
 //
 // Returns true if v subsets of equal sum
+#[allow(dead_code)]
 fn find_partition(v: &[u32]) -> bool {
     let sum = v.iter().sum::<u32>();
     if sum % 2 == 1 {
@@ -98,7 +99,9 @@ fn find_partition(v: &[u32]) -> bool {
     let cols = v.len() + 1;
     let pos = |row, col| row * cols + col;
 
+    // part[pos(i, j)] = true if a subset of [ v[0], v[1], ..v[j-1]] has sum equal to i, otherwise false
     let mut part = vec![false; rows * cols];
+
     // initialize top row as true
     for i in 0..cols {
         part[pos(0, i)] = true;
@@ -117,14 +120,34 @@ fn find_partition(v: &[u32]) -> bool {
         }
     }
 
-    // for i in 0..rows {
-    //     for j in 0..cols {
-    //         print!("{}", part[pos(i, j)]);
-    //     }
-    //     println!();
-    // }
-
     part[pos(rows - 1, cols - 1)]
+}
+
+fn find_partition_optimized(v: &[u32]) -> bool {
+    // We can space optimize the above approach as for calculating the values of the current row we require only previous row
+    let sum = v.iter().sum::<u32>();
+    if sum % 2 == 1 {
+        return false;
+    }
+
+    // part[i] = true if a sum equal to i can be reached with numbers from the set.
+    let part_len = sum as usize / 2 + 1;
+    let mut part = vec![false; part_len];
+
+    // Fill the partition table in bottom up manner
+    for i in 0..v.len() {
+        let mut j = sum as usize / 2;
+        // The element to be included in the sum cannot be greater than the sum
+        while j >= v[i] as usize {
+            // Check if sum - arr[i] could be formed from a subset using elements before index i
+            if part[j - v[i] as usize] || j == v[i] as usize {
+                part[j] = true;
+            }
+            j -= 1;
+        }
+    }
+
+    part[part_len - 1]
 }
 
 // We only need to look at configurations that work with smallest group 1.
@@ -140,8 +163,8 @@ fn group1_qe<const GROUP_COUNT: usize>(weights: &[u32]) -> u64 {
     let group_weight = get_group_weight::<GROUP_COUNT>(weights);
     let min_group_1_size = get_group1_min_possible_size(weights, group_weight);
     println!(
-        "We need at least {} elements in a group to reach the group weight",
-        min_group_1_size
+        "Need at least {} elements in a group to reach {}",
+        min_group_1_size, group_weight
     );
 
     // note that the max should be decreased there to a more reasonable value
@@ -157,7 +180,7 @@ fn group1_qe<const GROUP_COUNT: usize>(weights: &[u32]) -> u64 {
         for perm in valid_group1s {
             let subset = subset(weights, &perm);
             if GROUP_COUNT - 1 == 2 {
-                if find_partition(&subset) {
+                if find_partition_optimized(&subset) {
                     // Found it!
                     return get_qe(&perm);
                 }
@@ -187,5 +210,6 @@ mod tests {
     fn test_find_partition() {
         let v = vec![3, 1, 1, 2, 2, 1];
         assert!(find_partition(&v));
+        assert!(find_partition_optimized(&v));
     }
 }
