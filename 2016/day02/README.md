@@ -6,3 +6,4 @@ It was a simple one, by using nicely matching of range of integers. Also that's 
 
 ## Part 2
 
+Part 2 was nice as I used generics in the moving method.
