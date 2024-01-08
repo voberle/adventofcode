@@ -13,3 +13,7 @@ Simple. Generics.
 ### Day 3: [Squares With Three Sides](day03/README.md) 🌟🌟
 
 Easy. Triangles.
+
+### Day 4: [Security Through Obscurity](day04/README.md) 🌟
+
+Frequencies of elements in a vector.

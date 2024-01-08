@@ -1,0 +1,11 @@
+[package]
+name = "day04"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+
+[dependencies]
+itertools = "0.12.0"
+lazy_static = "1.4.0"
+regex = "1.10.2"
