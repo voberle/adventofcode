@@ -9,3 +9,7 @@ Tracking path.
 ### Day 2: [Bathroom Security](day02/README.md) 🌟🌟
 
 Simple. Generics.
+
+### Day 3: [Squares With Three Sides](day03/README.md) 🌟
+
+Triangles.
