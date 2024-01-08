@@ -6,3 +6,4 @@ I'm quite happy with this implementation, with a nice iterator to get the freque
 
 ## Part 2
 
+Second part was manipulating chars as bytes.

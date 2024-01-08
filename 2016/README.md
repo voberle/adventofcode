@@ -14,6 +14,6 @@ Simple. Generics.
 
 Easy. Triangles.
 
-### Day 4: [Security Through Obscurity](day04/README.md) 🌟
+### Day 4: [Security Through Obscurity](day04/README.md) 🌟🌟
 
-Frequencies of elements in a vector.
+Frequencies of elements in a vector. Chars as bytes manipulation.
