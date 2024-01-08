@@ -6,5 +6,6 @@
 
 Tracking path.
 
-### Day 2: [Bathroom Security](day02/README.md) 
+### Day 2: [Bathroom Security](day02/README.md) 🌟
 
+Simple.

@@ -1,70 +1,44 @@
 use std::io::{self, Read};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-use Direction::*;
-
-fn build(input: &str) -> Vec<Vec<Direction>> {
-    input
-        .lines()
-        .map(|line| {
-            line.chars()
-                .map(|c| match c {
-                    'U' => Up,
-                    'D' => Down,
-                    'L' => Left,
-                    'R' => Right,
-                    _ => panic!("Invalid direction char"),
-                })
-                .collect()
-        })
-        .collect()
-}
-
-fn move_to(pos: u8, dir: Direction) -> u8 {
+fn move_to(pos: u8, dir: char) -> u8 {
     match dir {
-        Up => match pos {
+        'U' => match pos {
             4..=9 => pos - 3,
             _ => pos,
         },
-        Down => match pos {
+        'D' => match pos {
             1..=6 => pos + 3,
             _ => pos,
         },
-        Left => match pos {
+        'L' => match pos {
             2 | 3 | 5 | 6 | 8 | 9 => pos - 1,
             _ => pos,
         },
-        Right => match pos {
+        'R' => match pos {
             1 | 2 | 4 | 5 | 7 | 8 => pos + 1,
             _ => pos,
         },
+        _ => panic!("Invalid direction char"),
     }
 }
 
-fn find_code(instructions: &[Vec<Direction>]) -> String {
+fn find_code(instructions: &str) -> String {
     let mut code = Vec::new();
     let mut pos: u8 = 5;
-    for line in instructions {
-        pos = line.iter().fold(pos, |current, dir| move_to(current, *dir));
+    for line in instructions.lines() {
+        pos = line.chars().fold(pos, move_to);
         code.push(pos);
     }
     code.iter().map(u8::to_string).collect()
 }
 
-fn part2(instructions: &[Vec<Direction>]) -> String {
+fn part2(instructions: &str) -> String {
     "".to_string()
 }
 
 fn main() {
-    let mut input = String::new();
-    io::stdin().read_to_string(&mut input).unwrap();
-    let instructions = build(&input);
+    let mut instructions = String::new();
+    io::stdin().read_to_string(&mut instructions).unwrap();
 
     println!("Part 1: {}", find_code(&instructions));
     println!("Part 2: {}", part2(&instructions));
@@ -78,11 +52,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(find_code(&build(INPUT_TEST)), "1985");
+        assert_eq!(find_code(INPUT_TEST), "1985");
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), "");
+        assert_eq!(part2(INPUT_TEST), "");
     }
 }
