@@ -10,6 +10,6 @@ Tracking path.
 
 Simple. Generics.
 
-### Day 3: [Squares With Three Sides](day03/README.md) 🌟
+### Day 3: [Squares With Three Sides](day03/README.md) 🌟🌟
 
-Triangles.
+Easy. Triangles.

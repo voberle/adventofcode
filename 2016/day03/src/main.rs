@@ -27,8 +27,18 @@ fn count_triangles(triangles: &[Vec<u32>]) -> usize {
     triangles.iter().filter(|t| is_triangle(t)).count()
 }
 
-fn part2(triangles: &[Vec<u32>]) -> usize {
-    0
+fn count_triangles_vertically(triangles: &[Vec<u32>]) -> usize {
+    triangles
+        .chunks(3)
+        .flat_map(|c| {
+            vec![
+                [c[0][0], c[1][0], c[2][0]],
+                [c[0][1], c[1][1], c[2][1]],
+                [c[0][2], c[1][2], c[2][2]],
+            ]
+        })
+        .filter(|t| is_triangle(t))
+        .count()
 }
 
 fn main() {
@@ -37,7 +47,7 @@ fn main() {
     let triangles = build(&input);
 
     println!("Part 1: {}", count_triangles(&triangles));
-    println!("Part 2: {}", part2(&triangles));
+    println!("Part 2: {}", count_triangles_vertically(&triangles));
 }
 
 #[cfg(test)]
@@ -51,6 +61,12 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build("")), 0);
+        const INPUT: &str = r"101 301 501
+102 302 502
+103 303 503
+201 401 601
+202 402 602
+203 403 603";
+        assert_eq!(count_triangles_vertically(&build(INPUT)), 6);
     }
 }

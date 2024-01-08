@@ -6,3 +6,4 @@ Very easy. I used a nice method to order 3 numbers.
 
 ## Part 2
 
+Simple with the chunks and flat_map iterators.
