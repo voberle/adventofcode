@@ -25,3 +25,7 @@ MD5. Brute-forced.
 ### Day 6: [Signals and Noise](day06/README.md) 🌟🌟
 
 Frequencies of elements.
+
+### Day 7: [Internet Protocol Version 7](day06/README.md) 🌟
+
+Parsing more tricky than it looked like.
