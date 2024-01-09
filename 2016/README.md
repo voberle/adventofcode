@@ -21,3 +21,7 @@ Frequencies of elements in a vector. Chars as bytes manipulation.
 ### Day 5: [How About a Nice Game of Chess?](day05/README.md) 🌟🌟
 
 MD5. Brute-forced.
+
+### Day 6: [Signals and Noise](day06/README.md) 🌟
+
+Frequencies of elements.
