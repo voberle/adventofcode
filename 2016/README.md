@@ -18,6 +18,6 @@ Easy. Triangles.
 
 Frequencies of elements in a vector. Chars as bytes manipulation.
 
-### Day 5: [How About a Nice Game of Chess?](day05/README.md) 🌟
+### Day 5: [How About a Nice Game of Chess?](day05/README.md) 🌟🌟
 
-MD5.
+MD5. Brute-forced.

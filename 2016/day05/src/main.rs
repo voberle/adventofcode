@@ -1,22 +1,49 @@
 use std::io::{self, Read};
 
+use itertools::Itertools;
+
+fn hash(door_id: &str, index: i32) -> String {
+    let digest = md5::compute(format!("{}{}", door_id, index).as_bytes());
+    format!("{:x}", digest)
+}
+
+const START: &str = "00000";
+
 fn find_password(door_id: &str) -> String {
-    const START: &str = "00000";
     let mut password = String::with_capacity(8);
     let mut index = 0;
     while password.len() < 8 {
-        let digest = md5::compute(format!("{}{}", door_id, index).as_bytes());
-        let s = format!("{:x}", digest);
+        let s = hash(door_id, index);
         if s.starts_with(START) {
-            password.push(s.trim_start_matches(START)[0..1].chars().next().unwrap());
+            password.push(s.trim_start_matches(START).chars().next().unwrap());
         }
         index += 1;
     }
     password
 }
 
-fn part2(door_id: &str) -> i64 {
-    0
+fn find_second_password(door_id: &str) -> String {
+    let mut password: [Option<char>; 8] = [None; 8];
+    let mut index = 0;
+    let mut password_len = 0;
+    while password_len < 8 {
+        let s = hash(door_id, index);
+        if s.starts_with(START) {
+            let mut it = s.trim_start_matches(START).chars();
+            if let Some(pos) = it.next().unwrap().to_digit(10) {
+                if pos < 8 {
+                    let i = pos as usize;
+                    let letter = it.next().unwrap();
+                    if password[i].is_none() {
+                        password[i] = Some(letter);
+                        password_len += 1;
+                    }
+                }
+            }
+        }
+        index += 1;
+    }
+    password.iter().map(|c| c.unwrap()).join("")
 }
 
 fn main() {
@@ -24,7 +51,7 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
 
     println!("Part 1: {}", find_password(&input));
-    println!("Part 2: {}", part2(&input));
+    println!("Part 2: {}", find_second_password(&input));
 }
 
 #[cfg(test)]
@@ -38,6 +65,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(""), 0);
+        assert_eq!(find_second_password("abc"), "05ace8e3");
     }
 }

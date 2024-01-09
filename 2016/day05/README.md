@@ -6,3 +6,4 @@ Calculating MD5 in a loop, nothing special.
 
 ## Part 2
 
+Similar, also brute-forced.
