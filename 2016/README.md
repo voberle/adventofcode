@@ -26,6 +26,6 @@ MD5. Brute-forced.
 
 Frequencies of elements.
 
-### Day 7: [Internet Protocol Version 7](day06/README.md) 🌟
+### Day 7: [Internet Protocol Version 7](day06/README.md) 🌟🌟
 
 Parsing more tricky than it looked like.
