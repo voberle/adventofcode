@@ -14,4 +14,4 @@ members = [
 version = "0.1.0"
 edition = "2021"
 authors = ["Vincent Oberle"]
-description = "Advent of Code 2015"
+description = "Advent of Code 2016"

@@ -74,7 +74,7 @@ fn decrypt_char(c: char, sector_id: u32) -> char {
     } else {
         cu8 + offset
     };
-    std::char::from_u32(letter as u32).unwrap()
+    std::char::from_u32(u32::from(letter)).unwrap()
 }
 
 fn build(input: &str) -> Vec<Room> {
