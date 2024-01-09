@@ -44,29 +44,33 @@ impl Part {
 
     // Returns all the ABA, if there is any.
     fn get_aba(&self) -> Vec<Vec<char>> {
-        let v = match self {
-            Part::External(v) | Part::Internal(v) => v,
-        };
-        if v.len() < 3 {
-            return Vec::new();
-        }
-        let mut res: Vec<Vec<char>> = Vec::new();
-        for i in 0..v.len() - 2 {
-            if is_aba(&[v[i], v[i + 1], v[i + 2]]) {
-                res.push(v[i..=i + 2].to_vec());
+        match self {
+            Part::External(v) => {
+                if v.len() < 3 {
+                    return Vec::new();
+                }
+                let mut res: Vec<Vec<char>> = Vec::new();
+                for i in 0..v.len() - 2 {
+                    if is_aba(&[v[i], v[i + 1], v[i + 2]]) {
+                        res.push(v[i..=i + 2].to_vec());
+                    }
+                }
+                res
             }
+            Part::Internal(_) => Vec::new(),
         }
-        res
     }
 
     fn contains_aba_as_bab(&self, bab: &[char]) -> bool {
-        let v = match self {
-            Part::External(v) | Part::Internal(v) => v,
-        };
-        if v.len() < 3 {
-            return false;
+        match self {
+            Part::External(_) => false,
+            Part::Internal(v) => {
+                if v.len() < 3 {
+                    return false;
+                }
+                (0..v.len() - 2).any(|i| v[i] == bab[1] && v[i + 1] == bab[0] && v[i + 2] == bab[1])
+            }
         }
-        (0..v.len() - 2).any(|i| v[i] == bab[1] && v[i + 1] == bab[0] && v[i + 2] == bab[1])
     }
 }
 
@@ -109,16 +113,8 @@ fn support_tls(ip: &[Part]) -> bool {
 }
 
 fn support_ssl(ip: &[Part]) -> bool {
-    for aba in ip
-        .iter()
-        .filter(|p| matches!(p, Part::External(_)))
-        .flat_map(Part::get_aba)
-    {
-        if ip
-            .iter()
-            .filter(|p| matches!(p, Part::Internal(_)))
-            .any(|p| p.contains_aba_as_bab(&aba))
-        {
+    for aba in ip.iter().flat_map(Part::get_aba) {
+        if ip.iter().any(|p| p.contains_aba_as_bab(&aba)) {
             return true;
         }
     }
