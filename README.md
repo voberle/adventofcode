@@ -17,3 +17,11 @@ with following in `$CARGO_HOME/cargo-generate.toml`:
     description = "Advent of Code template"
     path = "FULL_PATH_TO_TEMPLATE"
     vcs = "Git"
+
+## Clippy
+
+I try to have all exercises free of any default Clippy warnings.
+
+I also run Clippy in pedantic mode regularly, and add interesting checks to the workspace cargo file.
+
+    cargo clippy -- -W clippy::all -W clippy::pedantic

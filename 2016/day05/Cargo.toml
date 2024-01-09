@@ -5,6 +5,9 @@ edition.workspace = true
 authors.workspace = true
 description.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 itertools = "0.12.0"
 md5 = "0.7.0"

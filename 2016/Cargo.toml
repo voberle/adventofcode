@@ -16,3 +16,8 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Vincent Oberle"]
 description = "Advent of Code 2016"
+
+[workspace.lints.clippy]
+redundant_closure_for_method_calls = "warn"
+match_same_arms = "warn"
+range_plus_one = "warn"
