@@ -22,6 +22,6 @@ Frequencies of elements in a vector. Chars as bytes manipulation.
 
 MD5. Brute-forced.
 
-### Day 6: [Signals and Noise](day06/README.md) 🌟
+### Day 6: [Signals and Noise](day06/README.md) 🌟🌟
 
 Frequencies of elements.

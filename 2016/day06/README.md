@@ -6,3 +6,4 @@ Easy enough with same frequency code as two days ago.
 
 ## Part 2
 
+Trivial.
