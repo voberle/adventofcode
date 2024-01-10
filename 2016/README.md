@@ -37,3 +37,5 @@ Moving pixels.
 ### Day 9: [Explosives in Cyberspace](day09/README.md) 🌟🌟
 
 Recursion.
+
+### Day 10: [Balance Bots](day10/README.md) 
