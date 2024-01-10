@@ -38,6 +38,6 @@ Moving pixels.
 
 Recursion.
 
-### Day 10: [Balance Bots](day10/README.md) 🌟
+### Day 10: [Balance Bots](day10/README.md) 🌟🌟
 
 Graph of bots.

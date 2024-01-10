@@ -100,7 +100,16 @@ impl BotCore {
     }
 }
 
-fn execute(instructions: &[Instruction], values_searched: (u32, u32)) -> Option<usize> {
+fn values_has_bots_dest(values: &[(u32, Element)]) -> bool {
+    values
+        .iter()
+        .any(|(_, dest)| matches!(dest, Element::Bot(_)))
+}
+
+fn execute<const SEARCH: bool>(
+    instructions: &[Instruction],
+    values_searched: (u32, u32),
+) -> (Option<usize>, Option<Vec<(usize, u32)>>) {
     // List of value -> destination pairs.
     // This list comes from both value instructions and from bot execution.
     let mut values: Vec<(u32, Element)> = Vec::new();
@@ -123,35 +132,59 @@ fn execute(instructions: &[Instruction], values_searched: (u32, u32)) -> Option<
         }
     }
 
+    let mut outputs: Vec<(usize, u32)> = Vec::new();
+
     // Now we loop, emptying the values first, followed by bot execution, and so on
-    loop {
+    while values_has_bots_dest(&values) {
         while let Some((value, dest)) = values.pop() {
-            let bot_core = bots.get_mut(&dest).expect("Bot must exist");
-            bot_core.give_value(value);
+            match dest {
+                Element::Bot(_) => {
+                    let bot_core = bots.get_mut(&dest).expect("Bot must exist");
+                    bot_core.give_value(value);
+                }
+                Element::Output(id) => {
+                    outputs.push((id, value));
+                }
+            }
         }
         for (src, b) in &mut bots {
             if !b.is_ready() {
                 continue;
             }
             let r = b.exec();
-            if r[0].0 == values_searched.0 && r[1].0 == values_searched.1 {
+            if SEARCH && r[0].0 == values_searched.0 && r[1].0 == values_searched.1 {
                 // Found it
                 if let Element::Bot(id) = src {
-                    return Some(*id);
+                    return (Some(*id), None);
                 }
             }
             values.extend(r);
         }
     }
+    (None, Some(outputs))
 }
 
 fn comparing_bot_id(instructions: &[Instruction], values_searched: (u32, u32)) -> usize {
     assert!(values_searched.0 < values_searched.1);
-    execute(instructions, values_searched).expect("Didn't find a result")
+    execute::<true>(instructions, values_searched)
+        .0
+        .expect("Didn't find a result")
 }
 
-fn part2(instructions: &[Instruction]) -> i64 {
-    0
+fn mult_output_123(instructions: &[Instruction]) -> u32 {
+    let values = execute::<false>(instructions, (0, 0))
+        .1
+        .expect("Didn't find a result");
+    values
+        .iter()
+        .filter_map(|(id, val)| {
+            if [0, 1, 2].contains(id) {
+                Some(val)
+            } else {
+                None
+            }
+        })
+        .product()
 }
 
 fn main() {
@@ -160,7 +193,7 @@ fn main() {
     let instructions = build(&input);
 
     println!("Part 1: {}", comparing_bot_id(&instructions, (17, 61)));
-    println!("Part 2: {}", part2(&instructions));
+    println!("Part 2: {}", mult_output_123(&instructions));
 }
 
 #[cfg(test)]
@@ -172,10 +205,5 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(comparing_bot_id(&build(INPUT_TEST), (2, 5)), 2);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
     }
 }
