@@ -30,6 +30,6 @@ Frequencies of elements.
 
 Parsing more tricky than it looked like.
 
-### Day 8: [Two-Factor Authentication](day08/README.md) 🌟
+### Day 8: [Two-Factor Authentication](day08/README.md) 🌟🌟
 
 Moving pixels.

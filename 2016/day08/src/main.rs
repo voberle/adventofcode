@@ -7,7 +7,7 @@ enum Instruction {
     RotateRow { row: usize, amount: usize },
     RotateColumn { col: usize, amount: usize },
 }
-use Instruction::*;
+use Instruction::{Rect, RotateColumn, RotateRow};
 
 fn build(input: &str) -> Vec<Instruction> {
     let re_rect = Regex::new(r"rect (\d+)x(\d+)").unwrap();
@@ -76,11 +76,12 @@ impl Screen {
     fn format(&self) -> String {
         let mut s = String::with_capacity(self.rows * self.cols);
         for row in 0..self.rows {
-            for p in row * self.cols..(row + 1) * self.cols {
-                let c = self.values[p];
-                s += &format!("{}", if c { '#' } else { '.' });
-            }
-            s += "\n";
+            s.extend(
+                self.values[row * self.cols..(row + 1) * self.cols]
+                    .iter()
+                    .map(|&v| if v { '#' } else { '.' }),
+            );
+            s.push('\n');
         }
         s.trim_end().to_string()
     }
@@ -149,19 +150,11 @@ fn process_instruction(screen: &mut Screen, instruction: &Instruction) {
     }
 }
 
-fn lit_pixels_count<const SCREEN_WIDTH: usize, const SCREEN_HEIGHT: usize>(
-    instructions: &[Instruction],
-) -> usize {
-    let mut screen = Screen::new(SCREEN_HEIGHT, SCREEN_WIDTH);
+fn lit_pixels_count(instructions: &[Instruction], screen: &mut Screen) -> usize {
     for i in instructions {
-        process_instruction(&mut screen, i);
+        process_instruction(screen, i);
     }
-    // println!("{}", screen.format());
     screen.values.iter().filter(|&&v| v).count()
-}
-
-fn part2(instructions: &[Instruction]) -> i64 {
-    0
 }
 
 fn main() {
@@ -169,8 +162,9 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let instructions = build(&input);
 
-    println!("Part 1: {}", lit_pixels_count::<50, 6>(&instructions));
-    println!("Part 2: {}", part2(&instructions));
+    let mut screen = Screen::new(6, 50);
+    println!("Part 1: {}", lit_pixels_count(&instructions, &mut screen));
+    println!("Part 2:\n{}", screen.format());
 }
 
 #[cfg(test)]
@@ -232,11 +226,7 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(lit_pixels_count::<7, 3>(&build(INPUT_TEST)), 6);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        let mut screen = Screen::new(3, 7);
+        assert_eq!(lit_pixels_count(&build(INPUT_TEST), &mut screen), 6);
     }
 }
