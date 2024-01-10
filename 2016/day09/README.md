@@ -6,3 +6,4 @@ Part 1 was putting together a nice loop on the file.
 
 ## Part 2
 
+Fortunately worked nicely with recursion.

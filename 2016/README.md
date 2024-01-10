@@ -34,4 +34,6 @@ Parsing more tricky than it looked like.
 
 Moving pixels.
 
-### Day 9: [Explosives in Cyberspace](day09/README.md) 🌟
+### Day 9: [Explosives in Cyberspace](day09/README.md) 🌟🌟
+
+Recursion.
