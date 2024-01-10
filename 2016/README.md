@@ -33,3 +33,5 @@ Parsing more tricky than it looked like.
 ### Day 8: [Two-Factor Authentication](day08/README.md) 🌟🌟
 
 Moving pixels.
+
+### Day 9: [Explosives in Cyberspace](day09/README.md) 🌟
