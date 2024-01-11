@@ -41,3 +41,6 @@ Recursion.
 ### Day 10: [Balance Bots](day10/README.md) 🌟🌟
 
 Graph of bots.
+
+### Day 11: [Radioisotope Thermoelectric Generators](day11/README.md) 
+
