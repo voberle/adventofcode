@@ -1,8 +1,9 @@
 use std::{
     fmt,
-    io::{self, Read},
+    io::{self, Read}, usize,
 };
 
+use fxhash::{FxHashSet, FxHashMap};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -96,22 +97,16 @@ fn print_floors(floors: &[Vec<Object>]) {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-enum ObjectId {
-    Generator(usize),
-    Microchip(usize),
-}
-
 // A better data struct to organize the building than just a list of floors
+#[derive(Clone)]
 struct Building {
     // List of unique elements in the building. Not needed in algo.
     elements: Vec<Element>,
-    elements_count: usize,
     floor_count: usize,
     // First index is the floor (first floor is 0).
-    // Second index is the element.
-    generators: Vec<Vec<bool>>,
-    microchips: Vec<Vec<bool>>,
+    // Second index is the element: even indicates the generator, odd the chip
+    // TODO change this into a 1-dim vector
+    locations: Vec<Vec<bool>>,
 }
 
 impl Building {
@@ -124,33 +119,25 @@ impl Building {
             .unique()
             .cloned()
             .collect();
-        let mut generators = vec![vec![false; elements.len()]; floors.len()];
-        let mut microchips = vec![vec![false; elements.len()]; floors.len()];
+        let mut locations = vec![vec![false; elements.len() * 2]; floors.len()];
         for (level, floor) in floors.iter().enumerate() {
             for object in floor {
                 let elt_idx = elements.iter().position(|e| e == object.elt()).unwrap();
                 match object {
                     Object::Generator(_) => {
-                        generators[level][elt_idx] = true;
+                        locations[level][elt_idx * 2] = true;
                     }
                     Object::Microchip(_) => {
-                        microchips[level][elt_idx] = true;
+                        locations[level][elt_idx * 2 + 1] = true;
                     }
                 }
             }
         }
         Self {
-            elements_count: elements.len(),
             floor_count: floors.len(),
             elements,
-            generators,
-            microchips,
+            locations,
         }
-    }
-
-    // Should only be needed for testing.
-    fn elt_idx(&self, symbol: &str) -> usize {
-        self.elements.iter().position(|e| e.0 == symbol).unwrap()
     }
 
     fn print(&self, elevator: usize) {
@@ -158,19 +145,19 @@ impl Building {
             println!(
                 "F{}: {}  {}",
                 f + 1,
-                if elevator == f { "E" } else { "." },
+                if elevator == f { "E" } else { " " },
                 self.elements
                     .iter()
                     .enumerate()
                     .map(|(c, e)| {
                         format!(
                             "{:3} {:3}",
-                            if self.generators[f][c] {
+                            if self.locations[f][c * 2] {
                                 e.to_string() + "G"
                             } else {
                                 ".".to_string()
                             },
-                            if self.microchips[f][c] {
+                            if self.locations[f][c * 2 + 1] {
                                 e.to_string() + "M"
                             } else {
                                 ".".to_string()
@@ -184,84 +171,174 @@ impl Building {
 
     // All items on last floor
     fn success(&self) -> bool {
-        let last_floor = self.floor_count - 1;
-        self.generators[last_floor].iter().all(|&v| v)
-            && self.microchips[last_floor].iter().all(|&v| v)
+        self.locations[self.floor_count - 1].iter().all(|&v| v)
     }
 
-    fn any_generator_on_floor(&self, floor: usize) -> bool {
-        self.generators[floor].iter().any(|&v| v)
-    }
-
-    fn is_chip_on(&self, chip: usize, floor: usize) -> bool {
-        self.microchips[floor][chip]
-    }
-
-    fn is_generator_on(&self, chip: usize, floor: usize) -> bool {
-        self.generators[floor][chip]
-    }
-
-    // Rules
-    // Chip cannot be on a floor with Generators without having its own Generator as well
-    fn can_chip_go_to(&self, chip: usize, floor: usize) -> bool {
-        // Either no generators on floor, or our own is there.
-        !self.any_generator_on_floor(floor) || self.is_generator_on(chip, floor)
+    fn is_floor_valid(floor: &[bool]) -> bool {
+        // If no generators at all, we're good
+        if floor.iter().step_by(2).all(|&v| !v) {
+            return true;
+        }
+        for i in (0..floor.len()).step_by(2) {
+            // If element has a chip but not corresponding generator, it's bad
+            if floor[i+1] && !floor[i] {
+                return false;
+            }
+        }
+        return true;
     }
 
     // Finds what the elevator could take from a floor to another.
-    fn can_take_to(&self, from: usize, to: usize) -> Vec<Vec<ObjectId>> {
+    // Elevator can have one or two items (cannot be empty).
+    fn can_take_to(&self, from: usize, to: usize) -> Vec<Vec<usize>> {
         assert_eq!(from.abs_diff(to), 1);
-        // Elevator can have one or two items (cannot be empty).
-        let mut movable_objects: Vec<_> = self.microchips[from]
+        let movable_objects_indexes: Vec<_> = self.locations[from]
             .iter()
             .enumerate()
             .filter_map(|(i, &v)| if v { Some(i) } else { None })
-            .filter(|&chip| self.can_chip_go_to(chip, to))
-            .map(|i| ObjectId::Microchip(i))
             .collect();
-        movable_objects.extend(
-            self.generators[from]
-            .iter()
-            .enumerate()
-            .filter_map(|(i, &v)| if v { Some(i) } else { None })
-            .map(|i| ObjectId::Generator(i))
-        );
 
-        let mut elevator_options: Vec<Vec<ObjectId>> = Vec::new();
-        elevator_options.extend(movable_objects.iter().map(|o| vec![*o]));
-        elevator_options.extend(movable_objects.iter().permutations(2)
+        let mut elevator_options: Vec<Vec<usize>> = Vec::new();
+        elevator_options.extend(movable_objects_indexes.iter().map(|o| vec![*o]));
+        elevator_options.extend(movable_objects_indexes.iter().combinations(2)
         .map(|v| v.iter().map(|e| **e).collect())
         );
-        elevator_options
+
+        elevator_options.iter().filter(|&option| {
+            let mut from_floor_copy = self.locations[from].clone();
+            let mut to_floor_copy = self.locations[to].clone();
+            for i in option {
+                from_floor_copy[*i] = false;
+                to_floor_copy[*i] = true;
+            }
+            Self::is_floor_valid(&from_floor_copy) && Self::is_floor_valid(&to_floor_copy)
+
+        }).cloned()
+        .collect()
     }
 
-    fn move_objects(&mut self, objects: &[ObjectId], from: usize, to: usize) {
+    fn can_take_up(&self, elevator: usize) -> Vec<Vec<usize>> {
+        self.can_take_to(elevator, elevator + 1)
+    }
+
+    fn can_take_down(&self, elevator: usize) -> Vec<Vec<usize>> {
+        self.can_take_to(elevator, elevator - 1)
+    }
+
+    fn move_objects(&mut self, objects: &[usize], from: usize, to: usize) {
         assert_eq!(from.abs_diff(to), 1);
         assert!(objects.len() == 1 || objects.len() == 2);
 
-        for o in objects {
-            match o {
-                ObjectId::Generator(i) => {
-                    self.generators[from][*i] = false;
-                    self.generators[to][*i] = true;
-                }
-                ObjectId::Microchip(i) => {
-                    self.microchips[from][*i] = false;
-                    self.microchips[to][*i] = true;
-                }
-            }
+        for i in objects {
+            self.locations[from][*i] = false;
+            self.locations[to][*i] = true;
         }
+    }
+
+    fn move_up(&mut self, objects: &[usize], elevator: usize) {
+        self.move_objects(objects, elevator, elevator + 1);
+    }
+
+    fn move_down(&mut self, objects: &[usize], elevator: usize) {
+        self.move_objects(objects, elevator, elevator - 1);
     }
 }
 
-fn part1(floors: &[Vec<Object>]) -> i64 {
-    let mut building = Building::new(floors);
-    let mut elevator = 0;
-    building.print(elevator);
+// Recursive function
+fn find_steps(
+    building: &mut Building,
+    current_floor: usize,
+    origin: (i8, Vec<usize>),  // what got us there, to avoid going back
+    steps: usize,
+    min_steps_found: &mut usize,
+    done: &mut FxHashMap<(usize, Vec<Vec<bool>>), usize>
+) {
+    // println!("{} steps:", steps);
+    // building.print(current_floor);
 
-    let o = building.can_take_to(0, 1);
-    println!("{:?}", o);
-    0
+    if steps > 100 {
+        return;
+    }
+    if let Some(s) = done.get(&(current_floor, building.locations.clone())) {
+        if steps >= *s {
+            // println!("Already been here");
+            return;
+        }
+    }
+    done.insert((current_floor, building.locations.clone()), steps);
+
+    if steps > *min_steps_found {
+        return;
+    }
+
+    if current_floor < building.floor_count - 1 {
+        // Can go up
+        let mut up_options = building.can_take_up(current_floor);
+
+        // We also want to exclude what we just did
+        if origin.0 == -1 {
+            if let Some(index) = up_options.iter().position(|o| *o == origin.1) {
+                up_options.remove(index);
+            }
+        }
+
+        // println!("UP options: {:?}", up_options);
+        for objects in up_options {
+            // println!("Up: {:?}", objects);
+            let mut new_building = building.clone();
+            new_building.move_up(&objects, current_floor);
+
+            if new_building.success() {
+                *min_steps_found = (steps + 1).min(*min_steps_found);
+                println!("Found one: {}", *min_steps_found);
+                // new_building.print(current_floor + 1);
+                // We can return, even if another option works, it would be the same step count
+                return;
+            }
+            find_steps(&mut new_building.clone(), current_floor + 1, (1, objects.clone()), steps + 1, min_steps_found, done);
+        }
+    }
+    
+    if current_floor > 0 {
+        // Can go down
+        let mut down_options = building.can_take_down(current_floor);
+
+        // We also want to exclude what we just did
+        if origin.0 == 1 {
+            if let Some(index) = down_options.iter().position(|o| *o == origin.1) {
+                down_options.remove(index);
+            }
+        }
+
+        // println!("DOWN options: {:?}", down_options);
+        for objects in down_options {
+            // println!("Down: {:?}", objects);
+            let mut new_building = building.clone();
+            new_building.move_down(&objects, current_floor);
+
+            if new_building.success() {
+                *min_steps_found = (steps + 1).min(*min_steps_found);
+                println!("Found one: {}", *min_steps_found);
+                // new_building.print(current_floor + 1);
+                // We can return, even if another option works, it would be the same step count
+                return;
+            }
+            find_steps(&mut new_building, current_floor - 1, (-1, objects.clone()), steps + 1, min_steps_found, done);
+        }
+    }
+
+
+}
+
+
+fn min_number_steps(floors: &[Vec<Object>]) -> usize {
+    let mut building = Building::new(floors);
+    building.print(0);
+
+    let mut min_steps_found = usize::MAX;
+    let mut done: FxHashMap<(usize, Vec<Vec<bool>>), usize> = FxHashMap::default();
+    find_steps(&mut building, 0, (0, Vec::new()), 0, &mut min_steps_found, &mut done);
+    min_steps_found
 }
 
 fn part2(floors: &[Vec<Object>]) -> i64 {
@@ -274,7 +351,7 @@ fn main() {
     let floors = build(&input);
     // print_floors(&floors);
 
-    println!("Part 1: {}", part1(&floors));
+    println!("Part 1: {}", min_number_steps(&floors));
     println!("Part 2: {}", part2(&floors));
 }
 
@@ -285,42 +362,95 @@ mod tests {
     const INPUT_TEST: &str = include_str!("../resources/input_test_1");
 
     #[test]
-    fn test_building() {
-        let building = Building::new(&build(INPUT_TEST));
-        building.print(0);
+    fn test_is_floor_valid() {
+        // Empty
+        assert!(Building::is_floor_valid(&[false, false, false, false]));
+        // Only one microchip
+        assert!(Building::is_floor_valid(&[false, false, false, true]));
+        // Only one generator
+        assert!(Building::is_floor_valid(&[false, false, true, false]));
+        // Microchip + corresponding generator
+        assert!(Building::is_floor_valid(&[false, false, true, true]));
+        // Microchip + corresponding generator + other generator
+        assert!(Building::is_floor_valid(&[true, false, true, true]));
+        assert!(Building::is_floor_valid(&[true, true, true, false]));
+        // Two generators, no microchip
+        assert!(Building::is_floor_valid(&[true, false, true, false]));
+        // Full
+        assert!(Building::is_floor_valid(&[true, true, true, true]));
 
-        let h_index = building.elt_idx("H");
-        println!("Index of {}: {}", "H", h_index);
-        assert!(building.is_chip_on(h_index, 0));
-        assert!(building.can_chip_go_to(h_index, 1));
-        assert!(!building.can_chip_go_to(h_index, 2));
+        // Invalid:
+        // Microchip + other generator
+        assert!(!Building::is_floor_valid(&[true, false, false, true]));
+    }
+
+    #[test]
+    fn test_is_success() {
+        let building = Building { elements: Vec::new(), floor_count: 4, locations: vec![
+            vec![false, false, false, false],
+            vec![false, false, false, false],
+            vec![false, false, false, false],
+            vec![true, true, true, true],
+        ] };
+        assert!(building.success());
+    }
+
+    #[test]
+    fn test_can_take_to() {
+        let building = Building { elements: Vec::new(), floor_count: 4, locations: vec![
+            vec![false, false, false, true],
+            vec![false, false, false, false],
+            vec![false, true, false, false],
+            vec![true, false, true, false],
+        ] };
+        let options = building.can_take_down(3);
+        assert_eq!(options, vec![vec![0], vec![0, 2]]);
+    }
+
+    fn up(building: &mut Building, current_floor: &mut usize, steps: &mut usize, objects: Vec<usize>) {
+        *steps += 1;
+        println!("Step {}", *steps);
+        let options = building.can_take_up(*current_floor);
+        assert!(options.contains(&objects));
+        building.move_up(&objects, *current_floor);
+        *current_floor += 1;
+        building.print(*current_floor);
+    }
+
+    fn down(building: &mut Building, current_floor: &mut usize, steps: &mut usize, objects: Vec<usize>) {
+        *steps += 1;
+        println!("Step {}", *steps);
+        let options = building.can_take_down(*current_floor);
+        assert!(options.contains(&objects));
+        building.move_down(&objects, *current_floor);
+        *current_floor -= 1;
+        building.print(*current_floor);
     }
 
     #[test]
     fn test_moving() {
         let mut building = Building::new(&build(INPUT_TEST));
-        let mut elevator = 0;
-        building.print(elevator);
+        let mut current_floor = 0;
+        building.print(current_floor);
 
-        let o = building.can_take_to(elevator, 1);
-        println!("{:?}", o);
+        let mut steps = 0;
+        up(&mut building, &mut current_floor, &mut steps, vec![1]);
+        up(&mut building, &mut current_floor, &mut steps, vec![0, 1]);
+        down(&mut building, &mut current_floor, &mut steps, vec![1]);
+        down(&mut building, &mut current_floor, &mut steps, vec![1]);
+        up(&mut building, &mut current_floor, &mut steps, vec![1, 3]);
+        up(&mut building, &mut current_floor, &mut steps, vec![1, 3]);
+        up(&mut building, &mut current_floor, &mut steps, vec![1, 3]);
+        down(&mut building, &mut current_floor, &mut steps, vec![1]);
+        up(&mut building, &mut current_floor, &mut steps, vec![0, 2]);
+        down(&mut building, &mut current_floor, &mut steps, vec![3]);
+        up(&mut building, &mut current_floor, &mut steps, vec![1, 3]);
 
-        building.move_objects(&o[0], elevator, elevator + 1);
-        elevator += 1;
-        building.print(elevator);
-
-        let o1 = building.can_take_to(elevator, 2);
-        println!("{:?}", o1);
-        assert!(false)
+        assert_eq!(steps, 11);
     }
 
     #[test]
     fn test_part1() {
-        assert_eq!(part1(&build(INPUT_TEST)), 11);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(min_number_steps(&build(INPUT_TEST)), 11);
     }
 }
