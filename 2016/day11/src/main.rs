@@ -47,12 +47,11 @@ enum Object {
     Generator(Element),
     Microchip(Element),
 }
-use Object::{Generator, Microchip};
 
 impl Object {
     fn elt(&self) -> &Element {
         match self {
-            Generator(e) | Microchip(e) => e,
+            Object::Generator(e) | Object::Microchip(e) => e,
         }
     }
 }
@@ -77,10 +76,10 @@ fn build(input: &str) -> Vec<Vec<Object>> {
         .map(|line| {
             let mut floor = Vec::new();
             for (_, [p]) in RE_GEN.captures_iter(line).map(|c| c.extract()) {
-                floor.push(Generator(Element::from_name(p)));
+                floor.push(Object::Generator(Element::from_name(p)));
             }
             for (_, [p]) in RE_CHIP.captures_iter(line).map(|c| c.extract()) {
-                floor.push(Microchip(Element::from_name(p)));
+                floor.push(Object::Microchip(Element::from_name(p)));
             }
             floor
         })
@@ -95,6 +94,12 @@ fn print_floors(floors: &[Vec<Object>]) {
             floor.iter().map(ToString::to_string).join(" ")
         )
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum ObjectId {
+    Generator(usize),
+    Microchip(usize),
 }
 
 // A better data struct to organize the building than just a list of floors
@@ -125,10 +130,10 @@ impl Building {
             for object in floor {
                 let elt_idx = elements.iter().position(|e| e == object.elt()).unwrap();
                 match object {
-                    Generator(_) => {
+                    Object::Generator(_) => {
                         generators[level][elt_idx] = true;
                     }
-                    Microchip(_) => {
+                    Object::Microchip(_) => {
                         microchips[level][elt_idx] = true;
                     }
                 }
@@ -148,11 +153,12 @@ impl Building {
         self.elements.iter().position(|e| e.0 == symbol).unwrap()
     }
 
-    fn print(&self) {
+    fn print(&self, elevator: usize) {
         for f in (0..self.floor_count).rev() {
             println!(
-                "F{}: {}",
+                "F{}: {}  {}",
                 f + 1,
+                if elevator == f { "E" } else { "." },
                 self.elements
                     .iter()
                     .enumerate()
@@ -176,6 +182,13 @@ impl Building {
         }
     }
 
+    // All items on last floor
+    fn success(&self) -> bool {
+        let last_floor = self.floor_count - 1;
+        self.generators[last_floor].iter().all(|&v| v)
+            && self.microchips[last_floor].iter().all(|&v| v)
+    }
+
     fn any_generator_on_floor(&self, floor: usize) -> bool {
         self.generators[floor].iter().any(|&v| v)
     }
@@ -194,9 +207,60 @@ impl Building {
         // Either no generators on floor, or our own is there.
         !self.any_generator_on_floor(floor) || self.is_generator_on(chip, floor)
     }
+
+    // Finds what the elevator could take from a floor to another.
+    fn can_take_to(&self, from: usize, to: usize) -> Vec<Vec<ObjectId>> {
+        assert_eq!(from.abs_diff(to), 1);
+        // Elevator can have one or two items (cannot be empty).
+        let mut movable_objects: Vec<_> = self.microchips[from]
+            .iter()
+            .enumerate()
+            .filter_map(|(i, &v)| if v { Some(i) } else { None })
+            .filter(|&chip| self.can_chip_go_to(chip, to))
+            .map(|i| ObjectId::Microchip(i))
+            .collect();
+        movable_objects.extend(
+            self.generators[from]
+            .iter()
+            .enumerate()
+            .filter_map(|(i, &v)| if v { Some(i) } else { None })
+            .map(|i| ObjectId::Generator(i))
+        );
+
+        let mut elevator_options: Vec<Vec<ObjectId>> = Vec::new();
+        elevator_options.extend(movable_objects.iter().map(|o| vec![*o]));
+        elevator_options.extend(movable_objects.iter().permutations(2)
+        .map(|v| v.iter().map(|e| **e).collect())
+        );
+        elevator_options
+    }
+
+    fn move_objects(&mut self, objects: &[ObjectId], from: usize, to: usize) {
+        assert_eq!(from.abs_diff(to), 1);
+        assert!(objects.len() == 1 || objects.len() == 2);
+
+        for o in objects {
+            match o {
+                ObjectId::Generator(i) => {
+                    self.generators[from][*i] = false;
+                    self.generators[to][*i] = true;
+                }
+                ObjectId::Microchip(i) => {
+                    self.microchips[from][*i] = false;
+                    self.microchips[to][*i] = true;
+                }
+            }
+        }
+    }
 }
 
 fn part1(floors: &[Vec<Object>]) -> i64 {
+    let mut building = Building::new(floors);
+    let mut elevator = 0;
+    building.print(elevator);
+
+    let o = building.can_take_to(0, 1);
+    println!("{:?}", o);
     0
 }
 
@@ -208,7 +272,7 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let floors = build(&input);
-    print_floors(&floors);
+    // print_floors(&floors);
 
     println!("Part 1: {}", part1(&floors));
     println!("Part 2: {}", part2(&floors));
@@ -223,14 +287,31 @@ mod tests {
     #[test]
     fn test_building() {
         let building = Building::new(&build(INPUT_TEST));
-        building.print();
-        println!("{:?}", building.microchips);
+        building.print(0);
 
         let h_index = building.elt_idx("H");
         println!("Index of {}: {}", "H", h_index);
         assert!(building.is_chip_on(h_index, 0));
         assert!(building.can_chip_go_to(h_index, 1));
         assert!(!building.can_chip_go_to(h_index, 2));
+    }
+
+    #[test]
+    fn test_moving() {
+        let mut building = Building::new(&build(INPUT_TEST));
+        let mut elevator = 0;
+        building.print(elevator);
+
+        let o = building.can_take_to(elevator, 1);
+        println!("{:?}", o);
+
+        building.move_objects(&o[0], elevator, elevator + 1);
+        elevator += 1;
+        building.print(elevator);
+
+        let o1 = building.can_take_to(elevator, 2);
+        println!("{:?}", o1);
+        assert!(false)
     }
 
     #[test]
