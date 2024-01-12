@@ -8,4 +8,4 @@ The nice part of this implementation is the use of a cache in order to compute e
 
 In part 2, there are all the intermediate 2016 hashes to calculate, where there is probably nothing extra to optimize, so it's bit slow.
 
-Main challenge there was properly converting the data for the MD5 method.
+Main challenge there was properly converting the data for the MD5 method. But once I had it, I simplified the code and it turned out surprisingly simple.

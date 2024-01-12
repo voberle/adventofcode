@@ -1,8 +1,8 @@
 use std::io::{self, Read};
 
-fn calc_hash(salt: &str, i: usize) -> Vec<char> {
+fn calc_hash(salt: &str, i: usize) -> String {
     let digest = md5::compute(format!("{}{}", salt, i).as_bytes());
-    format!("{:x}", digest).chars().collect()
+    format!("{:x}", digest)
 }
 
 fn has_three_char_in_row(s: &[char]) -> Option<char> {
@@ -35,18 +35,13 @@ fn get_hash<'a, const STRETCHED: bool>(
     }
     // Fill the cache until the value we need
     (cache.len()..=index).for_each(|i| {
-        if !STRETCHED {
-            let hash = calc_hash(salt, i);
-            cache.push(hash);
-        } else {
-            let key = format!("{}{}", salt, i);
-            let mut digest = md5::compute(key.as_bytes());
+        let mut hash = calc_hash(salt, i);
+        if STRETCHED {
             for _ in 0..2016 {
-                digest = md5::compute(format!("{:x}", digest));
+                hash = format!("{:x}", md5::compute(hash));
             }
-            let hash = format!("{:x}", digest).chars().collect();
-            cache.push(hash);
         }
+        cache.push(hash.chars().collect());
     });
     &cache[index]
 }
