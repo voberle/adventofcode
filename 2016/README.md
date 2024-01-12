@@ -45,3 +45,7 @@ Graph of bots.
 ### Day 11: [Radioisotope Thermoelectric Generators](day11/README.md) 🌟
 
 Complicated: Lift with rule what to transport. Recursion.
+
+### Day 12: [Leonardo's Monorail](day12/README.md) 🌟
+
+Little computer, similar to [2015/Day23](../2015/day23/README.md).
