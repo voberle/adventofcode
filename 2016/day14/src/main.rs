@@ -1,6 +1,6 @@
 use std::io::{self, Read};
 
-fn hash(salt: &str, i: usize) -> Vec<char> {
+fn calc_hash(salt: &str, i: usize) -> Vec<char> {
     let digest = md5::compute(format!("{}{}", salt, i).as_bytes());
     format!("{:x}", digest).chars().collect()
 }
@@ -25,27 +25,27 @@ fn contains_char_times_five(s: &[char], c: char) -> bool {
 }
 
 // Returns the hash for the corresponding index, caching them in `cache`.
-fn hash_cached<'a>(salt: &str, index: usize, cache: &'a mut Vec<Vec<char>>) -> &'a Vec<char> {
+fn get_hash<'a>(salt: &str, index: usize, cache: &'a mut Vec<Vec<char>>) -> &'a Vec<char> {
     if index < cache.len() {
         return &cache[index];
     }
     (cache.len()..=index).for_each(|i| {
-        let hash = hash(salt, i);
+        let hash = calc_hash(salt, i);
         cache.push(hash);
     });
     &cache[index]
 }
 
-fn index_of_nth_key<const NTH: usize>(salt: &str) -> usize {
+fn index_of_64th_key<const STRETCHED: bool>(salt: &str) -> usize {
     let mut hashes: Vec<Vec<char>> = Vec::new();
     let mut keys_found = 0;
     let mut index = 0;
-    while keys_found != NTH {
-        let hash = hash_cached(salt, index, &mut hashes);
+    while keys_found != 64 {
+        let hash = get_hash(salt, index, &mut hashes);
         if let Some(triple) = has_three_char_in_row(hash) {
             // check if next 1000 hashes contain the triple 5 times
             let has_triple_5_times = (index + 1..=index + 1000).any(|i| {
-                let h = hash_cached(salt, i, &mut hashes);
+                let h = get_hash(salt, i, &mut hashes);
                 contains_char_times_five(h, triple)
             });
             if has_triple_5_times {
@@ -57,16 +57,12 @@ fn index_of_nth_key<const NTH: usize>(salt: &str) -> usize {
     index - 1
 }
 
-fn part2(salt: &str) -> usize {
-    0
-}
-
 fn main() {
     let mut salt = String::new();
     io::stdin().read_to_string(&mut salt).unwrap();
 
-    println!("Part 1: {}", index_of_nth_key::<64>(salt.trim()));
-    println!("Part 2: {}", part2(salt.trim()));
+    println!("Part 1: {}", index_of_64th_key::<false>(salt.trim()));
+    println!("Part 2: {}", index_of_64th_key::<true>(salt.trim()));
 }
 
 #[cfg(test)]
@@ -75,11 +71,12 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(index_of_nth_key::<64>("abc"), 22728);
+        assert_eq!(index_of_64th_key::<false>("abc"), 22728);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2("abc"), 0);
+        assert_eq!(index_of_64th_key::<true>("abc"), 22859);
+
     }
 }
