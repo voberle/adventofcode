@@ -25,13 +25,28 @@ fn contains_char_times_five(s: &[char], c: char) -> bool {
 }
 
 // Returns the hash for the corresponding index, caching them in `cache`.
-fn get_hash<'a>(salt: &str, index: usize, cache: &'a mut Vec<Vec<char>>) -> &'a Vec<char> {
+fn get_hash<'a, const STRETCHED: bool>(
+    salt: &str,
+    index: usize,
+    cache: &'a mut Vec<Vec<char>>,
+) -> &'a Vec<char> {
     if index < cache.len() {
         return &cache[index];
     }
+    // Fill the cache until the value we need
     (cache.len()..=index).for_each(|i| {
-        let hash = calc_hash(salt, i);
-        cache.push(hash);
+        if !STRETCHED {
+            let hash = calc_hash(salt, i);
+            cache.push(hash);
+        } else {
+            let key = format!("{}{}", salt, i);
+            let mut digest = md5::compute(key.as_bytes());
+            for _ in 0..2016 {
+                digest = md5::compute(format!("{:x}", digest));
+            }
+            let hash = format!("{:x}", digest).chars().collect();
+            cache.push(hash);
+        }
     });
     &cache[index]
 }
@@ -41,11 +56,11 @@ fn index_of_64th_key<const STRETCHED: bool>(salt: &str) -> usize {
     let mut keys_found = 0;
     let mut index = 0;
     while keys_found != 64 {
-        let hash = get_hash(salt, index, &mut hashes);
+        let hash = get_hash::<STRETCHED>(salt, index, &mut hashes);
         if let Some(triple) = has_three_char_in_row(hash) {
             // check if next 1000 hashes contain the triple 5 times
             let has_triple_5_times = (index + 1..=index + 1000).any(|i| {
-                let h = get_hash(salt, i, &mut hashes);
+                let h = get_hash::<STRETCHED>(salt, i, &mut hashes);
                 contains_char_times_five(h, triple)
             });
             if has_triple_5_times {
@@ -77,6 +92,5 @@ mod tests {
     #[test]
     fn test_part2() {
         assert_eq!(index_of_64th_key::<true>("abc"), 22859);
-
     }
 }
