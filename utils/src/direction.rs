@@ -7,10 +7,10 @@ pub enum Direction {
     South,
     West,
 }
-use Direction::*;
+use Direction::{East, North, South, West};
 
 impl Direction {
-    pub fn index(&self) -> usize {
+    pub fn index(self) -> usize {
         match self {
             North => 0,
             East => 1,
@@ -19,7 +19,7 @@ impl Direction {
         }
     }
 
-    pub fn opposite(&self) -> Self {
+    pub fn opposite(self) -> Self {
         match self {
             North => South,
             East => West,

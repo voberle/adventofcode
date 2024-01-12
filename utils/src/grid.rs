@@ -1,5 +1,5 @@
 /// A 2D grid backed by a simple Vector
-use crate::direction::Direction::{self, *};
+use crate::direction::Direction::{self, East, North, South, West};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Grid {
@@ -68,7 +68,7 @@ impl Grid {
     }
 
     // Returns the index of the next position in that direction.
-    // Assumes validity of the move has been checked before with `can_go`.
+    // Assumes validity of the move has been checked before with `allowed`.
     pub fn next_pos(&self, pos: usize, direction: Direction) -> usize {
         match direction {
             North => pos - self.cols,
