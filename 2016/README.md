@@ -46,6 +46,6 @@ Graph of bots.
 
 Complicated: Lift with rule what to transport. Recursion.
 
-### Day 12: [Leonardo's Monorail](day12/README.md) 🌟
+### Day 12: [Leonardo's Monorail](day12/README.md) 🌟🌟
 
 Little computer, similar to [2015/Day23](../2015/day23/README.md).

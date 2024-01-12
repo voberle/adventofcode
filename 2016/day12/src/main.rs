@@ -138,8 +138,8 @@ fn value_in_reg_a(instructions: &[Instruction]) -> i32 {
     execute_all(instructions, Registers::new(0, 0, 0, 0))['a']
 }
 
-fn part2(instructions: &[Instruction]) -> i32 {
-    0
+fn value_in_reg_a_with_c_at_1(instructions: &[Instruction]) -> i32 {
+    execute_all(instructions, Registers::new(0, 0, 1, 0))['a']
 }
 
 fn main() {
@@ -148,7 +148,7 @@ fn main() {
     let instructions = build(&input);
 
     println!("Part 1: {}", value_in_reg_a(&instructions));
-    println!("Part 2: {}", part2(&instructions));
+    println!("Part 2: {}", value_in_reg_a_with_c_at_1(&instructions));
 }
 
 #[cfg(test)]
@@ -160,10 +160,5 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(value_in_reg_a(&build(INPUT_TEST)), 42);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
     }
 }
