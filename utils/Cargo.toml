@@ -6,3 +6,4 @@ authors = ["Vincent Oberle"]
 description = "Advent of Code utils"
 
 [dependencies]
+md5 = "0.7.0"

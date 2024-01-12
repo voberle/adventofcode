@@ -6,4 +6,5 @@ mod ansi;
 mod array;
 mod direction;
 mod grid;
+mod md5;
 mod pipe;
