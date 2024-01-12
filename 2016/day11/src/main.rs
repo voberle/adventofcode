@@ -1,9 +1,10 @@
 use std::{
     fmt,
-    io::{self, Read}, usize,
+    io::{self, Read},
+    usize,
 };
 
-use fxhash::{FxHashSet, FxHashMap};
+use fxhash::FxHashMap;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -14,7 +15,7 @@ struct Element(String);
 
 impl Element {
     // For pretty visualizations
-    const SYMBOLS: [(&'static str, &'static str); 7] = [
+    const SYMBOLS: [(&'static str, &'static str); 9] = [
         ("polonium", "Po"),
         ("thulium", "Tm"),
         ("promethium", "Pm"),
@@ -22,8 +23,12 @@ impl Element {
         ("cobalt", "Co"),
         ("hydrogen", "H"),
         ("lithium", "Li"),
+        // For part 2, fictional elements
+        ("dilithium", "Dt"),
+        ("elerium", "El"),
     ];
 
+    #[cfg(test)]
     fn new(symbol: &str) -> Self {
         Self(symbol.to_string())
     }
@@ -85,16 +90,6 @@ fn build(input: &str) -> Vec<Vec<Object>> {
             floor
         })
         .collect()
-}
-
-fn print_floors(floors: &[Vec<Object>]) {
-    for (level, floor) in floors.iter().rev().enumerate() {
-        println!(
-            "F{}: {}",
-            floors.len() - level,
-            floor.iter().map(ToString::to_string).join(" ")
-        )
-    }
 }
 
 // A better data struct to organize the building than just a list of floors
@@ -174,6 +169,10 @@ impl Building {
         self.locations[self.floor_count - 1].iter().all(|&v| v)
     }
 
+    fn all_below_empty(&self, floor: usize) -> bool {
+        (0..floor).all(|i| self.locations[i].iter().all(|&v| !v))
+    }
+
     fn is_floor_valid(floor: &[bool]) -> bool {
         // If no generators at all, we're good
         if floor.iter().step_by(2).all(|&v| !v) {
@@ -181,16 +180,16 @@ impl Building {
         }
         for i in (0..floor.len()).step_by(2) {
             // If element has a chip but not corresponding generator, it's bad
-            if floor[i+1] && !floor[i] {
+            if floor[i + 1] && !floor[i] {
                 return false;
             }
         }
-        return true;
+        true
     }
 
     // Finds what the elevator could take from a floor to another.
     // Elevator can have one or two items (cannot be empty).
-    fn can_take_to(&self, from: usize, to: usize) -> Vec<Vec<usize>> {
+    fn can_take_to(&self, from: usize, to: usize, include_pairs: bool) -> Vec<Vec<usize>> {
         assert_eq!(from.abs_diff(to), 1);
         let movable_objects_indexes: Vec<_> = self.locations[from]
             .iter()
@@ -200,29 +199,36 @@ impl Building {
 
         let mut elevator_options: Vec<Vec<usize>> = Vec::new();
         elevator_options.extend(movable_objects_indexes.iter().map(|o| vec![*o]));
-        elevator_options.extend(movable_objects_indexes.iter().combinations(2)
-        .map(|v| v.iter().map(|e| **e).collect())
-        );
+        if include_pairs {
+            elevator_options.extend(
+                movable_objects_indexes
+                    .iter()
+                    .combinations(2)
+                    .map(|v| v.iter().map(|e| **e).collect()),
+            );
+        }
 
-        elevator_options.iter().filter(|&option| {
-            let mut from_floor_copy = self.locations[from].clone();
-            let mut to_floor_copy = self.locations[to].clone();
-            for i in option {
-                from_floor_copy[*i] = false;
-                to_floor_copy[*i] = true;
-            }
-            Self::is_floor_valid(&from_floor_copy) && Self::is_floor_valid(&to_floor_copy)
-
-        }).cloned()
-        .collect()
+        elevator_options
+            .iter()
+            .filter(|&option| {
+                let mut from_floor_copy = self.locations[from].clone();
+                let mut to_floor_copy = self.locations[to].clone();
+                for i in option {
+                    from_floor_copy[*i] = false;
+                    to_floor_copy[*i] = true;
+                }
+                Self::is_floor_valid(&from_floor_copy) && Self::is_floor_valid(&to_floor_copy)
+            })
+            .cloned()
+            .collect()
     }
 
     fn can_take_up(&self, elevator: usize) -> Vec<Vec<usize>> {
-        self.can_take_to(elevator, elevator + 1)
+        self.can_take_to(elevator, elevator + 1, true)
     }
 
     fn can_take_down(&self, elevator: usize) -> Vec<Vec<usize>> {
-        self.can_take_to(elevator, elevator - 1)
+        self.can_take_to(elevator, elevator - 1, true)
     }
 
     fn move_objects(&mut self, objects: &[usize], from: usize, to: usize) {
@@ -248,15 +254,16 @@ impl Building {
 fn find_steps(
     building: &mut Building,
     current_floor: usize,
-    origin: (i8, Vec<usize>),  // what got us there, to avoid going back
+    origin: (i8, Vec<usize>), // what got us there, to avoid going back
     steps: usize,
     min_steps_found: &mut usize,
-    done: &mut FxHashMap<(usize, Vec<Vec<bool>>), usize>
+    done: &mut FxHashMap<(usize, Vec<Vec<bool>>), usize>,
 ) {
     // println!("{} steps:", steps);
     // building.print(current_floor);
 
-    if steps > 100 {
+    // For part 1, 50 to 100 works
+    if steps > 50 {
         return;
     }
     if let Some(s) = done.get(&(current_floor, building.locations.clone())) {
@@ -281,6 +288,8 @@ fn find_steps(
                 up_options.remove(index);
             }
         }
+        // up_options.shuffle(&mut thread_rng());
+        // up_options.reverse();
 
         // println!("UP options: {:?}", up_options);
         for objects in up_options {
@@ -290,16 +299,24 @@ fn find_steps(
 
             if new_building.success() {
                 *min_steps_found = (steps + 1).min(*min_steps_found);
-                println!("Found one: {}", *min_steps_found);
+                // println!("Found one: {}", *min_steps_found);
                 // new_building.print(current_floor + 1);
                 // We can return, even if another option works, it would be the same step count
                 return;
             }
-            find_steps(&mut new_building.clone(), current_floor + 1, (1, objects.clone()), steps + 1, min_steps_found, done);
+            find_steps(
+                &mut new_building.clone(),
+                current_floor + 1,
+                (1, objects.clone()),
+                steps + 1,
+                min_steps_found,
+                done,
+            );
         }
     }
-    
-    if current_floor > 0 {
+
+    // If below is all empty, don't attempt to go down anymore.
+    if current_floor > 0 && !building.all_below_empty(current_floor) {
         // Can go down
         let mut down_options = building.can_take_down(current_floor);
 
@@ -318,18 +335,22 @@ fn find_steps(
 
             if new_building.success() {
                 *min_steps_found = (steps + 1).min(*min_steps_found);
-                println!("Found one: {}", *min_steps_found);
+                // println!("Found one: {}", *min_steps_found);
                 // new_building.print(current_floor + 1);
                 // We can return, even if another option works, it would be the same step count
                 return;
             }
-            find_steps(&mut new_building, current_floor - 1, (-1, objects.clone()), steps + 1, min_steps_found, done);
+            find_steps(
+                &mut new_building,
+                current_floor - 1,
+                (-1, objects.clone()),
+                steps + 1,
+                min_steps_found,
+                done,
+            );
         }
     }
-
-
 }
-
 
 fn min_number_steps(floors: &[Vec<Object>]) -> usize {
     let mut building = Building::new(floors);
@@ -337,22 +358,34 @@ fn min_number_steps(floors: &[Vec<Object>]) -> usize {
 
     let mut min_steps_found = usize::MAX;
     let mut done: FxHashMap<(usize, Vec<Vec<bool>>), usize> = FxHashMap::default();
-    find_steps(&mut building, 0, (0, Vec::new()), 0, &mut min_steps_found, &mut done);
+    find_steps(
+        &mut building,
+        0,
+        (0, Vec::new()),
+        0,
+        &mut min_steps_found,
+        &mut done,
+    );
     min_steps_found
 }
 
-fn part2(floors: &[Vec<Object>]) -> i64 {
-    0
+fn add_extra_elements(floors: &mut [Vec<Object>]) {
+    let floor = floors.get_mut(0).unwrap();
+    floor.push(Object::Generator(Element::from_name("elerium")));
+    floor.push(Object::Microchip(Element::from_name("elerium")));
+    floor.push(Object::Generator(Element::from_name("dilithium")));
+    floor.push(Object::Microchip(Element::from_name("dilithium")));
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let floors = build(&input);
-    // print_floors(&floors);
+    let mut floors = build(&input);
 
     println!("Part 1: {}", min_number_steps(&floors));
-    println!("Part 2: {}", part2(&floors));
+
+    // add_extra_elements(&mut floors);
+    // println!("Part 2: {}", min_number_steps(&floors));
 }
 
 #[cfg(test)]
@@ -386,28 +419,41 @@ mod tests {
 
     #[test]
     fn test_is_success() {
-        let building = Building { elements: Vec::new(), floor_count: 4, locations: vec![
-            vec![false, false, false, false],
-            vec![false, false, false, false],
-            vec![false, false, false, false],
-            vec![true, true, true, true],
-        ] };
+        let building = Building {
+            elements: Vec::new(),
+            floor_count: 4,
+            locations: vec![
+                vec![false, false, false, false],
+                vec![false, false, false, false],
+                vec![false, false, false, false],
+                vec![true, true, true, true],
+            ],
+        };
         assert!(building.success());
     }
 
     #[test]
     fn test_can_take_to() {
-        let building = Building { elements: Vec::new(), floor_count: 4, locations: vec![
-            vec![false, false, false, true],
-            vec![false, false, false, false],
-            vec![false, true, false, false],
-            vec![true, false, true, false],
-        ] };
+        let building = Building {
+            elements: Vec::new(),
+            floor_count: 4,
+            locations: vec![
+                vec![false, false, false, true],
+                vec![false, false, false, false],
+                vec![false, true, false, false],
+                vec![true, false, true, false],
+            ],
+        };
         let options = building.can_take_down(3);
         assert_eq!(options, vec![vec![0], vec![0, 2]]);
     }
 
-    fn up(building: &mut Building, current_floor: &mut usize, steps: &mut usize, objects: Vec<usize>) {
+    fn up(
+        building: &mut Building,
+        current_floor: &mut usize,
+        steps: &mut usize,
+        objects: Vec<usize>,
+    ) {
         *steps += 1;
         println!("Step {}", *steps);
         let options = building.can_take_up(*current_floor);
@@ -417,7 +463,12 @@ mod tests {
         building.print(*current_floor);
     }
 
-    fn down(building: &mut Building, current_floor: &mut usize, steps: &mut usize, objects: Vec<usize>) {
+    fn down(
+        building: &mut Building,
+        current_floor: &mut usize,
+        steps: &mut usize,
+        objects: Vec<usize>,
+    ) {
         *steps += 1;
         println!("Step {}", *steps);
         let options = building.can_take_down(*current_floor);
@@ -435,17 +486,22 @@ mod tests {
 
         let mut steps = 0;
         up(&mut building, &mut current_floor, &mut steps, vec![1]);
+        assert!(!building.all_below_empty(current_floor));
         up(&mut building, &mut current_floor, &mut steps, vec![0, 1]);
+        assert!(!building.all_below_empty(current_floor));
         down(&mut building, &mut current_floor, &mut steps, vec![1]);
         down(&mut building, &mut current_floor, &mut steps, vec![1]);
         up(&mut building, &mut current_floor, &mut steps, vec![1, 3]);
+        assert!(building.all_below_empty(current_floor));
         up(&mut building, &mut current_floor, &mut steps, vec![1, 3]);
+        assert!(building.all_below_empty(current_floor));
         up(&mut building, &mut current_floor, &mut steps, vec![1, 3]);
         down(&mut building, &mut current_floor, &mut steps, vec![1]);
         up(&mut building, &mut current_floor, &mut steps, vec![0, 2]);
         down(&mut building, &mut current_floor, &mut steps, vec![3]);
         up(&mut building, &mut current_floor, &mut steps, vec![1, 3]);
 
+        assert!(building.success());
         assert_eq!(steps, 11);
     }
 
