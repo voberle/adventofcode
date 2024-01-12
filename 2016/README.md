@@ -50,6 +50,6 @@ Complicated: Lift with rule what to transport. Recursion.
 
 Little computer, similar to [2015/Day23](../2015/day23/README.md).
 
-### Day 13: [A Maze of Twisty Little Cubicles](day13/README.md) 🌟
+### Day 13: [A Maze of Twisty Little Cubicles](day13/README.md) 🌟🌟
 
 Dijkstra shortest path.

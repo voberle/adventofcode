@@ -75,7 +75,11 @@ impl PartialOrd for Node {
 }
 
 // Dijkstra shortest path
-fn find_shortest_path(fav_nb: usize, start: Position, end: Position) -> usize {
+fn find_shortest_path(
+    fav_nb: usize,
+    start: Position,
+    target: Option<Position>,
+) -> (FxHashMap<Position, usize>, usize) {
     let mut visited: FxHashSet<Position> = FxHashSet::default();
     let mut distance: FxHashMap<Position, usize> = FxHashMap::default();
     let mut previous: FxHashMap<Position, Position> = FxHashMap::default();
@@ -91,9 +95,11 @@ fn find_shortest_path(fav_nb: usize, start: Position, end: Position) -> usize {
         // Mark node as visited
         visited.insert(pos);
 
-        if pos == end {
-            shortest_distance = usize::min(shortest_distance, cost);
-            continue;
+        if let Some(end) = target {
+            if pos == end {
+                shortest_distance = usize::min(shortest_distance, cost);
+                continue;
+            }
         }
 
         queue.extend(ALL_DIRECTIONS.iter().filter_map(|d| {
@@ -129,22 +135,27 @@ fn find_shortest_path(fav_nb: usize, start: Position, end: Position) -> usize {
         }));
     }
 
+    (distance, shortest_distance)
+}
+
+fn min_number_steps(fav_nb: usize, target: (usize, usize)) -> usize {
+    let (distance, shortest_distance) = find_shortest_path(fav_nb, (1, 1), Some(target));
+
     let end_key = distance
         .iter()
-        .filter(|(&k, _)| k == end)
+        .filter(|(&k, _)| k == target)
         .min_by_key(|(_, v)| *v)
         .map(|(k, _)| k)
         .unwrap();
     assert_eq!(shortest_distance, *distance.get(end_key).unwrap());
+
     shortest_distance
 }
 
-fn min_number_steps(fav_nb: usize, target: (usize, usize)) -> usize {
-    find_shortest_path(fav_nb, (1, 1), target)
-}
-
-fn part2(fav_nb: usize) -> i64 {
-    0
+fn locations_count_reachable_in_max(fav_nb: usize, max_steps: usize) -> usize {
+    let (distance, _) = find_shortest_path(fav_nb, (1, 1), None);
+    distance.iter().filter(|(_, &d)| d <= max_steps).count() + 1
+    // +1 as the start is not included in the distances
 }
 
 fn main() {
@@ -154,7 +165,7 @@ fn main() {
 
     let target = (31, 39);
     println!("Part 1: {}", min_number_steps(fav_nb, target));
-    println!("Part 2: {}", part2(fav_nb));
+    println!("Part 2: {}", locations_count_reachable_in_max(fav_nb, 50));
 }
 
 #[cfg(test)]
@@ -185,10 +196,5 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(min_number_steps(10, (7, 4)), 11);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(10), 0);
     }
 }

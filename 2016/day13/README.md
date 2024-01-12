@@ -8,3 +8,4 @@ For finding the shortest path, I used Dijkstra shortest path algorith, a similar
 
 ## Part 2
 
+Part 2 was fairly easy, by just counting the distances saved in the distances map.
