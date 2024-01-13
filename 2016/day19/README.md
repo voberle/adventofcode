@@ -4,7 +4,7 @@
 
 It was actually easy once I realized I didn't need to bother with how many presents each elf had, and just needed a boolean for each elf indicating if they had presents or not. Then each elf marks the next true as false.
 
-The `wrapping_index` function was handy again.
+Then while working on part 2, I optimized this by not having a vector of boolean, but one indicating the index of the next elf that has presents. This divided the execution time of part 1 by 20!
 
 ## Part 2
 
