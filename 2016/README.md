@@ -42,7 +42,7 @@ Recursion.
 
 Graph of bots.
 
-### Day 11: [Radioisotope Thermoelectric Generators](day11/README.md) 🌟
+### Day 11: [Radioisotope Thermoelectric Generators](day11/README.md) 🌟🌟
 
 Complicated: Lift with rule what to transport. Recursion.
 
