@@ -57,3 +57,7 @@ Dijkstra shortest path.
 ### Day 14: [One-Time Pad](day14/README.md) 🌟🌟
 
 MD5. Cache of hashes and use of lifetime. Brute-force and a bit slow.
+
+## Day 15: [Timing is Everything](day15/README.md) 🌟
+
+Simple.
