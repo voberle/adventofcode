@@ -65,3 +65,7 @@ Simple.
 ### Day 16: [Dragon Checksum](day16/README.md) 🌟🌟
 
 Simple. Looping on chars as bytes.
+
+### Day 17: [Two Steps Forward](day17/README.md) 🌟
+
+Recursive. Shortest and longest path.
