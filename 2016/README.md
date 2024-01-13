@@ -58,6 +58,6 @@ Dijkstra shortest path.
 
 MD5. Cache of hashes and use of lifetime. Brute-force and a bit slow.
 
-## Day 15: [Timing is Everything](day15/README.md) 🌟
+## Day 15: [Timing is Everything](day15/README.md) 🌟🌟
 
 Simple.

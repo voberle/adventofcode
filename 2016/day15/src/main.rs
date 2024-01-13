@@ -47,17 +47,19 @@ fn first_time_to_press_button(discs: &[Disc]) -> usize {
         .expect("Didn't find a result")
 }
 
-fn part2(discs: &[Disc]) -> i64 {
-    0
-}
-
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let discs = build(&input);
+    let mut discs = build(&input);
 
     println!("Part 1: {}", first_time_to_press_button(&discs));
-    println!("Part 2: {}", part2(&discs));
+
+    discs.push(Disc {
+        position_count: 11,
+        initial_time: 0,
+        initial_position: 0,
+    });
+    println!("Part 2: {}", first_time_to_press_button(&discs));
 }
 
 #[cfg(test)]
@@ -80,10 +82,5 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(first_time_to_press_button(&build(INPUT_TEST)), 5);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
     }
 }
