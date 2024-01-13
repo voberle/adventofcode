@@ -94,22 +94,20 @@ impl Position {
 }
 
 // Recursive function.
-fn find_shortest_path(
+fn find_path<const LONGEST: bool>(
     passcode: &str,
     goal: &Position,
     current_pos: &Position,
     current_path: &str,
-    shortest_path_found: &mut String,
+    path_found: &mut String,
 ) {
     let door_states = open_doors(passcode, current_path);
 
-    // println!("{} {}: {:?}", current_pos, current_path, door_states);
     for dir in ALL_DIRECTIONS {
         if !current_pos.allowed(dir) {
             // Not allowed: Going outside grid
             continue;
         }
-
         if !door_states[dir.index()] {
             // Door closed
             continue;
@@ -117,23 +115,28 @@ fn find_shortest_path(
 
         let next_pos = current_pos.next_pos(dir);
         let next_path = current_path.to_owned() + &dir.to_string();
-        // println!("{} {}: {:?} - {}. Goal {}", current_pos, current_path, dir, next_pos, goal);
 
         if next_pos == *goal {
-            // println!("Reached, new_path {}, vs {}", next_path, shortest_path_found);
-            if shortest_path_found.is_empty() || next_path.len() < shortest_path_found.len() {
-                *shortest_path_found = next_path.to_string();
+            #[allow(clippy::collapsible_else_if)]
+            if LONGEST {
+                if next_path.len() > path_found.len() {
+                    *path_found = next_path.to_string();
+                }
+            } else {
+                if path_found.is_empty() || next_path.len() < path_found.len() {
+                    *path_found = next_path.to_string();
+                }
             }
             continue;
         }
 
-        find_shortest_path(passcode, goal, &next_pos, &next_path, shortest_path_found);
+        find_path::<LONGEST>(passcode, goal, &next_pos, &next_path, path_found);
     }
 }
 
 fn shortest_path(passcode: &str) -> String {
     let mut shortest_path_found = String::new();
-    find_shortest_path(
+    find_path::<false>(
         passcode,
         &Position::new(3, 3),
         &Position::new(0, 0),
@@ -144,8 +147,17 @@ fn shortest_path(passcode: &str) -> String {
     shortest_path_found
 }
 
-fn part2(passcode: &str) -> i64 {
-    0
+fn longest_path_len(passcode: &str) -> usize {
+    let mut longest_path_found = String::new();
+    find_path::<true>(
+        passcode,
+        &Position::new(3, 3),
+        &Position::new(0, 0),
+        "",
+        &mut longest_path_found,
+    );
+
+    longest_path_found.len()
 }
 
 fn main() {
@@ -153,7 +165,7 @@ fn main() {
     io::stdin().read_to_string(&mut passcode).unwrap();
 
     println!("Part 1: {}", shortest_path(passcode.trim()));
-    println!("Part 2: {}", part2(passcode.trim()));
+    println!("Part 2: {}", longest_path_len(passcode.trim()));
 }
 
 #[cfg(test)]
@@ -176,6 +188,8 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(""), 0);
+        assert_eq!(longest_path_len("ihgpwlah"), 370);
+        assert_eq!(longest_path_len("kglvqrro"), 492);
+        assert_eq!(longest_path_len("ulqzkmiv"), 830);
     }
 }

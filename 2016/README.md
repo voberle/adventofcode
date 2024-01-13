@@ -66,6 +66,6 @@ Simple.
 
 Simple. Looping on chars as bytes.
 
-### Day 17: [Two Steps Forward](day17/README.md) 🌟
+### Day 17: [Two Steps Forward](day17/README.md) 🌟🌟
 
 Recursive. Shortest and longest path.

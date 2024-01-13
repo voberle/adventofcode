@@ -6,3 +6,4 @@ This was finding the shortest path, but not with Dijkstra, but doing a Depth Fir
 
 ## Part 2
 
+For the longest path, part 1 method works perfectly.
