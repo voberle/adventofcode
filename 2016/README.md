@@ -74,6 +74,6 @@ Recursive. Shortest and longest path.
 
 Simple.
 
-### Day 19: [An Elephant Named Joseph](day19/README.md) 🌟
+### Day 19: [An Elephant Named Joseph](day19/README.md) 🌟🌟
 
-Simple brute-force loop.
+Simple brute-force loop. Ugly part 2.

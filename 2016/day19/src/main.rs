@@ -13,6 +13,7 @@ fn elf_getting_all_v1(elf_count: usize) -> usize {
     while elf_with_presents > 1 {
         // next looser
         let looser = next_with_presents[stealer];
+
         next_with_presents[stealer] = next_with_presents[looser];
         elf_with_presents -= 1;
 
@@ -21,8 +22,39 @@ fn elf_getting_all_v1(elf_count: usize) -> usize {
     stealer + 1
 }
 
+const fn wrapping_index(i: usize, len: usize) -> usize {
+    (i % len + len) % len
+}
+
+// Horrible brute-force implementation, but I couldn't find a smarter way
 fn elf_getting_all_v2(elf_count: usize) -> usize {
-    0
+    // This array has the elf number
+    let mut next_with_presents: Vec<i32> = vec![0; elf_count];
+    for (i, e) in next_with_presents.iter_mut().enumerate().take(elf_count) {
+        *e = i as i32 + 1;
+    }
+
+    let mut stealer_idx = 0;
+    while next_with_presents.len() > 1 {
+        let stealer = next_with_presents[stealer_idx];
+
+        let looser_idx = wrapping_index(
+            stealer_idx + next_with_presents.len() / 2,
+            next_with_presents.len(),
+        );
+
+        next_with_presents.remove(looser_idx);
+
+        stealer_idx = wrapping_index(
+            next_with_presents
+                .iter()
+                .position(|&e| e == stealer)
+                .unwrap()
+                + 1,
+            next_with_presents.len(),
+        );
+    }
+    next_with_presents[0] as usize
 }
 
 fn main() {
