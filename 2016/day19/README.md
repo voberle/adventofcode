@@ -9,3 +9,5 @@ Then while working on part 2, I optimized this by not having a vector of boolean
 ## Part 2
 
 Part 2 on the other hand is ultra-ugly. I didn't manage to find an efficient version, so I fell back on a brute-force version that removes the elf from the `Vec` on each iteration. Not efficient at all, but got the job done in around 15 minutes.
+
+Later checked AoC Reddit for better ideas, seems for Rust most practical is to split the list in two Vector. I implemented such a version, it's very fast then.

@@ -1,4 +1,7 @@
-use std::io::{self, Read};
+use std::{
+    collections::VecDeque,
+    io::{self, Read},
+};
 
 fn elf_getting_all_v1(elf_count: usize) -> usize {
     // This array has the index of the next elf that has presents
@@ -55,6 +58,23 @@ fn elf_getting_all_v2(elf_count: usize) -> usize {
         );
     }
     next_with_presents[0] as usize
+}
+
+// Fast implementation inspired by an idea on Reddit.
+// https://www.reddit.com/r/adventofcode/comments/5j4lp1/comment/dbdj8jh/?utm_source=share&utm_medium=web2x&context=3
+#[allow(dead_code)]
+fn elf_getting_all_v2_fast(elf_count: usize) -> usize {
+    let mut left: VecDeque<usize> = (1..=elf_count / 2).collect();
+    let mut right: VecDeque<usize> = (elf_count / 2 + 1..=elf_count).collect();
+
+    while left.len() + right.len() > 1 {
+        right.pop_front();
+        right.push_back(left.pop_front().unwrap());
+        if (left.len() + right.len()) % 2 == 0 {
+            left.push_back(right.pop_front().unwrap());
+        }
+    }
+    right[0]
 }
 
 fn main() {
