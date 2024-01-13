@@ -62,6 +62,6 @@ MD5. Cache of hashes and use of lifetime. Brute-force and a bit slow.
 
 Simple.
 
-### Day 16: [Dragon Checksum](day16/README.md) 🌟
+### Day 16: [Dragon Checksum](day16/README.md) 🌟🌟
 
 Simple. Looping on chars as bytes.

@@ -6,3 +6,4 @@ It was an easy implementation of the description. Note the iteration of the stri
 
 ## Part 2
 
+The bigger disk length wasn't a problem at all.

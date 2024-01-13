@@ -40,16 +40,12 @@ fn checksum(initial_state: &str, length: usize) -> String {
     calc_checksum(&generate_enough_data(initial_state, length))
 }
 
-fn part2(initial_state: &str) -> i64 {
-    0
-}
-
 fn main() {
     let mut initial_state = String::new();
     io::stdin().read_to_string(&mut initial_state).unwrap();
 
     println!("Part 1: {}", checksum(&initial_state, 272));
-    println!("Part 2: {}", part2(&initial_state));
+    println!("Part 2: {}", checksum(&initial_state, 35_651_584));
 }
 
 #[cfg(test)]
@@ -77,10 +73,5 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(checksum("10000", 20), "01100");
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(""), 0);
     }
 }
