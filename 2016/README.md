@@ -73,3 +73,7 @@ Recursive. Shortest and longest path.
 ### Day 18: [Like a Rogue](day18/README.md) 🌟🌟
 
 Simple.
+
+### Day 19: [An Elephant Named Joseph](day19/README.md) 🌟
+
+Simple brute-force loop.
