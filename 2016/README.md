@@ -70,6 +70,6 @@ Simple. Looping on chars as bytes.
 
 Recursive. Shortest and longest path.
 
-### Day 18: [Like a Rogue](day18/README.md) 🌟
+### Day 18: [Like a Rogue](day18/README.md) 🌟🌟
 
 Simple.

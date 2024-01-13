@@ -1,10 +1,7 @@
 use std::io::{self, Read};
 
 fn build(input: &str) -> Vec<bool> {
-    input
-        .chars()
-        .map(|c| c == '^')
-        .collect()
+    input.chars().map(|c| c == '^').collect()
 }
 
 fn next_row(row: &[bool]) -> Vec<bool> {
@@ -39,17 +36,13 @@ fn safe_tiles_count(first_row: &[bool], rows_count: usize) -> usize {
     total_safe_tiles
 }
 
-fn part2(first_row: &[bool]) -> usize {
-    0
-}
-
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let first_row = build(&input);
 
     println!("Part 1: {}", safe_tiles_count(&first_row, 40));
-    println!("Part 2: {}", part2(&first_row));
+    println!("Part 2: {}", safe_tiles_count(&first_row, 400_000));
 }
 
 #[cfg(test)]
@@ -70,10 +63,5 @@ mod tests {
     fn test_part1() {
         assert_eq!(safe_tiles_count(&build("..^^."), 3), 6);
         assert_eq!(safe_tiles_count(&build(".^^.^.^^^^"), 10), 38);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build("")), 0);
     }
 }

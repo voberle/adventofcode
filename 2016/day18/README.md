@@ -6,3 +6,4 @@ Simple exercise, iterator `windows` making it easy.
 
 ## Part 2
 
+Trivial.
