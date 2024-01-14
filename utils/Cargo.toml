@@ -5,5 +5,10 @@ edition = "2021"
 authors = ["Vincent Oberle"]
 description = "Advent of Code utils"
 
+[lints.clippy]
+redundant_closure_for_method_calls = "warn"
+match_same_arms = "warn"
+range_plus_one = "warn"
+
 [dependencies]
 md5 = "0.7.0"
