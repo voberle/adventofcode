@@ -77,3 +77,7 @@ Simple.
 ### Day 19: [An Elephant Named Joseph](day19/README.md) 🌟🌟
 
 Simple brute-force loop. Ugly part 2.
+
+### Day 20: [Firewall Rules](day19/README.md) 🌟
+
+Ranges, with a simplified range method.
