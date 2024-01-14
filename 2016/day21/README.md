@@ -8,3 +8,4 @@ Got to use a few nice Vec functions: `swap`, `rotate_left`, `rotate_right`, `spl
 
 ## Part 2
 
+The rotate position case was tricky in part 2. I solved it with some kind of reverse mapping table. Unfortunately it doesn't work for the test input, only the real one.

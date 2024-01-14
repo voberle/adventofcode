@@ -82,6 +82,6 @@ Simple brute-force loop. Ugly part 2.
 
 Ranges, with a simplified range method.
 
-### Day 21: [Scrambled Letters and Hash](day21/README.md) 🌟
+### Day 21: [Scrambled Letters and Hash](day21/README.md) 🌟🌟
 
 Instructions to apply.
