@@ -66,28 +66,38 @@ fn build(input: &str) -> Vec<(u32, u32)> {
         .collect()
 }
 
-fn lowest_allowed_ip(blocked_ips: &[(u32, u32)]) -> u32 {
+fn simplify(blocked_ips: &[(u32, u32)]) -> Vec<(u64, u64)> {
     // We need exclusive ranges for the simplify method, so we need to use u64 as u32 + 1 may overflow.
     let ranges_excl: Vec<(u64, u64)> = blocked_ips
         .iter()
         .map(|r| (r.0 as u64, r.1 as u64 + 1))
         .collect();
 
-    let simplified = simplify_ranges(&ranges_excl);
-    simplified.first().expect("No ranges found").1 as u32
+    simplify_ranges(&ranges_excl)
 }
 
-fn part2(blocked_ips: &[(u32, u32)]) -> u32 {
-    0
+fn lowest_allowed_ip(blocked_ips: &[(u64, u64)]) -> u32 {
+    let first_range = blocked_ips.first().expect("No ranges found");
+    if first_range.0 > 0 {
+        return 0;
+    }
+    blocked_ips.first().expect("No ranges found").1 as u32
+}
+
+fn allowed_ips_count(blocked_ips: &[(u64, u64)]) -> u32 {
+    u32::MAX - blocked_ips.iter().map(|r| r.1 - r.0).sum::<u64>() as u32 + 1
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let blocked_ips = build(&input);
+    let blocked_ips = simplify(&build(&input));
+    // for r in &blocked_ips {
+    //     println!("{} - {}", r.0, r.1);
+    // }
 
     println!("Part 1: {}", lowest_allowed_ip(&blocked_ips));
-    println!("Part 2: {}", part2(&blocked_ips));
+    println!("Part 2: {}", allowed_ips_count(&blocked_ips));
 }
 
 #[cfg(test)]
@@ -104,11 +114,6 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(lowest_allowed_ip(&build(INPUT_TEST)), 3);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(lowest_allowed_ip(&simplify(&build(INPUT_TEST))), 3);
     }
 }

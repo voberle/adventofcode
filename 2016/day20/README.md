@@ -8,3 +8,4 @@ With such a list, the answer to part 1 is very easy.
 
 ## Part 2
 
+Easy with the simplified list.
