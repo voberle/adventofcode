@@ -93,3 +93,7 @@ Visualization and analysis of the input data.
 ### Day 23: [Safe Cracking](day23/README.md) 🌟🌟
 
 Extension to previous Day 12.
+
+### Day 24: [Air Duct Spelunking](day24/README.md) 🌟
+
+Dijkstra shortest path + Brute-force to find the shortest visiting all nodes.
