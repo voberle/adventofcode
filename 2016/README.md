@@ -85,3 +85,6 @@ Ranges, with a simplified range method.
 ### Day 21: [Scrambled Letters and Hash](day21/README.md) 🌟🌟
 
 Instructions to apply.
+
+### Day 22: [Grid Computing](day22/README.md) 🌟
+
