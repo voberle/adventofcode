@@ -86,5 +86,6 @@ Ranges, with a simplified range method.
 
 Instructions to apply.
 
-### Day 22: [Grid Computing](day22/README.md) 🌟
+### Day 22: [Grid Computing](day22/README.md) 🌟🌟
 
+Visualization and analysis of the input data.
