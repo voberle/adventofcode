@@ -167,13 +167,17 @@ fn value_sent_to_safe(instructions: &[Instruction]) -> i32 {
     execute_all(instructions, Registers::new(7, 0, 0, 0))['a']
 }
 
+fn actual_value_sent_to_safe(instructions: &[Instruction]) -> i32 {
+    execute_all(instructions, Registers::new(12, 0, 0, 0))['a']
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let instructions = build(&input);
 
     println!("Part 1: {}", value_sent_to_safe(&instructions));
-    //println!("Part 2: {}", value_in_reg_a_with_c_at_1(&instructions));
+    println!("Part 2: {}", actual_value_sent_to_safe(&instructions));
 }
 
 #[cfg(test)]

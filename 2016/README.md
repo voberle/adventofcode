@@ -90,6 +90,6 @@ Instructions to apply.
 
 Visualization and analysis of the input data.
 
-### Day 23: [Safe Cracking](day23/README.md) 🌟
+### Day 23: [Safe Cracking](day23/README.md) 🌟🌟
 
-Extension to previous day.
+Extension to previous Day 12.
