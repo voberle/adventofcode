@@ -30,7 +30,7 @@ To get the whole standard input to a String:
 
 Generate a PDF:
 
-    dot -Tpdf -Ksfdp input_cluster.gv > input.pdf
+    dot -Tpdf -Ksfdp input.gv > input.pdf
 
 `digraph {}` and `->` for directed graphs, `graph {}` and `--` for non-directed ones.
 

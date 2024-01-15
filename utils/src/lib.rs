@@ -7,6 +7,6 @@ mod array;
 mod direction;
 mod grid;
 mod md5;
+mod parsing;
 mod pipe;
 mod ranges;
-mod string;
