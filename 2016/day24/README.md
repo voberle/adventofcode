@@ -6,3 +6,4 @@ By reusing my Dijkstra shortest path implementation and adding a brute-force ver
 
 ## Part 2
 
+Easy with part 1 working.

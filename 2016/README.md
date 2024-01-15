@@ -94,6 +94,6 @@ Visualization and analysis of the input data.
 
 Extension to previous Day 12.
 
-### Day 24: [Air Duct Spelunking](day24/README.md) 🌟
+### Day 24: [Air Duct Spelunking](day24/README.md) 🌟🌟
 
 Dijkstra shortest path + Brute-force to find the shortest visiting all nodes.

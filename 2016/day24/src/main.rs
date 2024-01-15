@@ -145,7 +145,11 @@ fn find_shortest_path(grid: &Grid, start: usize, end: usize) -> usize {
 
 // Returns the shortest path visiting all the nodes.
 // Brute-force approach.
-fn shortest_path_visiting_all_nodes(grid: &Grid, nodes: &[usize], start: usize) -> usize {
+fn shortest_path_visiting_all_nodes<const RETURN_TO_START: bool>(
+    grid: &Grid,
+    nodes: &[usize],
+    start: usize,
+) -> usize {
     // https://www.baeldung.com/cs/shortest-path-visiting-all-nodes
     let mut result = usize::MAX;
     let distances: Vec<Vec<usize>> = nodes
@@ -160,11 +164,15 @@ fn shortest_path_visiting_all_nodes(grid: &Grid, nodes: &[usize], start: usize) 
 
     let permutations = (0..nodes.len()).permutations(nodes.len());
 
-    for permutation in permutations {
+    for mut permutation in permutations {
         // we filter out the permutations that don't start at the beginning
         if permutation[0] != start {
             continue;
         }
+        if RETURN_TO_START {
+            permutation.push(start);
+        }
+
         let mut cost = 0;
         let mut previous = permutation[0];
         for node in &permutation {
@@ -189,16 +197,12 @@ fn all_numbers_positions(map: &Grid) -> Vec<usize> {
         .collect()
 }
 
-fn shortest_visit_all_once(grid: &Grid) -> usize {
+fn shortest_visit_all_once<const RETURN_TO_START: bool>(grid: &Grid) -> usize {
     let positions_to_visit = all_numbers_positions(grid);
     // since positions_to_visit is sorted by grid numbers, and we want to start at 0
     // 0 is also the position of the start
     let start_pos = 0;
-    shortest_path_visiting_all_nodes(grid, &positions_to_visit, start_pos)
-}
-
-fn part2(grid: &Grid) -> i64 {
-    0
+    shortest_path_visiting_all_nodes::<RETURN_TO_START>(grid, &positions_to_visit, start_pos)
 }
 
 fn main() {
@@ -206,8 +210,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let grid = Grid::build(&input);
 
-    println!("Part 1: {}", shortest_visit_all_once(&grid));
-    println!("Part 2: {}", part2(&grid));
+    println!("Part 1: {}", shortest_visit_all_once::<false>(&grid));
+    println!("Part 2: {}", shortest_visit_all_once::<true>(&grid));
 }
 
 #[cfg(test)]
@@ -218,11 +222,9 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(shortest_visit_all_once(&Grid::build(INPUT_TEST)), 14);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        assert_eq!(
+            shortest_visit_all_once::<false>(&Grid::build(INPUT_TEST)),
+            14
+        );
     }
 }
