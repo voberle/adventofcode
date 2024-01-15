@@ -3,6 +3,11 @@ use std::{
     ops::{Index, IndexMut},
 };
 
+#[inline]
+fn char(s: &str) -> char {
+    s.chars().next().unwrap()
+}
+
 #[derive(Debug)]
 struct Registers {
     a: i32,
@@ -14,6 +19,13 @@ struct Registers {
 impl Registers {
     fn new(a: i32, b: i32, c: i32, d: i32) -> Self {
         Self { a, b, c, d }
+    }
+
+    fn get(&self, x: &IntChar<i32>) -> i32 {
+        match x {
+            IntChar::Integer(val) => *val,
+            IntChar::Char(src) => self[*src],
+        }
     }
 }
 
@@ -43,22 +55,37 @@ impl IndexMut<char> for Registers {
     }
 }
 
-#[inline]
-fn char(s: &str) -> char {
-    s.chars().next().unwrap()
+#[derive(Debug, Clone, Copy)]
+enum IntChar<T>
+where
+    T: std::str::FromStr,
+{
+    Integer(T),
+    Char(char),
+}
+
+impl<T> IntChar<T>
+where
+    T: std::str::FromStr,
+{
+    fn new(s: &str) -> Self {
+        if let Ok(val) = s.parse() {
+            IntChar::Integer(val)
+        } else if s.len() == 1 {
+            IntChar::Char(s.chars().next().unwrap())
+        } else {
+            panic!("Invalid string for building IntChar")
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 enum Instruction {
     // Same instructions as Day 12
-    CopyVal(i32, char),
-    CopyReg(char, char),
+    Copy(IntChar<i32>, char),
     Increase(char),
     Decrease(char),
-    JumpIfNotZeroValVal(i32, i32),
-    JumpIfNotZeroValReg(i32, char),
-    JumpIfNotZeroRegVal(char, i32),
-    JumpIfNotZeroRegReg(char, char),
+    JumpIfNotZero(IntChar<i32>, IntChar<i32>),
     // New instruction
     Toggle(char),
     Invalid,
@@ -68,28 +95,10 @@ impl Instruction {
     fn build(s: &str) -> Self {
         let parts: Vec<_> = s.split(' ').collect();
         match *parts.first().unwrap() {
-            "cpy" => {
-                if let Ok(val) = parts[1].parse() {
-                    Self::CopyVal(val, char(parts[2]))
-                } else {
-                    Self::CopyReg(char(parts[1]), char(parts[2]))
-                }
-            }
+            "cpy" => Self::Copy(IntChar::new(parts[1]), char(parts[2])),
             "inc" => Self::Increase(char(parts[1])),
             "dec" => Self::Decrease(char(parts[1])),
-            "jnz" => {
-                if let Ok(val) = parts[1].parse() {
-                    if let Ok(offset) = parts[2].parse() {
-                        Self::JumpIfNotZeroValVal(val, offset)
-                    } else {
-                        Self::JumpIfNotZeroValReg(val, char(parts[2]))
-                    }
-                } else if let Ok(offset) = parts[2].parse() {
-                    Self::JumpIfNotZeroRegVal(char(parts[1]), offset)
-                } else {
-                    Self::JumpIfNotZeroRegReg(char(parts[1]), char(parts[2]))
-                }
-            }
+            "jnz" => Self::JumpIfNotZero(IntChar::new(parts[1]), IntChar::new(parts[2])),
             "tgl" => Self::Toggle(char(parts[1])),
             _ => panic!("Unknown instruction"),
         }
@@ -100,12 +109,8 @@ impl Instruction {
 fn execute(instructions: &mut Vec<Instruction>, ir: usize, regs: &mut Registers) -> usize {
     let ins = &instructions[ir];
     match ins {
-        Instruction::CopyVal(val, r) => {
-            regs[*r] = *val;
-            ir + 1
-        }
-        Instruction::CopyReg(src, r) => {
-            regs[*r] = regs[*src];
+        Instruction::Copy(x, r) => {
+            regs[*r] = regs.get(x);
             ir + 1
         }
         Instruction::Increase(r) => {
@@ -116,30 +121,9 @@ fn execute(instructions: &mut Vec<Instruction>, ir: usize, regs: &mut Registers)
             regs[*r] -= 1;
             ir + 1
         }
-        Instruction::JumpIfNotZeroValVal(val, offset) => {
-            if *val != 0 {
-                (ir as i32 + offset) as usize
-            } else {
-                ir + 1
-            }
-        }
-        Instruction::JumpIfNotZeroValReg(val, offset) => {
-            if *val != 0 {
-                (ir as i32 + regs[*offset]) as usize
-            } else {
-                ir + 1
-            }
-        }
-        Instruction::JumpIfNotZeroRegVal(r, offset) => {
-            if regs[*r] != 0 {
-                (ir as i32 + offset) as usize
-            } else {
-                ir + 1
-            }
-        }
-        Instruction::JumpIfNotZeroRegReg(r, offset) => {
-            if regs[*r] != 0 {
-                (ir as i32 + regs[*offset]) as usize
+        Instruction::JumpIfNotZero(v, offset) => {
+            if regs.get(v) != 0 {
+                (ir as i32 + regs.get(offset)) as usize
             } else {
                 ir + 1
             }
@@ -149,18 +133,16 @@ fn execute(instructions: &mut Vec<Instruction>, ir: usize, regs: &mut Registers)
             if ir_to_toggle >= instructions.len() {
                 return ir + 1;
             }
-            let ins_to_toggle = &instructions[ir_to_toggle];
-            instructions[ir_to_toggle] = match ins_to_toggle {
-                Instruction::CopyVal(val, r) => Instruction::JumpIfNotZeroValReg(*val, *r),
-                Instruction::CopyReg(src, r) => Instruction::JumpIfNotZeroRegReg(*src, *r),
+            instructions[ir_to_toggle] = match &instructions[ir_to_toggle] {
+                Instruction::Copy(x, r) => Instruction::JumpIfNotZero(*x, IntChar::Char(*r)),
                 Instruction::Increase(r) => Instruction::Decrease(*r),
                 Instruction::Decrease(r) => Instruction::Increase(*r),
-                Instruction::JumpIfNotZeroValReg(v, o) => Instruction::CopyVal(*v, *o),
-                Instruction::JumpIfNotZeroRegReg(r, offset) => Instruction::CopyReg(*r, *offset),
+                Instruction::JumpIfNotZero(v, o) => match o {
+                    IntChar::Integer(_) => Instruction::Invalid,
+                    IntChar::Char(r) => Instruction::Copy(*v, *r),
+                },
                 Instruction::Toggle(offset) => Instruction::Increase(*offset),
-                Instruction::JumpIfNotZeroValVal(_, _)
-                | Instruction::JumpIfNotZeroRegVal(_, _)
-                | Instruction::Invalid => Instruction::Invalid,
+                Instruction::Invalid => Instruction::Invalid,
             };
             ir + 1
         }
@@ -176,9 +158,7 @@ fn execute_all(instructions: &[Instruction], mut regs: Registers) -> Registers {
     let mut modifiable_ins: Vec<Instruction> = instructions.to_vec();
     let mut ir = 0;
     while ir < modifiable_ins.len() {
-        // print!("{}: Exec {:?} for {:?}", ir, instructions[ir], regs);
         ir = execute(&mut modifiable_ins, ir, &mut regs);
-        // println!("; next {}", ir);
     }
     regs
 }
@@ -205,5 +185,14 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(value_sent_to_safe(&build(INPUT_TEST)), 3);
+    }
+
+    #[test]
+    fn test_day12_part1() {
+        let instructions = build(include_str!("../../day12/resources/input_test_1"));
+        assert_eq!(
+            execute_all(&instructions, Registers::new(0, 0, 0, 0))['a'],
+            42
+        );
     }
 }
