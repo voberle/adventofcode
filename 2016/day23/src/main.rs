@@ -55,7 +55,7 @@ impl IndexMut<char> for Registers {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum IntChar<T>
 where
     T: std::str::FromStr,
@@ -79,7 +79,7 @@ where
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum Instruction {
     // Same instructions as Day 12
     Copy(IntChar<i32>, char),
@@ -88,7 +88,9 @@ enum Instruction {
     JumpIfNotZero(IntChar<i32>, IntChar<i32>),
     // New instruction
     Toggle(char),
-    Invalid,
+    Nop,
+    // Optimization instruction for part 2
+    Mult(IntChar<i32>, IntChar<i32>, char),
 }
 
 impl Instruction {
@@ -100,6 +102,12 @@ impl Instruction {
             "dec" => Self::Decrease(char(parts[1])),
             "jnz" => Self::JumpIfNotZero(IntChar::new(parts[1]), IntChar::new(parts[2])),
             "tgl" => Self::Toggle(char(parts[1])),
+            "mul" => Self::Mult(
+                IntChar::new(parts[1]),
+                IntChar::new(parts[2]),
+                char(parts[3]),
+            ),
+            "nop" => Self::Nop,
             _ => panic!("Unknown instruction"),
         }
     }
@@ -138,15 +146,20 @@ fn execute(instructions: &mut Vec<Instruction>, ir: usize, regs: &mut Registers)
                 Instruction::Increase(r) => Instruction::Decrease(*r),
                 Instruction::Decrease(r) => Instruction::Increase(*r),
                 Instruction::JumpIfNotZero(v, o) => match o {
-                    IntChar::Integer(_) => Instruction::Invalid,
+                    IntChar::Integer(_) => Instruction::Nop,
                     IntChar::Char(r) => Instruction::Copy(*v, *r),
                 },
                 Instruction::Toggle(offset) => Instruction::Increase(*offset),
-                Instruction::Invalid => Instruction::Invalid,
+                Instruction::Mult(a, b, r) => Instruction::Mult(*a, *b, *r),
+                Instruction::Nop => Instruction::Nop,
             };
             ir + 1
         }
-        Instruction::Invalid => ir + 1,
+        Instruction::Mult(a, b, r) => {
+            regs[*r] = regs.get(a) * regs.get(b);
+            ir + 1
+        }
+        Instruction::Nop => ir + 1,
     }
 }
 
@@ -154,10 +167,52 @@ fn build(input: &str) -> Vec<Instruction> {
     input.lines().map(Instruction::build).collect()
 }
 
+// This set of instructions multiplies b by d, storing the result into a.
+const MULT_INSTRUCTIONS: [Instruction; 6] = [
+    Instruction::Copy(IntChar::Char('b'), 'c'),
+    Instruction::Increase('a'),
+    Instruction::Decrease('c'),
+    Instruction::JumpIfNotZero(IntChar::Char('c'), IntChar::Integer(-2)),
+    Instruction::Decrease('d'),
+    Instruction::JumpIfNotZero(IntChar::Char('d'), IntChar::Integer(-5)),
+];
+
+const MULT_INSTRUCTIONS_OPTIMIZED: [Instruction; 6] = [
+    Instruction::Mult(IntChar::Char('b'), IntChar::Char('d'), 'a'),
+    Instruction::Nop,
+    Instruction::Nop,
+    Instruction::Nop,
+    Instruction::Nop,
+    Instruction::Nop,
+];
+
+fn find_subset(instructions: &[Instruction], needle: &[Instruction]) -> Option<usize> {
+    for (position, window) in instructions.windows(needle.len()).enumerate() {
+        if window == needle {
+            return Some(position);
+        }
+    }
+    None
+}
+
+// Finds and optimizes
+fn optimizer(instructions: &mut Vec<Instruction>) {
+    assert_eq!(MULT_INSTRUCTIONS.len(), MULT_INSTRUCTIONS_OPTIMIZED.len());
+    if let Some(subset_start) = find_subset(instructions, &MULT_INSTRUCTIONS) {
+        instructions.splice(
+            subset_start..subset_start + MULT_INSTRUCTIONS.len(),
+            MULT_INSTRUCTIONS_OPTIMIZED,
+        );
+    }
+}
+
 fn execute_all(instructions: &[Instruction], mut regs: Registers) -> Registers {
     let mut modifiable_ins: Vec<Instruction> = instructions.to_vec();
+    optimizer(&mut modifiable_ins);
+
     let mut ir = 0;
     while ir < modifiable_ins.len() {
+        // println!("{}: Exec {:?} for {:?}", ir, instructions[ir], regs);
         ir = execute(&mut modifiable_ins, ir, &mut regs);
     }
     regs

@@ -11,3 +11,5 @@ I later cleaned up the code by using a `IntChar` enum, to store an interger or a
 ## Part 2
 
 The description hints that an optimization is needed, but my version runs without it in a few seconds.
+
+Later I understood that a subset of instructions does a multiplication. So I implemented an optimizer function that replaces them with a new multiplication instruction.
