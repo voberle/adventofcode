@@ -1,5 +1,7 @@
 # Advent of Code 2016
 
+After 2023 and 2015, I did this as my 3rd AoC year. It felt easier as the previous ones, as I get more comfortable with Rust and the tasks. But it was still great fun!
+
 ## Days
 
 ### Day 1: [No Time for a Taxicab](day01/README.md) 🌟🌟
@@ -97,3 +99,7 @@ Extension to previous Day 12.
 ### Day 24: [Air Duct Spelunking](day24/README.md) 🌟🌟
 
 Dijkstra shortest path + Brute-force to find the shortest visiting all nodes.
+
+### Day 25: [Clock Signal](day25/README.md) 🌟🌟
+
+Extension to Day 12.
