@@ -21,10 +21,10 @@ impl Registers {
         Self { a, b, c, d }
     }
 
-    fn get(&self, x: &IntChar<i32>) -> i32 {
+    fn get(&self, x: IntChar<i32>) -> i32 {
         match x {
-            IntChar::Integer(val) => *val,
-            IntChar::Char(src) => self[*src],
+            IntChar::Integer(val) => val,
+            IntChar::Char(src) => self[src],
         }
     }
 }
@@ -112,12 +112,12 @@ fn execute(instructions: &[Instruction], ir: &mut usize, regs: &mut Registers) -
     let ins = &instructions[*ir];
     if let Instruction::Out(x) = ins {
         *ir += 1;
-        return Some(regs.get(x));
+        return Some(regs.get(*x));
     }
 
     match ins {
         Instruction::Copy(x, r) => {
-            regs[*r] = regs.get(x);
+            regs[*r] = regs.get(*x);
             *ir += 1;
         }
         Instruction::Increase(r) => {
@@ -129,8 +129,8 @@ fn execute(instructions: &[Instruction], ir: &mut usize, regs: &mut Registers) -
             *ir += 1;
         }
         Instruction::JumpIfNotZero(v, offset) => {
-            if regs.get(v) != 0 {
-                *ir = (*ir as i32 + regs.get(offset)) as usize
+            if regs.get(*v) != 0 {
+                *ir = (*ir as i32 + regs.get(*offset)) as usize;
             } else {
                 *ir += 1;
             }
