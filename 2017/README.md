@@ -10,3 +10,7 @@ With `wrapping_index`.
 ### Day 2: [Corruption Checksum](day02/README.md) 🌟🌟
 
 Itertools `minmax()` and `permutations()`
+
+### Day 3: [Spiral Memory](day03/README.md) 🌟
+
+Calculating...

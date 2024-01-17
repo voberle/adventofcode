@@ -1,9 +1,10 @@
-[workspace]
+    [workspace]
 resolver = "2"
 
 members = [
     "day01",
     "day02",
+    "day03",
 ]
 
 [workspace.package]
