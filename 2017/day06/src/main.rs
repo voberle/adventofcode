@@ -24,6 +24,9 @@ fn most_blocks_idx(mem_banks: &[u32]) -> usize {
             |(im, vm), (i, v)| if *v > vm { (i, *v) } else { (im, vm) },
         )
         .0
+    // Update: Actually max_by_key could have still been used so:
+    //.max_by_key(|&(i, val)| (val, -(i as isize))).unwrap().0
+    // or doing a reverse iterator with rev() and a normal max_by_key.
 }
 
 fn redistribution_cycles_count(original: &[u32]) -> (usize, usize) {
