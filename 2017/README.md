@@ -7,6 +7,6 @@
 
 With `wrapping_index`.
 
-### Day 2: [Corruption Checksum](day02/README.md) 🌟
+### Day 2: [Corruption Checksum](day02/README.md) 🌟🌟
 
-Itertools `minmax()`.
+Itertools `minmax()` and `permutations()`

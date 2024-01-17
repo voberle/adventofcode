@@ -6,3 +6,4 @@ Easy using Itertools `minmax()`.
 
 ## Part 2
 
+This time with `permutations()`.
