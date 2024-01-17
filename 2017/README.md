@@ -22,3 +22,7 @@ Anagrams. An easy one.
 ### Day 5: [A Maze of Twisty Trampolines, All Alike](day05/README.md) 🌟🌟
 
 Easy.
+
+### Day 6: [Memory Reallocation](day06/README.md) 🌟
+
+Writing my own iterator `max_by_key` replacement with `fold`.
