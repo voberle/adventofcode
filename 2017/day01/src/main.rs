@@ -5,17 +5,37 @@ fn build(input: &str) -> Vec<u32> {
 }
 
 fn captcha(seq_digits: &[u32]) -> u32 {
-    let mut extended = seq_digits.to_owned();
-    extended.push(seq_digits[0]);
-    extended
+    assert!(seq_digits.len() > 1);
+    seq_digits
         .windows(2)
-        .filter(|v| v[0] == v[1])
-        .map(|v| v[0])
-        .sum()
+        .filter_map(|v| if v[0] == v[1] { Some(v[0]) } else { None })
+        .sum::<u32>()
+        // handling last digit case that way, to avoid doing a copy of the slice
+        + if seq_digits[0] == *seq_digits.last().unwrap() {
+            seq_digits[0]
+        } else {
+            0
+        }
 }
 
-fn captcha2(seq_digits: &[u32]) -> i64 {
-    0
+const fn wrapping_index(i: usize, len: usize) -> usize {
+    (i % len + len) % len
+}
+
+fn captcha2(seq_digits: &[u32]) -> u32 {
+    assert_eq!(seq_digits.len() % 2, 0);
+    let mid = seq_digits.len() / 2;
+    seq_digits
+        .iter()
+        .enumerate()
+        .filter_map(|(i, d)| {
+            if *d == seq_digits[wrapping_index(i + mid, seq_digits.len())] {
+                Some(d)
+            } else {
+                None
+            }
+        })
+        .sum::<u32>()
 }
 
 fn main() {

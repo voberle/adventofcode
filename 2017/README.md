@@ -3,6 +3,6 @@
 
 ## Days
 
-### Day 1: [Inverse Captcha](day01/README.md)
+### Day 1: [Inverse Captcha](day01/README.md) 🌟🌟
 
-🌟
+With `wrapping_index`.
