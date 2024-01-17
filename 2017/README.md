@@ -15,4 +15,6 @@ Itertools `minmax()` and `permutations()`
 
 Calculating...
 
-### Day 4: [High-Entropy Passphrases](day04/README.md) 🌟
+### Day 4: [High-Entropy Passphrases](day04/README.md) 🌟🌟
+
+Anagrams. An easy one.
