@@ -23,6 +23,6 @@ Anagrams. An easy one.
 
 Easy.
 
-### Day 6: [Memory Reallocation](day06/README.md) 🌟
+### Day 6: [Memory Reallocation](day06/README.md) 🌟🌟
 
 Writing my own iterator `max_by_key` replacement with `fold`.

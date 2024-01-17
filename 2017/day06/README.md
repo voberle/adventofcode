@@ -6,3 +6,4 @@ Main trick here was writing my own iterator `max_by_key` replacement with `fold`
 
 ## Part 2
 
+Just replacing the Set with the Map.

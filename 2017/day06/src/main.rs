@@ -1,6 +1,6 @@
 use std::io::{self, Read};
 
-use fxhash::FxHashSet;
+use fxhash::FxHashMap;
 
 fn build(input: &str) -> Vec<u32> {
     input
@@ -26,12 +26,12 @@ fn most_blocks_idx(mem_banks: &[u32]) -> usize {
         .0
 }
 
-fn redistribution_cycles_count(original: &[u32]) -> usize {
+fn redistribution_cycles_count(original: &[u32]) -> (usize, usize) {
     let mut mem_banks = original.to_vec();
-    let mut seen: FxHashSet<Vec<u32>> = FxHashSet::default();
+    let mut seen_at: FxHashMap<Vec<u32>, usize> = FxHashMap::default();
     let mut count = 0;
-    while !seen.contains(&mem_banks) {
-        seen.insert(mem_banks.clone());
+    while !seen_at.contains_key(&mem_banks) {
+        seen_at.insert(mem_banks.clone(), count);
 
         // maybe we could optimize by distributing more than one if we have a lot
         let mut i = most_blocks_idx(&mem_banks);
@@ -46,11 +46,7 @@ fn redistribution_cycles_count(original: &[u32]) -> usize {
         }
         count += 1;
     }
-    count
-}
-
-fn part2(mem_banks: &[u32]) -> usize {
-    0
+    (count, count - *seen_at.get(&mem_banks).unwrap())
 }
 
 fn main() {
@@ -58,8 +54,9 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let mem_banks = build(&input);
 
-    println!("Part 1: {}", redistribution_cycles_count(&mem_banks));
-    println!("Part 2: {}", part2(&mem_banks));
+    let (since_beginning, since_seen) = redistribution_cycles_count(&mem_banks);
+    println!("Part 1: {}", since_beginning);
+    println!("Part 2: {}", since_seen);
 }
 
 #[cfg(test)]
@@ -68,11 +65,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(redistribution_cycles_count(&[0, 2, 7, 0]), 5);
+        assert_eq!(redistribution_cycles_count(&[0, 2, 7, 0]).0, 5);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&[0, 2, 7, 0]), 0);
+        assert_eq!(redistribution_cycles_count(&[0, 2, 7, 0]).1, 4);
     }
 }
