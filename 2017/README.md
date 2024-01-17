@@ -18,3 +18,6 @@ Calculating...
 ### Day 4: [High-Entropy Passphrases](day04/README.md) 🌟🌟
 
 Anagrams. An easy one.
+
+### Day 5: [A Maze of Twisty Trampolines, All Alike](day05/README.md) 🌟
+
