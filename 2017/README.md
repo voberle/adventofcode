@@ -14,3 +14,5 @@ Itertools `minmax()` and `permutations()`
 ### Day 3: [Spiral Memory](day03/README.md) 🌟🌟
 
 Calculating...
+
+### Day 4: [High-Entropy Passphrases](day04/README.md) 🌟
