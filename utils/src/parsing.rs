@@ -6,6 +6,10 @@ fn char(s: &str) -> char {
 }
 
 #[inline]
-fn int<T>(s: &str) -> T where T : std::str::FromStr, <T as std::str::FromStr>::Err: std::fmt::Debug {
+fn int<T>(s: &str) -> T
+where
+    T: std::str::FromStr,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
     s.parse::<T>().unwrap()
 }
