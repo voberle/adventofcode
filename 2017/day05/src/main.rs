@@ -11,14 +11,13 @@ fn steps_to_exit<const STRANGER: bool>(original_offsets: &[i32]) -> usize {
     let mut offsets = original_offsets.to_vec();
     let mut ir: i32 = 0; // need to use signed integer as the offset can make us go negative
     let mut steps = 0;
-    while ir >= 0 && ir < offsets.len() as i32 {
-        let o = offsets[ir as usize];
-        if STRANGER && o >= 3 {
-            offsets[ir as usize] -= 1;
+    while let Some(o) = offsets.get_mut(ir as usize) {
+        ir += *o;
+        if STRANGER && *o >= 3 {
+            *o -= 1;
         } else {
-            offsets[ir as usize] += 1;
+            *o += 1;
         }
-        ir += o;
         steps += 1;
     }
     steps
