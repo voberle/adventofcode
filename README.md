@@ -1,8 +1,6 @@
 # Advent of Code
 
-## 2023
-
-My [first participation to AoC](2023/README.md).
+My *Advent Of Code* code.
 
 ## Template
 
