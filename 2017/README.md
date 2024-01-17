@@ -19,5 +19,6 @@ Calculating...
 
 Anagrams. An easy one.
 
-### Day 5: [A Maze of Twisty Trampolines, All Alike](day05/README.md) 🌟
+### Day 5: [A Maze of Twisty Trampolines, All Alike](day05/README.md) 🌟🌟
 
+Easy.
