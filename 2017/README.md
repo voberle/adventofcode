@@ -11,6 +11,6 @@ With `wrapping_index`.
 
 Itertools `minmax()` and `permutations()`
 
-### Day 3: [Spiral Memory](day03/README.md) 🌟
+### Day 3: [Spiral Memory](day03/README.md) 🌟🌟
 
 Calculating...

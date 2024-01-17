@@ -6,3 +6,4 @@ Figuring out the position on the spiral was harder than it seemed. I did it with
 
 ## Part 2
 
+A not so trivial variation on part 1.

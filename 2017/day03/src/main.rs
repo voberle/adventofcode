@@ -1,5 +1,7 @@
 use std::io::{self, Read};
 
+use fxhash::FxHashMap;
+
 fn target_position(target_square: i32) -> (i32, i32) {
     assert!(target_square > 1);
 
@@ -65,8 +67,93 @@ fn steps_count(target_square: usize) -> usize {
     (x.abs_diff(0) + y.abs_diff(0)) as usize
 }
 
-fn part2(square: usize) -> usize {
-    0
+fn sum_neighbors(values: &FxHashMap<(i32, i32), u32>, x: i32, y: i32) -> u32 {
+    let sum = [
+        (x - 1, y - 1),
+        (x - 1, y),
+        (x - 1, y + 1),
+        (x, y - 1),
+        (x, y),
+        (x, y + 1),
+        (x + 1, y - 1),
+        (x + 1, y),
+        (x + 1, y + 1),
+    ].iter().map(|n| values.get(n).cloned().unwrap_or_default()).sum();
+    println!(" Sum: {x},{y} = {}", sum);
+    sum
+}
+
+fn stress_test_first_val_larger_than(target_square: u32) -> u32 {
+    let mut values: FxHashMap<(i32, i32), u32> = FxHashMap::default();
+    values.insert((0, 0), 1);
+
+    let mut square = 1;
+    let mut x: i32 = 0;
+    let mut y: i32 = 0;
+
+    let mut side_len = 0; // 2, 4, 6 etc
+
+    println!("Target square {}", target_square);
+    while square < target_square {
+        // move to next circle
+        x += 1;
+        y += 1;
+        side_len += 2;
+
+        // Right vertical side
+        let end_line = square + side_len;
+        while square < end_line {
+            y -= 1;
+            square += 1;
+            let sum_n = sum_neighbors(&values, x, y);
+            if sum_n > target_square {
+                return sum_n;
+            }
+            values.insert((x, y), sum_n);
+        }
+        println!("  After right vertical: {x},{y}, square={square}. Side={side_len}");
+
+        // Top horizontal side
+        let end_line = square + side_len;
+        while square < end_line {
+            x -= 1;
+            square += 1;
+            let sum_n = sum_neighbors(&values, x, y);
+            if sum_n > target_square {
+                return sum_n;
+            }
+            values.insert((x, y), sum_n);
+        }
+        println!("  After top horizontal: {x},{y}, square={square}. Side={side_len}");
+
+        // Left vertical side
+        let end_line = square + side_len;
+        while square < end_line {
+            y += 1;
+            square += 1;
+            let sum_n = sum_neighbors(&values, x, y);
+            if sum_n > target_square {
+                return sum_n;
+            }
+            values.insert((x, y), sum_n);
+        }
+        println!("  After left vertical: {x},{y}, square={square}. Side={side_len}");
+
+        // Bottom horizontal side
+        let end_line = square + side_len;
+        while square < end_line {
+            x += 1;
+            square += 1;
+            let sum_n = sum_neighbors(&values, x, y);
+            if sum_n > target_square {
+                return sum_n;
+            }
+            values.insert((x, y), sum_n);
+        }
+        println!("  After bottom horizontal: {x},{y}, square={square}. Side={side_len}");
+    }
+
+    panic!("Should never get here: square={square}, side_len={side_len}, target_square={target_square}")
 }
 
 fn main() {
@@ -75,7 +162,7 @@ fn main() {
     let square = input.trim().parse().unwrap();
 
     println!("Part 1: {}", steps_count(square));
-    println!("Part 2: {}", part2(square));
+    println!("Part 2: {}", stress_test_first_val_larger_than(square as u32));
 }
 
 #[cfg(test)]
@@ -98,6 +185,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(0), 0);
+        assert_eq!(stress_test_first_val_larger_than(800), 806);
     }
 }
