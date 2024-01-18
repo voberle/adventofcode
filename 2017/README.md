@@ -27,6 +27,6 @@ Easy.
 
 Writing my own iterator `max_by_key` replacement with `fold`.
 
-### Day 7: [Recursive Circus](day07/README.md) 🌟
+### Day 7: [Recursive Circus](day07/README.md) 🌟🌟
 
 Optimized data structure.

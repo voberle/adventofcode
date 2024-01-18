@@ -6,3 +6,6 @@ Maybe I went a bit overkill with the data structure I used to store the input. I
 
 ## Part 2
 
+That wasn't as easy.
+
+I used a recursive approach to find the weights of each tower on each platform. Then starting from the bottom, I find which is the highest platform that is unbalanced, which then gives us the item with the wrong weight.
