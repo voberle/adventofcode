@@ -6,3 +6,4 @@ Getting the right coordinates system for the hexagonal grid was key, and I had t
 
 ## Part 2
 
+Trivial.

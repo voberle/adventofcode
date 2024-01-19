@@ -43,6 +43,6 @@ Counting open brackets, ignoring garbage.
 
 Circular list reversal.
 
-### Day 11: [Hex Ed](day11/README.md) 🌟
+### Day 11: [Hex Ed](day11/README.md) 🌟🌟
 
 Hexagonal grids, cube coordinates.

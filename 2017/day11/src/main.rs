@@ -59,23 +59,22 @@ impl Dir {
     }
 }
 
-fn find_child_position(directions: &[Dir]) -> CubeCoords {
+fn min_steps_to_child(directions: &[Dir]) -> i32 {
     let mut pos = CubeCoords::new(0, 0, 0);
     for d in directions {
         pos = d.next_pos(&pos);
     }
-    pos
+    pos.distance_from_zero()
 }
 
-fn min_steps_to_child(directions: &[Dir]) -> i32 {
-    let child_pos = find_child_position(directions);
-    println!("Child pos {:?}", child_pos);
-
-    child_pos.distance_from_zero()
-}
-
-fn part2(directions: &[Dir]) -> i64 {
-    0
+fn furthest_ever(directions: &[Dir]) -> i32 {
+    let mut distance = 0;
+    let mut pos = CubeCoords::new(0, 0, 0);
+    for d in directions {
+        pos = d.next_pos(&pos);
+        distance = distance.max(pos.distance_from_zero());
+    }
+    distance
 }
 
 fn main() {
@@ -84,7 +83,7 @@ fn main() {
     let directions = Dir::build(&input);
 
     println!("Part 1: {}", min_steps_to_child(&directions));
-    println!("Part 2: {}", part2(&directions));
+    println!("Part 2: {}", furthest_ever(&directions));
 }
 
 #[cfg(test)]
@@ -97,10 +96,5 @@ mod tests {
         assert_eq!(min_steps_to_child(&Dir::build("ne,ne,sw,sw")), 0);
         assert_eq!(min_steps_to_child(&Dir::build("ne,ne,s,s")), 2);
         assert_eq!(min_steps_to_child(&Dir::build("se,sw,se,sw,sw")), 3);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&Dir::build("")), 0);
     }
 }
