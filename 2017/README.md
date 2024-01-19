@@ -30,3 +30,7 @@ Writing my own iterator `max_by_key` replacement with `fold`.
 ### Day 7: [Recursive Circus](day07/README.md) 🌟🌟
 
 Optimized data structure.
+
+### Day 8: [I Heard You Like Registers](day08/README.md) 🌟
+
+Instructions, registers.
