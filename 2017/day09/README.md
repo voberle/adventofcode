@@ -6,3 +6,4 @@ This one was surprisingly easy, I only had one bug in the initial version, which
 
 ## Part 2
 
+Just a simple addition to the part 1.

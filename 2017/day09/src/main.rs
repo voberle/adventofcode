@@ -4,8 +4,10 @@ fn build(input: &str) -> Vec<char> {
     input.chars().collect()
 }
 
-fn score(s: &[char]) -> u32 {
+fn process(s: &[char]) -> (u32, usize) {
     let mut score = 0;
+    // non-canceled characters within the garbage
+    let mut garbage_char_count = 0;
 
     let mut bracket_level = 0;
     let mut in_garbage = false; // there are no "garbage levels"
@@ -13,41 +15,36 @@ fn score(s: &[char]) -> u32 {
     let mut i = 0;
     while i < s.len() {
         let c = s[i];
+
         if c == '!' {
-            // println!("{i}->{c}: !, ignore next");
             i += 2; // ok if we jump below the end, while condition will catch it
             continue;
         }
+
         if in_garbage {
-            // println!("{i}->{c}: in_garbage");
             // Inside garbage: Only looking for closing char
             if c == '>' {
-                // println!("{i}->{c}: Stop in_garbage");
                 in_garbage = false;
+            } else {
+                garbage_char_count += 1;
             }
             i += 1;
             continue;
         }
+
         if c == '<' {
-            // println!("{i}->{c}: Start in_garbage");
             in_garbage = true;
         } else if c == '{' {
             bracket_level += 1;
-            // println!("{i}->{c}: bracket_level++, {}", bracket_level);
         } else if c == '}' && bracket_level > 0 {
             // closed a group, so update the score
             score += bracket_level;
             bracket_level -= 1;
-            // println!("{i}->{c}: bracket_level--, {}; score={score}", bracket_level);
         }
-
         i += 1;
     }
-    score
-}
 
-fn part2(input: &[char]) -> i64 {
-    0
+    (score, garbage_char_count)
 }
 
 fn main() {
@@ -55,8 +52,9 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let input_parsed = build(&input);
 
-    println!("Part 1: {}", score(&input_parsed));
-    println!("Part 2: {}", part2(&input_parsed));
+    let (score, garbage_char_count) = process(&input_parsed);
+    println!("Part 1: {}", score);
+    println!("Part 2: {}", garbage_char_count);
 }
 
 #[cfg(test)]
@@ -65,18 +63,24 @@ mod tests {
 
     #[test]
     fn test_score() {
-        assert_eq!(score(&build(r#"{}"#)), 1);
-        assert_eq!(score(&build(r#"{{{}}}"#)), 6);
-        assert_eq!(score(&build(r#"{{},{}}"#)), 5);
-        assert_eq!(score(&build(r#"{{{},{},{{}}}}"#)), 16);
-        assert_eq!(score(&build(r#"{<a>,<a>,<a>,<a>}"#)), 1);
-        assert_eq!(score(&build(r#"{{<ab>},{<ab>},{<ab>},{<ab>}}"#)), 9);
-        assert_eq!(score(&build(r#"{{<!!>},{<!!>},{<!!>},{<!!>}}"#)), 9);
-        assert_eq!(score(&build(r#"{{<a!>},{<a!>},{<a!>},{<ab>}}"#)), 3);
+        assert_eq!(process(&build(r#"{}"#)).0, 1);
+        assert_eq!(process(&build(r#"{{{}}}"#)).0, 6);
+        assert_eq!(process(&build(r#"{{},{}}"#)).0, 5);
+        assert_eq!(process(&build(r#"{{{},{},{{}}}}"#)).0, 16);
+        assert_eq!(process(&build(r#"{<a>,<a>,<a>,<a>}"#)).0, 1);
+        assert_eq!(process(&build(r#"{{<ab>},{<ab>},{<ab>},{<ab>}}"#)).0, 9);
+        assert_eq!(process(&build(r#"{{<!!>},{<!!>},{<!!>},{<!!>}}"#)).0, 9);
+        assert_eq!(process(&build(r#"{{<a!>},{<a!>},{<a!>},{<ab>}}"#)).0, 3);
     }
 
     #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build("")), 0);
+    fn test_garbage_char_count() {
+        assert_eq!(process(&build(r#"<>"#)).1, 0);
+        assert_eq!(process(&build(r#"<random characters>"#)).1, 17);
+        assert_eq!(process(&build(r#"<<<<>"#)).1, 3);
+        assert_eq!(process(&build(r#"<{!>}>"#)).1, 2);
+        assert_eq!(process(&build(r#"<!!>"#)).1, 0);
+        assert_eq!(process(&build(r#"<!!!>>"#)).1, 0);
+        assert_eq!(process(&build(r#"<{o"i!a,<{i<a>"#)).1, 10);
     }
 }

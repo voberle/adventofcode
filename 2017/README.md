@@ -35,6 +35,6 @@ Optimized data structure.
 
 Instructions, registers.
 
-### Day 9: [Stream Processing](day09/README.md) 🌟
+### Day 9: [Stream Processing](day09/README.md) 🌟🌟
 
 Counting open brackets, ignoring garbage.
