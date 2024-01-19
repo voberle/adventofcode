@@ -38,3 +38,7 @@ Instructions, registers.
 ### Day 9: [Stream Processing](day09/README.md) 🌟🌟
 
 Counting open brackets, ignoring garbage.
+
+### Day 10: [Knot Hash](day10/README.md) 🌟
+
+Circular list reversal.
