@@ -39,6 +39,6 @@ Instructions, registers.
 
 Counting open brackets, ignoring garbage.
 
-### Day 10: [Knot Hash](day10/README.md) 🌟
+### Day 10: [Knot Hash](day10/README.md) 🌟🌟
 
 Circular list reversal.
