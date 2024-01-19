@@ -34,3 +34,7 @@ Optimized data structure.
 ### Day 8: [I Heard You Like Registers](day08/README.md) 🌟🌟
 
 Instructions, registers.
+
+### Day 9: [Stream Processing](day09/README.md) 🌟
+
+Counting open brackets, ignoring garbage.
