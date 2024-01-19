@@ -42,3 +42,7 @@ Counting open brackets, ignoring garbage.
 ### Day 10: [Knot Hash](day10/README.md) 🌟🌟
 
 Circular list reversal.
+
+### Day 11: [Hex Ed](day11/README.md) 🌟
+
+Hexagonal grids, cube coordinates.
