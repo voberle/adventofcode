@@ -31,6 +31,6 @@ Writing my own iterator `max_by_key` replacement with `fold`.
 
 Optimized data structure.
 
-### Day 8: [I Heard You Like Registers](day08/README.md) 🌟
+### Day 8: [I Heard You Like Registers](day08/README.md) 🌟🌟
 
 Instructions, registers.

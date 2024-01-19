@@ -6,3 +6,4 @@ Another instructions with registers exercise. This time the difference is that `
 
 ## Part 2
 
+Was easy.

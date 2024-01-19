@@ -49,9 +49,10 @@ fn build(input: &str) -> Vec<Instruction> {
         .collect()
 }
 
-fn largest_value_any_register(instructions: &[Instruction]) -> i32 {
+fn largest_value_any_register(instructions: &[Instruction]) -> (i32, i32) {
     let mut registers: FxHashMap<String, i32> = FxHashMap::default();
     let mut ir = 0;
+    let mut largest_val = 0;
     while let Some(ins) = instructions.get(ir) {
         let cond_reg_val = registers.get(&ins.cond_reg).copied().unwrap_or_default();
         if (ins.cond)(cond_reg_val, ins.cond_val) {
@@ -61,14 +62,13 @@ fn largest_value_any_register(instructions: &[Instruction]) -> i32 {
             } else {
                 *reg -= ins.amount;
             }
+            if *reg > largest_val {
+                largest_val = *reg;
+            }
         }
         ir += 1;
     }
-    *registers.values().max().unwrap()
-}
-
-fn part2(instructions: &[Instruction]) -> i64 {
-    0
+    (*registers.values().max().unwrap(), largest_val)
 }
 
 fn main() {
@@ -77,8 +77,8 @@ fn main() {
     let instructions = build(&input);
     // println!("{:#?}", instructions);
 
-    println!("Part 1: {}", largest_value_any_register(&instructions));
-    println!("Part 2: {}", part2(&instructions));
+    println!("Part 1: {}", largest_value_any_register(&instructions).0);
+    println!("Part 2: {}", largest_value_any_register(&instructions).1);
 }
 
 #[cfg(test)]
@@ -89,11 +89,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(largest_value_any_register(&build(INPUT_TEST)), 1);
+        assert_eq!(largest_value_any_register(&build(INPUT_TEST)).0, 1);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(largest_value_any_register(&build(INPUT_TEST)).1, 10);
     }
 }
