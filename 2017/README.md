@@ -47,6 +47,6 @@ Circular list reversal.
 
 Hexagonal grids, cube coordinates.
 
-### Day 12: [Digital Plumber](day12/README.md) 🌟
+### Day 12: [Digital Plumber](day12/README.md) 🌟🌟
 
 Bi-directional graph, connected groups.

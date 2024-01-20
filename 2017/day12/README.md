@@ -6,3 +6,6 @@ A recursive function does the job here, although I'm not sure it's the best appr
 
 ## Part 2
 
+First part could nicely be used for part 2.
+
+To find each group, I allocate just one vector, so hopefully performance can be considered good too.
