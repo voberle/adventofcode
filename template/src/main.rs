@@ -16,6 +16,7 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let input_parsed = build(&input);
+    println!("{:?}", input_parsed);
 
     println!("Part 1: {}", part1(&input_parsed));
     println!("Part 2: {}", part2(&input_parsed));

@@ -50,3 +50,7 @@ Hexagonal grids, cube coordinates.
 ### Day 12: [Digital Plumber](day12/README.md) 🌟🌟
 
 Bi-directional graph, connected groups.
+
+### Day 13: [Packet Scanners](day13/README.md) 🌟
+
+Zig-zag in a sequence with a cache.
