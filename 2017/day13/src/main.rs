@@ -51,6 +51,9 @@ fn trip_severity(layers: &[usize], bases: &[Vec<usize>]) -> usize {
         .enumerate()
         .map(|(i, range)| {
             if *range > 0 {
+                // It's actually possible to avoid completely calculating the scanner position
+                // and instead just using following check:
+                // i % (2 * (range - 1)) == 0
                 let scanner_pos = scanner_position(bases, *range, i);
                 if scanner_pos == 0 {
                     // depth * range
@@ -76,13 +79,11 @@ fn is_trip_safe(layers: &[usize], bases: &[Vec<usize>], delay: usize) -> bool {
     })
 }
 
+#[allow(clippy::maybe_infinite_iter)]
 fn smallest_delay_not_caught(layers: &[usize], bases: &[Vec<usize>]) -> usize {
-    for delay in 0..usize::MAX {
-        if is_trip_safe(layers, bases, delay) {
-            return delay;
-        }
-    }
-    panic!("Didn't find a delay");
+    (0..)
+        .find(|delay| is_trip_safe(layers, bases, *delay))
+        .unwrap()
 }
 
 fn main() {
