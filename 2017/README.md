@@ -51,6 +51,6 @@ Hexagonal grids, cube coordinates.
 
 Bi-directional graph, connected groups.
 
-### Day 13: [Packet Scanners](day13/README.md) 🌟
+### Day 13: [Packet Scanners](day13/README.md) 🌟🌟
 
 Zig-zag in a sequence with a cache.

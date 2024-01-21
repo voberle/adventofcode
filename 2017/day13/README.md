@@ -10,3 +10,6 @@ Once I have this way of calculating the scanner position, calculating the severe
 
 ## Part 2
 
+Brute-forcing it works well.
+
+Note that we couldn't reuse the severity function from part 1, as the severaty for the layer 0 was always 0.

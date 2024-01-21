@@ -45,18 +45,16 @@ fn scanner_position(bases: &[Vec<usize>], range: usize, time: usize) -> usize {
     base[time % base.len()]
 }
 
-fn trip_severity(layers: &[usize]) -> usize {
-    let bases = init_bases(layers);
-
+fn trip_severity(layers: &[usize], bases: &[Vec<usize>]) -> usize {
     layers
         .iter()
         .enumerate()
-        .map(|(i, r)| {
-            if *r > 0 {
-                let scanner_pos = scanner_position(&bases, *r, i);
+        .map(|(i, range)| {
+            if *range > 0 {
+                let scanner_pos = scanner_position(bases, *range, i);
                 if scanner_pos == 0 {
                     // depth * range
-                    i * r
+                    i * range
                 } else {
                     0
                 }
@@ -67,8 +65,24 @@ fn trip_severity(layers: &[usize]) -> usize {
         .sum()
 }
 
-fn part2(layers: &[usize]) -> usize {
-    0
+fn is_trip_safe(layers: &[usize], bases: &[Vec<usize>], delay: usize) -> bool {
+    layers.iter().enumerate().all(|(i, range)| {
+        if *range > 0 {
+            let time = i + delay;
+            scanner_position(bases, *range, time) != 0
+        } else {
+            true
+        }
+    })
+}
+
+fn smallest_delay_not_caught(layers: &[usize], bases: &[Vec<usize>]) -> usize {
+    for delay in 0..usize::MAX {
+        if is_trip_safe(layers, bases, delay) {
+            return delay;
+        }
+    }
+    panic!("Didn't find a delay");
 }
 
 fn main() {
@@ -76,8 +90,10 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let layers = build(&input);
 
-    println!("Part 1: {}", trip_severity(&layers));
-    println!("Part 2: {}", part2(&layers));
+    let bases = init_bases(&layers);
+
+    println!("Part 1: {}", trip_severity(&layers, &bases));
+    println!("Part 2: {}", smallest_delay_not_caught(&layers, &bases));
 }
 
 #[cfg(test)]
@@ -104,11 +120,15 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(trip_severity(&build(INPUT_TEST)), 24);
+        let layers = build(INPUT_TEST);
+        let bases = init_bases(&layers);
+        assert_eq!(trip_severity(&layers, &bases), 24);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        let layers = build(INPUT_TEST);
+        let bases = init_bases(&layers);
+        assert_eq!(smallest_delay_not_caught(&layers, &bases), 10);
     }
 }
