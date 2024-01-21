@@ -54,3 +54,7 @@ Bi-directional graph, connected groups.
 ### Day 13: [Packet Scanners](day13/README.md) 🌟🌟
 
 Zig-zag in a sequence with a cache.
+
+### Day 14: [Disk Defragmentation](day14/README.md) 🌟
+
+Knot-hash from Day 10
