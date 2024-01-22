@@ -44,4 +44,5 @@ Generate a PDF:
 
 Easy benchmarking with [hyperfine](https://github.com/sharkdp/hyperfine):
 
-    hyperfine --warmup 5 'cat input| ./day01'
+    cargo b --release
+    hyperfine --warmup 5 'cat resources/input | ../target/release/day01'
