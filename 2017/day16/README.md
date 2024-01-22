@@ -6,3 +6,4 @@ The methods that manipulate vectors make this one easy, once we have converted t
 
 ## Part 2
 
+Quite obviously, the system is periodic, at some point we are back at the original positions. So finding the period allows to jump ahead and it's fast.

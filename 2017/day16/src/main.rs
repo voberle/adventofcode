@@ -64,16 +64,34 @@ fn string_to_programs(s: &str) -> Vec<char> {
     s.chars().collect()
 }
 
-fn dance(moves: &[Moves], programs: &[char]) -> String {
-    let mut programs = programs.to_vec();
+fn dance(moves: &[Moves], original_programs: &[char]) -> Vec<char> {
+    let mut programs = original_programs.to_vec();
     for m in moves {
         m.exec(&mut programs);
     }
-    programs_to_string(&programs)
+    programs
 }
 
-fn part2(moves: &[Moves]) -> i64 {
-    0
+fn dance_a_lot<const DANCE_COUNT: usize>(moves: &[Moves], original_programs: &[char]) -> Vec<char> {
+    let mut programs = original_programs.to_vec();
+    // At some point, we go back to the first dance, find the period
+    let mut period = 0;
+    loop {
+        period += 1;
+        programs = dance(moves, &programs);
+        if programs == original_programs {
+            break;
+        }
+    }
+    // Jump in future
+    let idx = (DANCE_COUNT / period) * period;
+    // now at dance idx, just below the target, programs is same as the original.
+
+    // Just finish
+    for _ in idx..DANCE_COUNT {
+        programs = dance(moves, &programs);
+    }
+    programs
 }
 
 fn main() {
@@ -83,8 +101,11 @@ fn main() {
 
     let programs = string_to_programs("abcdefghijklmnop");
 
-    println!("Part 1: {}", dance(&moves, &programs));
-    println!("Part 2: {}", part2(&moves));
+    println!("Part 1: {}", programs_to_string(&dance(&moves, &programs)));
+    println!(
+        "Part 2: {}",
+        programs_to_string(&dance_a_lot::<1_000_000_000>(&moves, &programs))
+    );
 }
 
 #[cfg(test)]
@@ -96,13 +117,19 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(
-            dance(&build(INPUT_TEST), &string_to_programs("abcde")),
+            programs_to_string(&dance(&build(INPUT_TEST), &string_to_programs("abcde"))),
             "baedc"
         );
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(
+            programs_to_string(&dance_a_lot::<2>(
+                &build(INPUT_TEST),
+                &string_to_programs("abcde")
+            )),
+            "ceadb"
+        );
     }
 }

@@ -63,6 +63,6 @@ Knot-hash from Day 10. Finding regions in grid.
 
 Brute-force.
 
-### Day 16: [Permutation Promenade](day16/README.md) 🌟
+### Day 16: [Permutation Promenade](day16/README.md) 🌟🌟
 
-Instructions execution.
+Instructions execution. Periodic.
