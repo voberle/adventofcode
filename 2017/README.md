@@ -67,6 +67,6 @@ Brute-force.
 
 Instructions execution. Periodic.
 
-### Day 17: [Spinlock](day17/README.md) 🌟
+### Day 17: [Spinlock](day17/README.md) 🌟🌟
 
 Circular buffer, rem_euclid.
