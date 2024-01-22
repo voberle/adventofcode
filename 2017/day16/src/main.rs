@@ -64,11 +64,15 @@ fn string_to_programs(s: &str) -> Vec<char> {
     s.chars().collect()
 }
 
+fn dance_once(moves: &[Moves], programs: &mut [char]) {
+    for m in moves {
+        m.exec(programs);
+    }
+}
+
 fn dance(moves: &[Moves], original_programs: &[char]) -> Vec<char> {
     let mut programs = original_programs.to_vec();
-    for m in moves {
-        m.exec(&mut programs);
-    }
+    dance_once(moves, &mut programs);
     programs
 }
 
@@ -78,18 +82,19 @@ fn dance_a_lot<const DANCE_COUNT: usize>(moves: &[Moves], original_programs: &[c
     let mut period = 0;
     loop {
         period += 1;
-        programs = dance(moves, &programs);
+        dance_once(moves, &mut programs);
         if programs == original_programs {
             break;
         }
     }
     // Jump in future
     let idx = (DANCE_COUNT / period) * period;
+    programs = original_programs.to_vec();
     // now at dance idx, just below the target, programs is same as the original.
 
     // Just finish
     for _ in idx..DANCE_COUNT {
-        programs = dance(moves, &programs);
+        dance_once(moves, &mut programs);
     }
     programs
 }
