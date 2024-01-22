@@ -62,3 +62,7 @@ Knot-hash from Day 10. Finding regions in grid.
 ### Day 15: [Dueling Generators](day15/README.md) 🌟🌟
 
 Brute-force.
+
+### Day 16: [Permutation Promenade](day16/README.md) 🌟
+
+Instructions execution.
