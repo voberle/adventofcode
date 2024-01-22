@@ -55,6 +55,6 @@ Bi-directional graph, connected groups.
 
 Zig-zag in a sequence with a cache.
 
-### Day 14: [Disk Defragmentation](day14/README.md) 🌟
+### Day 14: [Disk Defragmentation](day14/README.md) 🌟🌟
 
-Knot-hash from Day 10
+Knot-hash from Day 10. Finding regions in grid.

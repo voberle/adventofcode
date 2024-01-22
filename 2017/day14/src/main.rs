@@ -2,6 +2,7 @@ use std::fmt::Write;
 use std::io::{self, Read};
 
 fn hexa2bool(c: char) -> [bool; 4] {
+    // A bit ugly, any better way?
     match c {
         '0' => [false, false, false, false],
         '1' => [false, false, false, true],
@@ -23,27 +24,96 @@ fn hexa2bool(c: char) -> [bool; 4] {
     }
 }
 
-fn squares_used(input: &str) -> usize {
-    let map: Vec<Vec<bool>> = (0..128)
+fn get_grid(input: &str) -> Vec<Vec<bool>> {
+    (0..128)
         .map(|row| {
             let khash = knot_hash(&format!("{}-{}", input.trim(), row));
             khash.chars().flat_map(|c| hexa2bool(c).to_vec()).collect()
         })
-        .collect();
-
-    map.iter().flatten().filter(|v| **v).count()
+        .collect()
 }
 
-fn part2(input: &str) -> usize {
-    0
+fn squares_used(grid: &[Vec<bool>]) -> usize {
+    grid.iter().flatten().filter(|v| **v).count()
+}
+
+enum Dir {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+use Dir::{Down, Left, Right, Up};
+
+impl Dir {
+    fn can_go(&self, pos: (usize, usize)) -> bool {
+        match self {
+            Up => pos.0 > 0,
+            Down => pos.0 < 127,
+            Left => pos.1 > 0,
+            Right => pos.1 < 127,
+        }
+    }
+
+    fn next_pos(&self, pos: (usize, usize)) -> (usize, usize) {
+        match self {
+            Up => (pos.0 - 1, pos.1),
+            Down => (pos.0 + 1, pos.1),
+            Left => (pos.0, pos.1 - 1),
+            Right => (pos.0, pos.1 + 1),
+        }
+    }
+}
+
+fn regions_count(grid: &[Vec<bool>]) -> usize {
+    let mut regions_cnt = 0;
+    // We visit all the used squares of the grid, for each unvisited square, we find the corresponding region.
+    let mut visited: Vec<Vec<bool>> = vec![vec![false; 128]; 128];
+    for row in 0..128 {
+        for col in 0..128 {
+            if visited[row][col] {
+                // Already been there.
+                continue;
+            }
+            if !grid[row][col] {
+                // If square is free, just mark it visited and continue.
+                visited[row][col] = true;
+                continue;
+            }
+            // We are on an unvisited used square. It's the beginning of a region.
+            regions_cnt += 1;
+            // Visit the whole region
+            let mut queue: Vec<(usize, usize)> = Vec::new();
+            queue.push((row, col));
+            while let Some(pos) = queue.pop() {
+                visited[pos.0][pos.1] = true;
+                queue.extend([Up, Down, Left, Right].iter().filter_map(|dir| {
+                    if !dir.can_go(pos) {
+                        return None;
+                    }
+                    let next_pos = dir.next_pos(pos);
+                    if visited[next_pos.0][next_pos.1] {
+                        return None;
+                    }
+                    if !grid[next_pos.0][next_pos.1] {
+                        return None;
+                    }
+                    Some(next_pos)
+                }));
+            }
+        }
+    }
+    regions_cnt
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
 
-    println!("Part 1: {}", squares_used(&input));
-    println!("Part 2: {}", part2(&input));
+    let grid = get_grid(&input);
+
+    println!("Part 1: {}", squares_used(&grid));
+    println!("Part 2: {}", regions_count(&grid));
 }
 
 #[cfg(test)]
@@ -52,15 +122,16 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(squares_used("flqrgnkx"), 8108);
+        let grid = get_grid("flqrgnkx");
+        assert_eq!(squares_used(&grid), 8108);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2("flqrgnkx"), 0);
+        let grid = get_grid("flqrgnkx");
+        assert_eq!(regions_count(&grid), 1242);
     }
 }
-
 
 // Below is exact code from From Day 10
 
