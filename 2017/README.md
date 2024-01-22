@@ -66,3 +66,7 @@ Brute-force.
 ### Day 16: [Permutation Promenade](day16/README.md) 🌟🌟
 
 Instructions execution. Periodic.
+
+### Day 17: [Spinlock](day17/README.md) 🌟
+
+Circular buffer, rem_euclid.
