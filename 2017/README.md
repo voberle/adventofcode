@@ -70,3 +70,7 @@ Instructions execution. Periodic.
 ### Day 17: [Spinlock](day17/README.md) 🌟🌟
 
 Circular buffer, rem_euclid.
+
+### Day 18: [Duet](day18/README.md) 🌟
+
+Instruction. Registers with HashMap.
