@@ -2,34 +2,25 @@ use std::io::{self, Read};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Direction {
-    North,
-    East,
-    South,
-    West,
+    Up,
+    Down,
+    Left,
+    Right,
 }
-use Direction::{East, North, South, West};
+use Direction::{Down, Left, Right, Up};
 
 impl Direction {
-    pub fn index(self) -> usize {
-        match self {
-            North => 0,
-            East => 1,
-            South => 2,
-            West => 3,
-        }
-    }
-
     pub fn opposite(self) -> Self {
         match self {
-            North => South,
-            East => West,
-            South => North,
-            West => East,
+            Up => Down,
+            Down => Up,
+            Left => Right,
+            Right => Left,
         }
     }
 }
 
-const ALL_DIRECTIONS: [Direction; 4] = [North, East, South, West];
+const ALL_DIRECTIONS: [Direction; 4] = [Up, Down, Left, Right];
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Grid {
@@ -90,10 +81,10 @@ impl Grid {
     // Check we don't go outside grid.
     pub fn allowed(&self, pos: usize, direction: Direction) -> bool {
         !match direction {
-            North => pos < self.cols,
-            East => pos % self.cols == self.cols - 1,
-            South => pos / self.cols == self.rows - 1,
-            West => pos % self.cols == 0,
+            Up => pos < self.cols,
+            Down => pos / self.cols == self.rows - 1,
+            Left => pos % self.cols == 0,
+            Right => pos % self.cols == self.cols - 1,
         }
     }
 
@@ -101,10 +92,10 @@ impl Grid {
     // Assumes validity of the move has been checked before with `allowed`.
     pub fn next_pos(&self, pos: usize, direction: Direction) -> usize {
         match direction {
-            North => pos - self.cols,
-            East => pos + 1,
-            South => pos + self.cols,
-            West => pos - 1,
+            Up => pos - self.cols,
+            Down => pos + self.cols,
+            Left => pos - 1,
+            Right => pos + 1,
         }
     }
 
@@ -117,8 +108,69 @@ impl Grid {
     }
 }
 
-fn part1(grid: &Grid) -> String {
-    "".to_string()
+fn find_start(grid: &Grid) -> usize {
+    grid.values.iter().position(|c| *c == '|').unwrap()
+}
+
+fn seen_letters(grid: &Grid) -> String {
+    let mut letters = String::new();
+
+    let mut pos = find_start(grid);
+    let mut dir = Direction::Down;
+    while let Some(next_pos) = grid.try_next_pos(pos, dir) {
+        pos = next_pos;
+        let c = grid.values[pos];
+        match c {
+            '|' | '-' => {
+                // Direction doesn't change
+            }
+            '+' => {
+                // Need to look at next char
+                match dir {
+                    Up | Down => {
+                        if let Some(n_pos) = grid.try_next_pos(pos, Left) {
+                            // anything except space should be ok
+                            if grid.values[n_pos] != ' ' {
+                                dir = Left;
+                            }
+                        }
+                        if let Some(n_pos) = grid.try_next_pos(pos, Right) {
+                            if grid.values[n_pos] != ' ' {
+                                assert_ne!(dir, Left);
+                                dir = Right;
+                            }
+                        }
+                    }
+                    Left | Right => {
+                        if let Some(n_pos) = grid.try_next_pos(pos, Up) {
+                            if grid.values[n_pos] != ' ' {
+                                dir = Up;
+                            }
+                        }
+                        if let Some(n_pos) = grid.try_next_pos(pos, Down) {
+                            if grid.values[n_pos] != ' ' {
+                                assert_ne!(dir, Up);
+                                dir = Down;
+                            }
+                        }
+                    }
+                }
+            }
+            'A'..='Z' => {
+                // Direction doesn't change, just store letter
+                letters.push(c);
+            }
+            ' ' => {
+                // If there is no bug, it means we got to the end
+                break;
+            }
+            _ => panic!("Invalid char in grid {}", c),
+        }
+        // println!("Next dir {:?} pos {}", dir, pos);
+        // grid.print_with_pos(&vec![pos]);
+    }
+
+    letters
 }
 
 fn part2(grid: &Grid) -> i64 {
@@ -129,9 +181,9 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let grid = Grid::build(&input);
-    grid.print();
+    // grid.print();
 
-    println!("Part 1: {}", part1(&grid));
+    println!("Part 1: {}", seen_letters(&grid));
     println!("Part 2: {}", part2(&grid));
 }
 
@@ -143,7 +195,7 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(part1(&Grid::build(INPUT_TEST)), "ABCDEF");
+        assert_eq!(seen_letters(&Grid::build(INPUT_TEST)), "ABCDEF");
     }
 
     #[test]

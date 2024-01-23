@@ -75,4 +75,6 @@ Circular buffer, rem_euclid.
 
 Instruction. Registers with HashMap. Threads, channels and Arc pointers.
 
-### Day 19: [A Series of Tubes](day19/README.md) 
+### Day 19: [A Series of Tubes](day19/README.md) 🌟
+
+Grid, following a line.
