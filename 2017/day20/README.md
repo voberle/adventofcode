@@ -6,3 +6,4 @@ I did the first part brute force and very simple, ticking a 1000 times and check
 
 ## Part 2
 
+Brute-forced the part 2 as well, using sort and iterator `windows` to find the colliding particules.

@@ -79,6 +79,6 @@ Instruction. Registers with HashMap. Threads, channels and Arc pointers.
 
 Grid, following a line.
 
-### Day 20: [Particle Swarm](day19/README.md) 🌟
+### Day 20: [Particle Swarm](day19/README.md) 🌟🌟
 
-Moving particules.
+Moving particules. Brute-force.
