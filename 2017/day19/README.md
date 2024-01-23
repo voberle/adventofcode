@@ -6,3 +6,4 @@ Using my Grid code, first part turned out quite easy.
 
 ## Part 2
 
+Part 2 was trivial.

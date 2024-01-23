@@ -1,7 +1,7 @@
 use std::io::{self, Read};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Direction {
+enum Direction {
     Up,
     Down,
     Left,
@@ -9,36 +9,20 @@ pub enum Direction {
 }
 use Direction::{Down, Left, Right, Up};
 
-impl Direction {
-    pub fn opposite(self) -> Self {
-        match self {
-            Up => Down,
-            Down => Up,
-            Left => Right,
-            Right => Left,
-        }
-    }
-}
-
-const ALL_DIRECTIONS: [Direction; 4] = [Up, Down, Left, Right];
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Grid {
-    pub values: Vec<char>,
-    pub rows: usize,
-    pub cols: usize,
+struct Grid {
+    values: Vec<char>,
+    rows: usize,
+    cols: usize,
 }
 
 impl Grid {
-    pub fn build(input: &str) -> Self {
+    fn build(input: &str) -> Self {
         let mut rows = 0;
         let values: Vec<_> = input
             .lines()
             .flat_map(|l| {
                 rows += 1;
-                l.chars()
-                    // .map(|c| c)
-                    .collect::<Vec<_>>()
+                l.chars().collect::<Vec<_>>()
             })
             .collect();
         assert_eq!(values.len() % rows, 0);
@@ -46,40 +30,8 @@ impl Grid {
         Self { values, rows, cols }
     }
 
-    pub fn print_with_pos(&self, positions: &[usize]) {
-        const RED: &str = "\x1b[31m";
-        const RESET: &str = "\x1b[0m";
-        for row in 0..self.rows {
-            for p in row * self.cols..(row + 1) * self.cols {
-                let c = self.values[p];
-                if positions.contains(&p) {
-                    print!("{RED}{}{RESET}", c);
-                } else {
-                    print!("{}", c);
-                }
-            }
-            println!();
-        }
-    }
-
-    pub fn print(&self) {
-        self.print_with_pos(&[]);
-    }
-
-    pub fn pos(&self, row: usize, col: usize) -> usize {
-        row * self.cols + col
-    }
-
-    pub fn col(&self, index: usize) -> usize {
-        index % self.cols
-    }
-
-    pub fn row(&self, index: usize) -> usize {
-        index / self.cols
-    }
-
     // Check we don't go outside grid.
-    pub fn allowed(&self, pos: usize, direction: Direction) -> bool {
+    fn allowed(&self, pos: usize, direction: Direction) -> bool {
         !match direction {
             Up => pos < self.cols,
             Down => pos / self.cols == self.rows - 1,
@@ -90,7 +42,7 @@ impl Grid {
 
     // Returns the index of the next position in that direction.
     // Assumes validity of the move has been checked before with `allowed`.
-    pub fn next_pos(&self, pos: usize, direction: Direction) -> usize {
+    fn next_pos(&self, pos: usize, direction: Direction) -> usize {
         match direction {
             Up => pos - self.cols,
             Down => pos + self.cols,
@@ -99,7 +51,7 @@ impl Grid {
         }
     }
 
-    pub fn try_next_pos(&self, pos: usize, direction: Direction) -> Option<usize> {
+    fn try_next_pos(&self, pos: usize, direction: Direction) -> Option<usize> {
         if self.allowed(pos, direction) {
             Some(self.next_pos(pos, direction))
         } else {
@@ -112,12 +64,14 @@ fn find_start(grid: &Grid) -> usize {
     grid.values.iter().position(|c| *c == '|').unwrap()
 }
 
-fn seen_letters(grid: &Grid) -> String {
+fn walk(grid: &Grid) -> (String, usize) {
     let mut letters = String::new();
+    let mut steps = 0;
 
     let mut pos = find_start(grid);
     let mut dir = Direction::Down;
     while let Some(next_pos) = grid.try_next_pos(pos, dir) {
+        steps += 1;
         pos = next_pos;
         let c = grid.values[pos];
         match c {
@@ -166,25 +120,20 @@ fn seen_letters(grid: &Grid) -> String {
             }
             _ => panic!("Invalid char in grid {}", c),
         }
-        // println!("Next dir {:?} pos {}", dir, pos);
-        // grid.print_with_pos(&vec![pos]);
     }
 
-    letters
-}
-
-fn part2(grid: &Grid) -> i64 {
-    0
+    (letters, steps)
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let grid = Grid::build(&input);
-    // grid.print();
 
-    println!("Part 1: {}", seen_letters(&grid));
-    println!("Part 2: {}", part2(&grid));
+    let (seen_letters, steps) = walk(&grid);
+
+    println!("Part 1: {}", seen_letters);
+    println!("Part 2: {}", steps);
 }
 
 #[cfg(test)]
@@ -194,12 +143,9 @@ mod tests {
     const INPUT_TEST: &str = include_str!("../resources/input_test_1");
 
     #[test]
-    fn test_part1() {
-        assert_eq!(seen_letters(&Grid::build(INPUT_TEST)), "ABCDEF");
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+    fn test_part1_2() {
+        let (seen_letters, steps) = walk(&Grid::build(INPUT_TEST));
+        assert_eq!(seen_letters, "ABCDEF");
+        assert_eq!(steps, 38);
     }
 }
