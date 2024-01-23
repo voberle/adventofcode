@@ -71,7 +71,7 @@ enum Instruction {
     Add(char, IntChar<i64>),
     Mul(char, IntChar<i64>),
     Mod(char, IntChar<i64>),
-    Recover(IntChar<i64>),
+    Rcv(IntChar<i64>),
     JumpGreaterThanZero(IntChar<i64>, IntChar<i64>),
     Nop,
 }
@@ -85,7 +85,7 @@ impl Instruction {
             "add" => Self::Add(char(parts[1]), IntChar::new(parts[2])),
             "mul" => Self::Mul(char(parts[1]), IntChar::new(parts[2])),
             "mod" => Self::Mod(char(parts[1]), IntChar::new(parts[2])),
-            "rcv" => Self::Recover(IntChar::new(parts[1])),
+            "rcv" => Self::Rcv(IntChar::new(parts[1])),
             "jgz" => Self::JumpGreaterThanZero(IntChar::new(parts[1]), IntChar::new(parts[2])),
             "nop" => Self::Nop,
             _ => panic!("Unknown instruction"),
@@ -93,20 +93,14 @@ impl Instruction {
     }
 }
 
-// Executes the instruction specified by ins, modifying the registers if needed.
-fn execute(
-    instructions: &[Instruction],
-    ir: &mut usize,
-    regs: &mut Registers<i64>,
-    last_sound_played: &mut i64,
-) -> Option<i64> {
-    let ins = &instructions[*ir];
+fn build(input: &str) -> Vec<Instruction> {
+    input.lines().map(Instruction::build).collect()
+}
+
+
+// Executes the instruction: Common parts for part 1 and 2.
+fn execute_common(ins: &Instruction, ir: &mut usize, regs: &mut Registers<i64>) {
     match ins {
-        Instruction::Snd(x) => {
-            // plays a sound with a frequency equal to the value of X
-            *last_sound_played = regs.get_ic(*x);
-            *ir += 1;
-        }
         Instruction::Set(x, y) => {
             regs.set(*x, regs.get_ic(*y));
             *ir += 1;
@@ -123,13 +117,6 @@ fn execute(
             regs.set(*x, regs.get(*x) % regs.get_ic(*y));
             *ir += 1;
         }
-        Instruction::Recover(x) => {
-            if regs.get_ic(*x) != 0 {
-                // recovers the frequency of the last sound played
-                return Some(*last_sound_played);
-            }
-            *ir += 1;
-        }
         Instruction::JumpGreaterThanZero(x, y) => {
             if regs.get_ic(*x) > 0 {
                 *ir = (*ir as i64 + regs.get_ic(*y)) as usize;
@@ -138,12 +125,34 @@ fn execute(
             }
         }
         Instruction::Nop => *ir += 1,
+        _ => panic!("Wrong use of this function"),
     }
-    None
 }
 
-fn build(input: &str) -> Vec<Instruction> {
-    input.lines().map(Instruction::build).collect()
+// Executes the instruction specified by ins, modifying the registers if needed.
+fn execute_sound_playing(
+    instructions: &[Instruction],
+    ir: &mut usize,
+    regs: &mut Registers<i64>,
+    last_sound_played: &mut i64,
+) -> Option<i64> {
+    let ins = &instructions[*ir];
+    match ins {
+        Instruction::Snd(x) => {
+            // plays a sound with a frequency equal to the value of X
+            *last_sound_played = regs.get_ic(*x);
+            *ir += 1;
+        }
+        Instruction::Rcv(x) => {
+            if regs.get_ic(*x) != 0 {
+                // recovers the frequency of the last sound played
+                return Some(*last_sound_played);
+            }
+            *ir += 1;
+        }
+        _ => execute_common(ins, ir, regs),
+    }
+    None
 }
 
 fn recovered_frequency_value(instructions: &[Instruction]) -> i64 {
@@ -152,14 +161,16 @@ fn recovered_frequency_value(instructions: &[Instruction]) -> i64 {
     let mut ir = 0;
     while ir < instructions.len() {
         // println!("{}: Exec {:?} for {:?}", ir, instructions[ir], regs);
-        if let Some(recv_snd) = execute(instructions, &mut ir, &mut regs, &mut last_sound_played) {
+        if let Some(recv_snd) =
+            execute_sound_playing(instructions, &mut ir, &mut regs, &mut last_sound_played)
+        {
             return recv_snd;
         }
     }
     panic!("Didn't find a recovered sound")
 }
 
-fn part2(instructions: &[Instruction]) -> i64 {
+fn program_1_send_count(instructions: &[Instruction]) -> i64 {
     0
 }
 
@@ -169,7 +180,7 @@ fn main() {
     let instructions = build(&input);
 
     println!("Part 1: {}", recovered_frequency_value(&instructions));
-    println!("Part 2: {}", part2(&instructions));
+    println!("Part 2: {}", program_1_send_count(&instructions));
 }
 
 #[cfg(test)]
@@ -185,6 +196,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(program_1_send_count(&build(INPUT_TEST)), 0);
     }
 }
