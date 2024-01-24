@@ -82,3 +82,7 @@ Grid, following a line.
 ### Day 20: [Particle Swarm](day19/README.md) 🌟🌟
 
 Moving particules. Brute-force.
+
+### Day 21: [Fractal Art](day20/README.md) 🌟🌟
+
+Dividing and merging squares, rotating and flipping. Not so easy.
