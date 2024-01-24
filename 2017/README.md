@@ -79,10 +79,14 @@ Instruction. Registers with HashMap. Threads, channels and Arc pointers.
 
 Grid, following a line.
 
-### Day 20: [Particle Swarm](day19/README.md) 🌟🌟
+### Day 20: [Particle Swarm](day20/README.md) 🌟🌟
 
 Moving particules. Brute-force.
 
-### Day 21: [Fractal Art](day20/README.md) 🌟🌟
+### Day 21: [Fractal Art](day21/README.md) 🌟🌟
 
 Dividing and merging squares, rotating and flipping. Not so easy.
+
+### Day 22: [Sporifica Virus](day22/README.md) 🌟
+
+Grid moving.
