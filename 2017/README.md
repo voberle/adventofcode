@@ -87,6 +87,6 @@ Moving particules. Brute-force.
 
 Dividing and merging squares, rotating and flipping. Not so easy.
 
-### Day 22: [Sporifica Virus](day22/README.md) 🌟
+### Day 22: [Sporifica Virus](day22/README.md) 🌟🌟
 
 Grid moving.
