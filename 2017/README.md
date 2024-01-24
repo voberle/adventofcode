@@ -90,3 +90,7 @@ Dividing and merging squares, rotating and flipping. Not so easy.
 ### Day 22: [Sporifica Virus](day22/README.md) 🌟🌟
 
 Grid moving.
+
+### Day 23: [Coprocessor Conflagration](day23/README.md) 🌟
+
+Instruction. Reuse of [Day 18](day18/README.md).
