@@ -54,12 +54,14 @@ fn bridge_to_string(bridge: &[&Component]) -> String {
         .join("--")
 }
 
-// fn bridge_strength(bridge: &[&Component]) -> usize {
-//     bridge.iter().map(|c| c.strength()).sum()
-// }
+fn bridge_strength(bridge: &[&Component]) -> usize {
+    bridge.iter().map(|c| c.strength()).sum()
+}
 
 // Convert the component list into a structure easier to walk through:
 // A vector where at each index are the components that match that index.
+//
+// Note that we assume there are no duplicate in the list (there aren't in mine).
 fn convert_components_list(components: &[Component]) -> Vec<Vec<&Component>> {
     let max_component_nb = components.iter().flat_map(|c| [c.p1, c.p2]).max().unwrap();
     let mut mapped: Vec<Vec<&Component>> = vec![Vec::new(); max_component_nb + 1];
@@ -70,13 +72,14 @@ fn convert_components_list(components: &[Component]) -> Vec<Vec<&Component>> {
     mapped
 }
 
-// Recursive function
-fn build_bridge(
-    components: &[Vec<&Component>],
+// Recursive function.
+fn build_bridge<'a>(
+    components: &[Vec<&'a Component>],
     port_to_connect: usize,
-    current_bridge: &[&Component],
+    current_bridge: &[&'a Component],
     current_strength: usize,
-) -> usize {
+    bridges: &mut Vec<Vec<&'a Component>>, // All bridges we've found (as long as possible)
+) {
     // Find all components that could be connected to the last one and that are not yet in the bridge
     let possible_connections: Vec<_> = components[port_to_connect]
         .iter()
@@ -84,39 +87,50 @@ fn build_bridge(
         .collect();
 
     if possible_connections.is_empty() {
-        return current_strength;
+        bridges.push(current_bridge.to_vec());
+        return;
     }
 
     // Try to build a bridge with each possibility.
-    let mut max_strength = 0;
     for c in possible_connections {
         let mut new_bridge = current_bridge.to_vec();
         new_bridge.push(c);
         let new_strength = current_strength + c.strength();
-        // println!("Bridge s={}: {}", new_strength, bridge_to_string(&new_bridge));
 
-        let strength = build_bridge(
+        build_bridge(
             components,
             c.other_port(port_to_connect),
             &new_bridge,
             new_strength,
+            bridges,
         );
-        max_strength = max_strength.max(strength);
     }
-    max_strength
 }
 
-fn strongest_bridge_strength(components: &[Vec<&Component>]) -> usize {
-    let mut max_strength = 0;
+// First value is the strength of the strongest bridge.
+// Second value is the strength of the longest bridge.
+fn bridges_strength<'a>(components: &[Vec<&'a Component>]) -> (usize, usize) {
+    let mut bridges: Vec<Vec<&'a Component>> = Vec::new();
     for c in &components[0] {
-        let strength = build_bridge(components, c.other_port(0), &[*c], c.strength());
-        max_strength = max_strength.max(strength);
+        build_bridge(
+            components,
+            c.other_port(0),
+            &[*c],
+            c.strength(),
+            &mut bridges,
+        );
     }
-    max_strength
-}
 
-fn part2(components: &[Component]) -> usize {
-    0
+    let strongest = bridges.iter().map(|b| bridge_strength(b)).max().unwrap();
+    let max_len = bridges.iter().map(Vec::len).max().unwrap();
+    let longest = bridges
+        .iter()
+        .filter(|b| b.len() == max_len)
+        .map(|b| bridge_strength(b))
+        .max()
+        .unwrap();
+
+    (strongest, longest)
 }
 
 fn main() {
@@ -126,8 +140,9 @@ fn main() {
 
     let mapped = convert_components_list(&components);
 
-    println!("Part 1: {}", strongest_bridge_strength(&mapped));
-    println!("Part 2: {}", part2(&components));
+    let (strongest, longest) = bridges_strength(&mapped);
+    println!("Part 1: {}", strongest);
+    println!("Part 2: {}", longest);
 }
 
 #[cfg(test)]
@@ -137,14 +152,12 @@ mod tests {
     const INPUT_TEST: &str = include_str!("../resources/input_test_1");
 
     #[test]
-    fn test_part1() {
+    fn test_part1_2() {
         let components = build(INPUT_TEST);
         let mapped = convert_components_list(&components);
-        assert_eq!(strongest_bridge_strength(&mapped), 31);
-    }
+        let (strongest, longest) = bridges_strength(&mapped);
 
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(strongest, 31);
+        assert_eq!(longest, 19);
     }
 }
