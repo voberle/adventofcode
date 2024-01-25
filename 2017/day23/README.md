@@ -8,3 +8,6 @@ NB: With the reuse, it took me about 6-7 minutes to do this part after reading t
 
 ## Part 2
 
+Part 2 was way to slow to run with the Rust interpreter and you were supposed to manually analyse the assembly and find a way to optimize it. Unfortunately I'm not very good at it and didn't manage.
+
+So instead I went for the approach of converting the assembly into C code, and running that. It's still slow, takes about 15 minutes to run, but that makes about 1000 times faster than the Rust interpreted version.
