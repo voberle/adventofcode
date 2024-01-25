@@ -94,3 +94,7 @@ Grid moving.
 ### Day 23: [Coprocessor Conflagration](day23/README.md) 🌟🌟
 
 Instruction. Reuse of [Day 18](day18/README.md). Converting assembly into C.
+
+### Day 24: [Electromagnetic Moat](day24/README.md) 🌟
+
+Recursive approach for longest path.
