@@ -1,5 +1,7 @@
 use std::{
-    fmt, fs, io::{self, Read}
+    fmt, fs,
+    io::{self, Read},
+    process::Command,
 };
 
 use fxhash::{FxHashMap, FxHashSet};
@@ -279,6 +281,25 @@ int main() {
     code
 }
 
+fn exec_c_code(instructions: &[Instruction]) -> String {
+    // Generate the C code.
+    let c_code = get_c_code(instructions, true);
+    // Write the C file.
+    fs::write("resources/main.c", c_code).expect("Unable to write file");
+    // Compile it.
+    let _ = Command::new("gcc")
+        .arg("-O3")
+        .arg("resources/main.c")
+        .output();
+    // Run it.
+    let output = Command::new("./a.out").output().unwrap();
+    // Clean the files.
+    let _ = Command::new("rm").arg("./a.out").output();
+    let _ = Command::new("rm").arg("resources/main.c").output();
+
+    String::from_utf8(output.stdout).unwrap()
+}
+
 // This would be the brute-force Rust version, but it's way too slow.
 #[allow(dead_code)]
 fn value_of_h_at_end(instructions: &[Instruction]) -> i64 {
@@ -298,7 +319,5 @@ fn main() {
     let instructions = build(&input);
 
     println!("Part 1: {}", mul_count(&instructions));
-
-    println!("Part 2: Execute following code:");
-    println!("{}", get_c_code(&instructions, true));
+    println!("Part 2: {}", exec_c_code(&instructions));
 }
