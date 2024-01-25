@@ -1,7 +1,5 @@
 use std::{
-    fmt,
-    io::{self, Read},
-    vec,
+    fmt, fs, io::{self, Read}
 };
 
 use fxhash::{FxHashMap, FxHashSet};
@@ -209,7 +207,7 @@ fn gen_free_label_name(next_label_name: &mut String) -> String {
 // Transform the instructions into C.
 // Save to a file and compile with `gcc -O3 main.c`.
 #[allow(clippy::single_match)]
-fn get_c_code(instructions: &[Instruction]) -> String {
+fn get_c_code(instructions: &[Instruction], use_optimization: bool) -> String {
     let mut code = String::new();
     code += r"#include <stdio.h>
 
@@ -240,6 +238,17 @@ int main() {
     }
 
     for (i, label) in labels.iter().enumerate() {
+        // Inner loop optimization (from Reddit)
+        if use_optimization && (11..=19).contains(&i) {
+            if i == 11 {
+                code += "\t// Inner loop optimization
+\tif (b % d == 0 && b / d != 1) {
+\t\tf = 0;
+\t}
+";
+            }
+            continue;
+        }
         let mut line = String::new();
         if !label.is_empty() {
             line += &format!("{}: ", label);
@@ -291,5 +300,5 @@ fn main() {
     println!("Part 1: {}", mul_count(&instructions));
 
     println!("Part 2: Execute following code:");
-    println!("{}", get_c_code(&instructions));
+    println!("{}", get_c_code(&instructions, true));
 }
