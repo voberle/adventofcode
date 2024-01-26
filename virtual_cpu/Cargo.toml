@@ -1,0 +1,15 @@
+[package]
+name = "virtual_cpu"
+version = "0.1.0"
+edition = "2021"
+
+[lints.clippy]
+redundant_closure_for_method_calls = "warn"
+match_same_arms = "warn"
+range_plus_one = "warn"
+trivially_copy_pass_by_ref = "warn"
+semicolon_if_nothing_returned = "warn"
+needless-for-each = "warn"
+
+[dependencies]
+fxhash = "0.2.1"
