@@ -14,6 +14,9 @@ It is composed of a library with all the common code, and a main that uses the l
   - Part 1
 - 2016 - Day 23: [Safe Cracking](https://adventofcode.com/2016/day/23)
   - Part 1
+- 2016 - Day 12: [Leonardo's Monorail](https://adventofcode.com/2016/day/12)
+  - Part 1
+  - Part 2
 
 ## Execution
 
