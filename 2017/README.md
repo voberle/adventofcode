@@ -1,5 +1,16 @@
 # Advent of Code 2017
 
+## Wrapup
+
+Another fun set of Advent of Code puzzles. It's the 4th one I did, after 2023, 2015 and 2016. It didn't feel as hard anymore, as I get more experience with the puzzles and with Rust.
+
+Tricky days were day 3 (the spiral and its math), day 7 was lots of code (towers on platforms), day 11 with the hexa grid, day 21 as I misunderstood the meaning of rotate a square and day 23 where I converted the assembly to C.
+
+In some puzzles, I used nice solutions or tricks. I'm very happy I also got to try Rust threads and channels in day 18.
+
+There were multiple puzzles with CPU instructions to execute, which is always fun. Maybe I will do a general implementation that can execute most of the puzzles, that could be fun.
+
+AoC creator has a nice post where he talks about the [what goes into the design of this year's puzzles](https://www.reddit.com/r/adventofcode/comments/7idn6k/comment/dqy08tk/).
 
 ## Days
 
@@ -75,7 +86,7 @@ Circular buffer, rem_euclid.
 
 Instruction. Registers with HashMap. Threads, channels and Arc pointers.
 
-### Day 19: [A Series of Tubes](day19/README.md) 🌟
+### Day 19: [A Series of Tubes](day19/README.md) 🌟🌟
 
 Grid, following a line.
 
