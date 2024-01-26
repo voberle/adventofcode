@@ -14,12 +14,13 @@ where
     T: std::str::FromStr,
 {
     pub fn new(s: &str) -> Self {
-        if let Ok(val) = s.parse() {
+        // if let Ok(val) = s.trim_start_matches('+').parse() {
+        if let Ok(val) = s.trim().parse() {
             IntChar::Integer(val)
         } else if s.len() == 1 {
             IntChar::Char(s.chars().next().unwrap())
         } else {
-            panic!("Invalid string for building IntChar")
+            panic!("Invalid string for building IntChar: {}", s)
         }
     }
 

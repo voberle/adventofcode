@@ -1,3 +1,4 @@
+mod day2015_23;
 mod day2016_12;
 mod day2016_23;
 mod day2016_25;
@@ -32,7 +33,9 @@ fn parse_puzzle_name(s: &str) -> (u32, u32) {
 
 type PuzzleFn = fn(&str) -> String;
 
-const PUZZLES: [(&str, u8, PuzzleFn); 6] = [
+const PUZZLES: [(&str, u8, PuzzleFn); 8] = [
+    ("day2015_23", 1, day2015_23::part1),
+    ("day2015_23", 2, day2015_23::part2),
     ("day2016_12", 1, day2016_12::part1),
     ("day2016_12", 2, day2016_12::part2),
     ("day2016_23", 1, day2016_23::part1),
