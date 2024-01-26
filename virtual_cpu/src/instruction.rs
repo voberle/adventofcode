@@ -7,6 +7,13 @@ pub enum Instruction {
     Sub(char, IntChar<i64>),
     Mul(char, IntChar<i64>),
     JumpNotZero(IntChar<i64>, IntChar<i64>),
+
+    Snd(IntChar<i64>),
+    Add(char, IntChar<i64>),
+    Mod(char, IntChar<i64>),
+    Rcv(char), // In theory could be IntChar but input and part 2 limits to a register.
+    JumpGreaterThanZero(IntChar<i64>, IntChar<i64>),
+
     Nop,
 }
 
@@ -19,6 +26,13 @@ impl Instruction {
             "mul" => Self::Mul(char(parts[1]), IntChar::new(parts[2])),
             "jnz" => Self::JumpNotZero(IntChar::new(parts[1]), IntChar::new(parts[2])),
             "nop" => Self::Nop,
+
+            "snd" => Self::Snd(IntChar::new(parts[1])),
+            "add" => Self::Add(char(parts[1]), IntChar::new(parts[2])),
+            "mod" => Self::Mod(char(parts[1]), IntChar::new(parts[2])),
+            "rcv" => Self::Rcv(char(parts[1])),
+            "jgz" => Self::JumpGreaterThanZero(IntChar::new(parts[1]), IntChar::new(parts[2])),
+
             _ => panic!("Unknown instruction"),
         }
     }

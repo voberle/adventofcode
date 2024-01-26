@@ -26,7 +26,7 @@ fn execute_common(ins: &Instruction, ir: &mut usize, regs: &mut Registers<i64>) 
             }
         }
         Instruction::Nop => *ir += 1,
-        Instruction::Mul(..) => panic!("Wrong use of this function"),
+        _ => panic!("Wrong use of this function"),
     }
 }
 

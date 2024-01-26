@@ -6,8 +6,10 @@ It is composed of a library with all the common code, and a main that uses the l
 
 ## Supported days
 
-2017 - Day 23: [Coprocessor Conflagration](https://adventofcode.com/2017/day/23)
-
+- 2017 - Day 23: [Coprocessor Conflagration](https://adventofcode.com/2017/day/23)
+  - Part 1
+- 2017 - Day 18: [Duet](https://adventofcode.com/2017/day/18)
+  - Part 1
 
 ## Execution
 
