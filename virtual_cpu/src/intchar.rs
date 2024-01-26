@@ -24,6 +24,11 @@ where
         }
     }
 
+    // TODO: Replace with From trait
+    pub fn from_int(val: T) -> Self {
+        IntChar::Integer(val)
+    }
+
     pub fn get_integer(&self) -> &T {
         if let IntChar::Integer(i) = self {
             i

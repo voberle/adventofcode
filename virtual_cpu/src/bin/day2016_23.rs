@@ -25,14 +25,14 @@ fn execute(instructions: &mut Vec<Instruction>, ir: &mut usize, regs: &mut Regis
         let ir_to_toggle = (*ir as i64 + regs.get(*offset)) as usize;
         if ir_to_toggle < instructions.len() {
             instructions[ir_to_toggle] = match &instructions[ir_to_toggle] {
-                Instruction::Copy(x, r) => Instruction::JumpNotZero(*x, IntChar::Char(*r)),
-                Instruction::Increase(r) => Instruction::Decrease(*r),
-                Instruction::Decrease(r) => Instruction::Increase(*r),
+                Instruction::Set(r, x) => Instruction::JumpNotZero(*x, IntChar::Char(*r)),
+                Instruction::Add(r, _) => Instruction::Sub(*r, IntChar::from_int(1)),
+                Instruction::Sub(r, _) => Instruction::Add(*r, IntChar::from_int(1)),
                 Instruction::JumpNotZero(v, o) => match o {
                     IntChar::Integer(_) => Instruction::Nop,
-                    IntChar::Char(r) => Instruction::Copy(*v, *r),
+                    IntChar::Char(r) => Instruction::Set(*r, *v),
                 },
-                Instruction::Toggle(offset) => Instruction::Increase(*offset),
+                Instruction::Toggle(offset) => Instruction::Add(*offset, IntChar::from_int(1)),
                 // Instruction::Mult(a, b, r) => Instruction::Mult(*a, *b, *r),
                 _ => ins.clone(),
             };

@@ -9,15 +9,11 @@ pub enum Instruction {
     Sub(char, IntChar<i64>),
     Mul(char, IntChar<i64>),
     Mod(char, IntChar<i64>),
-    Copy(IntChar<i64>, char),
-    Increase(char),
-    Decrease(char),
+    Div(char, IntChar<i64>),
     JumpNotZero(IntChar<i64>, IntChar<i64>),
     JumpGreaterThanZero(IntChar<i64>, IntChar<i64>),
     Nop,
 
-    Half(char),
-    Triple(char),
     Jump(IntChar<i64>),
     JumpIfEven(IntChar<i64>, IntChar<i64>),
     JumpIfOne(IntChar<i64>, IntChar<i64>), // jump if one", not odd
@@ -39,18 +35,18 @@ impl Instruction {
     pub fn build_from_parts(parts: &[&str]) -> Self {
         match *parts.first().unwrap() {
             "set" => Self::Set(char(parts[1]), IntChar::new(parts[2])),
+            "cpy" => Self::Set(char(parts[2]), IntChar::new(parts[1])), // params inversed vs set
             "add" => Self::Add(char(parts[1]), IntChar::new(parts[2])),
+            "inc" => Self::Add(char(parts[1]), IntChar::from_int(1)),
             "sub" => Self::Sub(char(parts[1]), IntChar::new(parts[2])),
+            "dec" => Self::Sub(char(parts[1]), IntChar::from_int(1)),
             "mul" => Self::Mul(char(parts[1]), IntChar::new(parts[2])),
+            "tpl" => Self::Mul(char(parts[1]), IntChar::from_int(3)),
             "mod" => Self::Mod(char(parts[1]), IntChar::new(parts[2])),
-            "cpy" => Self::Copy(IntChar::new(parts[1]), char(parts[2])),
-            "inc" => Self::Increase(char(parts[1])),
-            "dec" => Self::Decrease(char(parts[1])),
+            "div" => Self::Div(char(parts[1]), IntChar::new(parts[2])),
+            "hlf" => Self::Div(char(parts[1]), IntChar::from_int(2)),
             "jnz" => Self::JumpNotZero(IntChar::new(parts[1]), IntChar::new(parts[2])),
             "jgz" => Self::JumpGreaterThanZero(IntChar::new(parts[1]), IntChar::new(parts[2])),
-
-            "hlf" => Self::Half(char(parts[1])),
-            "tpl" => Self::Triple(char(parts[1])),
             "jmp" => Self::Jump(IntChar::new(parts[1])),
             "jie" => Self::JumpIfEven(IntChar::new(parts[1]), IntChar::new(parts[2])),
             "jio" => Self::JumpIfOne(IntChar::new(parts[1]), IntChar::new(parts[2])),
@@ -82,28 +78,8 @@ impl Instruction {
                 regs.set(*x, regs.get(*x) % regs.get_ic(*y));
                 *ir += 1;
             }
-            Instruction::Copy(x, r) => {
-                // TODO: Merge with set
-                regs.set(*r, regs.get_ic(*x));
-                *ir += 1;
-            }
-            Instruction::Increase(x) => {
-                // TODO: Merge with Add
-                regs.set(*x, regs.get(*x) + 1);
-                *ir += 1;
-            }
-            Instruction::Decrease(x) => {
-                // TODO: Merge with sub
-                regs.set(*x, regs.get(*x) - 1);
-                *ir += 1;
-            }
-
-            Instruction::Half(x) => {
-                regs.set(*x, regs.get(*x) / 2);
-                *ir += 1;
-            }
-            Instruction::Triple(x) => {
-                regs.set(*x, regs.get(*x) * 3);
+            Instruction::Div(x, y) => {
+                regs.set(*x, regs.get(*x) / regs.get_ic(*y));
                 *ir += 1;
             }
 
@@ -121,7 +97,6 @@ impl Instruction {
                     *ir += 1;
                 }
             }
-
             Instruction::Jump(x) => {
                 *ir = (*ir as i64 + regs.get_ic(*x)) as usize;
             }
