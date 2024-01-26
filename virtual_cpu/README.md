@@ -10,6 +10,8 @@ It is composed of a library with all the common code, and a main that uses the l
   - Part 1
 - 2017 - Day 18: [Duet](https://adventofcode.com/2017/day/18)
   - Part 1
+- 2016 - Day 25: [Clock Signal](https://adventofcode.com/2016/day/25)
+  - Part 1
 
 ## Execution
 
