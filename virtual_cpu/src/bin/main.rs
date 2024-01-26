@@ -1,3 +1,4 @@
+mod day2016_23;
 mod day2016_25;
 mod day2017_18;
 mod day2017_23;
@@ -25,7 +26,8 @@ fn load_answer_list() -> FxHashMap<String, String> {
 
 type PuzzleFn = fn(&str) -> String;
 
-const PUZZLES: [(&str, PuzzleFn); 3] = [
+const PUZZLES: [(&str, PuzzleFn); 4] = [
+    ("day2016_23", day2016_23::part1),
     ("day2016_25", day2016_25::part1),
     ("day2017_18", day2017_18::part1),
     ("day2017_23", day2017_23::part1),

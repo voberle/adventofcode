@@ -21,6 +21,7 @@ pub enum Instruction {
     Rcv(char), // In theory could be IntChar but input and part 2 limits to a register.
     // Day 2016 12, 23, 25
     Out(IntChar<i64>),
+    Toggle(char),
 }
 
 impl Instruction {
