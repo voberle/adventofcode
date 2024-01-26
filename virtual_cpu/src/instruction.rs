@@ -103,3 +103,10 @@ impl Instruction {
         input.lines().map(Instruction::build).collect()
     }
 }
+
+pub fn execute_all(instructions: &[Instruction], regs: &mut Registers<i64>) {
+    let mut ir = 0;
+    while ir < instructions.len() {
+        instructions[ir].execute(&mut ir, regs);
+    }
+}

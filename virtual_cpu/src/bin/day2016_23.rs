@@ -67,10 +67,9 @@ pub fn part1(input: &str) -> String {
 
 #[allow(dead_code)]
 fn main() {
-    let input_file = test_utils::get_input_file("day2017_23");
+    let input_file = test_utils::get_input_file("day2016_23");
     let input = fs::read_to_string(input_file).expect("Unable to read input file");
-    let res = part1(&input);
-    println!("Part 1: {}", res);
+    println!("Part 1: {}", part1(&input));
 }
 
 #[cfg(test)]
