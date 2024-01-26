@@ -26,13 +26,13 @@ fn execute(instructions: &mut Vec<Instruction>, ir: &mut usize, regs: &mut Regis
         if ir_to_toggle < instructions.len() {
             instructions[ir_to_toggle] = match &instructions[ir_to_toggle] {
                 Instruction::Set(r, x) => Instruction::JumpIf(*x, IntChar::Char(*r), |v| v != 0),
-                Instruction::Add(r, _) => Instruction::Sub(*r, IntChar::from_int(1)),
-                Instruction::Sub(r, _) => Instruction::Add(*r, IntChar::from_int(1)),
+                Instruction::Add(r, _) => Instruction::Sub(*r, IntChar::from(1)),
+                Instruction::Sub(r, _) => Instruction::Add(*r, IntChar::from(1)),
                 Instruction::JumpIf(v, o, _) => match o {
                     IntChar::Integer(_) => Instruction::Nop,
                     IntChar::Char(r) => Instruction::Set(*r, *v),
                 },
-                Instruction::Toggle(offset) => Instruction::Add(*offset, IntChar::from_int(1)),
+                Instruction::Toggle(offset) => Instruction::Add(*offset, IntChar::from(1)),
                 // Instruction::Mult(a, b, r) => Instruction::Mult(*a, *b, *r),
                 _ => ins.clone(),
             };

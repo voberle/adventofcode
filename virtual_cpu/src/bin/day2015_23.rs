@@ -10,8 +10,8 @@ fn build_instruction(s: &str) -> Instruction {
     let t = s.replace(',', "");
     let parts: Vec<_> = t.split(' ').collect();
     match *parts.first().unwrap() {
-        "tpl" => Instruction::Mul(char(parts[1]), IntChar::from_int(3)),
-        "hlf" => Instruction::Div(char(parts[1]), IntChar::from_int(2)),
+        "tpl" => Instruction::Mul(char(parts[1]), IntChar::from(3)),
+        "hlf" => Instruction::Div(char(parts[1]), IntChar::from(2)),
         _ => Instruction::build(&t),
     }
 }

@@ -24,17 +24,21 @@ where
         }
     }
 
-    // TODO: Replace with From trait
-    pub fn from_int(val: T) -> Self {
-        IntChar::Integer(val)
-    }
-
     pub fn get_integer(&self) -> &T {
         if let IntChar::Integer(i) = self {
             i
         } else {
             panic!("Wanted an integer")
         }
+    }
+}
+
+impl<T> From<T> for IntChar<T>
+where
+T: std::str::FromStr,
+{
+    fn from(item: T) -> Self {
+        IntChar::Integer(item)
     }
 }
 
