@@ -29,28 +29,27 @@ pub enum Instruction {
 impl Instruction {
     pub fn build(s: &str) -> Self {
         let parts: Vec<_> = s.split(' ').collect();
-        Self::build_from_parts(&parts)
+        Self::build_from_parts(parts.first().unwrap(), &parts[1..])
     }
 
-    pub fn build_from_parts(parts: &[&str]) -> Self {
-        match *parts.first().unwrap() {
-            "set" => Self::Set(char(parts[1]), IntChar::new(parts[2])),
-            "cpy" => Self::Set(char(parts[2]), IntChar::new(parts[1])), // params inversed vs set
-            "add" => Self::Add(char(parts[1]), IntChar::new(parts[2])),
-            "inc" => Self::Add(char(parts[1]), IntChar::from_int(1)),
-            "sub" => Self::Sub(char(parts[1]), IntChar::new(parts[2])),
-            "dec" => Self::Sub(char(parts[1]), IntChar::from_int(1)),
-            "mul" => Self::Mul(char(parts[1]), IntChar::new(parts[2])),
-            "tpl" => Self::Mul(char(parts[1]), IntChar::from_int(3)),
-            "mod" => Self::Mod(char(parts[1]), IntChar::new(parts[2])),
-            "div" => Self::Div(char(parts[1]), IntChar::new(parts[2])),
-            "hlf" => Self::Div(char(parts[1]), IntChar::from_int(2)),
-            "jnz" => Self::JumpNotZero(IntChar::new(parts[1]), IntChar::new(parts[2])),
-            "jgz" => Self::JumpGreaterThanZero(IntChar::new(parts[1]), IntChar::new(parts[2])),
-            "jmp" => Self::Jump(IntChar::new(parts[1])),
-            "jie" => Self::JumpIfEven(IntChar::new(parts[1]), IntChar::new(parts[2])),
-            "jio" => Self::JumpIfOne(IntChar::new(parts[1]), IntChar::new(parts[2])),
-
+    pub fn build_from_parts(ins: &str, p: &[&str]) -> Self {
+        match ins {
+            "set" => Self::Set(char(p[0]), IntChar::new(p[1])),
+            "cpy" => Self::Set(char(p[1]), IntChar::new(p[0])), // params inversed vs set
+            "add" => Self::Add(char(p[0]), IntChar::new(p[1])),
+            "inc" => Self::Add(char(p[0]), IntChar::from_int(1)),
+            "sub" => Self::Sub(char(p[0]), IntChar::new(p[1])),
+            "dec" => Self::Sub(char(p[0]), IntChar::from_int(1)),
+            "mul" => Self::Mul(char(p[0]), IntChar::new(p[1])),
+            "tpl" => Self::Mul(char(p[0]), IntChar::from_int(3)),
+            "mod" => Self::Mod(char(p[0]), IntChar::new(p[1])),
+            "div" => Self::Div(char(p[0]), IntChar::new(p[1])),
+            "hlf" => Self::Div(char(p[0]), IntChar::from_int(2)),
+            "jnz" => Self::JumpNotZero(IntChar::new(p[0]), IntChar::new(p[1])),
+            "jgz" => Self::JumpGreaterThanZero(IntChar::new(p[0]), IntChar::new(p[1])),
+            "jmp" => Self::Jump(IntChar::new(p[0])),
+            "jie" => Self::JumpIfEven(IntChar::new(p[0]), IntChar::new(p[1])),
+            "jio" => Self::JumpIfOne(IntChar::new(p[0]), IntChar::new(p[1])),
             "nop" => Self::Nop,
             _ => panic!("Unknown instruction"),
         }
