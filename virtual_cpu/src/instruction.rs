@@ -91,6 +91,10 @@ impl Instruction {
     }
 }
 
+pub fn build_list(input: &str, build_instruction: fn(&str) -> Instruction) -> Vec<Instruction> {
+    input.lines().map(build_instruction).collect()
+}
+
 pub fn execute_all(instructions: &[Instruction], regs: &mut Registers<i64>) {
     let mut ir = 0;
     while ir < instructions.len() {

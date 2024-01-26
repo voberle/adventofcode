@@ -1,6 +1,6 @@
 use std::fs;
 
-use virtual_cpu::instruction::Instruction;
+use virtual_cpu::instruction::{build_list, Instruction};
 use virtual_cpu::intchar::IntChar;
 use virtual_cpu::registers::Registers;
 use virtual_cpu::test_utils;
@@ -11,10 +11,6 @@ fn build_instruction(s: &str) -> Instruction {
         "out" => Instruction::Out(IntChar::new(parts[1])),
         _ => Instruction::build(s),
     }
-}
-
-fn build_list(input: &str) -> Vec<Instruction> {
-    input.lines().map(build_instruction).collect()
 }
 
 // Executes the instruction specified by ins, modifying the registers if needed.
@@ -76,7 +72,7 @@ fn lowest_possible_int(instructions: &[Instruction]) -> i64 {
 }
 
 pub fn part1(input: &str) -> String {
-    let instructions = build_list(input);
+    let instructions = build_list(input, build_instruction);
     lowest_possible_int(&instructions).to_string()
 }
 

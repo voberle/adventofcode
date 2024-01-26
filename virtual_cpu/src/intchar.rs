@@ -35,7 +35,7 @@ where
 
 impl<T> From<T> for IntChar<T>
 where
-T: std::str::FromStr,
+    T: std::str::FromStr,
 {
     fn from(item: T) -> Self {
         IntChar::Integer(item)

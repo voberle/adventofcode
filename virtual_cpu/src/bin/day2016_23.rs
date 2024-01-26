@@ -1,6 +1,6 @@
 use std::fs;
 
-use virtual_cpu::instruction::Instruction;
+use virtual_cpu::instruction::{build_list, Instruction};
 use virtual_cpu::intchar::IntChar;
 use virtual_cpu::parsing::char;
 use virtual_cpu::registers::Registers;
@@ -12,10 +12,6 @@ fn build_instruction(s: &str) -> Instruction {
         "tgl" => Instruction::Toggle(char(parts[1])),
         _ => Instruction::build(s),
     }
-}
-
-fn build_list(input: &str) -> Vec<Instruction> {
-    input.lines().map(build_instruction).collect()
 }
 
 // Executes the instruction specified by ins, modifying the registers if needed.
@@ -61,7 +57,7 @@ fn value_sent_to_safe(instructions: &[Instruction]) -> i64 {
 }
 
 pub fn part1(input: &str) -> String {
-    let instructions = build_list(input);
+    let instructions = build_list(input, build_instruction);
     value_sent_to_safe(&instructions).to_string()
 }
 
@@ -74,12 +70,17 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use virtual_cpu::instruction::build_list;
+
     use super::*;
 
     const INPUT_TEST: &str = include_str!("test_input/day2016_23_input_test_1");
 
     #[test]
     fn test_part1() {
-        assert_eq!(value_sent_to_safe(&build_list(INPUT_TEST)), 3);
+        assert_eq!(
+            value_sent_to_safe(&build_list(INPUT_TEST, build_instruction)),
+            3
+        );
     }
 }

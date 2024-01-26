@@ -1,6 +1,6 @@
 use std::fs;
 
-use virtual_cpu::instruction::{execute_all, Instruction};
+use virtual_cpu::instruction::{build_list, execute_all, Instruction};
 use virtual_cpu::intchar::IntChar;
 use virtual_cpu::parsing::char;
 use virtual_cpu::registers::Registers;
@@ -14,10 +14,6 @@ fn build_instruction(s: &str) -> Instruction {
         "hlf" => Instruction::Div(char(parts[1]), IntChar::from(2)),
         _ => Instruction::build(&t),
     }
-}
-
-fn build_list(input: &str) -> Vec<Instruction> {
-    input.lines().map(build_instruction).collect()
 }
 
 fn value_in(instructions: &[Instruction], reg: char) -> i64 {
@@ -34,12 +30,12 @@ fn value_in_with_a_at_1(instructions: &[Instruction], reg: char) -> i64 {
 }
 
 pub fn part1(input: &str) -> String {
-    let instructions = build_list(input);
+    let instructions = build_list(input, build_instruction);
     value_in(&instructions, 'b').to_string()
 }
 
 pub fn part2(input: &str) -> String {
-    let instructions = build_list(input);
+    let instructions = build_list(input, build_instruction);
     value_in_with_a_at_1(&instructions, 'b').to_string()
 }
 
@@ -59,7 +55,10 @@ mod tests {
 
     #[test]
     fn test_part1_2() {
-        assert_eq!(value_in(&build_list(INPUT_TEST), 'a'), 2);
-        assert_eq!(value_in_with_a_at_1(&build_list(INPUT_TEST), 'a'), 7);
+        assert_eq!(value_in(&build_list(INPUT_TEST, build_instruction), 'a'), 2);
+        assert_eq!(
+            value_in_with_a_at_1(&build_list(INPUT_TEST, build_instruction), 'a'),
+            7
+        );
     }
 }
