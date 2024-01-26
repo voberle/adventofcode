@@ -1,5 +1,5 @@
-mod day2017_23;
 mod day2017_18;
+mod day2017_23;
 
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
@@ -33,7 +33,9 @@ fn main() {
     let answers = load_answer_list();
 
     for (puzzle_name, puzzle_fn) in PUZZLES {
-        let expected_result = answers.get(puzzle_name).expect(&format!("Missing answer for {}", puzzle_name));
+        let expected_result = answers
+            .get(puzzle_name)
+            .unwrap_or_else(|| panic!("Missing answer for {}", puzzle_name));
         let input_file = test_utils::get_input_file(puzzle_name);
         let input = fs::read_to_string(input_file).expect("Unable to read input file");
         let res = puzzle_fn(&input);

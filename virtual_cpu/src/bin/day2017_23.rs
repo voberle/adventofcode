@@ -8,28 +8,6 @@ fn build(input: &str) -> Vec<Instruction> {
     input.lines().map(Instruction::build).collect()
 }
 
-fn execute_common(ins: &Instruction, ir: &mut usize, regs: &mut Registers<i64>) {
-    match ins {
-        Instruction::Set(x, y) => {
-            regs.set(*x, regs.get_ic(*y));
-            *ir += 1;
-        }
-        Instruction::Sub(x, y) => {
-            regs.set(*x, regs.get(*x) - regs.get_ic(*y));
-            *ir += 1;
-        }
-        Instruction::JumpNotZero(x, y) => {
-            if regs.get_ic(*x) != 0 {
-                *ir = (*ir as i64 + regs.get_ic(*y)) as usize;
-            } else {
-                *ir += 1;
-            }
-        }
-        Instruction::Nop => *ir += 1,
-        _ => panic!("Wrong use of this function"),
-    }
-}
-
 fn execute(instructions: &[Instruction], ir: &mut usize, regs: &mut Registers<i64>) -> bool {
     let ins = &instructions[*ir];
     match ins {
@@ -38,7 +16,7 @@ fn execute(instructions: &[Instruction], ir: &mut usize, regs: &mut Registers<i6
             *ir += 1;
             return true;
         }
-        _ => execute_common(ins, ir, regs),
+        _ => ins.execute(ir, regs),
     }
     false
 }
@@ -60,6 +38,7 @@ pub fn part1(input: &str) -> String {
     mul_count(&instructions).to_string()
 }
 
+#[allow(dead_code)]
 fn main() {
     let input_file = test_utils::get_input_file("day2017_23");
     let input = fs::read_to_string(input_file).expect("Unable to read input file");

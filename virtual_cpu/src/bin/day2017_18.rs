@@ -8,37 +8,6 @@ fn build(input: &str) -> Vec<Instruction> {
     input.lines().map(Instruction::build).collect()
 }
 
-// Executes the instruction: Common parts for part 1 and 2.
-fn execute_common(ins: &Instruction, ir: &mut usize, regs: &mut Registers<i64>) {
-    match ins {
-        Instruction::Set(x, y) => {
-            regs.set(*x, regs.get_ic(*y));
-            *ir += 1;
-        }
-        Instruction::Add(x, y) => {
-            regs.set(*x, regs.get(*x) + regs.get_ic(*y));
-            *ir += 1;
-        }
-        Instruction::Mul(x, y) => {
-            regs.set(*x, regs.get(*x) * regs.get_ic(*y));
-            *ir += 1;
-        }
-        Instruction::Mod(x, y) => {
-            regs.set(*x, regs.get(*x) % regs.get_ic(*y));
-            *ir += 1;
-        }
-        Instruction::JumpGreaterThanZero(x, y) => {
-            if regs.get_ic(*x) > 0 {
-                *ir = (*ir as i64 + regs.get_ic(*y)) as usize;
-            } else {
-                *ir += 1;
-            }
-        }
-        Instruction::Nop => *ir += 1,
-        _ => panic!("Wrong use of this function"),
-    }
-}
-
 // Executes the instruction specified by ins, modifying the registers if needed.
 fn execute_sound_playing(
     instructions: &[Instruction],
@@ -60,7 +29,7 @@ fn execute_sound_playing(
             }
             *ir += 1;
         }
-        _ => execute_common(ins, ir, regs),
+        _ => ins.execute(ir, regs),
     }
     None
 }
@@ -85,6 +54,7 @@ pub fn part1(input: &str) -> String {
     recovered_frequency_value(&instructions).to_string()
 }
 
+#[allow(dead_code)]
 fn main() {
     let input_file = test_utils::get_input_file("day2017_18");
     let input = fs::read_to_string(input_file).expect("Unable to read input file");
