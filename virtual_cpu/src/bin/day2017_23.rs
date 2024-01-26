@@ -4,13 +4,10 @@ use virtual_cpu::instruction::Instruction;
 use virtual_cpu::registers::Registers;
 use virtual_cpu::test_utils;
 
-fn build(input: &str) -> Vec<Instruction> {
-    input.lines().map(Instruction::build).collect()
-}
-
 fn execute(instructions: &[Instruction], ir: &mut usize, regs: &mut Registers<i64>) -> bool {
     let ins = &instructions[*ir];
     match ins {
+        // Overwriting Mul from default
         Instruction::Mul(x, y) => {
             regs.set(*x, regs.get(*x) * regs.get_ic(*y));
             *ir += 1;
@@ -34,7 +31,7 @@ fn mul_count(instructions: &[Instruction]) -> usize {
 }
 
 pub fn part1(input: &str) -> String {
-    let instructions = build(input);
+    let instructions = Instruction::build_list(input);
     mul_count(&instructions).to_string()
 }
 

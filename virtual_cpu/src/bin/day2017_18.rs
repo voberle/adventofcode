@@ -1,11 +1,22 @@
 use std::fs;
 
 use virtual_cpu::instruction::Instruction;
+use virtual_cpu::intchar::IntChar;
+use virtual_cpu::parsing::char;
 use virtual_cpu::registers::Registers;
 use virtual_cpu::test_utils;
 
-fn build(input: &str) -> Vec<Instruction> {
-    input.lines().map(Instruction::build).collect()
+fn build_instruction(s: &str) -> Instruction {
+    let parts: Vec<_> = s.split(' ').collect();
+    match *parts.first().unwrap() {
+        "snd" => Instruction::Snd(IntChar::new(parts[1])),
+        "rcv" => Instruction::Rcv(char(parts[1])),
+        _ => Instruction::build(s),
+    }
+}
+
+fn build_list(input: &str) -> Vec<Instruction> {
+    input.lines().map(build_instruction).collect()
 }
 
 // Executes the instruction specified by ins, modifying the registers if needed.
@@ -50,7 +61,7 @@ fn recovered_frequency_value(instructions: &[Instruction]) -> i64 {
 }
 
 pub fn part1(input: &str) -> String {
-    let instructions = build(input);
+    let instructions = build_list(input);
     recovered_frequency_value(&instructions).to_string()
 }
 
@@ -70,6 +81,6 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(recovered_frequency_value(&build(INPUT_TEST_1)), 4);
+        assert_eq!(recovered_frequency_value(&build_list(INPUT_TEST_1)), 4);
     }
 }

@@ -29,10 +29,6 @@ impl Instruction {
             "jnz" => Self::JumpNotZero(IntChar::new(parts[1]), IntChar::new(parts[2])),
             "jgz" => Self::JumpGreaterThanZero(IntChar::new(parts[1]), IntChar::new(parts[2])),
             "nop" => Self::Nop,
-
-            "snd" => Self::Snd(IntChar::new(parts[1])),
-            "rcv" => Self::Rcv(char(parts[1])),
-
             _ => panic!("Unknown instruction"),
         }
     }
@@ -76,5 +72,9 @@ impl Instruction {
             Instruction::Nop => *ir += 1,
             _ => panic!("Unsupported instruction in Instruction::execute()"),
         }
+    }
+
+    pub fn build_list(input: &str) -> Vec<Instruction> {
+        input.lines().map(Instruction::build).collect()
     }
 }
