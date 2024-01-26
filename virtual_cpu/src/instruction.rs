@@ -10,13 +10,8 @@ pub enum Instruction {
     Mul(char, IntChar<i64>),
     Mod(char, IntChar<i64>),
     Div(char, IntChar<i64>),
-    JumpNotZero(IntChar<i64>, IntChar<i64>),
-    JumpGreaterThanZero(IntChar<i64>, IntChar<i64>),
+    JumpIf(IntChar<i64>, IntChar<i64>, fn(i64) -> bool),
     Nop,
-
-    Jump(IntChar<i64>),
-    JumpIfEven(IntChar<i64>, IntChar<i64>),
-    JumpIfOne(IntChar<i64>, IntChar<i64>), // jump if one", not odd
 
     // Day 2017 18
     Snd(IntChar<i64>),
@@ -41,15 +36,13 @@ impl Instruction {
             "sub" => Self::Sub(char(p[0]), IntChar::new(p[1])),
             "dec" => Self::Sub(char(p[0]), IntChar::from_int(1)),
             "mul" => Self::Mul(char(p[0]), IntChar::new(p[1])),
-            "tpl" => Self::Mul(char(p[0]), IntChar::from_int(3)),
             "mod" => Self::Mod(char(p[0]), IntChar::new(p[1])),
             "div" => Self::Div(char(p[0]), IntChar::new(p[1])),
-            "hlf" => Self::Div(char(p[0]), IntChar::from_int(2)),
-            "jnz" => Self::JumpNotZero(IntChar::new(p[0]), IntChar::new(p[1])),
-            "jgz" => Self::JumpGreaterThanZero(IntChar::new(p[0]), IntChar::new(p[1])),
-            "jmp" => Self::Jump(IntChar::new(p[0])),
-            "jie" => Self::JumpIfEven(IntChar::new(p[0]), IntChar::new(p[1])),
-            "jio" => Self::JumpIfOne(IntChar::new(p[0]), IntChar::new(p[1])),
+            "jnz" => Self::JumpIf(IntChar::new(p[0]), IntChar::new(p[1]), |v| v != 0),
+            "jgz" => Self::JumpIf(IntChar::new(p[0]), IntChar::new(p[1]), |v| v > 0),
+            "jmp" => Self::JumpIf(IntChar::from_int(0), IntChar::new(p[0]), |_| true),
+            "jie" => Self::JumpIf(IntChar::new(p[0]), IntChar::new(p[1]), |v| v % 2 == 0),
+            "jio" => Self::JumpIf(IntChar::new(p[0]), IntChar::new(p[1]), |v| v == 1),
             "nop" => Self::Nop,
             _ => panic!("Unknown instruction"),
         }
@@ -81,40 +74,13 @@ impl Instruction {
                 regs.set(*x, regs.get(*x) / regs.get_ic(*y));
                 *ir += 1;
             }
-
-            Instruction::JumpNotZero(x, y) => {
-                if regs.get_ic(*x) != 0 {
+            Instruction::JumpIf(x, y, test_fn) => {
+                if test_fn(regs.get_ic(*x)) {
                     *ir = (*ir as i64 + regs.get_ic(*y)) as usize;
                 } else {
                     *ir += 1;
                 }
             }
-            Instruction::JumpGreaterThanZero(x, y) => {
-                if regs.get_ic(*x) > 0 {
-                    *ir = (*ir as i64 + regs.get_ic(*y)) as usize;
-                } else {
-                    *ir += 1;
-                }
-            }
-            Instruction::Jump(x) => {
-                *ir = (*ir as i64 + regs.get_ic(*x)) as usize;
-            }
-            Instruction::JumpIfEven(x, y) => {
-                if regs.get_ic(*x) % 2 == 0 {
-                    *ir = (*ir as i64 + regs.get_ic(*y)) as usize;
-                } else {
-                    *ir += 1;
-                }
-            }
-            Instruction::JumpIfOne(x, y) => {
-                // jump if one", not odd
-                if regs.get_ic(*x) == 1 {
-                    *ir = (*ir as i64 + regs.get_ic(*y)) as usize;
-                } else {
-                    *ir += 1;
-                }
-            }
-
             Instruction::Nop => *ir += 1,
             _ => panic!("Unsupported instruction in Instruction::execute()"),
         }

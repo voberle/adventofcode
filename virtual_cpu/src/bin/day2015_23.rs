@@ -1,12 +1,19 @@
 use std::fs;
 
 use virtual_cpu::instruction::{execute_all, Instruction};
+use virtual_cpu::intchar::IntChar;
+use virtual_cpu::parsing::char;
 use virtual_cpu::registers::Registers;
 use virtual_cpu::test_utils;
 
 fn build_instruction(s: &str) -> Instruction {
     let t = s.replace(',', "");
-    Instruction::build(&t)
+    let parts: Vec<_> = t.split(' ').collect();
+    match *parts.first().unwrap() {
+        "tpl" => Instruction::Mul(char(parts[1]), IntChar::from_int(3)),
+        "hlf" => Instruction::Div(char(parts[1]), IntChar::from_int(2)),
+        _ => Instruction::build(&t),
+    }
 }
 
 fn build_list(input: &str) -> Vec<Instruction> {
