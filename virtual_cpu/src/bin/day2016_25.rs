@@ -85,6 +85,8 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use virtual_cpu::c_code::gen::get_c_code;
+
     use super::*;
 
     #[test]
@@ -95,5 +97,15 @@ mod tests {
 
         assert!(!is_periodic_clock_signal(&[0, 1, 1, 0, 0]));
         assert!(!is_periodic_clock_signal(&[0, 0]));
+    }
+
+    #[test]
+    fn test_generate_c_code_works() {
+        let input_file = run_utils::get_input_file("day2016_25");
+        let input = fs::read_to_string(input_file).expect("Unable to read input file");
+        let instructions = build_list(&input, build_instruction);
+        let code = get_c_code(&instructions, &Registers::new(), &[]);
+        // println!("{}", code);
+        assert!(!code.is_empty());
     }
 }

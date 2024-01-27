@@ -51,6 +51,7 @@ fn instruction_c_version(ins: &Instruction, ir: usize, labels: &[String]) -> Str
                 Condition::EqualOne => format!("if ({} == 1) goto {}", x, &labels[index]),
             }
         }
+        Instruction::Out(x) => format!("printf(\"%lli\\n\", {})", x),
         Instruction::Nop => String::new(),
         _ => panic!("Unsupported instruction for C generation: {:?}", ins),
     }
