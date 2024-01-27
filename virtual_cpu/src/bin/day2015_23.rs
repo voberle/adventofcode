@@ -1,5 +1,6 @@
 use std::fs;
 
+use virtual_cpu::c_code::gen::get_c_code;
 use virtual_cpu::instruction::{build_list, execute_all, Instruction};
 use virtual_cpu::intchar::IntChar;
 use virtual_cpu::parsing::char;
@@ -37,6 +38,18 @@ pub fn part1(input: &str) -> String {
 pub fn part2(input: &str) -> String {
     let instructions = build_list(input, build_instruction);
     value_in_with_a_at_1(&instructions, 'b').to_string()
+}
+
+pub fn part1_c_code(input: &str) -> String {
+    let instructions = build_list(input, build_instruction);
+    get_c_code(&instructions, &Registers::new(), &['b'])
+}
+
+pub fn part2_c_code(input: &str) -> String {
+    let instructions = build_list(input, build_instruction);
+    let mut initial_registers = Registers::new();
+    initial_registers.set('a', 1);
+    get_c_code(&instructions, &initial_registers, &['b'])
 }
 
 #[allow(dead_code)]

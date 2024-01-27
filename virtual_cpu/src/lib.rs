@@ -1,3 +1,4 @@
+pub mod c_code;
 pub mod instruction;
 pub mod intchar;
 pub mod parsing;

@@ -4,7 +4,7 @@ use crate::intchar::IntChar;
 
 #[derive(Debug)]
 pub struct Registers<T> {
-    regs: FxHashMap<char, T>,
+    pub regs: FxHashMap<char, T>,
 }
 
 impl<T> Registers<T>

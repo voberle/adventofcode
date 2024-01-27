@@ -27,4 +27,4 @@ Input files are in the `src/bin/input` directory (not in git). There is an `answ
 
 Run all the supported puzzles with:
 
-    cargo r --bin main
+    cargo r --bin main --release

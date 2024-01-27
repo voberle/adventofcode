@@ -1,2 +1,4 @@
 target/
 src/bin/input
+main.c
+a.out

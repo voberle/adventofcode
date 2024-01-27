@@ -1,6 +1,6 @@
 use std::fs;
 
-use virtual_cpu::instruction::{build_list, Instruction};
+use virtual_cpu::instruction::{build_list, Condition, Instruction};
 use virtual_cpu::intchar::IntChar;
 use virtual_cpu::parsing::char;
 use virtual_cpu::registers::Registers;
@@ -21,10 +21,12 @@ fn execute(instructions: &mut Vec<Instruction>, ir: &mut usize, regs: &mut Regis
         let ir_to_toggle = (*ir as i64 + regs.get(*offset)) as usize;
         if ir_to_toggle < instructions.len() {
             instructions[ir_to_toggle] = match &instructions[ir_to_toggle] {
-                Instruction::Set(r, x) => Instruction::JumpIf(*x, IntChar::Char(*r), |v| v != 0),
+                Instruction::Set(r, x) => {
+                    Instruction::JumpIf(Condition::NotZero, *x, IntChar::Char(*r), |v| v != 0)
+                }
                 Instruction::Add(r, _) => Instruction::Sub(*r, IntChar::from(1)),
                 Instruction::Sub(r, _) => Instruction::Add(*r, IntChar::from(1)),
-                Instruction::JumpIf(v, o, _) => match o {
+                Instruction::JumpIf(_, v, o, _) => match o {
                     IntChar::Integer(_) => Instruction::Nop,
                     IntChar::Char(r) => Instruction::Set(*r, *v),
                 },

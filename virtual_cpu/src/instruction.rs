@@ -3,6 +3,16 @@ use crate::parsing::char;
 use crate::registers::Registers;
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum Condition {
+    NotZero,
+    GreaterThanZero,
+    True,
+    Even,
+    EqualOne,
+}
+use Condition::*;
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
     Set(char, IntChar<i64>),
     Add(char, IntChar<i64>),
@@ -10,7 +20,7 @@ pub enum Instruction {
     Mul(char, IntChar<i64>),
     Mod(char, IntChar<i64>),
     Div(char, IntChar<i64>),
-    JumpIf(IntChar<i64>, IntChar<i64>, fn(i64) -> bool),
+    JumpIf(Condition, IntChar<i64>, IntChar<i64>, fn(i64) -> bool),
     Nop,
 
     // Day 2017 18
@@ -38,11 +48,16 @@ impl Instruction {
             "mul" => Self::Mul(char(p[0]), IntChar::new(p[1])),
             "mod" => Self::Mod(char(p[0]), IntChar::new(p[1])),
             "div" => Self::Div(char(p[0]), IntChar::new(p[1])),
-            "jnz" => Self::JumpIf(IntChar::new(p[0]), IntChar::new(p[1]), |v| v != 0),
-            "jgz" => Self::JumpIf(IntChar::new(p[0]), IntChar::new(p[1]), |v| v > 0),
-            "jmp" => Self::JumpIf(IntChar::from(0), IntChar::new(p[0]), |_| true),
-            "jie" => Self::JumpIf(IntChar::new(p[0]), IntChar::new(p[1]), |v| v % 2 == 0),
-            "jio" => Self::JumpIf(IntChar::new(p[0]), IntChar::new(p[1]), |v| v == 1),
+            "jnz" => Self::JumpIf(NotZero, IntChar::new(p[0]), IntChar::new(p[1]), |v| v != 0),
+            "jgz" => Self::JumpIf(
+                GreaterThanZero,
+                IntChar::new(p[0]),
+                IntChar::new(p[1]),
+                |v| v > 0,
+            ),
+            "jmp" => Self::JumpIf(True, IntChar::from(0), IntChar::new(p[0]), |_| true),
+            "jie" => Self::JumpIf(Even, IntChar::new(p[0]), IntChar::new(p[1]), |v| v % 2 == 0),
+            "jio" => Self::JumpIf(EqualOne, IntChar::new(p[0]), IntChar::new(p[1]), |v| v == 1),
             "nop" => Self::Nop,
             _ => panic!("Unknown instruction"),
         }
@@ -74,7 +89,7 @@ impl Instruction {
                 regs.set(*x, regs.get(*x) / regs.get_ic(*y));
                 *ir += 1;
             }
-            Instruction::JumpIf(x, y, test_fn) => {
+            Instruction::JumpIf(_, x, y, test_fn) => {
                 if test_fn(regs.get_ic(*x)) {
                     *ir = (*ir as i64 + regs.get_ic(*y)) as usize;
                 } else {
@@ -88,6 +103,42 @@ impl Instruction {
 
     pub fn build_list(input: &str) -> Vec<Instruction> {
         input.lines().map(Instruction::build).collect()
+    }
+
+    /// Returns the list of register names used by this instruction, if any.
+    pub fn get_register_names(&self) -> Vec<char> {
+        let mut regs = Vec::new();
+        match self {
+            Instruction::Set(x, y)
+            | Instruction::Add(x, y)
+            | Instruction::Sub(x, y)
+            | Instruction::Mul(x, y)
+            | Instruction::Mod(x, y)
+            | Instruction::Div(x, y) => {
+                regs.push(*x);
+                if let IntChar::Char(c) = y {
+                    regs.push(*c);
+                }
+            }
+            Instruction::JumpIf(_, x, y, _) => {
+                if let IntChar::Char(c) = x {
+                    regs.push(*c);
+                }
+                if let IntChar::Char(c) = y {
+                    regs.push(*c);
+                }
+            }
+            Instruction::Snd(x) | Instruction::Out(x) => {
+                if let IntChar::Char(c) = x {
+                    regs.push(*c);
+                }
+            }
+            Instruction::Rcv(x) | Instruction::Toggle(x) => {
+                regs.push(*x);
+            }
+            Instruction::Nop => {}
+        }
+        regs
     }
 }
 
