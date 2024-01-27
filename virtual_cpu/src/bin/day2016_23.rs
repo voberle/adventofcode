@@ -63,6 +63,8 @@ pub fn part1(input: &str) -> String {
     value_sent_to_safe(&instructions).to_string()
 }
 
+// Cannot do C version, as toggle cannot be supported.
+
 #[allow(dead_code)]
 fn main() {
     let input_file = run_utils::get_input_file("day2016_23");

@@ -13,13 +13,13 @@ fn main() {
     let puzzles = vec![
         Puzzle::both("day2015_23", 1, day2015_23::part1, day2015_23::part1_c_code),
         Puzzle::both("day2015_23", 2, day2015_23::part2, day2015_23::part2_c_code),
-        Puzzle::base("day2016_12", 1, day2016_12::part1),
-        Puzzle::base("day2016_12", 2, day2016_12::part2),
-        Puzzle::base("day2016_23", 1, day2016_23::part1),
+        Puzzle::both("day2016_12", 1, day2016_12::part1, day2016_12::part1_c_code),
+        Puzzle::both("day2016_12", 2, day2016_12::part2, day2016_12::part2_c_code),
+        Puzzle::base("day2016_23", 1, day2016_23::part1), // C not possible
         Puzzle::base("day2016_25", 1, day2016_25::part1),
         Puzzle::base("day2017_18", 1, day2017_18::part1),
         Puzzle::base("day2017_23", 1, day2017_23::part1),
-        Puzzle::with_c("day2017_23", 2, day2017_23::part2_c_code),
+        Puzzle::with_c("day2017_23", 2, day2017_23::part2_c_code), // Only C, other too slow.
     ];
 
     let answers = load_answer_list();
