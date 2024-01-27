@@ -8,6 +8,7 @@ It is composed of a library with all the common code, and a main that uses the l
 
 - 2017 - Day 23: [Coprocessor Conflagration](https://adventofcode.com/2017/day/23)
   - Part 1
+  - Part 2 as C version
 - 2017 - Day 18: [Duet](https://adventofcode.com/2017/day/18)
   - Part 1
 - 2016 - Day 25: [Clock Signal](https://adventofcode.com/2016/day/25)
@@ -18,8 +19,7 @@ It is composed of a library with all the common code, and a main that uses the l
   - Part 1
   - Part 2
 - 2017 - Day 23: [Opening the Turing Lock](https://adventofcode.com/2015/day/23)
-  - Part 1
-  - Part 2
+  - Part 1 and 2, classic and C versions.
 
 ## Execution
 

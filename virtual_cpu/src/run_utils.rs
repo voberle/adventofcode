@@ -1,14 +1,19 @@
+//! Support code for running all the puzzles.
+
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 
 use fxhash::FxHashMap;
 
-use virtual_cpu::test_utils;
+pub const RESOURCES_DIR: &str = "src/bin/input";
+
+pub fn get_input_file(puzzle_name: &str) -> String {
+    format!("{}/{}_input", RESOURCES_DIR, puzzle_name)
+}
 
 // Loads the list of puzzle answers, saving it into a map "puzzle name" => "answer".
 pub fn load_answer_list() -> FxHashMap<String, String> {
-    let reader =
-        BufReader::new(File::open(format!("{}/answers", test_utils::RESOURCES_DIR)).unwrap());
+    let reader = BufReader::new(File::open(format!("{}/answers", RESOURCES_DIR)).unwrap());
     reader
         .lines()
         .map(|line| {
@@ -67,7 +72,7 @@ impl Puzzle {
     }
 
     pub fn get_input(&self) -> String {
-        let input_file = test_utils::get_input_file(&self.name);
+        let input_file = get_input_file(&self.name);
         fs::read_to_string(input_file).expect("Unable to read input file")
     }
 }

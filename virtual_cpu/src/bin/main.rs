@@ -1,5 +1,3 @@
-mod utils;
-
 mod day2015_23;
 mod day2016_12;
 mod day2016_23;
@@ -7,8 +5,8 @@ mod day2016_25;
 mod day2017_18;
 mod day2017_23;
 
-use utils::*;
 use virtual_cpu::c_code::exec::exec_c_code;
+use virtual_cpu::run_utils::*;
 
 fn main() {
     #[rustfmt::skip]
@@ -21,6 +19,7 @@ fn main() {
         Puzzle::base("day2016_25", 1, day2016_25::part1),
         Puzzle::base("day2017_18", 1, day2017_18::part1),
         Puzzle::base("day2017_23", 1, day2017_23::part1),
+        Puzzle::with_c("day2017_23", 2, day2017_23::part2_c_code),
     ];
 
     let answers = load_answer_list();

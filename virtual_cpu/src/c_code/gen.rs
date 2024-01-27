@@ -1,3 +1,5 @@
+use std::ops::RangeInclusive;
+
 use fxhash::FxHashSet;
 
 use crate::{
@@ -28,8 +30,9 @@ fn gen_free_label_name(next_label_name: &mut String) -> String {
     free_name
 }
 
-// Generates C code for the instruction.
-// labels contains the list of goto labels for the specified index
+/// Generates C code for the instruction.
+///
+/// * `labels` - List of goto labels for the specified index.
 fn instruction_c_version(ins: &Instruction, ir: usize, labels: &[String]) -> String {
     match ins {
         Instruction::Set(x, y) => format!("{} = {}", x, y),
@@ -53,13 +56,19 @@ fn instruction_c_version(ins: &Instruction, ir: usize, labels: &[String]) -> Str
     }
 }
 
-// Transform the instructions into C.
-// Save to a file and compile with `gcc -O3 main.c`.
+/// Transform the instructions into C.
+/// Save to a file and compile with `gcc -O3 main.c`.
+///
+/// * `initial_registers` - The registers (aka variables) that must have their values set at something else than zero at the beginning.
+/// * `registers_to_print` - The register's values to print at the end.
+/// * `optimizations` - A block of instructions, indicated by its indexes, to be replaced
+/// with the specified code. If there are multiple ones, their indexes cannot overlap.
 #[allow(clippy::single_match)]
-pub fn get_c_code(
+pub fn get_c_code_full(
     instructions: &[Instruction],
     initial_registers: &Registers<i64>,
     registers_to_print: &[char],
+    optimizations: &[(RangeInclusive<usize>, String)],
 ) -> String {
     let mut code = String::new();
     code += r"#include <stdio.h>
@@ -97,7 +106,16 @@ int main() {
         }
     }
 
-    for (i, label) in labels.iter().enumerate() {
+    'instruction: for (i, label) in labels.iter().enumerate() {
+        for (optim_range, optim_replacement) in optimizations {
+            if optim_range.contains(&i) {
+                if i == *optim_range.start() {
+                    code += optim_replacement;
+                }
+                continue 'instruction;
+            }
+        }
+
         let mut line = String::new();
         if !label.is_empty() {
             line += &format!("{}: ", label);
@@ -119,4 +137,12 @@ int main() {
     code += "}\n";
 
     code
+}
+
+pub fn get_c_code(
+    instructions: &[Instruction],
+    initial_registers: &Registers<i64>,
+    registers_to_print: &[char],
+) -> String {
+    get_c_code_full(instructions, initial_registers, registers_to_print, &[])
 }

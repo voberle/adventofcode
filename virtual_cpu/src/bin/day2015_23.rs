@@ -5,7 +5,7 @@ use virtual_cpu::instruction::{build_list, execute_all, Instruction};
 use virtual_cpu::intchar::IntChar;
 use virtual_cpu::parsing::char;
 use virtual_cpu::registers::Registers;
-use virtual_cpu::test_utils;
+use virtual_cpu::run_utils;
 
 fn build_instruction(s: &str) -> Instruction {
     let t = s.replace(',', "");
@@ -54,7 +54,7 @@ pub fn part2_c_code(input: &str) -> String {
 
 #[allow(dead_code)]
 fn main() {
-    let input_file = test_utils::get_input_file("day2015_23");
+    let input_file = run_utils::get_input_file("day2015_23");
     let input = fs::read_to_string(input_file).expect("Unable to read input file");
     println!("Part 1: {}", part1(&input));
     println!("Part 2: {}", part2(&input));
