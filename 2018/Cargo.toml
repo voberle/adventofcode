@@ -1,19 +1,17 @@
 [workspace]
+members = ["day01"]
 resolver = "2"
 
-members = [
-]
+[workspace.lints.clippy]
+match_same_arms = "warn"
+needless-for-each = "warn"
+range_plus_one = "warn"
+redundant_closure_for_method_calls = "warn"
+semicolon_if_nothing_returned = "warn"
+trivially_copy_pass_by_ref = "warn"
 
 [workspace.package]
-version = "0.1.0"
-edition = "2021"
 authors = ["Vincent Oberle"]
 description = "Advent of Code 2018"
-
-[workspace.lints.clippy]
-redundant_closure_for_method_calls = "warn"
-match_same_arms = "warn"
-range_plus_one = "warn"
-trivially_copy_pass_by_ref = "warn"
-semicolon_if_nothing_returned = "warn"
-needless-for-each = "warn"
+edition = "2021"
+version = "0.1.0"
