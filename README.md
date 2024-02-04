@@ -9,6 +9,10 @@ My *Advent Of Code* code.
     cd YEAR
     cargo generate aoc --name dayXX
 
+or better using the [aoc_new tool](tools/aoc_new/README.md), in YEAR directory:
+
+    ../aoc_new X
+
 with following in `$CARGO_HOME/cargo-generate.toml`:
 
     [favorites.aoc]
