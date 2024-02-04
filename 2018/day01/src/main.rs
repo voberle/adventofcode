@@ -14,8 +14,7 @@ fn first_frequency_twice(changes: &[i32]) -> i32 {
     let mut seen: FxHashSet<i32> = FxHashSet::default();
     let mut f = 0;
     let mut i: usize = 0;
-    while !seen.contains(&f) {
-        seen.insert(f);
+    while seen.insert(f) {
         f += changes[i];
         i = (i + 1).rem_euclid(changes.len());
     }
