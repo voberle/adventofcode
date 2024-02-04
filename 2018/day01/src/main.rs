@@ -21,6 +21,23 @@ fn first_frequency_twice(changes: &[i32]) -> i32 {
     f
 }
 
+// Variant with iterator from Reddit
+// https://www.reddit.com/r/adventofcode/comments/a20646/comment/eau63ok/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+fn _first_frequency_twice(changes: &[i32]) -> i32 {
+    let mut seen: FxHashSet<i32> = FxHashSet::default();
+    let mut f = 0;
+    seen.insert(0);
+    changes
+        .iter()
+        .cycle()
+        .find_map(|v| {
+            f += v;
+            seen.replace(f)
+        })
+        .unwrap();
+    f
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
