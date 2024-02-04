@@ -2,5 +2,6 @@
 
 ## Days
 
-### Day 1: [Chronal Calibration](day01/README.md) 🌟
+### Day 1: [Chronal Calibration](day01/README.md) 🌟🌟
 
+Looping on an array.

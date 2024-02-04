@@ -6,3 +6,4 @@ Maybe the easiest one ever so far? `changes.iter().sum()`
 
 ## Part 2
 
+Main work was thinking if there was a better way than just looping and putting all values in a HashSet.
