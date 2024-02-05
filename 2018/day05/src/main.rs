@@ -51,10 +51,42 @@ fn shortest_polymer(polymer: &[char]) -> usize {
         .unwrap()
 }
 
+// Much faster/smarter solution using a stack. Doesn't do any copy.
+// From https://www.reddit.com/r/adventofcode/comments/a3912m/comment/eb4fkwu/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+fn react<'a>(input: impl Iterator<Item = &'a u8>) -> usize {
+    let mut v = Vec::new();
+    for &c in input {
+        match v.last() {
+            None => v.push(c),
+            Some(&d) => {
+                if d.to_ascii_lowercase() == c.to_ascii_lowercase() && d != c {
+                    v.pop();
+                } else {
+                    v.push(c);
+                }
+            }
+        }
+    }
+    v.len()
+}
+
+#[allow(dead_code)]
+fn fast_version(input: &str) {
+    let input: Vec<u8> = input.chars().map(|c| c as u8).collect();
+    println!("Part 1: {}", react(input.iter()));
+    let mut min = std::usize::MAX;
+    for i in 0u8..=26 {
+        let v = input.iter().filter(|&&c| c != b'a' + i && c != b'A' + i);
+        min = usize::min(react(v), min);
+    }
+    println!("Part 2: {}", min);
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let polymer = build(&input);
+    // fast_version(&input);
+    let polymer = build(input.trim());
 
     println!("Part 1: {}", remaining_units_count(&polymer));
     println!("Part 2: {}", shortest_polymer(&polymer));
