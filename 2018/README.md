@@ -18,3 +18,7 @@ Brute-force.
 ### Day 4: [Repose Record](day04/README.md) 🌟🌟
 
 DateTime.
+
+### Day 5: [Alchemical Reduction](day05/README.md) 🌟
+
+Brute-force.
