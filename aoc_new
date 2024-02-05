@@ -1,0 +1,10 @@
+#!/bin/bash
+
+d=$1
+../tools/aoc_new/target/release/aoc_new $d
+dir=$(printf day%02d $d)
+# echo $dir
+cd $dir
+code .
+code ../README.md
+$SHELL

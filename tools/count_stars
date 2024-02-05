@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo 2015: $(tr -d -c '🌟' 2>/dev/null < ../2015/README.md | wc -m) 🌟
 echo 2016: $(tr -d -c '🌟' 2>/dev/null < ../2016/README.md | wc -m) 🌟
 echo 2017: $(tr -d -c '🌟' 2>/dev/null < ../2017/README.md | wc -m) 🌟
