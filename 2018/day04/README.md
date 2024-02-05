@@ -8,3 +8,4 @@ First use of `chrono` crate and DateTime.
 
 ## Part 2
 
+The funny things is that I had initially solved part 2 by accident with part 1, I had misread the instructions :-)

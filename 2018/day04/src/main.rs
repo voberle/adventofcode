@@ -59,9 +59,9 @@ fn asleep_count(hour: &[usize]) -> usize {
     hour.iter().sum()
 }
 
-fn strategy_1_result(entries: &[Entry]) -> usize {
-    // For each guard, how often were they at sleep at the specified minute
-    let mut guards: FxHashMap<usize, Vec<usize>> = FxHashMap::default();
+// For each guard, how often were they at sleep at the specified minute
+fn get_guards_sleeping_schedule(entries: &[Entry]) -> FxHashMap<usize, Vec<usize>> {
+    let mut guards_sleeping_schedule: FxHashMap<usize, Vec<usize>> = FxHashMap::default();
     let mut asleep_range: (u32, u32) = (0, 0);
     let mut current_guard = 0; // assuming no guard with ID 0
     for e in entries {
@@ -76,7 +76,7 @@ fn strategy_1_result(entries: &[Entry]) -> usize {
                 // Assuming guards always wake up before next shift
                 asleep_range.1 = e.get_minute();
                 assert_ne!(current_guard, 0);
-                guards
+                guards_sleeping_schedule
                     .entry(current_guard)
                     .and_modify(|hour| {
                         increase_sleeping_minutes(hour, asleep_range.0, asleep_range.1);
@@ -89,19 +89,34 @@ fn strategy_1_result(entries: &[Entry]) -> usize {
             }
         }
     }
+    guards_sleeping_schedule
+}
 
-    let (guard_id, hour) = guards
+fn strategy_1_result(entries: &[Entry]) -> usize {
+    let guards_sleeping_schedule = get_guards_sleeping_schedule(entries);
+
+    let (guard_id, hour) = guards_sleeping_schedule
         .iter()
         .max_by_key(|(_, hour)| asleep_count(hour))
         .unwrap();
     let minute = hour.iter().enumerate().max_by_key(|(_, s)| *s).unwrap().0;
 
-    println!("{} {}", guard_id, minute);
     guard_id * minute
 }
 
-fn part2(entries: &[Entry]) -> i64 {
-    0
+fn strategy_2_result(entries: &[Entry]) -> usize {
+    let guards_sleeping_schedule = get_guards_sleeping_schedule(entries);
+
+    let (guard_id, minute, _) = guards_sleeping_schedule
+        .iter()
+        .map(|(guard_id, v)| {
+            let (minute, asleep_count) = v.iter().enumerate().max_by_key(|(_, s)| *s).unwrap();
+            (guard_id, minute, asleep_count)
+        })
+        .max_by_key(|(_guard_id, _minute, asleep_count)| *asleep_count)
+        .unwrap();
+
+    guard_id * minute
 }
 
 fn main() {
@@ -113,7 +128,7 @@ fn main() {
     // }
 
     println!("Part 1: {}", strategy_1_result(&entries));
-    println!("Part 2: {}", part2(&entries));
+    println!("Part 2: {}", strategy_2_result(&entries));
 }
 
 #[cfg(test)]
@@ -129,6 +144,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build_sorted_entries(INPUT_TEST)), 0);
+        assert_eq!(strategy_2_result(&build_sorted_entries(INPUT_TEST)), 4455);
     }
 }

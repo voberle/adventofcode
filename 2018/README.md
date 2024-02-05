@@ -15,6 +15,6 @@ Cell; take_while and zip; Looping over all pairs of a vector.
 
 Brute-force.
 
-### Day 4: [Repose Record](day04/README.md) 🌟
+### Day 4: [Repose Record](day04/README.md) 🌟🌟
 
 DateTime.
