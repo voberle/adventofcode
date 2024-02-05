@@ -6,3 +6,4 @@ Completely brute-forced this one (and it was fast), as doing it smartly by compu
 
 ## Part 2
 
+With the overlapping count map I built in part 1, I just needed to check if for each claim they are on a zone with count > 1.

@@ -36,7 +36,7 @@ fn build(input: &str) -> Vec<Claim> {
         .collect()
 }
 
-fn overlaping_fabric<const SQUARE_SIDE: usize>(claims: &[Claim]) -> usize {
+fn overlapping_fabric<const SQUARE_SIDE: usize>(claims: &[Claim]) -> Vec<usize> {
     let pos = |x, y| x * SQUARE_SIDE + y;
     let mut big_square: Vec<usize> = vec![0; SQUARE_SIDE * SQUARE_SIDE];
     for claim in claims {
@@ -46,11 +46,30 @@ fn overlaping_fabric<const SQUARE_SIDE: usize>(claims: &[Claim]) -> usize {
             }
         }
     }
-    big_square.iter().filter(|v| **v > 1).count()
+    big_square
 }
 
-fn part2(claims: &[Claim]) -> usize {
-    0
+fn overlapping_fabric_count<const SQUARE_SIDE: usize>(claims: &[Claim]) -> usize {
+    overlapping_fabric::<SQUARE_SIDE>(claims)
+        .iter()
+        .filter(|v| **v > 1)
+        .count()
+}
+
+fn non_overlapping_claim<const SQUARE_SIDE: usize>(claims: &[Claim]) -> usize {
+    let pos = |x, y| x * SQUARE_SIDE + y;
+    let overlapping = overlapping_fabric::<SQUARE_SIDE>(claims);
+    'outer: for claim in claims {
+        for x in claim.top..claim.top + claim.height {
+            for y in claim.left..claim.left + claim.width {
+                if overlapping[pos(x, y)] > 1 {
+                    continue 'outer;
+                }
+            }
+        }
+        return claim.id;
+    }
+    panic!("No non-overlapping claim found");
 }
 
 fn main() {
@@ -58,8 +77,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let claims = build(&input);
 
-    println!("Part 1: {}", overlaping_fabric::<1000>(&claims));
-    println!("Part 2: {}", part2(&claims));
+    println!("Part 1: {}", overlapping_fabric_count::<1000>(&claims));
+    println!("Part 2: {}", non_overlapping_claim::<1000>(&claims));
 }
 
 #[cfg(test)]
@@ -70,11 +89,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(overlaping_fabric::<10>(&build(INPUT_TEST)), 4);
+        assert_eq!(overlapping_fabric_count::<10>(&build(INPUT_TEST)), 4);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(non_overlapping_claim::<10>(&build(INPUT_TEST)), 3);
     }
 }
