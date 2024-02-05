@@ -22,8 +22,8 @@ fn checksum(box_ids: &[Vec<char>]) -> usize {
     let res = box_ids.iter().fold((0, 0), |acc: (usize, usize), ids| {
         let (c2, c3) = count_occurences(ids);
         (
-            acc.0 + if c2 { 1 } else { 0 },
-            acc.1 + if c3 { 1 } else { 0 },
+            acc.0 + usize::from(c2),
+            acc.1 + usize::from(c3),
         )
     });
     res.0 * res.1
@@ -47,7 +47,7 @@ fn cmp_ids(id1: &[char], id2: &[char]) -> bool {
 fn common_letters(id1: &[char], id2: &[char]) -> String {
     id1.iter()
         .zip(id2.iter())
-        .flat_map(|p| if p.0 == p.1 { Some(p.0) } else { None })
+        .filter_map(|p| if p.0 == p.1 { Some(p.0) } else { None })
         .collect()
 }
 
