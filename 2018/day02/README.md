@@ -6,3 +6,8 @@ I nicely did the occurences counting without any HashMap or sorting, but by usin
 
 ## Part 2
 
+I used a few nice tricks in this one:
+
+- Cell to have have a mutable memory location and avoid borrow checker complaints.
+- Iterator zip and take_while
+- A simple way to iterate over all pairs we can do with the vector, without using itertools or vector indexes.

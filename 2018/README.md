@@ -6,6 +6,7 @@
 
 Looping on an array.
 
-### Day 2: [Inventory Management System](day02/README.md) 🌟
+### Day 2: [Inventory Management System](day02/README.md) 🌟🌟
 
 Neat occurences counting.
+Cell; take_while and zip; Looping over all pairs of a vector.
