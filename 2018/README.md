@@ -10,3 +10,7 @@ Looping on an array.
 
 Neat occurences counting.
 Cell; take_while and zip; Looping over all pairs of a vector.
+
+### Day 3: [No Matter How You Slice It](day03/README.md) 🌟
+
+Brute-force.
