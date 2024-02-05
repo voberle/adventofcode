@@ -6,3 +6,4 @@ The method to detect if two units are of opposite polarity is quite smart I thin
 
 ## Part 2
 
+Brute-forced it, takes a couple seconds.

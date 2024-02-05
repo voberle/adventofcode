@@ -19,6 +19,6 @@ Brute-force.
 
 DateTime.
 
-### Day 5: [Alchemical Reduction](day05/README.md) 🌟
+### Day 5: [Alchemical Reduction](day05/README.md) 🌟🌟
 
 Brute-force.

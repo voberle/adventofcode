@@ -27,8 +27,28 @@ fn remaining_units_count(polymer: &[char]) -> usize {
     scan(polymer).len()
 }
 
-fn part2(polymer: &[char]) -> i64 {
-    0
+// unit is the lowercase char
+fn remove_unit(polymer: &[char], unit: char) -> Vec<char> {
+    let upper_unit = unit.to_ascii_uppercase();
+    let mut polymer = polymer.to_vec();
+    polymer.retain(|&v| v != unit && v != upper_unit);
+    polymer
+}
+
+static ASCII_LOWER: [char; 26] = [
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
+    't', 'u', 'v', 'w', 'x', 'y', 'z',
+];
+
+fn shortest_polymer(polymer: &[char]) -> usize {
+    ASCII_LOWER
+        .iter()
+        .map(|unit| {
+            let polymer = remove_unit(polymer, *unit);
+            remaining_units_count(&polymer)
+        })
+        .min()
+        .unwrap()
 }
 
 fn main() {
@@ -37,7 +57,7 @@ fn main() {
     let polymer = build(&input);
 
     println!("Part 1: {}", remaining_units_count(&polymer));
-    println!("Part 2: {}", part2(&polymer));
+    println!("Part 2: {}", shortest_polymer(&polymer));
 }
 
 #[cfg(test)]
@@ -69,6 +89,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build("dabAcCaCBAcCcaDA")), 0);
+        assert_eq!(shortest_polymer(&build("dabAcCaCBAcCcaDA")), 4);
     }
 }
