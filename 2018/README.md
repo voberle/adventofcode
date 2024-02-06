@@ -26,3 +26,7 @@ Brute-force.
 ### Day 6: [Chronal Coordinates](day06/README.md) 🌟🌟
 
 Manhattan distance.
+
+### Day 7: [The Sum of Its Parts](day07/README.md) 🌟
+
+Graph.
