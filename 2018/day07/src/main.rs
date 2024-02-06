@@ -1,4 +1,7 @@
-use std::io::{self, Read};
+use std::{
+    fmt,
+    io::{self, Read},
+};
 
 use regex::Regex;
 
@@ -30,6 +33,7 @@ fn idx2char(idx: usize) -> char {
 }
 
 const NOT_READY: usize = 0;
+const IN_PROGRESS: usize = usize::MAX - 1; // used in part 2
 const READY: usize = usize::MAX;
 
 // Since we just deal with up to 26 steps (letters in alphabetical order),
@@ -89,8 +93,102 @@ fn steps_in_order<const STEP_COUNT: usize>(deps: &[Vec<usize>]) -> String {
     steps_array_to_string::<STEP_COUNT>(&letters)
 }
 
-fn time_to_complete(deps: &[Vec<usize>], workers: usize, step_duration_offset: usize) -> usize {
-    0
+#[derive(Debug, Clone)]
+struct Worker {
+    task_id: Option<usize>,
+    time_remaining: usize,
+}
+
+impl Worker {
+    fn new() -> Self {
+        Self {
+            task_id: None,
+            time_remaining: 0,
+        }
+    }
+
+    fn is_free(&self) -> bool {
+        self.task_id.is_none()
+    }
+
+    fn take_task(&mut self, task_id: usize, step_duration_offset: usize) {
+        self.task_id = Some(task_id);
+        self.time_remaining = task_id + 1 + step_duration_offset;
+    }
+
+    fn next_second(&mut self) {
+        self.time_remaining -= 1;
+        if self.time_remaining == 0 {
+            self.task_id = None;
+        }
+    }
+}
+
+impl fmt::Display for Worker {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(task_id) = self.task_id {
+            write!(f, "{}", idx2char(task_id))
+        } else {
+            write!(f, ".")
+        }
+    }
+}
+
+fn time_to_complete<const STEP_COUNT: usize>(
+    deps: &[Vec<usize>],
+    workers_count: usize,
+    step_duration_offset: usize,
+) -> usize {
+    // Workers array: They can be doing nothing or working on a task.
+    let mut workers: Vec<Worker> = vec![Worker::new(); workers_count];
+
+    let mut letters: [usize; STEP_COUNT] = build_steps_array(deps);
+
+    // println!("Sec\tWork 1\tWork 2");
+
+    let mut completed_steps = 0;
+    let mut seconds = 0;
+
+    while completed_steps < STEP_COUNT {
+        mark_ready::<STEP_COUNT>(deps, &mut letters);
+
+        // Find free worker
+        while let Some(free_worker_idx) = workers.iter().position(Worker::is_free) {
+            // Do next in alphabetical order.
+            if let Some(task_id) = letters.iter().position(|v| *v == READY) {
+                // Task started
+                letters[task_id] = IN_PROGRESS;
+                workers[free_worker_idx].take_task(task_id, step_duration_offset);
+            } else {
+                // We have a free worker but nothing to do for him
+                break;
+            }
+        }
+
+        seconds += 1;
+        if false {
+            print!("{}\t", seconds);
+            for w in &workers {
+                print!("{}\t", w);
+            }
+            println!();
+        }
+
+        // Update each worker
+        for worker in workers.iter_mut().take(workers_count) {
+            if !worker.is_free() {
+                let task_id = worker.task_id.unwrap();
+                worker.next_second();
+                if worker.is_free() {
+                    // Mark task completed
+                    letters[task_id] = 1;
+                    completed_steps += 1;
+                }
+            }
+        }
+    }
+
+    seconds
 }
 
 fn main() {
@@ -99,7 +197,7 @@ fn main() {
     let dependencies = build::<26>(input.trim());
 
     println!("Part 1: {}", steps_in_order::<26>(&dependencies));
-    println!("Part 2: {}", time_to_complete(&dependencies, 5, 60));
+    println!("Part 2: {}", time_to_complete::<26>(&dependencies, 5, 60));
 }
 
 #[cfg(test)]
@@ -115,6 +213,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(time_to_complete(&build::<6>(INPUT_TEST), 2, 0), 0);
+        assert_eq!(time_to_complete::<6>(&build::<6>(INPUT_TEST), 2, 0), 15);
     }
 }

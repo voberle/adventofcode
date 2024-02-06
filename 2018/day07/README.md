@@ -8,3 +8,4 @@ I also optimized it later with a better data structure for the dependencies list
 
 ## Part 2
 
+I split the part 1 solution in smaller functions, which helped build part 2.

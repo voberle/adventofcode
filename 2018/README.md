@@ -27,6 +27,6 @@ Brute-force.
 
 Manhattan distance.
 
-### Day 7: [The Sum of Its Parts](day07/README.md) 🌟
+### Day 7: [The Sum of Its Parts](day07/README.md) 🌟🌟
 
 Graph.
