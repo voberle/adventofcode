@@ -144,10 +144,12 @@ fn region_total_dist_to_all_less(coords: &[Coords], max_dist: u32) -> usize {
     let mut count = 0;
 
     let (max_x, min_x, max_y, min_y) = corner_coordinates(coords);
-    let md = max_dist as i32;
-    // We probably loop on a too big area.
-    for y in min_y - md..max_y + md {
-        for x in min_x - md..max_x + md {
+    // Optimization later found on Reddit:
+    // Since the sum of the distances must be less than 10000, the farthest a point could be is 10000/number_of_points
+    let furthest_dist = max_dist as i32 / coords.len() as i32;
+
+    for y in min_y - furthest_dist..max_y + furthest_dist {
+        for x in min_x - furthest_dist..max_x + furthest_dist {
             let p = Coords::new(x, y);
             if coords.iter().map(|c| c.distance(&p)).sum::<u32>() < max_dist {
                 count += 1;
