@@ -22,3 +22,7 @@ DateTime.
 ### Day 5: [Alchemical Reduction](day05/README.md) 🌟🌟
 
 Brute-force.
+
+### Day 6: [Chronal Coordinates](day06/README.md) 🌟
+
+Manhattan distance.
