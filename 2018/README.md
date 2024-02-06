@@ -23,6 +23,6 @@ DateTime.
 
 Brute-force.
 
-### Day 6: [Chronal Coordinates](day06/README.md) 🌟
+### Day 6: [Chronal Coordinates](day06/README.md) 🌟🌟
 
 Manhattan distance.

@@ -29,6 +29,10 @@ impl Coords {
         }
         points
     }
+
+    fn distance(&self, p: &Coords) -> u32 {
+        self.x.abs_diff(p.x) + self.y.abs_diff(p.y)
+    }
 }
 
 fn build(input: &str) -> Vec<Coords> {
@@ -41,16 +45,21 @@ fn build(input: &str) -> Vec<Coords> {
         .collect()
 }
 
-// Rough estimation how big distances we need to compute.
-fn max_dist_to_compute(coords: &[Coords]) -> i32 {
-    // Find the coordinates that are furthest in each corner:
+// Find the coordinates that are furthest in each corner.
+fn corner_coordinates(coords: &[Coords]) -> (i32, i32, i32, i32) {
     if let itertools::MinMaxResult::MinMax(min_x, max_x) = coords.iter().minmax_by_key(|c| c.x) {
         if let itertools::MinMaxResult::MinMax(min_y, max_y) = coords.iter().minmax_by_key(|c| c.y)
         {
-            return (max_x.x - min_x.x).max(max_y.y - min_y.y);
+            return (max_x.x, min_x.x, max_y.y, min_y.y);
         }
     }
     panic!("Couldn't find grid size");
+}
+
+// Rough estimation how big distances we need to compute.
+fn max_dist_to_compute(coords: &[Coords]) -> i32 {
+    let (max_x, min_x, max_y, min_y) = corner_coordinates(coords);
+    (max_x - min_x).max(max_y - min_y)
 }
 
 fn largest_finite_area_size(coords: &[Coords]) -> usize {
@@ -131,8 +140,21 @@ fn print_grid_for_test(coords: &[Coords], grid: &FxHashMap<Coords, (usize, i32)>
     }
 }
 
-fn part2(coords: &[Coords]) -> usize {
-    0
+fn region_total_dist_to_all_less(coords: &[Coords], max_dist: u32) -> usize {
+    let mut count = 0;
+
+    let (max_x, min_x, max_y, min_y) = corner_coordinates(coords);
+    let md = max_dist as i32;
+    // We probably loop on a too big area.
+    for y in min_y - md..max_y + md {
+        for x in min_x - md..max_x + md {
+            let p = Coords::new(x, y);
+            if coords.iter().map(|c| c.distance(&p)).sum::<u32>() < max_dist {
+                count += 1;
+            }
+        }
+    }
+    count
 }
 
 fn main() {
@@ -141,7 +163,7 @@ fn main() {
     let coords = build(input.trim());
 
     println!("Part 1: {}", largest_finite_area_size(&coords));
-    println!("Part 2: {}", part2(&coords));
+    println!("Part 2: {}", region_total_dist_to_all_less(&coords, 10_000));
 }
 
 #[cfg(test)]
@@ -174,6 +196,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(region_total_dist_to_all_less(&build(INPUT_TEST), 32), 16);
     }
 }

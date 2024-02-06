@@ -8,3 +8,4 @@ I attempted to use a vector for the grid, but it turned out to complicated, and 
 
 ## Part 2
 
+Brute forced it by just checking on a big enough area which coords are within the distance limit.
