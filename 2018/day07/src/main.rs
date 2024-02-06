@@ -7,15 +7,16 @@ fn char(s: &str) -> char {
     s.chars().next().unwrap()
 }
 
-fn build(input: &str) -> Vec<(char, char)> {
+fn build<const STEP_COUNT: usize>(input: &str) -> Vec<Vec<usize>> {
+    let mut result = vec![Vec::new(); STEP_COUNT];
     let re = Regex::new(r"Step (\w) must be finished before step (\w) can begin.").unwrap();
-    input
-        .lines()
-        .map(|line| {
-            let p = re.captures(line).unwrap();
-            (char(&p[1]), char(&p[2]))
-        })
-        .collect()
+    for line in input.lines() {
+        let p = re.captures(line).unwrap();
+        let left_idx = char2idx(char(&p[1]));
+        let right_idx = char2idx(char(&p[2]));
+        result[right_idx].push(left_idx);
+    }
+    result
 }
 
 #[inline]
@@ -28,7 +29,7 @@ fn idx2char(idx: usize) -> char {
     char::from(b'A' + idx as u8)
 }
 
-fn steps_in_order<const STEP_COUNT: usize>(deps: &[(char, char)]) -> String {
+fn steps_in_order<const STEP_COUNT: usize>(deps: &[Vec<usize>]) -> String {
     // Since we just deal with up to 26 steps (letters in alphabetical order),
     // tracking them in an array is convenient.
     //  0: Not ready to exec.
@@ -39,8 +40,10 @@ fn steps_in_order<const STEP_COUNT: usize>(deps: &[(char, char)]) -> String {
     let mut letters = [READY; STEP_COUNT];
 
     // Mark all that cannot be executed initially.
-    for d in deps {
-        letters[char2idx(d.1)] = 0;
+    for (i, d) in deps.iter().enumerate() {
+        if !d.is_empty() {
+            letters[i] = NOT_READY;
+        }
     }
 
     let mut pos = 1;
@@ -49,10 +52,9 @@ fn steps_in_order<const STEP_COUNT: usize>(deps: &[(char, char)]) -> String {
         for idx in 0..STEP_COUNT {
             if letters[idx] == NOT_READY {
                 // If it's on the right side of a dependency and not ready, we can only do it if we have done all the prerequisites.
-                if deps
+                if deps[idx]
                     .iter()
-                    .filter(|(_, r)| char2idx(*r) == idx)
-                    .all(|(l, _)| (1..=STEP_COUNT).contains(&letters[char2idx(*l)]))
+                    .all(|v| (1..=STEP_COUNT).contains(&letters[*v]))
                 {
                     letters[idx] = READY;
                 }
@@ -74,15 +76,14 @@ fn steps_in_order<const STEP_COUNT: usize>(deps: &[(char, char)]) -> String {
         .collect()
 }
 
-fn part2(deps: &[(char, char)]) -> i64 {
+fn part2(deps: &[Vec<usize>]) -> i64 {
     0
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let dependencies = build(input.trim());
-    println!("{:?}", dependencies);
+    let dependencies = build::<26>(input.trim());
 
     println!("Part 1: {}", steps_in_order::<26>(&dependencies));
     println!("Part 2: {}", part2(&dependencies));
@@ -96,11 +97,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(steps_in_order::<6>(&build(INPUT_TEST)), "CABDFE");
+        assert_eq!(steps_in_order::<6>(&build::<6>(INPUT_TEST)), "CABDFE");
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(part2(&build::<6>(INPUT_TEST)), 0);
     }
 }
