@@ -5,8 +5,6 @@ use std::{
 
 #[derive(Debug)]
 struct Node {
-    child_node_count: usize,
-    metadata_count: usize,
     child_nodes: Vec<Node>,
     metadata: Vec<u32>,
 }
@@ -20,8 +18,6 @@ impl Node {
             .map(|_| numbers.pop_front().unwrap())
             .collect();
         Self {
-            child_node_count,
-            metadata_count,
             child_nodes,
             metadata,
         }
@@ -38,8 +34,22 @@ fn metadata_sum(node: &Node) -> u32 {
     node.metadata.iter().sum::<u32>() + node.child_nodes.iter().map(metadata_sum).sum::<u32>()
 }
 
-fn part2(root: &Node) -> i64 {
-    0
+fn node_value(node: &Node) -> u32 {
+    if node.child_nodes.is_empty() {
+        node.metadata.iter().sum::<u32>()
+    } else {
+        node.metadata
+            .iter()
+            .map(|m| {
+                let m_idx = (*m - 1) as usize;
+                if m_idx < node.child_nodes.len() {
+                    node_value(&node.child_nodes[m_idx])
+                } else {
+                    0
+                }
+            })
+            .sum::<u32>()
+    }
 }
 
 fn main() {
@@ -49,7 +59,7 @@ fn main() {
     // println!("{:?}", root);
 
     println!("Part 1: {}", metadata_sum(&root));
-    println!("Part 2: {}", part2(&root));
+    println!("Part 2: {}", node_value(&root));
 }
 
 #[cfg(test)]
@@ -65,6 +75,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build_tree(INPUT_TEST)), 0);
+        assert_eq!(node_value(&build_tree(INPUT_TEST)), 66);
     }
 }

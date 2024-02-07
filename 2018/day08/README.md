@@ -6,3 +6,4 @@ It was interesting to build a tree data structure in Rust, as it was surprisingl
 
 ## Part 2
 
+Fairly easy with the tree structure.

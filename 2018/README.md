@@ -31,6 +31,6 @@ Manhattan distance.
 
 Graph.
 
-### Day 8: [Memory Maneuver](day08/README.md) 🌟
+### Day 8: [Memory Maneuver](day08/README.md) 🌟🌟
 
 Building a tree in Rust.
