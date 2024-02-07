@@ -35,6 +35,6 @@ Graph.
 
 Building a tree in Rust.
 
-### Day 9: [Marble Mania](day09/README.md) 🌟
+### Day 9: [Marble Mania](day09/README.md) 🌟🌟
 
-Marble game.
+Marble game. "Linked list" and `dlv_list` crate.

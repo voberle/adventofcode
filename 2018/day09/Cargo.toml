@@ -9,4 +9,5 @@ description.workspace = true
 workspace = true
 
 [dependencies]
+dlv-list = "0.5.2"
 regex = "1.10.3"
