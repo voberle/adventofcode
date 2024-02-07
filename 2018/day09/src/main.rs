@@ -1,6 +1,8 @@
-use std::io::{self, Read};
+use std::{
+    collections::VecDeque,
+    io::{self, Read},
+};
 
-use dlv_list::{Index, VecList};
 use regex::Regex;
 
 fn build(input: &str) -> (usize, u32) {
@@ -9,45 +11,30 @@ fn build(input: &str) -> (usize, u32) {
     (p[1].parse().unwrap(), p[2].parse().unwrap())
 }
 
-fn move_index_back(circle: &mut VecList<u32>, index: Index<u32>) -> Index<u32> {
-    circle
-        .get_previous_index(index)
-        .unwrap_or(circle.back_index().unwrap())
-}
-
-fn move_index_forward(circle: &mut VecList<u32>, index: Index<u32>) -> Index<u32> {
-    circle
-        .get_next_index(index)
-        .unwrap_or(circle.front_index().unwrap())
-}
-
 fn winning_score(players_count: usize, last_marble: u32) -> u32 {
-    // A semi-doubly linked list implemented with a vector.
-    // Allows for fast insert in the middle.
-    // Since we don't have to do a lot of list navigation (2 forwards, 7 backwards), it works.
-    let mut circle: VecList<u32> = VecList::new();
+    // Using a VecDecque where we push only back and pop front,
+    // and rotate it instead of tracking an index.
+    let mut circle: VecDeque<u32> = VecDeque::new();
     circle.push_back(0);
-    // The index that tracks our position in the circle.
-    let mut index = circle.front_index().unwrap();
 
     let mut marble = 1;
     let mut scores = vec![0; players_count];
     for player in (0..players_count).cycle() {
         if marble > 0 && marble % 23 == 0 {
             scores[player] += marble;
+            // "Moving back" by rotating the queue.
             for _ in 0..7 {
-                index = move_index_back(&mut circle, index);
+                let back = circle.pop_back().unwrap();
+                circle.push_front(back);
             }
-
-            // Once we remove the index, we cannot use it really anymore, so we copy it and move already to next one.
-            let index_to_remove = index;
-            index = move_index_forward(&mut circle, index);
-            scores[player] += circle.remove(index_to_remove).unwrap();
+            scores[player] += circle.pop_front().unwrap();
         } else {
-            index = move_index_forward(&mut circle, index);
-            index = circle.insert_after(index, marble);
+            for _ in 0..2 {
+                let front = circle.pop_front().unwrap();
+                circle.push_back(front);
+            }
+            circle.push_front(marble);
         }
-        // println!("[{}] {:?} - {:?}", player + 1, circle, index);
 
         if marble == last_marble {
             // game over

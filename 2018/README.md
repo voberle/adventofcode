@@ -37,4 +37,4 @@ Building a tree in Rust.
 
 ### Day 9: [Marble Mania](day09/README.md) 🌟🌟
 
-Marble game. "Linked list" and `dlv_list` crate.
+Marble game. "Linked list" and `dlv_list` crate. VecDequeu and rotation.
