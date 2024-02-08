@@ -47,4 +47,6 @@ Text detection.
 
 Iterators.
 
-### Day 12: [Subterranean Sustainability](day12/README.md) 🌟
+### Day 12: [Subterranean Sustainability](day12/README.md) 🌟🌟
+
+Huge number of iterations => pattern finding.

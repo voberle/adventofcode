@@ -45,20 +45,34 @@ fn state_to_string(state: &[bool]) -> String {
     state.iter().map(|v| if *v { '#' } else { '.' }).collect()
 }
 
-fn part1(initial_state: &[bool], instructions: &[bool]) -> i32 {
-    const NB_OF_GENERATIONS: usize = 20;
+#[allow(dead_code)]
+fn state_to_string_trimed(state: &[bool]) -> String {
+    state_to_string(state)
+        .trim_start_matches(|c| c == '.')
+        .trim_end_matches(|c| c == '.')
+        .to_string()
+}
 
+fn get_sum_of_plant_pots(state: &[bool], index_of_zero: i32) -> i32 {
+    state
+        .iter()
+        .enumerate()
+        .map(|(i, v)| if *v { i as i32 - index_of_zero } else { 0 })
+        .sum()
+}
+
+fn plant_pots_sum(initial_state: &[bool], instructions: &[bool], nb_of_generations: usize) -> i32 {
     const TEN_FALSE: [bool; 10] = [false; 10];
     const INDEX_OF_ZERO: i32 = 10;
 
     let mut state = Vec::new();
-    // Hard-coded padding for part 1, ugly but does the job
+    // Hard-coded padding, ugly but does the job.
     state.extend(TEN_FALSE);
     state.extend(initial_state);
     state.extend(TEN_FALSE);
 
-    println!("0: {}", state_to_string(&state));
-    for g in 1..=NB_OF_GENERATIONS {
+    // println!("0: {}", state_to_string(&state));
+    for _g in 1..=nb_of_generations {
         let mut next_state: Vec<bool> = Vec::new();
         next_state.push(false);
         next_state.push(false);
@@ -74,18 +88,30 @@ fn part1(initial_state: &[bool], instructions: &[bool]) -> i32 {
         next_state.push(false);
 
         std::mem::swap(&mut state, &mut next_state);
-        println!("{}: {}", g, state_to_string(&state));
+        // println!("{}: {}", _g, state_to_string_trimed(&state));
+        // println!("{}: {}", _g, get_sum_of_plant_pots(&state, INDEX_OF_ZERO));
     }
 
-    state
-        .iter()
-        .enumerate()
-        .map(|(i, v)| if *v { i as i32 - INDEX_OF_ZERO } else { 0 })
-        .sum()
+    get_sum_of_plant_pots(&state, INDEX_OF_ZERO)
 }
 
-fn part2(initial_state: &[bool], instructions: &[bool]) -> i64 {
-    0
+fn plant_pots_sum_small(initial_state: &[bool], instructions: &[bool]) -> i32 {
+    plant_pots_sum(initial_state, instructions, 20)
+}
+
+fn plant_pots_sum_huge(initial_state: &[bool], instructions: &[bool]) -> i64 {
+    const NB_OF_GENERATIONS: usize = 50_000_000_000;
+
+    // By printing the state trimmed, we see it stabilizes from generation 124,
+    // meaning it's the same pattern that just shifts.
+    const STABILIZATION_GENERATION: usize = 125;
+
+    // So we find the starting value and the shift.
+    let sum = plant_pots_sum(initial_state, instructions, STABILIZATION_GENERATION) as i64;
+    let sum2 = plant_pots_sum(initial_state, instructions, STABILIZATION_GENERATION + 1) as i64;
+    let diff = sum2 - sum;
+
+    sum + diff * (NB_OF_GENERATIONS - STABILIZATION_GENERATION) as i64
 }
 
 fn main() {
@@ -93,8 +119,14 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let (initial_state, instructions) = build(input.trim());
 
-    println!("Part 1: {}", part1(&initial_state, &instructions));
-    println!("Part 2: {}", part2(&initial_state, &instructions));
+    println!(
+        "Part 1: {}",
+        plant_pots_sum_small(&initial_state, &instructions)
+    );
+    println!(
+        "Part 2: {}",
+        plant_pots_sum_huge(&initial_state, &instructions)
+    );
 }
 
 #[cfg(test)]
@@ -114,11 +146,6 @@ mod tests {
     #[test]
     fn test_part1() {
         let (initial_state, instructions) = build(INPUT_TEST);
-        assert_eq!(part1(&initial_state, &instructions), 325);
-    }
-
-    #[test]
-    fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(plant_pots_sum_small(&initial_state, &instructions), 325);
     }
 }
