@@ -46,3 +46,5 @@ Text detection.
 ### Day 11: [Chronal Charge](day11/README.md) 🌟🌟
 
 Iterators.
+
+### Day 12: [Subterranean Sustainability](day12/README.md) 🌟
