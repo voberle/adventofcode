@@ -85,7 +85,7 @@ impl Sky {
 
                 for y in 0..v.len() {
                     for x in 0..v[0].len() {
-                        print!("{}", if v[y][x] { '#' } else { '.' });
+                        print!("{}", if v[y][x] { '\u{2593}' } else { '\u{2591}' });
                     }
                     println!();
                 }
