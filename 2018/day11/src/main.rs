@@ -4,7 +4,9 @@ fn get_hundreds_digit(n: i32) -> i32 {
     (n / 100) % 10
 }
 
-fn power_level(x: i32, y: i32, serial_number: i32) -> i32 {
+fn power_level(x: usize, y: usize, serial_number: i32) -> i32 {
+    let x = x as i32;
+    let y = y as i32;
     let rack_id = x + 10;
     let mut power_level = rack_id * y;
     power_level += serial_number;
@@ -12,29 +14,45 @@ fn power_level(x: i32, y: i32, serial_number: i32) -> i32 {
     get_hundreds_digit(power_level) - 5
 }
 
-fn power_level_square(x: i32, y: i32, serial_number: i32) -> i32 {
-    (y..y + 3)
+const GRID_SIZE: usize = 300;
+
+fn build_power_level_grid(serial_number: i32) -> Vec<Vec<i32>> {
+    (1..=GRID_SIZE)
         .map(|y| {
-            (x..x + 3)
-                .map(|x| power_level(x, y, serial_number))
+            (1..=GRID_SIZE)
+                .map(move |x| power_level(x, y, serial_number))
+                .collect()
+        })
+        .collect()
+}
+
+fn power_level_square(x: usize, y: usize, square_size: usize, grid: &[Vec<i32>]) -> i32 {
+    (y..y + square_size)
+        .map(|y| {
+            (x..x + square_size)
+                .map(|x| grid[y - 1][x - 1])
                 .sum::<i32>()
         })
         .sum()
 }
 
-fn largest_power(serial_number: i32) -> (i32, i32) {
-    const GRID_SIZE: i32 = 300;
+fn largest_power_3x3_with_cache(grid: &[Vec<i32>]) -> (usize, usize) {
     let m = (1..=GRID_SIZE - 2)
         .flat_map(|y| {
-            (1..=GRID_SIZE - 2).map(move |x| (x, y, power_level_square(x, y, serial_number)))
+            (1..=GRID_SIZE - 2).map(move |x| (x, y, power_level_square(x, y, 3, grid)))
         })
         .max_by_key(|(_, _, p)| *p)
         .unwrap();
     (m.0, m.1)
 }
 
-fn part2(serial_number: i32) -> i64 {
-    0
+fn largest_power_3x3(serial_number: i32) -> (usize, usize) {
+    let grid = build_power_level_grid(serial_number);
+    largest_power_3x3_with_cache(&grid)
+}
+
+fn largest_power_any_size(serial_number: i32) -> (usize, usize, usize) {
+    (0, 0, 0)
 }
 
 fn main() {
@@ -42,9 +60,10 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let serial_number = input.trim().parse().unwrap();
 
-    let (x, y) = largest_power(serial_number);
+    let (x, y) = largest_power_3x3(serial_number);
     println!("Part 1: {},{}", x, y);
-    println!("Part 2: {}", part2(serial_number));
+    let (x, y, size) = largest_power_any_size(serial_number);
+    println!("Part 2: {},{},{}", x, y, size);
 }
 
 #[cfg(test)]
@@ -68,12 +87,13 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(largest_power(18), (33, 45));
-        assert_eq!(largest_power(42), (21, 61));
+        assert_eq!(largest_power_3x3(18), (33, 45));
+        assert_eq!(largest_power_3x3(42), (21, 61));
     }
 
     #[test]
     fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(largest_power_any_size(18), (90, 269, 16));
+        assert_eq!(largest_power_any_size(42), (232, 251, 12));
     }
 }
