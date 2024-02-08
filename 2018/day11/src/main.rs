@@ -36,23 +36,30 @@ fn power_level_square(x: usize, y: usize, square_size: usize, grid: &[Vec<i32>])
         .sum()
 }
 
-fn largest_power_3x3_with_cache(grid: &[Vec<i32>]) -> (usize, usize) {
-    let m = (1..=GRID_SIZE - 2)
+fn largest_power_with_cache(grid: &[Vec<i32>], square_size: usize) -> (usize, usize, i32) {
+    (1..=GRID_SIZE - square_size + 1)
         .flat_map(|y| {
-            (1..=GRID_SIZE - 2).map(move |x| (x, y, power_level_square(x, y, 3, grid)))
+            (1..=GRID_SIZE - square_size + 1)
+                .map(move |x| (x, y, power_level_square(x, y, square_size, grid)))
         })
         .max_by_key(|(_, _, p)| *p)
-        .unwrap();
-    (m.0, m.1)
+        .unwrap()
 }
 
 fn largest_power_3x3(serial_number: i32) -> (usize, usize) {
     let grid = build_power_level_grid(serial_number);
-    largest_power_3x3_with_cache(&grid)
+    let m = largest_power_with_cache(&grid, 3);
+    (m.0, m.1)
 }
 
 fn largest_power_any_size(serial_number: i32) -> (usize, usize, usize) {
-    (0, 0, 0)
+    let grid = build_power_level_grid(serial_number);
+    // Brute-forced
+    let m = (1..=300)
+        .map(|square_size| (square_size, largest_power_with_cache(&grid, square_size)))
+        .max_by_key(|(_, (_, _, p))| *p)
+        .unwrap();
+    (m.1 .0, m.1 .1, m.0)
 }
 
 fn main() {
