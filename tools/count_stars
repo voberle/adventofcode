@@ -1,14 +1,29 @@
 #!/bin/bash
 
 CDIR=$( dirname "$0" )
-echo 2015: $(tr -d -c '🌟' 2>/dev/null < $CDIR/../2015/README.md | wc -m) 🌟
-echo 2016: $(tr -d -c '🌟' 2>/dev/null < $CDIR/../2016/README.md | wc -m) 🌟
-echo 2017: $(tr -d -c '🌟' 2>/dev/null < $CDIR/../2017/README.md | wc -m) 🌟
-echo 2018: $(tr -d -c '🌟' 2>/dev/null < $CDIR/../2018/README.md | wc -m) 🌟
-echo 2019: $(tr -d -c '🌟' 2>/dev/null < $CDIR/../2019/README.md | wc -m) 🌟
-echo 2020: $(tr -d -c '🌟' 2>/dev/null < $CDIR/../2020/README.md | wc -m) 🌟
-echo 2021: $(tr -d -c '🌟' 2>/dev/null < $CDIR/../2021/README.md | wc -m) 🌟
-echo 2022: $(tr -d -c '🌟' 2>/dev/null < $CDIR/../2022/README.md | wc -m) 🌟
-echo 2023: $(tr -d -c '🌟' 2>/dev/null < $CDIR/../2023/README.md | wc -m) 🌟
+c2015=$(tr -d -c '🌟' 2>/dev/null < $CDIR/../2015/README.md | wc -m)
+c2016=$(tr -d -c '🌟' 2>/dev/null < $CDIR/../2016/README.md | wc -m)
+c2017=$(tr -d -c '🌟' 2>/dev/null < $CDIR/../2017/README.md | wc -m)
+c2018=$(tr -d -c '🌟' 2>/dev/null < $CDIR/../2018/README.md | wc -m)
+c2019=$(tr -d -c '🌟' 2>/dev/null < $CDIR/../2019/README.md | wc -m)
+c2020=$(tr -d -c '🌟' 2>/dev/null < $CDIR/../2020/README.md | wc -m)
+c2021=$(tr -d -c '🌟' 2>/dev/null < $CDIR/../2021/README.md | wc -m)
+c2022=$(tr -d -c '🌟' 2>/dev/null < $CDIR/../2022/README.md | wc -m)
+c2023=$(tr -d -c '🌟' 2>/dev/null < $CDIR/../2023/README.md | wc -m)
 
-echo See your calendars with "aoc calendar -y YYYY"
+echo 2015: $c2015 🌟
+echo 2016: $c2016 🌟
+echo 2017: $c2017 🌟
+echo 2018: $c2018 🌟
+echo 2019: $c2019 🌟
+echo 2020: $c2020 🌟
+echo 2021: $c2021 🌟
+echo 2022: $c2022 🌟
+echo 2023: $c2023 🌟
+
+echo
+P=$(echo "scale=4; ($c2015 + $c2016 + $c2017 + $c2018 + $c2019 + $c2020 + $c2021 + $c2022 + $c2023) / (9 * 50) * 100" | bc)
+printf "Percentage completed: %.2f %%\n" $P
+
+echo
+echo See your calendars with \"aoc calendar -y YYYY\"
