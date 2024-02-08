@@ -14,7 +14,7 @@ fn build(input: &str) -> (usize, u32) {
 fn winning_score(players_count: usize, last_marble: u32) -> u32 {
     // Using a VecDecque where we push only back and pop front,
     // and rotate it instead of tracking an index.
-    let mut circle: VecDeque<u32> = VecDeque::new();
+    let mut circle: VecDeque<u32> = VecDeque::with_capacity(last_marble as usize + 1);
     circle.push_back(0);
 
     let mut marble = 1;
