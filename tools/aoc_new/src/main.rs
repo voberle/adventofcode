@@ -89,6 +89,7 @@ fn change_dir(day: &str) {
 }
 
 fn get_input(year: &str, day: u8) {
+    const INPUT_FILE: &str = "resources/input";
     let output = Command::new("aoc")
         .arg("download")
         .arg("--day")
@@ -97,13 +98,29 @@ fn get_input(year: &str, day: u8) {
         .arg(year)
         .arg("--input-only")
         .arg("--input-file")
-        .arg("resources/input")
+        .arg(INPUT_FILE)
         .arg("--overwrite")
         .output()
         .expect("Failed to get input file");
     io::stdout().write_all(&output.stdout).unwrap();
     io::stderr().write_all(&output.stderr).unwrap();
     assert!(output.status.success());
+
+    // On saving the file, a new line may be appended at the end,
+    // which can cause confusion on some tasks https://github.com/scarvalhojr/aoc-cli/issues/23
+    // So removing it here.
+    let mut input = fs::read_to_string(INPUT_FILE).unwrap();
+    trim_newline(&mut input);
+    fs::write(INPUT_FILE, input).expect("Failed to trim input file");
+}
+
+fn trim_newline(s: &mut String) {
+    if s.ends_with('\n') {
+        s.pop();
+        if s.ends_with('\r') {
+            s.pop();
+        }
+    }
 }
 
 fn read_puzzle(year: &str, day: u8) -> String {
