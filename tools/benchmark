@@ -1,0 +1,6 @@
+#!/bin/bash
+
+basedir="$(basename $PWD)"
+
+cargo b --release
+hyperfine --warmup 5 "cat resources/input | ../target/release/${basedir}"
