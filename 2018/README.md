@@ -50,3 +50,7 @@ Iterators.
 ### Day 12: [Subterranean Sustainability](day12/README.md) 🌟🌟
 
 Huge number of iterations => pattern finding.
+
+### Day 13: [Mine Cart Madness](day13/README.md) 🌟
+
+Following a track.
