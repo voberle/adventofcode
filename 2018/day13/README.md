@@ -6,3 +6,4 @@ Nothing specially complicated here. My Grid code fitted well this exercise and t
 
 ## Part 2
 
+Part 2 was complicated because I didn't implement correctly that the moving order of carts was important. Somehow I got (un)lucky with part 1, where I got the right answer despite that bug.

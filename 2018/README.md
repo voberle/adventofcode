@@ -51,6 +51,6 @@ Iterators.
 
 Huge number of iterations => pattern finding.
 
-### Day 13: [Mine Cart Madness](day13/README.md) 🌟
+### Day 13: [Mine Cart Madness](day13/README.md) 🌟🌟
 
 Following a track.
