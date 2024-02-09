@@ -57,4 +57,4 @@ Following a track.
 
 ### Day 14: [Chocolate Charts](day14/README.md) 🌟🌟
 
-Looping and slice comparaison.
+Looping and slice comparaison. FnMut.
