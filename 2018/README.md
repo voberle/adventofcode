@@ -55,4 +55,6 @@ Huge number of iterations => pattern finding.
 
 Following a track.
 
-### Day 14: [Chocolate Charts](day14/README.md) 🌟
+### Day 14: [Chocolate Charts](day14/README.md) 🌟🌟
+
+Looping and slice comparaison.
