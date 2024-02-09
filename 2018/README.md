@@ -54,3 +54,5 @@ Huge number of iterations => pattern finding.
 ### Day 13: [Mine Cart Madness](day13/README.md) 🌟🌟
 
 Following a track.
+
+### Day 14: [Chocolate Charts](day14/README.md) 🌟
