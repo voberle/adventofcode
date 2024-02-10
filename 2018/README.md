@@ -58,3 +58,7 @@ Following a track.
 ### Day 14: [Chocolate Charts](day14/README.md) 🌟🌟
 
 Looping and slice comparaison. FnMut.
+
+### Day 15: [Beverage Bandits](day15/README.md) 🌟
+
+Elves and goblins game. Long one: Many iterators, Dijkstra shortest path.
