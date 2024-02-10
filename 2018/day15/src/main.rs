@@ -151,7 +151,6 @@ fn choose_next_move(map: &Grid, attacker_pos: usize) -> Option<usize> {
 
 fn move_unit(map: &mut Grid, units: &mut [Unit], unit_idx: usize, to: usize) {
     assert!(is_open(map.values[to]));
-
     // println!("Moving {} to {}", map.pos_as_str(units[unit_idx].position), map.pos_as_str(to));
     // map.print();
 
@@ -186,7 +185,6 @@ fn choose_target(map: &Grid, units: &[Unit], attacker_pos: usize) -> Option<usiz
 
 fn attack(map: &mut Grid, units: &mut [Unit], target_unit_index: usize, attack_power: i32) {
     assert!(!units[target_unit_index].is_dead());
-
     // println!("Attacking {}", map.pos_as_str(units[target_unit_index].position));
 
     units[target_unit_index].hit(attack_power);
@@ -229,35 +227,41 @@ fn do_action(map: &mut Grid, units: &mut [Unit], unit_idx: usize) {
     }
 }
 
-fn units_of_remaining(units: &[Unit], unit_type: UnitType) -> bool {
+fn units_remaining(units: &[Unit], unit_type: UnitType) -> bool {
     units
         .iter()
         .any(|u| !u.is_dead() && u.unit_type == unit_type)
 }
 
-fn outcome(map: &Grid) -> usize {
-    let mut map = map.clone();
-    let mut units = build_units_list(&map);
+fn count_alive_elves(units: &[Unit]) -> usize {
+    units
+        .iter()
+        .filter(|u| !u.is_dead() && u.unit_type == UnitType::Elf)
+        .count()
+}
+
+// Returning None means the battle was interrupted before the end.
+fn full_battle(map: &mut Grid, units: &mut Vec<Unit>, stop_on_dead_elf: bool) -> Option<usize> {
     let mut combat_rounds = 0;
+    let initial_elves_count = count_alive_elves(units);
 
     'outer: loop {
         units.sort_by_key(|u| u.position);
 
         // Execute a full round
         for i in 0..units.len() {
-            if !units_of_remaining(&units, UnitType::Elf)
-                || !units_of_remaining(&units, UnitType::Goblin)
-            {
-                break 'outer;
+            if stop_on_dead_elf && count_alive_elves(units) < initial_elves_count {
+                return None;
             }
 
-            do_action(&mut map, &mut units, i);
+            if !units_remaining(units, UnitType::Elf) || !units_remaining(units, UnitType::Goblin) {
+                break 'outer;
+            }
+            do_action(map, units, i);
         }
-        // One more full round completed
         combat_rounds += 1;
 
-        // println!("Round {} completed", combat_rounds);
-        // map.print();
+        // println!("Round {} completed", combat_rounds); map.print();
 
         // Remove dead units
         units.retain(|u| !u.is_dead());
@@ -270,7 +274,7 @@ fn outcome(map: &Grid) -> usize {
     if false {
         map.print();
         units.sort_by_key(|u| u.position);
-        for u in &units {
+        for u in units {
             println!("{}({})", u.unit_type.name(), u.hit_points);
         }
         println!(
@@ -281,11 +285,35 @@ fn outcome(map: &Grid) -> usize {
         );
     }
 
-    combat_rounds * remaining_hps
+    Some(combat_rounds * remaining_hps)
 }
 
-fn part2(map: &Grid) -> i64 {
-    0
+fn outcome(map: &Grid) -> usize {
+    let mut map = map.clone();
+    let mut units = build_units_list(&map);
+    full_battle(&mut map, &mut units, false).unwrap()
+}
+
+fn set_elves_attack(units: &mut [Unit], attack_power: i32) {
+    units
+        .iter_mut()
+        .filter(|u| u.unit_type == UnitType::Elf)
+        .for_each(|u| u.attack_power = attack_power);
+}
+
+fn outcome_no_dead_elves(map: &Grid) -> usize {
+    let mut attack_power = 4;
+
+    loop {
+        let mut map = map.clone();
+        let mut units = build_units_list(&map);
+        set_elves_attack(&mut units, attack_power);
+
+        if let Some(res) = full_battle(&mut map, &mut units, true) {
+            return res;
+        }
+        attack_power += 1;
+    }
 }
 
 fn main() {
@@ -294,7 +322,7 @@ fn main() {
     let map = Grid::build(&input);
 
     println!("Part 1: {}", outcome(&map));
-    println!("Part 2: {}", part2(&map));
+    println!("Part 2: {}", outcome_no_dead_elves(&map));
 }
 
 #[cfg(test)]
@@ -321,29 +349,29 @@ mod tests {
         assert_eq!(choose_next_move(&map, map.pos(2, 2)), Some(map.pos(1, 2)));
     }
 
+    const INPUT0: &str = include_str!("../resources/input_test_0");
+    const INPUT1: &str = include_str!("../resources/input_test_1");
+    const INPUT2: &str = include_str!("../resources/input_test_2");
+    const INPUT3: &str = include_str!("../resources/input_test_3");
+    const INPUT4: &str = include_str!("../resources/input_test_4");
+    const INPUT5: &str = include_str!("../resources/input_test_5");
+
     #[test]
     fn test_part1() {
-        const INPUT0: &str = include_str!("../resources/input_test_0");
         assert_eq!(outcome(&Grid::build(INPUT0)), 27730);
-
-        const INPUT1: &str = include_str!("../resources/input_test_1");
         assert_eq!(outcome(&Grid::build(INPUT1)), 36334);
-
-        const INPUT2: &str = include_str!("../resources/input_test_2");
         assert_eq!(outcome(&Grid::build(INPUT2)), 39514);
-
-        const INPUT3: &str = include_str!("../resources/input_test_3");
         assert_eq!(outcome(&Grid::build(INPUT3)), 27755);
-
-        const INPUT4: &str = include_str!("../resources/input_test_4");
         assert_eq!(outcome(&Grid::build(INPUT4)), 28944);
-
-        const INPUT5: &str = include_str!("../resources/input_test_5");
         assert_eq!(outcome(&Grid::build(INPUT5)), 18740);
     }
 
     #[test]
     fn test_part2() {
-        // assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        assert_eq!(outcome_no_dead_elves(&Grid::build(INPUT0)), 4988);
+        assert_eq!(outcome_no_dead_elves(&Grid::build(INPUT2)), 31284);
+        assert_eq!(outcome_no_dead_elves(&Grid::build(INPUT3)), 3478);
+        assert_eq!(outcome_no_dead_elves(&Grid::build(INPUT4)), 6474);
+        assert_eq!(outcome_no_dead_elves(&Grid::build(INPUT5)), 1140);
     }
 }

@@ -15,3 +15,6 @@ The few bugs I had were quick to find:
 
 ## Part 2
 
+Second part was much easier. I detect in the battle as soon as an elf dies, interrupt it and start a new one with a bigger attacking power.
+
+As often, Rust makes the refactorings of part 2 easy and safe.
