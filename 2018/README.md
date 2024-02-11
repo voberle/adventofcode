@@ -62,3 +62,7 @@ Looping and slice comparaison. FnMut.
 ### Day 15: [Beverage Bandits](day15/README.md) 🌟🌟
 
 Elves and goblins game. Long one: Many iterators, Dijkstra shortest path.
+
+### Day 16: [Chronal Classification](day16/README.md) 🌟
+
+Instructions but a bit different.
