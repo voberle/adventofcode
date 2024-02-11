@@ -63,6 +63,6 @@ Looping and slice comparaison. FnMut.
 
 Elves and goblins game. Long one: Many iterators, Dijkstra shortest path.
 
-### Day 16: [Chronal Classification](day16/README.md) 🌟
+### Day 16: [Chronal Classification](day16/README.md) 🌟🌟
 
 Instructions but a bit different.
