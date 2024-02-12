@@ -66,3 +66,5 @@ Elves and goblins game. Long one: Many iterators, Dijkstra shortest path.
 ### Day 16: [Chronal Classification](day16/README.md) 🌟🌟
 
 Instructions but a bit different.
+
+### Day 17: [Reservoir Research](day17/README.md)
