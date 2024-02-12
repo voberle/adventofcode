@@ -5,6 +5,8 @@ use itertools::Itertools;
 mod grid;
 use grid::{find_shortest_path, Grid};
 
+mod visualization;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum UnitType {
     Elf,
@@ -233,6 +235,10 @@ fn units_remaining(units: &[Unit], unit_type: UnitType) -> bool {
         .any(|u| !u.is_dead() && u.unit_type == unit_type)
 }
 
+fn is_full_unit_dead(units: &[Unit]) -> bool {
+    !units_remaining(units, UnitType::Elf) || !units_remaining(units, UnitType::Goblin)
+}
+
 fn count_alive_elves(units: &[Unit]) -> usize {
     units
         .iter()
@@ -254,7 +260,7 @@ fn full_battle(map: &mut Grid, units: &mut Vec<Unit>, stop_on_dead_elf: bool) ->
                 return None;
             }
 
-            if !units_remaining(units, UnitType::Elf) || !units_remaining(units, UnitType::Goblin) {
+            if is_full_unit_dead(units) {
                 break 'outer;
             }
             do_action(map, units, i);
@@ -320,6 +326,12 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let map = Grid::build(&input);
+
+    let param = std::env::args().nth(1).unwrap_or_default();
+    if param == "visu" {
+        visualization::fancy(&map).unwrap();
+        return;
+    }
 
     println!("Part 1: {}", outcome(&map));
     println!("Part 2: {}", outcome_no_dead_elves(&map));
