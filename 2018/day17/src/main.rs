@@ -3,85 +3,17 @@ use std::{
     io::{self, Read},
 };
 
-use regex::Regex;
-
-// A line. Coordinates are ordered, [x|y]1 <= [x|y]2
-#[derive(Debug)]
-struct Line {
-    x1: usize,
-    y1: usize,
-    x2: usize,
-    y2: usize,
-}
-
-impl Line {
-    fn contains(&self, x: usize, y: usize) -> bool {
-        (self.x1..=self.x2).contains(&x) && (self.y1..=self.y2).contains(&y)
-    }
-}
-
-fn build(input: &str) -> Vec<Line> {
-    let re = Regex::new(r"(x|y)=(\d+).?.?(\d+)?").unwrap();
-    input
-        .lines()
-        .map(|line| {
-            let parts: Vec<_> = line.split(", ").collect();
-            let p1 = re.captures(parts[0]).unwrap();
-            let p2 = re.captures(parts[1]).unwrap();
-
-            let x = if &p1[1] == "x" { &p1 } else { &p2 };
-            let y = if &p1[1] == "y" { &p1 } else { &p2 };
-            let mut x1 = x[2].parse::<usize>().unwrap();
-            let mut x2 = x
-                .get(3)
-                .map_or(x1, |m| m.as_str().parse::<usize>().unwrap());
-            let mut y1 = y[2].parse::<usize>().unwrap();
-            let mut y2 = y
-                .get(3)
-                .map_or(y1, |m| m.as_str().parse::<usize>().unwrap());
-            if x1 > x2 {
-                std::mem::swap(&mut x1, &mut x2);
-            }
-            if y1 > y2 {
-                std::mem::swap(&mut y1, &mut y2);
-            }
-
-            Line { x1, y1, x2, y2 }
-        })
-        .collect()
-}
-
-// min x, max x and max y (min y is 0).
-fn borders(lines: &[Line]) -> (usize, usize, usize) {
-    (
-        lines.iter().flat_map(|l| [l.x1, l.x2]).min().unwrap(),
-        lines.iter().flat_map(|l| [l.x1, l.x2]).max().unwrap(),
-        lines.iter().flat_map(|l| [l.y1, l.y2]).max().unwrap(),
-    )
-}
-
-fn contains(lines: &[Line], x: usize, y: usize) -> bool {
-    lines.iter().any(|l| l.contains(x, y))
-}
-
-fn print(lines: &[Line]) {
-    let (min_x, max_x, max_y) = borders(lines);
-    for y in 0..=max_y {
-        for x in min_x..=max_x {
-            let c = if contains(lines, x, y) { '#' } else { '.' };
-            print!("{}", c);
-        }
-        println!();
-    }
-}
+mod parsing;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Material {
     Sand,
     Clay,
-    Water,
+    Spring,
+    WaterAtRest,
+    WaterFlow,
 }
-use Material::*;
+use Material::{Clay, Sand, Spring, WaterAtRest, WaterFlow};
 
 impl fmt::Display for Material {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -91,22 +23,38 @@ impl fmt::Display for Material {
             match *self {
                 Sand => '.',
                 Clay => '#',
-                Water => '+',
+                Spring => '+',
+                WaterAtRest => '~',
+                WaterFlow => '|',
             }
         )
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+use Direction::{Down, Left, Right, Up};
 
 #[derive(Debug, Clone, PartialEq)]
 struct Grid {
     values: Vec<Material>,
     rows: usize,
     cols: usize,
+    min_y: usize,
+    max_y: usize,
 }
 
 impl Grid {
-    fn build(lines: &[Line]) -> Self {
-        let (min_x, max_x, max_y) = borders(lines);
+    fn build(input: &str) -> Self {
+        let lines = parsing::build(input);
+
+        let (min_x, max_x, min_y, max_y) = parsing::borders(&lines);
+        // println!("{:?}", (min_x, max_x, min_y, max_y));
         // leave an empty column on each side
         let (min_x, max_x) = (min_x - 1, max_x + 2);
         let cols = max_x - min_x;
@@ -115,6 +63,8 @@ impl Grid {
             values: vec![Sand; rows * cols],
             rows,
             cols,
+            min_y,
+            max_y,
         };
 
         for line in lines {
@@ -134,7 +84,7 @@ impl Grid {
         }
 
         let p = grid.pos(500 - min_x, 0);
-        grid.values[p] = Water;
+        grid.values[p] = Spring;
 
         grid
     }
@@ -143,40 +93,230 @@ impl Grid {
         y * self.cols + x
     }
 
+    #[allow(dead_code)]
+    fn pos_as_str(&self, index: usize) -> String {
+        format!("({},{})", self.row(index), self.col(index))
+    }
+
+    fn col(&self, index: usize) -> usize {
+        index % self.cols
+    }
+
+    fn row(&self, index: usize) -> usize {
+        index / self.cols
+    }
+
+    fn allowed(&self, pos: usize, direction: Direction) -> bool {
+        !match direction {
+            Up => pos < self.cols,
+            Down => pos / self.cols == self.rows - 1,
+            Left => pos % self.cols == 0,
+            Right => pos % self.cols == self.cols - 1,
+        }
+    }
+
+    fn next_pos(&self, pos: usize, direction: Direction) -> usize {
+        match direction {
+            Up => pos - self.cols,
+            Down => pos + self.cols,
+            Left => pos - 1,
+            Right => pos + 1,
+        }
+    }
+
+    #[allow(dead_code)]
     fn print(&self) {
-        const RED: &str = "\x1b[31m";
+        const BLUE: &str = "\x1b[94m";
         const RESET: &str = "\x1b[0m";
         for row in 0..self.rows {
             for p in row * self.cols..(row + 1) * self.cols {
                 let c = self.values[p];
-                print!("{}", c);
+                if [WaterAtRest, WaterFlow].contains(&c) {
+                    print!("{BLUE}{}{RESET}", c);
+                } else {
+                    print!("{}", c);
+                }
             }
             println!();
         }
     }
 }
 
-fn part1(lines: &[Line]) -> i64 {
-    0
+fn find_flows(grid: &Grid) -> Vec<usize> {
+    grid.values
+        .iter()
+        .enumerate()
+        .filter_map(|(i, m)| {
+            if [Spring, WaterFlow].contains(m) {
+                Some(i)
+            } else {
+                None
+            }
+        })
+        .collect()
 }
 
-fn part2(lines: &[Line]) -> i64 {
-    0
+fn move_flow_to_side(grid: &mut Grid, p: usize, direction: Direction) -> bool {
+    assert!([Left, Right].contains(&direction));
+
+    let mut something_happened = false;
+    // We could optimize here and do a loop
+    if grid.allowed(p, direction) {
+        let side_pos = grid.next_pos(p, direction);
+        if grid.values[side_pos] == Sand && grid.allowed(side_pos, Down) {
+            let down = grid.next_pos(p, Down);
+            match grid.values[down] {
+                Clay | WaterAtRest => {
+                    assert_eq!(grid.values[side_pos], Sand);
+                    grid.values[side_pos] = WaterFlow;
+                    something_happened = true;
+                }
+                _ => {}
+            }
+        }
+    }
+    something_happened
+}
+
+// Find all flows that have clay on both sides.
+// Returns the position of the most left flow for such cases.
+fn find_flows_with_clay_at_side(grid: &Grid) -> Vec<usize> {
+    let flows = find_flows(grid);
+    flows
+        .iter()
+        .filter(|&&p| {
+            if grid.allowed(p, Left) && grid.values[grid.next_pos(p, Left)] == Clay {
+                let mut r = p;
+                loop {
+                    if !grid.allowed(r, Right) {
+                        break;
+                    }
+                    r = grid.next_pos(r, Right);
+                    let v = grid.values[r];
+                    if v == WaterFlow {
+                        continue;
+                    }
+                    if v == Clay {
+                        return true;
+                    }
+                    return false;
+                }
+                false
+            } else {
+                false
+            }
+        })
+        .copied()
+        .collect()
+}
+
+// For the flows with clay at side we found, fill them with water.
+// Assumes `pos` points to the first '.' in "#||||#".
+fn fill_space_with_water(grid: &mut Grid, pos: usize) {
+    let mut p = pos;
+    loop {
+        grid.values[p] = WaterAtRest;
+        if !grid.allowed(p, Right) {
+            break;
+        }
+        p = grid.next_pos(p, Right);
+        let v = grid.values[p];
+        if v == WaterFlow {
+            grid.values[p] = WaterAtRest;
+            continue;
+        } else if v == Clay {
+            return;
+        }
+        panic!("Should never get here when filling a space with water");
+    }
+}
+
+fn fill_water(grid: &mut Grid) {
+    // Tracks if water moved in an iteration of the big loop.
+    let mut something_happened = true;
+    while something_happened {
+        something_happened = false;
+
+        // Find all flows and see if we can go down
+        let flows = find_flows(grid);
+        let mut went_down = false;
+        let mut bottom_flows: Vec<usize> = Vec::new();
+        for p in flows {
+            if grid.allowed(p, Down) {
+                let down = grid.next_pos(p, Down);
+                match grid.values[down] {
+                    Sand => {
+                        // If we have sand below our water flow, flow goes down still.
+                        grid.values[down] = WaterFlow;
+                        something_happened = true;
+                        went_down = true;
+                    }
+                    Clay | WaterAtRest => {
+                        // If flow hit bottom, saving that position for next step.
+                        bottom_flows.push(p);
+                    }
+                    _ => {}
+                }
+            }
+        }
+        if went_down {
+            // If water could go down, we keep trying to go down.
+            continue;
+        }
+
+        // If no water flow could go down, look if flow can go to the side.
+
+        // Use the bottom flows positions we saved previously.
+        for p in bottom_flows {
+            // For each position left or right, add a water flow if there is solid (water or clay) under.
+            if move_flow_to_side(grid, p, Left) {
+                something_happened = true;
+            }
+            if move_flow_to_side(grid, p, Right) {
+                something_happened = true;
+            }
+        }
+
+        // Finally, find all flows that have clay on both sides, and replace them with water at rest.
+        let flows_with_clay_at_side = find_flows_with_clay_at_side(grid);
+        if !flows_with_clay_at_side.is_empty() {
+            for p in flows_with_clay_at_side {
+                fill_space_with_water(grid, p);
+            }
+            something_happened = true;
+        }
+    }
+}
+
+fn count_tiles(grid: &Grid, material: Material) -> usize {
+    // While for the grid we start at y = 0 (as the spring is there), the instructions say:
+    // "ignore tiles with a y coordinate smaller than the smallest y coordinate in your scan data or larger than the largest one"
+    // and the smallest y isn't 1...
+    grid.values
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| (grid.min_y..=grid.max_y).contains(&grid.row(*i)))
+        .filter(|(_, m)| **m == material)
+        .count()
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let lines = build(&input);
-    // let (min_x, max_x, max_y) = borders(&lines);
-    // println!("{}", (max_x - min_x) * max_y);
-    // print(&lines);
 
-    let grid = Grid::build(&lines);
-    grid.print();
+    let mut grid = Grid::build(&input);
+    fill_water(&mut grid);
 
-    println!("Part 1: {}", part1(&lines));
-    println!("Part 2: {}", part2(&lines));
+    let param = std::env::args().nth(1).unwrap_or_default();
+    if param == "visu" {
+        grid.print();
+    }
+
+    let water_at_rest_count = count_tiles(&grid, WaterAtRest);
+    let water_flow_count = count_tiles(&grid, WaterFlow);
+
+    println!("Part 1: {}", water_at_rest_count + water_flow_count);
+    println!("Part 2: {}", water_at_rest_count);
 }
 
 #[cfg(test)]
@@ -186,12 +326,13 @@ mod tests {
     const INPUT_TEST: &str = include_str!("../resources/input_test_1");
 
     #[test]
-    fn test_part1() {
-        assert_eq!(part1(&build(INPUT_TEST)), 0);
-    }
+    fn test_part1_2() {
+        let mut grid = Grid::build(INPUT_TEST);
+        fill_water(&mut grid);
 
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        let water_at_rest_count = count_tiles(&grid, WaterAtRest);
+        let water_flow_count = count_tiles(&grid, WaterFlow);
+        assert_eq!(water_at_rest_count + water_flow_count, 57);
+        assert_eq!(water_at_rest_count, 29);
     }
 }

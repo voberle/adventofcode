@@ -67,4 +67,6 @@ Elves and goblins game. Long one: Many iterators, Dijkstra shortest path.
 
 Instructions but a bit different.
 
-### Day 17: [Reservoir Research](day17/README.md)
+### Day 17: [Reservoir Research](day17/README.md) 🌟🌟
+
+Water falling. Amazing one!
