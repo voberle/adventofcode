@@ -156,12 +156,15 @@ fn find_flows(grid: &Grid) -> Vec<usize> {
         .collect()
 }
 
-fn move_flow_to_side(grid: &mut Grid, p: usize, direction: Direction) -> bool {
+fn move_flow_to_side(grid: &mut Grid, pos: usize, direction: Direction) -> bool {
     assert!([Left, Right].contains(&direction));
 
     let mut something_happened = false;
-    // We could optimize here and do a loop
-    if grid.allowed(p, direction) {
+    let mut p = pos;
+    loop {
+        if !grid.allowed(p, direction) {
+            break;
+        }
         let side_pos = grid.next_pos(p, direction);
         if grid.values[side_pos] == Sand && grid.allowed(side_pos, Down) {
             let down = grid.next_pos(p, Down);
@@ -170,10 +173,14 @@ fn move_flow_to_side(grid: &mut Grid, p: usize, direction: Direction) -> bool {
                     assert_eq!(grid.values[side_pos], Sand);
                     grid.values[side_pos] = WaterFlow;
                     something_happened = true;
+
+                    p = side_pos;
+                    continue;
                 }
                 _ => {}
             }
         }
+        break;
     }
     something_happened
 }
