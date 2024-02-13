@@ -16,9 +16,10 @@ type Err = Box<dyn std::error::Error>;
 type Result<T> = std::result::Result<T, Err>;
 
 pub fn fancy(lumber_collection: &Grid) -> Result<()> {
+    // How fast it should go (decrease for faster)
+    const SLEEP_TIME: Duration = Duration::from_millis(25);
+
     crossterm::execute!(stdout(), EnterAlternateScreen)?;
-    // We don't need raw mode, as we don't capture input. Not having raw mode allows ctrl-c to work for example.
-    // enable_raw_mode()?;
 
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     terminal.clear()?;
@@ -29,7 +30,8 @@ pub fn fancy(lumber_collection: &Grid) -> Result<()> {
     loop {
         advance_one_minute(&mut grid);
         minute += 1;
-        if minute == 1000 {
+        // Don't let it run forever (ctrl-c works, as raw mode isn't enabled)
+        if minute == 10000 {
             break;
         }
 
@@ -67,10 +69,9 @@ pub fn fancy(lumber_collection: &Grid) -> Result<()> {
             f.render_widget(p, size);
         })?;
 
-        thread::sleep(Duration::from_millis(100));
+        thread::sleep(SLEEP_TIME);
     }
 
     crossterm::execute!(std::io::stdout(), LeaveAlternateScreen)?;
-    // disable_raw_mode()?;
     Ok(())
 }

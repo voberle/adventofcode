@@ -49,7 +49,7 @@ enum Direction {
     SouthEast,
     SouthWest,
 }
-use Direction::*;
+use Direction::{East, North, NorthEast, NorthWest, South, SouthEast, SouthWest, West};
 
 const ALL_DIRECTIONS: [Direction; 8] = [
     North, East, South, West, NorthEast, NorthWest, SouthEast, SouthWest,
@@ -197,19 +197,33 @@ fn resource_after_10_min(lumber_collection: &Grid) -> usize {
 }
 
 fn resource_after_1000_years(lumber_collection: &Grid) -> usize {
-    // Find period
-    // let mut grid = lumber_collection.clone();
-    // let mut period = 0;
-    // loop {
-    //     period += 1;
-    //     advance_one_minute(&mut grid);
-    //     if grid.values == lumber_collection.values {
-    //         break;
-    //     }
-    // }
-    // println!("period {}", period);
-    // total_resource_value(&grid)
-    0
+    // The pattern becomes periodic.
+    const TIME: usize = 1_000_000_000;
+    const START_OFFSET: usize = 1010;
+
+    let mut grid = lumber_collection.clone();
+
+    // Period doesn't start immediately, moving ahead.
+    for _ in 0..START_OFFSET {
+        advance_one_minute(&mut grid);
+    }
+
+    let period_start_grid = grid.clone();
+    let mut period = 0;
+    loop {
+        period += 1;
+        advance_one_minute(&mut grid);
+        if grid.values == period_start_grid.values {
+            break;
+        }
+    }
+
+    let jump_ahead_start = START_OFFSET + ((TIME - START_OFFSET) / period) * period;
+    for _ in jump_ahead_start..TIME {
+        advance_one_minute(&mut grid);
+    }
+
+    total_resource_value(&grid)
 }
 
 fn main() {

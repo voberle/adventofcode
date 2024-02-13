@@ -71,6 +71,6 @@ Instructions but a bit different.
 
 Water falling. Amazing one!
 
-### Day 18: [Settlers of The North Pole](day18/README.md) 🌟
+### Day 18: [Settlers of The North Pole](day18/README.md) 🌟🌟
 
-Grid 8 directions.
+Grid 8 directions. Visualization.
