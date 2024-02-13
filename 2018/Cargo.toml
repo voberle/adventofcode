@@ -24,6 +24,7 @@ resolver = "2"
 [workspace.lints.clippy]
 bool_to_int_with_if = "warn"
 flat_map_option = "warn"
+items_after_statements = "warn"
 match_same_arms = "warn"
 needless-for-each = "warn"
 range_plus_one = "warn"

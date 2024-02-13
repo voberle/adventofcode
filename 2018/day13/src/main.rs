@@ -174,7 +174,7 @@ fn find_carts(map: &Grid) -> Vec<(usize, Direction, Option<Direction>)> {
 
 fn move_carts<const REMOVE_ON_CRASH: bool>(
     map: &Grid,
-    carts: &mut Vec<(usize, Direction, Option<Direction>)>,
+    carts: &mut [(usize, Direction, Option<Direction>)],
 ) -> usize {
     // We use the magic value MAX for the position to indicate that a cart has been removed from the track.
     const REMOVED: usize = usize::MAX;
