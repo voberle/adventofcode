@@ -70,3 +70,7 @@ Instructions but a bit different.
 ### Day 17: [Reservoir Research](day17/README.md) 🌟🌟
 
 Water falling. Amazing one!
+
+### Day 18: [Settlers of The North Pole](day18/README.md) 🌟
+
+Grid 8 directions.
