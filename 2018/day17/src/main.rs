@@ -156,7 +156,13 @@ fn find_flows(grid: &Grid) -> Vec<usize> {
         .collect()
 }
 
-fn move_flow_to_side(grid: &mut Grid, pos: usize, direction: Direction) -> bool {
+// Moving the flows to left or right, saving the positions of the flows we added,
+fn move_flow_to_side(
+    grid: &mut Grid,
+    pos: usize,
+    direction: Direction,
+    added_flows: &mut Vec<usize>,
+) -> bool {
     assert!([Left, Right].contains(&direction));
 
     let mut something_happened = false;
@@ -172,6 +178,7 @@ fn move_flow_to_side(grid: &mut Grid, pos: usize, direction: Direction) -> bool 
                 Clay | WaterAtRest => {
                     assert_eq!(grid.values[side_pos], Sand);
                     grid.values[side_pos] = WaterFlow;
+                    added_flows.push(side_pos);
                     something_happened = true;
 
                     p = side_pos;
@@ -187,8 +194,7 @@ fn move_flow_to_side(grid: &mut Grid, pos: usize, direction: Direction) -> bool 
 
 // Find all flows that have clay on both sides.
 // Returns the position of the most left flow for such cases.
-fn find_flows_with_clay_at_side(grid: &Grid) -> Vec<usize> {
-    let flows = find_flows(grid);
+fn find_flows_with_clay_at_side(grid: &Grid, flows: &[usize]) -> Vec<usize> {
     flows
         .iter()
         .filter(|&&p| {
@@ -204,6 +210,7 @@ fn find_flows_with_clay_at_side(grid: &Grid) -> Vec<usize> {
                         continue;
                     }
                     if v == Clay {
+                        // Hit other side wall, found a case.
                         return true;
                     }
                     return false;
@@ -274,18 +281,20 @@ fn fill_water(grid: &mut Grid) {
         // If no water flow could go down, look if flow can go to the side.
 
         // Use the bottom flows positions we saved previously.
+        let mut added_flows: Vec<usize> = Vec::new();
+        added_flows.extend(bottom_flows.iter());
         for p in bottom_flows {
             // For each position left or right, add a water flow if there is solid (water or clay) under.
-            if move_flow_to_side(grid, p, Left) {
+            if move_flow_to_side(grid, p, Left, &mut added_flows) {
                 something_happened = true;
             }
-            if move_flow_to_side(grid, p, Right) {
+            if move_flow_to_side(grid, p, Right, &mut added_flows) {
                 something_happened = true;
             }
         }
 
         // Finally, find all flows that have clay on both sides, and replace them with water at rest.
-        let flows_with_clay_at_side = find_flows_with_clay_at_side(grid);
+        let flows_with_clay_at_side = find_flows_with_clay_at_side(grid, &added_flows);
         if !flows_with_clay_at_side.is_empty() {
             for p in flows_with_clay_at_side {
                 fill_space_with_water(grid, p);

@@ -6,7 +6,7 @@ That one was fun to do. At first, it wasn't clear to me how to proceed, but then
 
 Main issue for getting the right answer was counting correctly the tiles, as I assumed wrongly didn't have to filter by y.
 
-My solution was initially a bit slow, at 8 seconds. I later optimized it to 1.5 seconds.
+My solution was initially a bit slow, at 8 seconds. I later optimized it to 1.3 seconds.
 
 The visualization is very satisfying.
 
