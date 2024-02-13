@@ -1,4 +1,7 @@
 /// A 2D grid backed by a simple Vector
+///
+/// For a grid looking at the 8 adjacent directions, check 2015/day18/src/main.rs.
+///
 use crate::direction::Direction::{self, East, North, South, West};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -55,6 +58,10 @@ impl Grid {
 
     pub fn row(&self, index: usize) -> usize {
         index / self.cols
+    }
+
+    pub fn pos_as_str(&self, index: usize) -> String {
+        format!("({},{})", self.row(index), self.col(index))
     }
 
     // Check we don't go outside grid.
