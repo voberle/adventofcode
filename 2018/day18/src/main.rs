@@ -3,6 +3,8 @@ use std::{
     io::{self, Read},
 };
 
+mod visualization;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Area {
     OpenGround,
@@ -75,40 +77,23 @@ impl Grid {
         Self { values, rows, cols }
     }
 
-    fn print_with_pos(&self, positions: &[usize]) {
-        const RED: &str = "\x1b[31m";
+    #[allow(dead_code)]
+    fn print(&self) {
+        const YELLOW: &str = "\x1b[33m";
+        const GREEN: &str = "\x1b[32m";
+        const BLUE: &str = "\x1b[94m";
         const RESET: &str = "\x1b[0m";
         for row in 0..self.rows {
             for p in row * self.cols..(row + 1) * self.cols {
                 let c = self.values[p];
-                if positions.contains(&p) {
-                    print!("{RED}{}{RESET}", c);
-                } else {
-                    print!("{}", c);
+                match c {
+                    OpenGround => print!("{YELLOW}{}{RESET}", c),
+                    Tree => print!("{GREEN}{}{RESET}", c),
+                    Lumberyard => print!("{BLUE}{}{RESET}", c),
                 }
             }
             println!();
         }
-    }
-
-    fn print(&self) {
-        self.print_with_pos(&[]);
-    }
-
-    fn pos(&self, row: usize, col: usize) -> usize {
-        row * self.cols + col
-    }
-
-    fn col(&self, index: usize) -> usize {
-        index % self.cols
-    }
-
-    fn row(&self, index: usize) -> usize {
-        index / self.cols
-    }
-
-    fn pos_as_str(&self, index: usize) -> String {
-        format!("({},{})", self.row(index), self.col(index))
     }
 
     fn north_forbidden(&self, pos: usize) -> bool {
@@ -154,15 +139,6 @@ impl Grid {
         }
     }
 
-    // Get the up to 8 positions around
-    fn neighbors(&self, pos: usize) -> Vec<usize> {
-        ALL_DIRECTIONS
-            .iter()
-            .filter(|&&d| !self.direction_forbidden(pos, d))
-            .map(|&d| self.position_in(pos, d))
-            .collect()
-    }
-
     // Get the up to 8 area around
     fn neighbor_areas(&self, pos: usize) -> Vec<Area> {
         ALL_DIRECTIONS
@@ -200,19 +176,39 @@ fn transform(grid: &Grid, pos: usize) -> Area {
     a
 }
 
-fn total_resource_value(lumber_collection: &Grid, time: usize) -> usize {
-    let mut grid = lumber_collection.clone();
-    for _ in 0..time {
-        grid.values = (0..grid.values.len())
-            .map(|pos| transform(&grid, pos))
-            .collect();
-    }
+fn advance_one_minute(grid: &mut Grid) {
+    grid.values = (0..grid.values.len())
+        .map(|pos| transform(grid, pos))
+        .collect();
+}
+
+fn total_resource_value(grid: &Grid) -> usize {
     let wooden_area = grid.values.iter().filter(|&&a| a == Tree).count();
     let lumberyards = grid.values.iter().filter(|&&a| a == Lumberyard).count();
     wooden_area * lumberyards
 }
 
-fn part2(lumber_collection: &Grid) -> usize {
+fn resource_after_10_min(lumber_collection: &Grid) -> usize {
+    let mut grid = lumber_collection.clone();
+    for _ in 0..10 {
+        advance_one_minute(&mut grid);
+    }
+    total_resource_value(&grid)
+}
+
+fn resource_after_1000_years(lumber_collection: &Grid) -> usize {
+    // Find period
+    // let mut grid = lumber_collection.clone();
+    // let mut period = 0;
+    // loop {
+    //     period += 1;
+    //     advance_one_minute(&mut grid);
+    //     if grid.values == lumber_collection.values {
+    //         break;
+    //     }
+    // }
+    // println!("period {}", period);
+    // total_resource_value(&grid)
     0
 }
 
@@ -220,9 +216,16 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let lumber_collection = Grid::build(&input);
+    // lumber_collection.print();
 
-    println!("Part 1: {}", total_resource_value(&lumber_collection, 10));
-    println!("Part 2: {}", part2(&lumber_collection));
+    let param = std::env::args().nth(1).unwrap_or_default();
+    if param == "visu" {
+        visualization::fancy(&lumber_collection).unwrap();
+        return;
+    }
+
+    println!("Part 1: {}", resource_after_10_min(&lumber_collection));
+    println!("Part 2: {}", resource_after_1000_years(&lumber_collection));
 }
 
 #[cfg(test)]
@@ -233,11 +236,6 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(total_resource_value(&Grid::build(INPUT_TEST), 10), 1147);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        assert_eq!(resource_after_10_min(&Grid::build(INPUT_TEST)), 1147);
     }
 }

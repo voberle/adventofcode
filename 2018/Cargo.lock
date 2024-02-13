@@ -270,6 +270,10 @@ dependencies = [
 [[package]]
 name = "day18"
 version = "0.1.0"
+dependencies = [
+ "crossterm",
+ "ratatui",
+]
 
 [[package]]
 name = "either"
