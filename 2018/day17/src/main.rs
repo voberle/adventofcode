@@ -192,57 +192,39 @@ fn move_flow_to_side(
     something_happened
 }
 
-// Find all flows that have clay on both sides.
-// Returns the position of the most left flow for such cases.
-fn find_flows_with_clay_at_side(grid: &Grid, flows: &[usize]) -> Vec<usize> {
-    flows
-        .iter()
-        .filter(|&&p| {
-            if grid.allowed(p, Left) && grid.values[grid.next_pos(p, Left)] == Clay {
-                let mut r = p;
-                loop {
-                    if !grid.allowed(r, Right) {
-                        break;
-                    }
-                    r = grid.next_pos(r, Right);
-                    let v = grid.values[r];
-                    if v == WaterFlow {
-                        continue;
-                    }
-                    if v == Clay {
-                        // Hit other side wall, found a case.
-                        return true;
-                    }
-                    return false;
+// Find all flows that have clay on both sides and fills them.
+fn fill_space_with_water(grid: &mut Grid, flows: &[usize]) -> bool {
+    let mut something_happened = false;
+    for p in flows {
+        // Search all flows that have clays on their left
+        if grid.allowed(*p, Left) && grid.values[grid.next_pos(*p, Left)] == Clay {
+            let mut r = *p;
+            let mut saved_pos = Vec::new();
+            // Move to the right while we have flow, until we hit a wall.
+            loop {
+                if !grid.allowed(r, Right) {
+                    break;
                 }
-                false
-            } else {
-                false
-            }
-        })
-        .copied()
-        .collect()
-}
+                r = grid.next_pos(r, Right);
+                let v = grid.values[r];
+                if v == WaterFlow {
+                    saved_pos.push(r);
+                    continue;
+                }
 
-// For the flows with clay at side we found, fill them with water.
-// Assumes `pos` points to the first '.' in "#||||#".
-fn fill_space_with_water(grid: &mut Grid, pos: usize) {
-    let mut p = pos;
-    loop {
-        grid.values[p] = WaterAtRest;
-        if !grid.allowed(p, Right) {
-            break;
+                if v == Clay {
+                    // Hit other side wall, found a case, filling it.
+                    saved_pos.push(*p);
+                    for p_to_fill in saved_pos {
+                        grid.values[p_to_fill] = WaterAtRest;
+                    }
+                    something_happened = true;
+                }
+                break;
+            }
         }
-        p = grid.next_pos(p, Right);
-        let v = grid.values[p];
-        if v == WaterFlow {
-            grid.values[p] = WaterAtRest;
-            continue;
-        } else if v == Clay {
-            return;
-        }
-        panic!("Should never get here when filling a space with water");
     }
+    something_happened
 }
 
 fn fill_water(grid: &mut Grid) {
@@ -294,11 +276,7 @@ fn fill_water(grid: &mut Grid) {
         }
 
         // Finally, find all flows that have clay on both sides, and replace them with water at rest.
-        let flows_with_clay_at_side = find_flows_with_clay_at_side(grid, &added_flows);
-        if !flows_with_clay_at_side.is_empty() {
-            for p in flows_with_clay_at_side {
-                fill_space_with_water(grid, p);
-            }
+        if fill_space_with_water(grid, &added_flows) {
             something_happened = true;
         }
     }
