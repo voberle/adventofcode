@@ -1,4 +1,5 @@
 use std::{
+    fmt,
     io::{self, Read},
     ops::{Index, IndexMut},
 };
@@ -71,6 +72,12 @@ impl Instruction {
     }
 }
 
+impl fmt::Display for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {} {} {}", self.opcode, self.a, self.b, self.c)
+    }
+}
+
 fn build(input: &str) -> (u32, Vec<Instruction>) {
     let mut it = input.lines();
     let ip_binding = it
@@ -87,27 +94,91 @@ fn build(input: &str) -> (u32, Vec<Instruction>) {
     (ip_binding, instructions)
 }
 
-fn exec(ip_binding: u32, instructions: &[Instruction], regs: &mut Registers) {
+fn exec(ip_binding: u32, instructions: &[Instruction], regs: &mut Registers, ip: &mut u32) {
+    const DEBUG: bool = false;
+
+    let ins = &instructions[*ip as usize];
+
+    regs[ip_binding] = *ip;
+    if DEBUG {
+        print!("ip={} {} {:?}", ip, ins, regs);
+    }
+
+    ins.exec(regs);
+
+    *ip = regs[ip_binding];
+    *ip += 1;
+    if DEBUG {
+        println!(" {:?}", regs);
+    }
+}
+
+fn exec_all(ip_binding: u32, instructions: &[Instruction], regs: &mut Registers) {
     let mut ip: u32 = 0;
     while ip < instructions.len() as u32 {
-        regs[ip_binding] = ip;
-
-        let ins = &instructions[ip as usize];
-        ins.exec(regs);
-
-        ip = regs[ip_binding];
-        ip += 1;
+        exec(ip_binding, instructions, regs, &mut ip);
     }
+}
+
+// Find the input to the main loop by running a sub-set of the instructions
+fn calculate_r1(ip_binding: u32, instructions: &[Instruction], r0: u32) -> u32 {
+    let mut regs = Registers::new();
+    regs[0] = r0;
+
+    // By not executing the very last instructions,
+    // we only get the input calculation part of the instructions executed.
+    exec_all(
+        ip_binding,
+        &instructions[0..instructions.len() - 1],
+        &mut regs,
+    );
+    regs[1]
+}
+
+// Rust implementation of the instructions 1 to 16.
+fn translated_loop(r1: u32) -> u32 {
+    // This code is looking for all numbers between 1 and r1
+    // which have another number <= r1 whose product is equal to r1.
+    // This means all factors of r1.
+    //
+    // It returns the sum of all those numbers.
+    let mut r0 = 0;
+
+    let mut r3 = 1;
+    while r3 <= r1 {
+        let mut r2 = 1;
+        while r2 <= r1 {
+            if r3 * r2 == r1 {
+                r0 += r3;
+            }
+            r2 += 1;
+        }
+        r3 += 1;
+    }
+    r0
+}
+
+// Optimized version of above function.
+fn sum_of_factors(n: u32) -> u32 {
+    (1..=n).filter(|i| n % i == 0).sum()
 }
 
 fn process1_reg0_val(ip_binding: u32, instructions: &[Instruction]) -> u32 {
     let mut regs = Registers::new();
-    exec(ip_binding, instructions, &mut regs);
-    regs[0]
+    exec_all(ip_binding, instructions, &mut regs);
+    let result = regs[0];
+
+    // Checks optimized version is correct for part 1.
+    let r1 = calculate_r1(ip_binding, instructions, 0);
+    assert_eq!(translated_loop(r1), result);
+    assert_eq!(sum_of_factors(r1), result);
+
+    result
 }
 
-fn part2(ip_binding: u32, instructions: &[Instruction]) -> u32 {
-    0
+fn process2_reg0_val(ip_binding: u32, instructions: &[Instruction]) -> u32 {
+    let r1 = calculate_r1(ip_binding, instructions, 1);
+    sum_of_factors(r1)
 }
 
 fn main() {
@@ -116,7 +187,7 @@ fn main() {
     let (ip_binding, instructions) = build(&input);
 
     println!("Part 1: {}", process1_reg0_val(ip_binding, &instructions));
-    println!("Part 2: {}", part2(ip_binding, &instructions));
+    println!("Part 2: {}", process2_reg0_val(ip_binding, &instructions));
 }
 
 #[cfg(test)]
@@ -129,10 +200,5 @@ mod tests {
     fn test_part1() {
         let (ip_binding, instructions) = build(INPUT_TEST);
         assert_eq!(process1_reg0_val(ip_binding, &instructions), 6);
-    }
-
-    #[test]
-    fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), 0);
     }
 }

@@ -75,6 +75,6 @@ Water falling. Amazing one!
 
 Grid 8 directions. Visualization.
 
-### Day 19: [Go With The Flow](day19/README.md) 🌟
+### Day 19: [Go With The Flow](day19/README.md) 🌟🌟
 
-Instructions.
+Instructions. Optimization of a slow set of instructions.
