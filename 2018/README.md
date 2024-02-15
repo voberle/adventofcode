@@ -78,3 +78,5 @@ Grid 8 directions. Visualization.
 ### Day 19: [Go With The Flow](day19/README.md) 🌟🌟
 
 Instructions. Optimization of a slow set of instructions.
+
+### Day 20: [A Regular Map](day20/README.md)
