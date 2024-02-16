@@ -8,6 +8,9 @@ use fxhash::{FxHashMap, FxHashSet};
 
 mod parsing;
 
+use parsing::parse_regex;
+use parsing::GraphNode;
+
 // In this exercise, we try reading the input file as bytes instead of a string.
 // This functions helps with debugging.
 #[allow(dead_code)]
@@ -53,8 +56,6 @@ impl Direction {
         }
     }
 }
-
-const ALL_DIRECTIONS: [Direction; 4] = [North, East, South, West];
 
 impl fmt::Display for Direction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -110,76 +111,105 @@ impl Pos {
 
 // The map is represented by a HashMap of positions to where we can go from these positions.
 // Indexes are the Direction `index()` values.
-fn build_map(regex: &[u8]) -> FxHashMap<Pos, [bool; 4]> {
-    // While building, "false" in the allowed array actually means "maybe"
-    let mut map: FxHashMap<Pos, [bool; 4]> = FxHashMap::default();
+struct Map(FxHashMap<Pos, [bool; 4]>);
 
-    // Ignoring first ^ and last $
-    let regex = &regex[1..regex.len() - 1];
-
-    let mut pos = Pos::new(0, 0);
-    map.insert(pos, [false, false, false, false]);
-
-    for c in regex {
-        if let Some(dir) = Direction::new(*c) {
-            // We can go in that direction from current position.
-            map.get_mut(&pos).unwrap()[dir.index()] = true;
-            // From next position, we can go back.
-            pos = pos.next(dir);
-            let mut allowed_dir = [false, false, false, false];
-            allowed_dir[dir.opposite().index()] = true;
-            map.insert(pos, allowed_dir);
-        }
+impl Map {
+    fn new() -> Self {
+        Self(FxHashMap::default())
     }
+
+    // Returns min x, max x, min y, max y.
+    fn borders(&self) -> (i32, i32, i32, i32) {
+        // Not using iterator min / max to keep only one loop.
+        let mut min_x = i32::MAX;
+        let mut max_x = i32::MIN;
+        let mut min_y = i32::MAX;
+        let mut max_y = i32::MIN;
+        for Pos { x, y } in self.0.keys() {
+            min_x = min_x.min(*x);
+            max_x = max_x.max(*x);
+            min_y = min_y.min(*y);
+            max_y = max_y.max(*y);
+        }
+        (min_x, max_x, min_y, max_y)
+    }
+
+    fn update(&mut self, pos: Pos, dir: Direction) {
+        self.0
+            .entry(pos)
+            .and_modify(|e| e[dir.index()] = true)
+            .or_insert({
+                let mut allowed_dir = [false, false, false, false];
+                allowed_dir[dir.index()] = true;
+                allowed_dir
+            });
+    }
+}
+
+fn build_map(graph: &[GraphNode]) -> Map {
+    let mut map: Map = Map::new();
+
+    let pos = Pos::new(0, 0);
+    // While building, "false" in the allowed array actually means "maybe",
+    // but at the end it means "wall".
+    map.0.insert(pos, [false, false, false, false]);
+
+    walk(graph, 0, pos, &mut map);
 
     map
 }
 
-// Returns min x, max x, min y, max y.
-fn map_borders(map: &FxHashMap<Pos, [bool; 4]>) -> (i32, i32, i32, i32) {
-    // Not using iterator min / max to keep only one loop.
-    let mut min_x = i32::MAX;
-    let mut max_x = i32::MIN;
-    let mut min_y = i32::MAX;
-    let mut max_y = i32::MIN;
-    for Pos { x, y } in map.keys() {
-        min_x = min_x.min(*x);
-        max_x = max_x.max(*x);
-        min_y = min_y.min(*y);
-        max_y = max_y.max(*y);
+fn walk(graph: &[GraphNode], node_idx: usize, pos: Pos, map: &mut Map) {
+    let mut pos = pos;
+    for dir in &graph[node_idx].value {
+        let dir = dir.unwrap();
+        // We can go in that direction from current position.
+        map.update(pos, dir);
+
+        // From next position, we can go back.
+        pos = pos.next(dir);
+        map.update(pos, dir.opposite());
     }
-    (min_x, max_x, min_y, max_y)
+
+    // A clone() is needed for the borrow checker
+    let next_nodes = graph[node_idx].next.clone();
+    for n in next_nodes {
+        walk(graph, n, pos, map);
+    }
 }
 
-fn print_map(map: &FxHashMap<Pos, [bool; 4]>) {
-    let (min_x, max_x, min_y, max_y) = map_borders(map);
-    println!("{:#<1$}", "", (max_x - min_y + 4) as usize);
-    for y in min_y..=max_y {
-        print!("#");
-        for x in min_x..=max_x {
-            let val = map.get(&Pos::new(x, y)).unwrap();
-            print!("{}", if x == 0 && y == 0 { 'X' } else { '.' });
-            if val[East.index()] {
-                print!("|");
-            } else {
-                print!("#");
+impl fmt::Display for Map {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (min_x, max_x, min_y, max_y) = self.borders();
+        // println!("borders = {:?}", (min_x, max_x, min_y, max_y));
+        writeln!(f, "{:#<1$}", "", ((max_x - min_y) * 2 + 3) as usize)?;
+        for y in min_y..=max_y {
+            write!(f, "#")?;
+            for x in min_x..=max_x {
+                let val = self.0.get(&Pos::new(x, y)).unwrap();
+                write!(f, "{}", if x == 0 && y == 0 { 'X' } else { '.' })?;
+                if val[East.index()] {
+                    write!(f, "|")?;
+                } else {
+                    write!(f, "#")?;
+                }
             }
-        }
-        println!();
+            writeln!(f)?;
 
-        print!("#");
-        for x in min_x..=max_x {
-            let val = map.get(&Pos::new(x, y)).unwrap();
-            if val[South.index()] {
-                print!("-");
-            } else {
-                print!("#");
+            write!(f, "#")?;
+            for x in min_x..=max_x {
+                let val = self.0.get(&Pos::new(x, y)).unwrap();
+                if val[South.index()] {
+                    write!(f, "-")?;
+                } else {
+                    write!(f, "#")?;
+                }
+                write!(f, "#")?;
             }
-            print!("#");
+            writeln!(f)?;
         }
-        println!();
+        Ok(())
     }
-    // println!("{:#<1$}", "", (max_x - min_y + 3) as usize);
 }
 
 // Node we are exploring with Dijkstra.
@@ -202,7 +232,7 @@ impl PartialOrd for Node {
 }
 
 // Dijkstra shortest path.
-pub fn find_shortest_path(graph: &[parsing::GraphNode], start: usize, end: usize) -> usize {
+pub fn find_shortest_path(graph: &[GraphNode], start: usize, end: usize) -> usize {
     let mut visited: FxHashSet<usize> = FxHashSet::default();
     let mut distance: FxHashMap<usize, usize> = FxHashMap::default();
     let mut shortest_distance = usize::MAX;
@@ -243,11 +273,16 @@ pub fn find_shortest_path(graph: &[parsing::GraphNode], start: usize, end: usize
 
 // Largest number of doors required to pass through to reach a room.
 fn dist_to_furthest_room(regex: &[u8]) -> usize {
-    let nodes = parsing::parse_regex(regex);
+    let graph = parse_regex(regex);
     // parsing::print_graphviz(&nodes);
 
+    let map = build_map(&graph);
+
+    println!("{}", regex_to_string(regex));
+    println!("{}", map);
+
     // Find all the nodes that don't have any next, meaning they are at the end.
-    let ending_nodes: Vec<usize> = nodes
+    let ending_nodes: Vec<usize> = graph
         .iter()
         .enumerate()
         .filter(|(_, n)| n.next.is_empty())
@@ -258,7 +293,7 @@ fn dist_to_furthest_room(regex: &[u8]) -> usize {
     // This produces the right answer, probably because no path overlap each other?
     ending_nodes
         .iter()
-        .map(|end| find_shortest_path(&nodes, 0, *end))
+        .map(|end| find_shortest_path(&graph, 0, *end))
         .max()
         .unwrap()
 }
@@ -320,18 +355,42 @@ fn main() {
 mod tests {
     use super::*;
 
+    const INPUT_TEST_1: &[u8; 5] = include_bytes!("../resources/input_test_1");
+    const INPUT_TEST_2: &[u8; 23] = include_bytes!("../resources/input_test_2");
+    const INPUT_TEST_3: &[u8; 41] = include_bytes!("../resources/input_test_3");
+    const INPUT_TEST_4: &[u8; 51] = include_bytes!("../resources/input_test_4");
+    const INPUT_TEST_5: &[u8; 65] = include_bytes!("../resources/input_test_5");
+
+    #[test]
+    fn test_map_generation() {
+        assert_eq!(
+            build_map(&parse_regex(INPUT_TEST_1)).to_string().trim(),
+            include_str!("../resources/input_test_1.map")
+        );
+        assert_eq!(
+            build_map(&parse_regex(INPUT_TEST_2)).to_string().trim(),
+            include_str!("../resources/input_test_2.map")
+        );
+        assert_eq!(
+            build_map(&parse_regex(INPUT_TEST_3)).to_string().trim(),
+            include_str!("../resources/input_test_3.map")
+        );
+        assert_eq!(
+            build_map(&parse_regex(INPUT_TEST_4)).to_string().trim(),
+            include_str!("../resources/input_test_4.map")
+        );
+        assert_eq!(
+            build_map(&parse_regex(INPUT_TEST_5)).to_string().trim(),
+            include_str!("../resources/input_test_5.map")
+        );
+    }
+
     #[test]
     fn test_part1() {
-        let input_test_1 = include_bytes!("../resources/input_test_1");
-        let input_test_2 = include_bytes!("../resources/input_test_2");
-        let input_test_3 = include_bytes!("../resources/input_test_3");
-        let input_test_4 = include_bytes!("../resources/input_test_4");
-        let input_test_5 = include_bytes!("../resources/input_test_5");
-
-        assert_eq!(dist_to_furthest_room(input_test_1), 3);
-        assert_eq!(dist_to_furthest_room(input_test_2), 10);
-        assert_eq!(dist_to_furthest_room(input_test_3), 18);
-        assert_eq!(dist_to_furthest_room(input_test_4), 23);
-        assert_eq!(dist_to_furthest_room(input_test_5), 31);
+        assert_eq!(dist_to_furthest_room(INPUT_TEST_1), 3);
+        assert_eq!(dist_to_furthest_room(INPUT_TEST_2), 10);
+        assert_eq!(dist_to_furthest_room(INPUT_TEST_3), 18);
+        assert_eq!(dist_to_furthest_room(INPUT_TEST_4), 23);
+        assert_eq!(dist_to_furthest_room(INPUT_TEST_5), 31);
     }
 }

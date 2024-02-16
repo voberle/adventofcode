@@ -2,6 +2,8 @@
 
 use std::slice::Iter;
 
+use fxhash::FxHashSet;
+
 use crate::Direction;
 
 // Intermediary structure representing the reg ex, to make life easier.
@@ -52,7 +54,7 @@ fn preprocess_regex(regex: &[u8]) -> Vec<Elt> {
 #[derive(Debug)]
 pub struct GraphNode {
     pub value: Vec<Option<Direction>>,
-    pub next: Vec<usize>, // REPLACE WITH SET TO HANDLE DUPES
+    pub next: FxHashSet<usize>,
 }
 
 impl GraphNode {
@@ -81,7 +83,7 @@ pub fn parse_regex(regex: &[u8]) -> Vec<GraphNode> {
             if let Elt::Value(s, _) = e {
                 Some(GraphNode {
                     value: s.iter().map(|x| Some(*x)).collect(),
-                    next: vec![],
+                    next: FxHashSet::default(),
                 })
             } else {
                 None
@@ -111,10 +113,10 @@ fn update_nodes(
     while let Some(elt) = it.next() {
         match elt {
             Elt::Value(_val, idx) => {
-                nodes[current_idx].next.push(*idx);
+                nodes[current_idx].next.insert(*idx);
                 current_idx = *idx;
                 for n in &last_exit_nodes {
-                    nodes[*n].next.push(*idx);
+                    nodes[*n].next.insert(*idx);
                 }
                 last_exit_nodes.clear();
             }
@@ -139,6 +141,9 @@ fn update_nodes(
 }
 
 // Prints a Graphviz version of the regex.
+// View with:
+//  dot -Tpdf resources/input.gv > input.pdf
+//
 // A good way to check it is to compare it against the output from
 // https://regexper.com
 #[allow(dead_code)]
@@ -171,23 +176,23 @@ mod tests {
 
     #[test]
     fn test_preprocess_regex() {
-        let input_test_4 = include_bytes!("../resources/input_test_4");
+        let input = include_bytes!("../resources/input_test_4");
 
-        let regex = preprocess_regex(input_test_4);
+        let regex = preprocess_regex(input);
         // println!("{:#?}", regex);
         assert_eq!(regex.len(), 22);
     }
 
     #[test]
     fn test_parse_regex() {
-        let input_test_4 = include_bytes!("../resources/input_test_4");
+        let input = include_bytes!("../resources/input_test_4");
 
-        let graph = parse_regex(input_test_4);
+        let graph = parse_regex(input);
         // for (i, n) in graph.iter().enumerate() {
         //     println!("{}: {}; next={:?}", i, n.dirs_to_string(), n.next);
         // }
 
-        // print_graphviz(&graph);
+        print_graphviz(&graph);
 
         assert_eq!(graph.len(), 9);
     }
