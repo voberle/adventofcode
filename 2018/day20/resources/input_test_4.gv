@@ -1,0 +1,28 @@
+digraph {
+	rankdir=LR;
+	node [shape = diamond]; "END";
+	node [shape = oval];
+	0 [shape = oval label = "ESSWWN"];
+	1 [shape = oval label = "E"];
+	2 [shape = oval label = "NNENN"];
+	3 [shape = oval label = "EESS"];
+	4 [shape = oval label = "WNSE"];
+	5 [shape = oval label = "SSS"];
+	6 [shape = oval label = "WWWSSSSE"];
+	7 [shape = oval label = "SW"];
+	8 [shape = oval label = "NNNE"];
+	0 -> 1;
+	0 -> 2;
+	1 -> END;
+	2 -> 3;
+	2 -> 6;
+	3 -> 4;
+	3 -> 5;
+	3 -> 5;
+	4 -> 5;
+	5 -> END;
+	6 -> 7;
+	6 -> 8;
+	7 -> END;
+	8 -> END;
+}
