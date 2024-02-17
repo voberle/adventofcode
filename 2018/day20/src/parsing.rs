@@ -125,12 +125,15 @@ fn update_nodes(
     while let Some(elt) = it.next() {
         match elt {
             Elt::Value(_val, idx) => {
-                nodes[current_idx].next.insert(*idx);
-                current_idx = *idx;
-                for n in &last_exit_nodes {
-                    nodes[*n].next.insert(*idx);
+                if last_exit_nodes.is_empty() {
+                    nodes[current_idx].next.insert(*idx);
+                } else {
+                    for n in &last_exit_nodes {
+                        nodes[*n].next.insert(*idx);
+                    }
+                    last_exit_nodes.clear();
                 }
-                last_exit_nodes.clear();
+                current_idx = *idx;
             }
             Elt::OpenGroup(_) => {
                 last_exit_nodes = update_nodes(nodes, it, current_idx);
@@ -201,7 +204,7 @@ mod tests {
 
     #[test]
     fn test_parse_regex() {
-        let graph = parse_regex(crate::tests::INPUT_TEST_5);
+        let graph = parse_regex(crate::tests::INPUT_TEST_6);
         for (i, n) in graph.iter().enumerate() {
             println!("{}: {}; next={:?}", i, n.dirs_to_string(), n.next);
         }
@@ -253,6 +256,17 @@ mod tests {
                 /* 10*/ GraphNode::new("SS", &[]),
             ]
         );
+
+        // https://regexper.com/#%5EW%28SSS%7CEEESSSWWW%29ENNES%24
+        assert_eq!(
+            parse_regex(crate::tests::INPUT_TEST_6),
+            vec![
+                /* 0 */ GraphNode::new("W", &[1, 2]),
+                /* 1 */ GraphNode::new("SSS", &[3]),
+                /* 2 */ GraphNode::new("EEESSSWWW", &[3]),
+                /* 3 */ GraphNode::new("ENNES", &[]),
+            ]
+        );
     }
 
     fn save_gv(input: &[u8], nb: usize) {
@@ -267,5 +281,6 @@ mod tests {
         save_gv(crate::tests::INPUT_TEST_3, 3);
         save_gv(crate::tests::INPUT_TEST_4, 4);
         save_gv(crate::tests::INPUT_TEST_5, 5);
+        save_gv(crate::tests::INPUT_TEST_6, 6);
     }
 }

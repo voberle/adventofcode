@@ -362,6 +362,7 @@ mod tests {
     pub const INPUT_TEST_3: &[u8; 41] = include_bytes!("../resources/input_test_3");
     pub const INPUT_TEST_4: &[u8; 51] = include_bytes!("../resources/input_test_4");
     pub const INPUT_TEST_5: &[u8; 65] = include_bytes!("../resources/input_test_5");
+    pub const INPUT_TEST_6: &[u8; 23] = include_bytes!("../resources/input_test_6");
 
     #[test]
     fn test_map_generation() {

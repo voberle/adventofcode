@@ -1,0 +1,14 @@
+digraph {
+	rankdir=LR;
+	node [shape = diamond]; "END";
+	node [shape = oval];
+	0 [shape = oval label = "W"];
+	1 [shape = oval label = "SSS"];
+	2 [shape = oval label = "EEESSSWWW"];
+	3 [shape = oval label = "ENNES"];
+	0 -> 1;
+	0 -> 2;
+	1 -> 3;
+	2 -> 3;
+	3 -> END;
+}
