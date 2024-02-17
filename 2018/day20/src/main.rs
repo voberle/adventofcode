@@ -183,30 +183,32 @@ fn walk(graph: &[GraphNode], node_idx: usize, pos: Pos, map: &mut Map) {
 impl fmt::Display for Map {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (min_x, max_x, min_y, max_y) = self.borders();
-        // println!("borders = {:?}", (min_x, max_x, min_y, max_y));
-        writeln!(f, "{:#<1$}", "", ((max_x - min_y) * 2 + 3) as usize)?;
+        let width = (((max_x - min_x) + 1) * 2 + 1) as usize;
+        // println!("borders = {:?}, width={}", (min_x, max_x, min_y, max_y), width);
+
+        writeln!(f, "{:#<1$}", "", width)?;
         for y in min_y..=max_y {
             write!(f, "#")?;
             for x in min_x..=max_x {
-                let val = self.0.get(&Pos::new(x, y)).unwrap();
-                write!(f, "{}", if x == 0 && y == 0 { 'X' } else { '.' })?;
-                if val[East.index()] {
-                    write!(f, "|")?;
+                if let Some(val) = self.0.get(&Pos::new(x, y)) {
+                    write!(f, "{}", if x == 0 && y == 0 { 'X' } else { '.' })?;
+                    write!(f, "{}", if val[East.index()] { "|" } else { "#" })?;
                 } else {
-                    write!(f, "#")?;
+                    // Doesn't happen on a "pure" map, that is a nice rectangle
+                    write!(f, "  ")?;
                 }
             }
             writeln!(f)?;
 
             write!(f, "#")?;
             for x in min_x..=max_x {
-                let val = self.0.get(&Pos::new(x, y)).unwrap();
-                if val[South.index()] {
-                    write!(f, "-")?;
-                } else {
+                if let Some(val) = self.0.get(&Pos::new(x, y)) {
+                    write!(f, "{}", if val[South.index()] { "-" } else { "#" })?;
+
                     write!(f, "#")?;
+                } else {
+                    write!(f, "  ")?;
                 }
-                write!(f, "#")?;
             }
             writeln!(f)?;
         }
@@ -280,7 +282,7 @@ fn dist_to_furthest_room(regex: &[u8]) -> usize {
 
     let map = build_map(&graph);
 
-    println!("{}", regex_to_string(regex));
+    // println!("{}", regex_to_string(regex));
     println!("{}", map);
 
     // Find all the nodes that don't have any next, meaning they are at the end.
