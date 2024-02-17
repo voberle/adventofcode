@@ -112,7 +112,7 @@ const INSTRUCTIONS: [(&str, InstructionFn); 16] = [
     ("bori", |regs, a, b, c| regs[c] = regs[a] | b),
     ("setr", |regs, a, _, c| regs[c] = regs[a]),
     ("seti", |regs, a, _, c| regs[c] = a),
-    ("gtit", |regs, a, b, c| regs[c] = u32::from(a > regs[b])),
+    ("gtir", |regs, a, b, c| regs[c] = u32::from(a > regs[b])),
     ("gtri", |regs, a, b, c| regs[c] = u32::from(regs[a] > b)),
     ("gtrr", |regs, a, b, c| regs[c] = u32::from(regs[a] > regs[b])),
     ("eqit", |regs, a, b, c| regs[c] = u32::from(a == regs[b])),

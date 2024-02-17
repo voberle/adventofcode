@@ -61,13 +61,13 @@ impl Instruction {
             "bori" => regs[self.c] = regs[self.a] | self.b,
             "setr" => regs[self.c] = regs[self.a],
             "seti" => regs[self.c] = self.a,
-            "gtit" => regs[self.c] = u32::from(self.a > regs[self.b]),
+            "gtir" => regs[self.c] = u32::from(self.a > regs[self.b]),
             "gtri" => regs[self.c] = u32::from(regs[self.a] > self.b),
             "gtrr" => regs[self.c] = u32::from(regs[self.a] > regs[self.b]),
             "eqit" => regs[self.c] = u32::from(self.a == regs[self.b]),
             "eqri" => regs[self.c] = u32::from(regs[self.a] == self.b),
             "eqrr" => regs[self.c] = u32::from(regs[self.a] == regs[self.b]),
-            _ => panic!("Invalid opcode"),
+            _ => panic!("Invalid opcode {}", self.opcode),
         }
     }
 }
