@@ -21,3 +21,7 @@ To my surprise, I didn't need to generate the maze to find the answer to part 1.
 ## Part 2
 
 For part 2, I tried to also use only the graph, by walking on all possible paths and marking all elements that were less than 1000 steps away. Unfortunately that didn't produce the right answer.
+
+So I still ended up generating the map and checking my graph produces the correct maps. It did.
+
+One theory was that the loops of the real input caused problem, and removing the empty options would fix it. Unfortunately that didn't work either.

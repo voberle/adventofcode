@@ -280,10 +280,9 @@ fn dist_to_furthest_room(regex: &[u8]) -> usize {
     let graph = parse_regex(regex);
     // parsing::print_graphviz(&nodes);
 
-    let map = build_map(&graph);
-
+    // let map = build_map(&graph);
     // println!("{}", regex_to_string(regex));
-    println!("{}", map);
+    // println!("{}", map);
 
     // Find all the nodes that don't have any next, meaning they are at the end.
     let ending_nodes: Vec<usize> = graph
@@ -330,15 +329,12 @@ fn walk_and_mark<const LIMIT: usize>(
 
 fn rooms_dist_over_1000_doors(regex: &[u8]) -> usize {
     let mut nodes = parsing::parse_regex(regex);
-    // println!("nodes count {}", nodes.len());
 
-    // let total_rooms_count: usize = nodes.iter().map(|n| n.value.len()).sum();
-    // +1 as we need to add first room
-    // println!("total_rooms_count count {}", total_rooms_count + 1);
-    // number of doors is number of rooms - 1
+    // Parsing and ignore empty nodes is possibly working for some inputs,
+    // but it doesn't for mine.
+    // let mut nodes = parsing::parse_regex_with(regex, true);
 
     walk_and_mark::<1000>(&mut nodes, 0, 0);
-    // parsing::print_graphviz(&nodes);
 
     // Unlike part 1, this doesn't work. Don't know why yet.
     nodes

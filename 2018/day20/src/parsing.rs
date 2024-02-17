@@ -17,10 +17,10 @@ enum Elt {
     OpenGroup(usize),
     CloseGroup(usize),
     Pipe,
-    Empty,
 }
 
-fn preprocess_regex(regex: &[u8]) -> Vec<Elt> {
+// When `skip_empty_options` is set, empty options like "(WNSE|)" will be skipped.
+fn preprocess_regex(regex: &[u8], skip_empty_options: bool) -> Vec<Elt> {
     // Ignoring first ^ and last $
     let regex = &regex[1..regex.len() - 1];
 
@@ -41,8 +41,12 @@ fn preprocess_regex(regex: &[u8]) -> Vec<Elt> {
         } else if *c == b'|' {
             output.push(Elt::Pipe);
         } else if *c == b')' {
-            if let Some(Elt::Pipe) = output.last() {
-                output.push(Elt::Empty);
+            if skip_empty_options {
+                if let Some(Elt::Pipe) = output.last() {
+                    output.pop();
+                    output.pop();
+                    value_idx -= 1;
+                }
             }
             output.push(Elt::CloseGroup(level));
             level -= 1;
@@ -85,7 +89,11 @@ impl GraphNode {
 }
 
 pub fn parse_regex(regex: &[u8]) -> Vec<GraphNode> {
-    let regex_elts = preprocess_regex(regex);
+    parse_regex_with(regex, false)
+}
+
+pub fn parse_regex_with(regex: &[u8], skip_empty_options: bool) -> Vec<GraphNode> {
+    let regex_elts = preprocess_regex(regex, skip_empty_options);
 
     // Create the node vector with all the values
     let mut nodes: Vec<GraphNode> = regex_elts
@@ -147,9 +155,6 @@ fn update_nodes(
                 exit_nodes.push(current_idx);
                 current_idx = level_idx;
             }
-            Elt::Empty => {
-                // Turns out this wasn't necessary
-            }
         }
     }
     exit_nodes
@@ -197,9 +202,9 @@ mod tests {
 
     #[test]
     fn test_preprocess_regex() {
-        let regex = preprocess_regex(crate::tests::INPUT_TEST_4);
+        let regex = preprocess_regex(crate::tests::INPUT_TEST_4, false);
         // println!("{:#?}", regex);
-        assert_eq!(regex.len(), 22);
+        assert_eq!(regex.len(), 21);
     }
 
     #[test]
