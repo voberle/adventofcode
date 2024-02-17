@@ -195,6 +195,8 @@ where
     Ok(())
 }
 
+// Attempt to build the map from the graph, but it doesn't work for the full input.
+#[allow(dead_code)]
 fn build_map(graph: &[GraphNode]) -> Map {
     let mut map: Map = Map::new();
 

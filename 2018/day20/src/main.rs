@@ -1,9 +1,10 @@
 use std::{
+    collections::BinaryHeap,
     fmt,
     io::{self, Read},
 };
 
-use fxhash::FxHashMap;
+use fxhash::{FxHashMap, FxHashSet};
 
 mod graphnode;
 mod trivial;
@@ -53,6 +54,8 @@ impl Direction {
         }
     }
 }
+
+const ALL_DIRECTIONS: [Direction; 4] = [North, East, South, West];
 
 impl fmt::Display for Direction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -141,16 +144,29 @@ impl Map {
                 allowed_dir
             });
     }
+
+    fn next_pos(&self, pos: Pos, dir: Direction) -> Option<Pos> {
+        if let Some(allowed_dir) = self.0.get(&pos) {
+            if allowed_dir[dir.index()] {
+                return Some(pos.next(dir));
+            }
+        }
+        None
+    }
 }
 
 // Map building directly from the regex.
 fn build_map_from_regex(regex: &[u8]) -> Map {
     let mut map = Map::new();
+    // Passing 1 as first index to skip first ^.
     explore_map_from_regex(regex, &mut 1, &mut map, Pos::new(0, 0));
     map
 }
 
 fn explore_map_from_regex(regex: &[u8], index: &mut usize, map: &mut Map, mut pos: Pos) {
+    // The next few lines are the key at exploring the regex.. so simple.
+    // Inspired from the idea at
+    // https://www.reddit.com/r/adventofcode/comments/a7uk3f/comment/ec6fv6r/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
     loop {
         match regex[*index] {
             b'|' | b')' | b'$' => break,
@@ -208,21 +224,99 @@ impl fmt::Display for Map {
     }
 }
 
-fn dist_to_furthest_room(regex: &[u8]) -> usize {
-    0
+#[derive(Debug, PartialEq, Eq)]
+struct Node {
+    pos: Pos,
+    cost: usize,
 }
 
-fn rooms_dist_over_1000_doors(regex: &[u8]) -> usize {
-    0
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+// Dijkstra shortest path.
+fn find_shortest_path(map: &Map, start: Pos, end: Pos) -> usize {
+    let mut visited: FxHashSet<Pos> = FxHashSet::default();
+    let mut distance: FxHashMap<Pos, usize> = FxHashMap::default();
+    let mut shortest_distance = usize::MAX;
+
+    let mut queue: BinaryHeap<Node> = BinaryHeap::new();
+    queue.push(Node {
+        pos: start,
+        cost: 0,
+    });
+
+    while let Some(Node { pos, cost }) = queue.pop() {
+        visited.insert(pos);
+        if pos == end {
+            shortest_distance = usize::min(shortest_distance, cost);
+            continue;
+        }
+        queue.extend(ALL_DIRECTIONS.iter().filter_map(|d| {
+            if let Some(next_pos) = map.next_pos(pos, *d) {
+                if visited.contains(&next_pos) {
+                    return None;
+                }
+                let next_cost = cost + 1;
+                if let Some(prevcost) = distance.get(&next_pos) {
+                    if *prevcost <= next_cost {
+                        return None;
+                    }
+                }
+                distance.insert(next_pos, next_cost);
+                Some(Node {
+                    pos: next_pos,
+                    cost: next_cost,
+                })
+            } else {
+                None
+            }
+        }));
+    }
+    shortest_distance
+}
+
+fn get_all_distances(regex: &[u8]) -> Vec<usize> {
+    let map = build_map_from_regex(regex);
+    let start = Pos::new(0, 0);
+    // Compute all shortest distances
+    map.0
+        .keys()
+        .map(|end| find_shortest_path(&map, start, *end))
+        .collect()
+}
+
+fn dist_to_furthest_room(all_dist: &[usize]) -> usize {
+    *all_dist.iter().max().unwrap()
+}
+
+fn rooms_dist_over_1000_doors(all_dist: &[usize]) -> usize {
+    all_dist.iter().filter(|&&d| d >= 1000).count()
 }
 
 fn main() {
     let mut regex = Vec::new();
     io::stdin().read_to_end(&mut regex).unwrap();
 
+    // Version I inially wrote, but doesn't work for part 2.
     println!("Part 1: {}", graphnode::dist_to_furthest_room(&regex));
     println!("Part 2: {}", graphnode::rooms_dist_over_1000_doors(&regex));
-    // trivial_version(&regex);
+
+    // Very simple version I re-implemented from a Reddit idea.
+    trivial::trivial_version(&regex);
+
+    // My final version, that doesn't attempt to build a graph from the regex, and that works.
+    let all_dist = get_all_distances(&regex);
+    println!("Part 1: {}", dist_to_furthest_room(&all_dist));
+    println!("Part 2: {}", rooms_dist_over_1000_doors(&all_dist));
 }
 
 #[cfg(test)]
@@ -238,10 +332,10 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(dist_to_furthest_room(INPUT_TEST_1), 3);
-        assert_eq!(dist_to_furthest_room(INPUT_TEST_2), 10);
-        assert_eq!(dist_to_furthest_room(INPUT_TEST_3), 18);
-        assert_eq!(dist_to_furthest_room(INPUT_TEST_4), 23);
-        assert_eq!(dist_to_furthest_room(INPUT_TEST_5), 31);
+        assert_eq!(dist_to_furthest_room(&get_all_distances(INPUT_TEST_1)), 3);
+        assert_eq!(dist_to_furthest_room(&get_all_distances(INPUT_TEST_2)), 10);
+        assert_eq!(dist_to_furthest_room(&get_all_distances(INPUT_TEST_3)), 18);
+        assert_eq!(dist_to_furthest_room(&get_all_distances(INPUT_TEST_4)), 23);
+        assert_eq!(dist_to_furthest_room(&get_all_distances(INPUT_TEST_5)), 31);
     }
 }

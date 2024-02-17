@@ -28,8 +28,26 @@ But for the real input, the map generation code gets into an infinite loops.
 
 One theory was that the loops of the real input caused problem, and removing the empty options would fix it. Unfortunately that didn't work either.
 
-### Other solutions
+So probably my reg parsing and graph generation isn't working well enough to handle the real input.
 
-I implemented a very trivial solution inspired from Reddit ideas that uses the fact that none of the path cross each other.
+## New implementation
 
-However the cleanest, shortest and easiest to understand solution I found is [this one](https://www.reddit.com/r/adventofcode/comments/a7uk3f/comment/ec6fv6r/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button).
+Ultimately, I had to look for a hint how to parse the regex, and used the simple and elegant solution from [aurele](https://www.reddit.com/r/adventofcode/comments/a7uk3f/comment/ec6fv6r/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button).
+
+```rust
+loop {
+    match regex[*index] {
+        b'|' | b')' | b'$' => break,
+        b'(' => {
+            while regex[*index] != b')' {
+                *index += 1;
+                explore_map_from_regex(regex, index, map, pos);
+            }
+        }
+        dir => // update the map.
+    }
+    *index += 1;
+}
+```
+
+With that, my map generation and Dijkstra algorithm worked nicely.
