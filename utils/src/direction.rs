@@ -1,4 +1,5 @@
 /// Helpers to deal with directions in 2D grids.
+use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Direction {
@@ -30,3 +31,18 @@ impl Direction {
 }
 
 const ALL_DIRECTIONS: [Direction; 4] = [North, East, South, West];
+
+impl fmt::Display for Direction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match *self {
+                North => 'N',
+                East => 'E',
+                South => 'S',
+                West => 'W',
+            }
+        )
+    }
+}
