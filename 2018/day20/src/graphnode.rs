@@ -1,13 +1,14 @@
 //! This module handles the parsing of the reg ex into a graph.
 
 use std::{
+    collections::BinaryHeap,
     io::{Error, Write},
     slice::Iter,
 };
 
-use fxhash::FxHashSet;
+use fxhash::{FxHashMap, FxHashSet};
 
-use crate::Direction;
+use crate::{Direction, Map, Pos};
 
 // Intermediary structure representing the reg ex, to make life easier.
 // It won't be the final graph.
@@ -59,9 +60,9 @@ fn preprocess_regex(regex: &[u8], skip_empty_options: bool) -> Vec<Elt> {
 
 // The node of the graph we use to represent the regex.
 #[derive(Debug, PartialEq)]
-pub struct GraphNode {
-    pub value: Vec<Option<Direction>>,
-    pub next: FxHashSet<usize>,
+struct GraphNode {
+    value: Vec<Option<Direction>>,
+    next: FxHashSet<usize>,
 }
 
 impl GraphNode {
@@ -88,11 +89,11 @@ impl GraphNode {
     }
 }
 
-pub fn parse_regex(regex: &[u8]) -> Vec<GraphNode> {
+fn parse_regex(regex: &[u8]) -> Vec<GraphNode> {
     parse_regex_with(regex, false)
 }
 
-pub fn parse_regex_with(regex: &[u8], skip_empty_options: bool) -> Vec<GraphNode> {
+fn parse_regex_with(regex: &[u8], skip_empty_options: bool) -> Vec<GraphNode> {
     let regex_elts = preprocess_regex(regex, skip_empty_options);
 
     // Create the node vector with all the values
@@ -167,7 +168,7 @@ fn update_nodes(
 // A good way to check it is to compare it against the output from
 // https://regexper.com
 #[allow(dead_code)]
-pub fn write_graphviz<W>(out: &mut W, nodes: &[GraphNode]) -> Result<(), Error>
+fn write_graphviz<W>(out: &mut W, nodes: &[GraphNode]) -> Result<(), Error>
 where
     W: Write,
 {
@@ -194,29 +195,195 @@ where
     Ok(())
 }
 
+fn build_map(graph: &[GraphNode]) -> Map {
+    let mut map: Map = Map::new();
+
+    let pos = Pos::new(0, 0);
+    // While building, "false" in the allowed array actually means "maybe",
+    // but at the end it means "wall".
+    map.0.insert(pos, [false, false, false, false]);
+
+    walk(graph, 0, pos, &mut map);
+
+    map
+}
+
+fn walk(graph: &[GraphNode], node_idx: usize, pos: Pos, map: &mut Map) {
+    // println!("Walking {}", node_idx);
+
+    let mut pos = pos;
+    for dir in &graph[node_idx].value {
+        let dir = dir.unwrap();
+        // We can go in that direction from current position.
+        map.update(pos, dir);
+
+        // From next position, we can go back.
+        pos = pos.next(dir);
+        map.update(pos, dir.opposite());
+    }
+
+    // A clone() is needed for the borrow checker
+    let next_nodes = graph[node_idx].next.clone();
+    for n in next_nodes {
+        walk(graph, n, pos, map);
+    }
+}
+
+// Node we are exploring with Dijkstra.
+#[derive(Debug, PartialEq, Eq)]
+struct Node {
+    pos: usize, // Index in the parsing::Node vector
+    cost: usize,
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+// Dijkstra shortest path.
+fn find_shortest_path(graph: &[GraphNode], start: usize, end: usize) -> usize {
+    let mut visited: FxHashSet<usize> = FxHashSet::default();
+    let mut distance: FxHashMap<usize, usize> = FxHashMap::default();
+    let mut shortest_distance = usize::MAX;
+
+    let mut queue: BinaryHeap<Node> = BinaryHeap::new();
+    queue.push(Node {
+        pos: start,
+        cost: 0,
+    });
+    while let Some(Node { pos, cost }) = queue.pop() {
+        visited.insert(pos);
+
+        if pos == end {
+            shortest_distance = usize::min(shortest_distance, cost);
+            continue;
+        }
+
+        queue.extend(graph[pos].next.iter().filter_map(|next_pos| {
+            if visited.contains(next_pos) {
+                return None;
+            }
+            let next_cost = cost + graph[pos].value.len();
+            if let Some(prevcost) = distance.get(next_pos) {
+                if *prevcost <= next_cost {
+                    return None;
+                }
+            }
+            distance.insert(*next_pos, next_cost);
+            Some(Node {
+                pos: *next_pos,
+                cost: next_cost,
+            })
+        }));
+    }
+    // Need to add the last node len, as it's not been added before.
+    shortest_distance + graph[end].value.len()
+}
+
+// Largest number of doors required to pass through to reach a room.
+#[allow(dead_code)]
+pub fn dist_to_furthest_room(regex: &[u8]) -> usize {
+    let graph = parse_regex(regex);
+    // parsing::print_graphviz(&nodes);
+
+    // let map = build_map(&graph);
+    // println!("{}", regex_to_string(regex));
+    // println!("{}", map);
+
+    // Find all the nodes that don't have any next, meaning they are at the end.
+    let ending_nodes: Vec<usize> = graph
+        .iter()
+        .enumerate()
+        .filter(|(_, n)| n.next.is_empty())
+        .map(|(i, _)| i)
+        .collect();
+
+    // Compute the shortest path to each of those ending nodes, and take the max.
+    // This produces the right answer, probably because no path overlap each other?
+    ending_nodes
+        .iter()
+        .map(|end| find_shortest_path(&graph, 0, *end))
+        .max()
+        .unwrap()
+}
+
+// Walk through the nodes and mark all rooms less than 1000 doors away
+fn walk_and_mark<const LIMIT: usize>(graph: &mut Vec<GraphNode>, node: usize, steps: usize) {
+    if steps >= LIMIT - 1 {
+        return;
+    }
+
+    let mut steps = steps;
+    for i in 0..graph[node].value.len() {
+        graph[node].value[i] = None;
+        steps += 1;
+        if steps >= LIMIT - 1 {
+            break;
+        }
+    }
+
+    // A clone() is needed for the borrow checker
+    let next_nodes = graph[node].next.clone();
+    for n in next_nodes {
+        walk_and_mark::<LIMIT>(graph, n, steps);
+    }
+}
+
+#[allow(dead_code)]
+pub fn rooms_dist_over_1000_doors(regex: &[u8]) -> usize {
+    let mut nodes = parse_regex(regex);
+
+    // Parsing and ignore empty nodes is possibly working for some inputs,
+    // but it doesn't for mine.
+    // let mut nodes = parsing::parse_regex_with(regex, true);
+
+    walk_and_mark::<1000>(&mut nodes, 0, 0);
+
+    // Unlike part 1, this doesn't work. Don't know why yet.
+    nodes
+        .iter()
+        .map(|n| n.value.iter().filter(|d| d.is_some()).count())
+        .sum()
+}
+
 #[cfg(test)]
 mod tests {
     use std::fs::File;
+
+    use crate::tests::INPUT_TEST_1;
+    use crate::tests::INPUT_TEST_2;
+    use crate::tests::INPUT_TEST_3;
+    use crate::tests::INPUT_TEST_4;
+    use crate::tests::INPUT_TEST_5;
+    use crate::tests::INPUT_TEST_6;
 
     use super::*;
 
     #[test]
     fn test_preprocess_regex() {
-        let regex = preprocess_regex(crate::tests::INPUT_TEST_4, false);
+        let regex = preprocess_regex(INPUT_TEST_4, false);
         // println!("{:#?}", regex);
         assert_eq!(regex.len(), 21);
     }
 
     #[test]
     fn test_parse_regex() {
-        let graph = parse_regex(crate::tests::INPUT_TEST_6);
+        let graph = parse_regex(INPUT_TEST_6);
         for (i, n) in graph.iter().enumerate() {
             println!("{}: {}; next={:?}", i, n.dirs_to_string(), n.next);
         }
 
         // https://regexper.com/#%5EENNWSWW%28NEWS%7C%29SSSEEN%28WNSE%7C%29EE%28SWEN%7C%29NNN%24
         assert_eq!(
-            parse_regex(crate::tests::INPUT_TEST_3),
+            parse_regex(INPUT_TEST_3),
             vec![
                 /* 0 */ GraphNode::new("ENNWSWW", &[1, 2]),
                 /* 1 */ GraphNode::new("NEWS", &[2]),
@@ -230,7 +397,7 @@ mod tests {
 
         // https://regexper.com/#%5EESSWWN%28E%7CNNENN%28EESS%28WNSE%7C%29SSS%7CWWWSSSSE%28SW%7CNNNE%29%29%29%24
         assert_eq!(
-            parse_regex(crate::tests::INPUT_TEST_4),
+            parse_regex(INPUT_TEST_4),
             vec![
                 /* 0 */ GraphNode::new("ESSWWN", &[1, 2]),
                 /* 1 */ GraphNode::new("E", &[]),
@@ -246,7 +413,7 @@ mod tests {
 
         // https://regexper.com/#%5EWSSEESWWWNW%28S%7CNENNEEEENN%28ESSSSW%28NWSW%7CSSEN%29%7CWSWWN%28E%7CWWS%28E%7CSS%29%29%29%29%24
         assert_eq!(
-            parse_regex(crate::tests::INPUT_TEST_5),
+            parse_regex(INPUT_TEST_5),
             vec![
                 /* 0 */ GraphNode::new("WSSEESWWWNW", &[1, 2]),
                 /* 1 */ GraphNode::new("S", &[]),
@@ -264,7 +431,7 @@ mod tests {
 
         // https://regexper.com/#%5EW%28SSS%7CEEESSSWWW%29ENNES%24
         assert_eq!(
-            parse_regex(crate::tests::INPUT_TEST_6),
+            parse_regex(INPUT_TEST_6),
             vec![
                 /* 0 */ GraphNode::new("W", &[1, 2]),
                 /* 1 */ GraphNode::new("SSS", &[3]),
@@ -283,9 +450,42 @@ mod tests {
 
     #[test]
     fn write_all_graphviz() {
-        save_gv(crate::tests::INPUT_TEST_3, 3);
-        save_gv(crate::tests::INPUT_TEST_4, 4);
-        save_gv(crate::tests::INPUT_TEST_5, 5);
-        save_gv(crate::tests::INPUT_TEST_6, 6);
+        save_gv(INPUT_TEST_3, 3);
+        save_gv(INPUT_TEST_4, 4);
+        save_gv(INPUT_TEST_5, 5);
+        save_gv(INPUT_TEST_6, 6);
+    }
+
+    #[test]
+    fn test_map_generation() {
+        assert_eq!(
+            build_map(&parse_regex(INPUT_TEST_1)).to_string().trim(),
+            include_str!("../resources/input_test_1.map")
+        );
+        assert_eq!(
+            build_map(&parse_regex(INPUT_TEST_2)).to_string().trim(),
+            include_str!("../resources/input_test_2.map")
+        );
+        assert_eq!(
+            build_map(&parse_regex(INPUT_TEST_3)).to_string().trim(),
+            include_str!("../resources/input_test_3.map")
+        );
+        assert_eq!(
+            build_map(&parse_regex(INPUT_TEST_4)).to_string().trim(),
+            include_str!("../resources/input_test_4.map")
+        );
+        assert_eq!(
+            build_map(&parse_regex(INPUT_TEST_5)).to_string().trim(),
+            include_str!("../resources/input_test_5.map")
+        );
+    }
+
+    #[test]
+    fn test_part1() {
+        assert_eq!(dist_to_furthest_room(INPUT_TEST_1), 3);
+        assert_eq!(dist_to_furthest_room(INPUT_TEST_2), 10);
+        assert_eq!(dist_to_furthest_room(INPUT_TEST_3), 18);
+        assert_eq!(dist_to_furthest_room(INPUT_TEST_4), 23);
+        assert_eq!(dist_to_furthest_room(INPUT_TEST_5), 31);
     }
 }
