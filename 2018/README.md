@@ -79,6 +79,6 @@ Grid 8 directions. Visualization.
 
 Instructions. Optimization of a slow set of instructions.
 
-### Day 20: [A Regular Map](day20/README.md) 🌟
+### Day 20: [A Regular Map](day20/README.md) 🌟🌟
 
 Regex parsing.

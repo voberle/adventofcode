@@ -22,6 +22,14 @@ To my surprise, I didn't need to generate the maze to find the answer to part 1.
 
 For part 2, I tried to also use only the graph, by walking on all possible paths and marking all elements that were less than 1000 steps away. Unfortunately that didn't produce the right answer.
 
-So I still ended up generating the map and checking my graph produces the correct maps. It did.
+So I still ended up generating the map and checking my graph produces the correct maps for the test inputs. It did.
+
+But for the real input, the map generation code gets into an infinite loops.
 
 One theory was that the loops of the real input caused problem, and removing the empty options would fix it. Unfortunately that didn't work either.
+
+### Other solutions
+
+I implemented a very trivial solution inspired from Reddit ideas that uses the fact that none of the path cross each other.
+
+However the cleanest, shortest and easiest to understand solution I found is [this one](https://www.reddit.com/r/adventofcode/comments/a7uk3f/comment/ec6fv6r/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button).
