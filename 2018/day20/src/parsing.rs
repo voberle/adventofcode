@@ -1,6 +1,9 @@
 //! This module handles the parsing of the reg ex into a graph.
 
-use std::slice::Iter;
+use std::{
+    io::{Error, Write},
+    slice::Iter,
+};
 
 use fxhash::FxHashSet;
 
@@ -51,13 +54,21 @@ fn preprocess_regex(regex: &[u8]) -> Vec<Elt> {
 }
 
 // The node of the graph we use to represent the regex.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct GraphNode {
     pub value: Vec<Option<Direction>>,
     pub next: FxHashSet<usize>,
 }
 
 impl GraphNode {
+    #[cfg(test)]
+    fn new(value: &str, next: &[usize]) -> Self {
+        Self {
+            value: value.bytes().map(|c| Direction::new(c)).collect(),
+            next: FxHashSet::from_iter(next.iter().cloned()),
+        }
+    }
+
     #[allow(dead_code)]
     fn dirs_to_string(&self) -> String {
         self.value
@@ -99,6 +110,7 @@ pub fn parse_regex(regex: &[u8]) -> Vec<GraphNode> {
     nodes
 }
 
+// Recursive function that sets the connections of the graphs.
 // level_idx points to the node just before this group
 fn update_nodes(
     nodes: &mut Vec<GraphNode>,
@@ -147,53 +159,113 @@ fn update_nodes(
 // A good way to check it is to compare it against the output from
 // https://regexper.com
 #[allow(dead_code)]
-pub fn print_graphviz(nodes: &[GraphNode]) {
-    println!("digraph {{");
-    println!("\trankdir=LR;");
-    println!("\tnode [shape = diamond]; \"END\";");
-    println!("\tnode [shape = oval];");
+pub fn write_graphviz<W>(out: &mut W, nodes: &[GraphNode]) -> Result<(), Error>
+where
+    W: Write,
+{
+    writeln!(out, "digraph {{")?;
+    writeln!(out, "\trankdir=LR;")?;
+    writeln!(out, "\tnode [shape = diamond]; \"END\";")?;
+    writeln!(out, "\tnode [shape = oval];")?;
 
     for (i, n) in nodes.iter().enumerate() {
         let name = n.dirs_to_string();
-        println!("\t{} [shape = oval label = \"{}\"];", i, name);
+        writeln!(out, "\t{} [shape = oval label = \"{}\"];", i, name)?;
     }
 
     for (i, f) in nodes.iter().enumerate() {
         if f.next.is_empty() {
-            println!("\t{} -> END;", i);
+            writeln!(out, "\t{} -> END;", i)?;
         } else {
             for n in &f.next {
-                println!("\t{} -> {};", i, n);
+                writeln!(out, "\t{} -> {};", i, n)?;
             }
         }
     }
-    println!("}}");
+    writeln!(out, "}}")?;
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
+    use std::fs::File;
+
     use super::*;
 
     #[test]
     fn test_preprocess_regex() {
-        let input = include_bytes!("../resources/input_test_4");
-
-        let regex = preprocess_regex(input);
+        let regex = preprocess_regex(crate::tests::INPUT_TEST_4);
         // println!("{:#?}", regex);
         assert_eq!(regex.len(), 22);
     }
 
     #[test]
     fn test_parse_regex() {
-        let input = include_bytes!("../resources/input_test_4");
+        let graph = parse_regex(crate::tests::INPUT_TEST_5);
+        for (i, n) in graph.iter().enumerate() {
+            println!("{}: {}; next={:?}", i, n.dirs_to_string(), n.next);
+        }
 
+        // https://regexper.com/#%5EENNWSWW%28NEWS%7C%29SSSEEN%28WNSE%7C%29EE%28SWEN%7C%29NNN%24
+        assert_eq!(
+            parse_regex(crate::tests::INPUT_TEST_3),
+            vec![
+                /* 0 */ GraphNode::new("ENNWSWW", &[1, 2]),
+                /* 1 */ GraphNode::new("NEWS", &[2]),
+                /* 2 */ GraphNode::new("SSSEEN", &[4, 3]),
+                /* 3 */ GraphNode::new("WNSE", &[4]),
+                /* 4 */ GraphNode::new("EE", &[5, 6]),
+                /* 5 */ GraphNode::new("SWEN", &[6]),
+                /* 6 */ GraphNode::new("NNN", &[]),
+            ]
+        );
+
+        // https://regexper.com/#%5EESSWWN%28E%7CNNENN%28EESS%28WNSE%7C%29SSS%7CWWWSSSSE%28SW%7CNNNE%29%29%29%24
+        assert_eq!(
+            parse_regex(crate::tests::INPUT_TEST_4),
+            vec![
+                /* 0 */ GraphNode::new("ESSWWN", &[1, 2]),
+                /* 1 */ GraphNode::new("E", &[]),
+                /* 2 */ GraphNode::new("NNENN", &[6, 3]),
+                /* 3 */ GraphNode::new("EESS", &[4, 5]),
+                /* 4 */ GraphNode::new("WNSE", &[5]),
+                /* 5 */ GraphNode::new("SSS", &[]),
+                /* 6 */ GraphNode::new("WWWSSSSE", &[8, 7]),
+                /* 7 */ GraphNode::new("SW", &[]),
+                /* 8 */ GraphNode::new("NNNE", &[]),
+            ]
+        );
+
+        // https://regexper.com/#%5EWSSEESWWWNW%28S%7CNENNEEEENN%28ESSSSW%28NWSW%7CSSEN%29%7CWSWWN%28E%7CWWS%28E%7CSS%29%29%29%29%24
+        assert_eq!(
+            parse_regex(crate::tests::INPUT_TEST_5),
+            vec![
+                /* 0 */ GraphNode::new("WSSEESWWWNW", &[1, 2]),
+                /* 1 */ GraphNode::new("S", &[]),
+                /* 2 */ GraphNode::new("NENNEEEENN", &[6, 3]),
+                /* 3 */ GraphNode::new("ESSSSW", &[4, 5]),
+                /* 4 */ GraphNode::new("NWSW", &[]),
+                /* 5 */ GraphNode::new("SSEN", &[]),
+                /* 6 */ GraphNode::new("WSWWN", &[8, 7]),
+                /* 7 */ GraphNode::new("E", &[]),
+                /* 8 */ GraphNode::new("WWS", &[9, 10]),
+                /* 9 */ GraphNode::new("E", &[]),
+                /* 10*/ GraphNode::new("SS", &[]),
+            ]
+        );
+    }
+
+    fn save_gv(input: &[u8], nb: usize) {
         let graph = parse_regex(input);
-        // for (i, n) in graph.iter().enumerate() {
-        //     println!("{}: {}; next={:?}", i, n.dirs_to_string(), n.next);
-        // }
+        let path = format!("resources/input_test_{}.gv", nb);
+        let mut output = File::create(path).unwrap();
+        write_graphviz(&mut output, &graph).unwrap();
+    }
 
-        print_graphviz(&graph);
-
-        assert_eq!(graph.len(), 9);
+    #[test]
+    fn write_all_graphviz() {
+        save_gv(crate::tests::INPUT_TEST_3, 3);
+        save_gv(crate::tests::INPUT_TEST_4, 4);
+        save_gv(crate::tests::INPUT_TEST_5, 5);
     }
 }

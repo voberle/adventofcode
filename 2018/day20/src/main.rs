@@ -160,6 +160,8 @@ fn build_map(graph: &[GraphNode]) -> Map {
 }
 
 fn walk(graph: &[GraphNode], node_idx: usize, pos: Pos, map: &mut Map) {
+    // println!("Walking {}", node_idx);
+
     let mut pos = pos;
     for dir in &graph[node_idx].value {
         let dir = dir.unwrap();
@@ -355,11 +357,11 @@ fn main() {
 mod tests {
     use super::*;
 
-    const INPUT_TEST_1: &[u8; 5] = include_bytes!("../resources/input_test_1");
-    const INPUT_TEST_2: &[u8; 23] = include_bytes!("../resources/input_test_2");
-    const INPUT_TEST_3: &[u8; 41] = include_bytes!("../resources/input_test_3");
-    const INPUT_TEST_4: &[u8; 51] = include_bytes!("../resources/input_test_4");
-    const INPUT_TEST_5: &[u8; 65] = include_bytes!("../resources/input_test_5");
+    pub const INPUT_TEST_1: &[u8; 5] = include_bytes!("../resources/input_test_1");
+    pub const INPUT_TEST_2: &[u8; 23] = include_bytes!("../resources/input_test_2");
+    pub const INPUT_TEST_3: &[u8; 41] = include_bytes!("../resources/input_test_3");
+    pub const INPUT_TEST_4: &[u8; 51] = include_bytes!("../resources/input_test_4");
+    pub const INPUT_TEST_5: &[u8; 65] = include_bytes!("../resources/input_test_5");
 
     #[test]
     fn test_map_generation() {
