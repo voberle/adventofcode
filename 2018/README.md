@@ -83,6 +83,6 @@ Instructions. Optimization of a slow set of instructions.
 
 Regex parsing.
 
-### Day 21: [Chronal Conversion](day21/README.md) 🌟
+### Day 21: [Chronal Conversion](day21/README.md) 🌟🌟
 
-Follow up to day 19. Instruction analysis, optimization and brite forcing.
+Follow up to day 19. Instruction analysis, optimization and brute forcing.

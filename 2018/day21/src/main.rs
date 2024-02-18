@@ -4,6 +4,8 @@ use std::{
     ops::{Index, IndexMut},
 };
 
+use fxhash::FxHashSet;
+
 #[derive(Debug, PartialEq, Clone)]
 struct Registers(Vec<u32>);
 
@@ -124,7 +126,10 @@ fn exec(
 // Executes the specified instructions, with the given IP binding and registers.
 // If set, max_step gives a maximum amount of instructions to execute.
 // If the program finishes normally, it will return the number of instructions executed.
-fn exec_all<const ENABLE_OPTIMIZATIONS: bool>(
+//
+// If INST28_REPLACEMENT is set, then the program keeps running until we detect at r1
+// we have already seem at instruction 28, and in that case, we return the previous r1.
+fn exec_all<const ENABLE_OPTIMIZATIONS: bool, const INST28_REPLACEMENT: bool>(
     ip_binding: u32,
     instructions: &[Instruction],
     regs: &mut Registers,
@@ -132,6 +137,10 @@ fn exec_all<const ENABLE_OPTIMIZATIONS: bool>(
 ) -> Option<usize> {
     let mut ip: u32 = 0;
     let mut steps_count = 0;
+
+    // Only used with INST28_REPLACEMENT
+    let mut set: FxHashSet<u32> = FxHashSet::default();
+    let mut last_r1 = 0;
 
     while ip < instructions.len() as u32 {
         if ENABLE_OPTIMIZATIONS {
@@ -144,6 +153,23 @@ fn exec_all<const ENABLE_OPTIMIZATIONS: bool>(
             // if ip == 26 {
             //     assert_eq!(regs[5], regs[4] / 256);
             // }
+        }
+
+        if INST28_REPLACEMENT {
+            // Replaces following
+            // 28   eqrr 1 0 5             r5 = r1 == r0 ? 1 : 0
+            // by returning always false on the equality check, until we
+            // get a r1 we have already seen.
+            if ip == 28 {
+                if !set.insert(regs[1]) {
+                    return Some(last_r1 as usize);
+                }
+                last_r1 = regs[1];
+
+                regs[5] = 0;
+                ip = 29;
+                continue;
+            }
         }
 
         exec(ip_binding, instructions, regs, &mut ip, steps_count);
@@ -174,7 +200,9 @@ fn reg0_halt_least_ins(ip_binding: u32, instructions: &[Instruction]) -> u32 {
     while r0 < MAX_R0_TO_CHECK {
         let mut regs = Registers::new();
         regs[0] = r0;
-        if let Some(step_count) = exec_all::<true>(ip_binding, instructions, &mut regs, MAX_STEPS) {
+        if let Some(step_count) =
+            exec_all::<true, false>(ip_binding, instructions, &mut regs, MAX_STEPS)
+        {
             // normal exit, so found something
             if step_count < candidate.1 {
                 candidate = (r0, step_count);
@@ -195,6 +223,7 @@ fn reg0_halt_least_ins(ip_binding: u32, instructions: &[Instruction]) -> u32 {
 // The program reimplemented in Rust.
 // See resources/main.c for the C version, that this is based on.
 // Doesn't include the first part (and check), ie starts at line 6.
+#[allow(dead_code)]
 fn program_reimplemented(r0: u32) {
     let mut r1 = 0;
     let mut r4 = r1 | 0x10000;
@@ -213,13 +242,16 @@ fn program_reimplemented(r0: u32) {
     }
 }
 
+fn reg0_halt_most_ins(ip_binding: u32, instructions: &[Instruction]) -> u32 {
+    let mut regs = Registers::new();
+    exec_all::<true, true>(ip_binding, instructions, &mut regs, None).unwrap() as u32
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let (ip_binding, instructions) = build(&input);
 
-    // program_reimplemented(10320985);
-
     println!("Part 1: {}", reg0_halt_least_ins(ip_binding, &instructions));
-    // println!("Part 2: {}", reg0_halt_most_ins(ip_binding, &instructions));
+    println!("Part 2: {}", reg0_halt_most_ins(ip_binding, &instructions));
 }

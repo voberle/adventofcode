@@ -23,3 +23,10 @@ I added code to "kill" the program after a certain number of executed instructio
 
 ## Part 2
 
+Part 2 had be confused for a while.
+
+I reimplemented the full program [first in C](resources/main.c) and then in Rust. As I couldn't initially see how to get the answer from the program, I made it print out all the valid register 0s, and ran the program on all of them, counting how many loops it executed to find the longest one.
+
+But that didn't work, because for different values, the division by 256 required different number of instructions.
+
+It turned out it was also needlessly complicated! The program computes all all the possible r1, and logically these values are coming out in the order of the number of instructions they need. So to find the one that needs the longest, we just need to detect when we start computing an r1 we had already seen, and take the previous one.
