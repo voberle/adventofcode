@@ -18,18 +18,15 @@ int main(int argc, char *argv[]) {
             r1 = r1 & 0xFFFFFF;
 
             if (r4 < 256) {
-                goto line28;
+                if (r1 == r0) {
+                    printf("r0 %lli r1 %lli r4 %lli\n", r0, r1, r4);
+                    return 0;
+                }
             }
 
             r4 = r4 / 256;
         }
-
-    line28:
-        if (r1 == r0) {
-            break;
-        }
     }
-    printf("r0 %lli r1 %lli r4 %lli\n", r0, r1, r4);
 
     return 0;
 }
