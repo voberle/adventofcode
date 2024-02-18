@@ -9,7 +9,6 @@ int main(int argc, char *argv[]) {
     // R2 is IP
     long long r3 = 0;
     long long r4 = 0;
-    long long r5 = 0;
 
 line6:
     // 6    bori 1 65536 4         r4 = r1 | 0x10000
@@ -22,8 +21,7 @@ line8:
     // 10   bani 1 16777215 1      r1 = r1 & 0xFFFFFF
     // 11   muli 1 65899 1         r1 = r1 * 65899
     // 12   bani 1 16777215 1      r1 = r1 & 0xFFFFFF
-    r5 = r4 & 0xFF;
-    r1 = r1 + r5;
+    r1 = r1 + (r4 & 0xFF);
     r1 = r1 & 0xFFFFFF;
     r1 = r1 * 65899;
     r1 = r1 & 0xFFFFFF;
@@ -33,19 +31,14 @@ line8:
     // 15   addi 2 1 2             R2 = R2 + 1, JUMP: skip next line
     // 16   seti 27 1 2            R2 = 27, JUMP line 28
     // 17   seti 0 3 5             r5 = 0
-    //printf("13: [%lli, %lli, IP, %lli, %lli, %lli, \n", r0, r1, r3, r4, r5);
     if (r4 < 256) {
         goto line28;
     }
-    //r5 = 0;
-
-line18:
-    r5 = r4 / 256;
 
 line26:
     // 26   setr 5 3 4             r4 = r5   
     // 27   seti 7 7 2             R2 = 7, JUMP line 8
-    r4 = r5;
+    r4 = r4 / 256;
     goto line8;
 
 line28:
