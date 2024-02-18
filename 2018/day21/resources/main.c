@@ -10,18 +10,19 @@ int main(int argc, char *argv[]) {
     while (1) {
         r4 = r1 | 0x10000;
         r1 = 16298264;
-    line8:
-        r1 = r1 + (r4 & 0xFF);
-        r1 = r1 & 0xFFFFFF;
-        r1 = r1 * 65899;
-        r1 = r1 & 0xFFFFFF;
 
-        if (r4 < 256) {
-            goto line28;
+        while (1) {
+            r1 = r1 + (r4 & 0xFF);
+            r1 = r1 & 0xFFFFFF;
+            r1 = r1 * 65899;
+            r1 = r1 & 0xFFFFFF;
+
+            if (r4 < 256) {
+                goto line28;
+            }
+
+            r4 = r4 / 256;
         }
-
-        r4 = r4 / 256;
-        goto line8;
 
     line28:
         if (r1 == r0) {
