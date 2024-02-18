@@ -158,7 +158,7 @@ fn exec_all<const ENABLE_OPTIMIZATIONS: bool>(
     Some(steps_count)
 }
 
-fn lowest_reg0_causing_halt_fewest_ins(ip_binding: u32, instructions: &[Instruction]) -> u32 {
+fn reg0_halt_least_ins(ip_binding: u32, instructions: &[Instruction]) -> u32 {
     // Number of instructions to execute before giving up.
     // This number was found by looking after how many instructions the program stops normally,
     // and then decreasing it so that it runs quickly.
@@ -192,8 +192,25 @@ fn lowest_reg0_causing_halt_fewest_ins(ip_binding: u32, instructions: &[Instruct
     candidate.0
 }
 
-fn part2(ip_binding: u32, instructions: &[Instruction]) -> i64 {
-    0
+// The program reimplemented in Rust.
+// See resources/main.c for the C version, that this is based on.
+// Doesn't include the first part (and check), ie starts at line 6.
+fn program_reimplemented(r0: u32) {
+    let mut r1 = 0;
+    let mut r4 = r1 | 0x10000;
+    r1 = 16298264;
+
+    loop {
+        r1 += r4 & 0xFF;
+        r1 &= 0xFFFFFF;
+        r1 *= 65899;
+        r1 &= 0xFFFFFF;
+
+        if r4 < 256 && r1 == r0 {
+            return;
+        }
+        r4 /= 256;
+    }
 }
 
 fn main() {
@@ -201,9 +218,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let (ip_binding, instructions) = build(&input);
 
-    println!(
-        "Part 1: {}",
-        lowest_reg0_causing_halt_fewest_ins(ip_binding, &instructions)
-    );
-    println!("Part 2: {}", part2(ip_binding, &instructions));
+    // program_reimplemented(10320985);
+
+    println!("Part 1: {}", reg0_halt_least_ins(ip_binding, &instructions));
+    // println!("Part 2: {}", reg0_halt_most_ins(ip_binding, &instructions));
 }
