@@ -90,3 +90,7 @@ Follow up to day 19. Instruction analysis, optimization and brute forcing.
 ### Day 22: [Mode Maze](day22/README.md) 🌟🌟
 
 Maze building. Dijkstra shortest path.
+
+### Day 23: [Experimental Emergency Teleportation](day23/README.md) 🌟
+
+Manhattan distance.
