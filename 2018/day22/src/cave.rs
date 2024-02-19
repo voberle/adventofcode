@@ -1,5 +1,5 @@
 use fxhash::FxHashMap;
-use std::fmt;
+use std::{cell::RefCell, fmt};
 
 use crate::Pos;
 
@@ -53,8 +53,9 @@ impl fmt::Display for RegionType {
 pub struct Cave {
     depth: u32,
     target: Pos,
-    // Regions and erosion levels of all regions
-    regions: FxHashMap<Pos, RegionType>,
+    // Regions and erosion levels of all regions.
+    // Wrapping it in a RefCell, as we will need to mutate it when auto-growing the map.
+    regions: RefCell<FxHashMap<Pos, RegionType>>,
 }
 
 impl Cave {
@@ -63,10 +64,14 @@ impl Cave {
         let mut cave = Self {
             depth,
             target,
-            regions: FxHashMap::default(),
+            regions: RefCell::new(FxHashMap::default()),
         };
         cave.fill_regions(target.y + 1, target.x + 1);
         cave
+    }
+
+    pub fn get_target(&self) -> Pos {
+        self.target
     }
 
     fn parse_input(input: &str) -> (u32, Pos) {
@@ -82,15 +87,15 @@ impl Cave {
     }
 
     fn get(&self, pos: &Pos) -> Option<RegionType> {
-        self.regions.get(pos).copied()
+        self.regions.borrow().get(pos).copied()
     }
 
-    fn set(&mut self, pos: &Pos, val: RegionType) {
-        self.regions.insert(*pos, val);
+    fn set(&self, pos: &Pos, val: RegionType) {
+        self.regions.borrow_mut().insert(*pos, val);
     }
 
     // Returns the geologic index for the position, recursively filling the map if needed.
-    fn calc_geologic_index(&mut self, pos: &Pos) -> u32 {
+    fn calc_geologic_index(&self, pos: &Pos) -> u32 {
         if pos == &Pos::ZERO || pos == &self.target {
             0
         } else if pos.y == 0 {
@@ -113,7 +118,7 @@ impl Cave {
     }
 
     // Sets the erosion level for the position, recursively filling the map if needed.
-    fn set_erosion_level(&mut self, pos: &Pos) {
+    fn set_erosion_level(&self, pos: &Pos) {
         let geologic_index = self.calc_geologic_index(pos);
         let erosion_level = self.calc_erosion_level(geologic_index);
         self.set(pos, RegionType::new(erosion_level));
@@ -132,7 +137,7 @@ impl Cave {
 
     // Returns the position's region.
     // Fills the map if needed.
-    pub fn get_region(&mut self, pos: &Pos) -> RegionType {
+    pub fn get_region(&self, pos: &Pos) -> RegionType {
         if let Some(region) = self.get(pos) {
             region
         } else {
@@ -143,6 +148,7 @@ impl Cave {
 
     pub fn risk_level(&self) -> u32 {
         self.regions
+            .borrow()
             .iter()
             .filter_map(|(pos, region)| {
                 if pos.x <= self.target.x && pos.y <= self.target.y {
@@ -208,7 +214,7 @@ mod tests {
 
     #[test]
     fn test_map_growing() {
-        let mut cave = Cave::new(INPUT_TEST);
+        let cave = Cave::new(INPUT_TEST);
         assert_eq!(cave.get_region(&Pos::new(15, 15)), RegionType::Narrow(3002));
     }
 }

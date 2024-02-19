@@ -87,6 +87,6 @@ Regex parsing.
 
 Follow up to day 19. Instruction analysis, optimization and brute forcing.
 
-### Day 22: [Mode Maze](day22/README.md) 🌟
+### Day 22: [Mode Maze](day22/README.md) 🌟🌟
 
-Maze building.
+Maze building. Dijkstra shortest path.
