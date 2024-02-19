@@ -1,29 +1,37 @@
+use fxhash::FxHashMap;
 use std::fmt;
 
 use crate::Pos;
 
-enum RegionType {
-    Rocky,
-    Narrow,
-    Wet,
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum RegionType {
+    Rocky(u32),
+    Narrow(u32),
+    Wet(u32),
 }
 use RegionType::{Narrow, Rocky, Wet};
 
 impl RegionType {
     fn new(erosion_level: u32) -> Self {
         match erosion_level % 3 {
-            0 => Rocky,
-            1 => Wet,
-            2 => Narrow,
+            0 => Rocky(erosion_level),
+            1 => Wet(erosion_level),
+            2 => Narrow(erosion_level),
             _ => panic!("Impossible modulo"),
+        }
+    }
+
+    fn get_erosion_level(self) -> u32 {
+        match self {
+            Rocky(e) | Wet(e) | Narrow(e) => e,
         }
     }
 
     fn risk_level(self) -> u32 {
         match self {
-            Rocky => 0,
-            Wet => 1,
-            Narrow => 2,
+            Rocky(_) => 0,
+            Wet(_) => 1,
+            Narrow(_) => 2,
         }
     }
 }
@@ -34,9 +42,9 @@ impl fmt::Display for RegionType {
             f,
             "{}",
             match *self {
-                Rocky => '.',
-                Wet => '=',
-                Narrow => '|',
+                Rocky(_) => '.',
+                Wet(_) => '=',
+                Narrow(_) => '|',
             }
         )
     }
@@ -45,25 +53,19 @@ impl fmt::Display for RegionType {
 pub struct Cave {
     depth: u32,
     target: Pos,
-    // Erosion levels of all regions
-    erosion_levels: Vec<Option<u32>>,
-    rows: usize,
-    cols: usize,
+    // Regions and erosion levels of all regions
+    regions: FxHashMap<Pos, RegionType>,
 }
 
 impl Cave {
     pub fn new(input: &str) -> Self {
         let (depth, target) = Self::parse_input(input);
-        let cols = target.x + 1;
-        let rows = target.y + 1;
         let mut cave = Self {
             depth,
             target,
-            erosion_levels: vec![None; cols * rows],
-            cols,
-            rows,
+            regions: FxHashMap::default(),
         };
-        cave.fill_erosion_levels();
+        cave.fill_regions(target.y + 1, target.x + 1);
         cave
     }
 
@@ -79,20 +81,16 @@ impl Cave {
         (depth, Pos::new(target[0], target[1]))
     }
 
-    fn pos(&self, pos: &Pos) -> usize {
-        pos.y * self.cols + pos.x
+    fn get(&self, pos: &Pos) -> Option<RegionType> {
+        self.regions.get(pos).copied()
     }
 
-    fn get(&self, pos: &Pos) -> Option<u32> {
-        self.erosion_levels[self.pos(pos)]
+    fn set(&mut self, pos: &Pos, val: RegionType) {
+        self.regions.insert(*pos, val);
     }
 
-    fn set(&mut self, pos: &Pos, val: u32) {
-        let p = self.pos(pos);
-        self.erosion_levels[p] = Some(val);
-    }
-
-    fn calc_geologic_index(&self, pos: &Pos) -> u32 {
+    // Returns the geologic index for the position, recursively filling the map if needed.
+    fn calc_geologic_index(&mut self, pos: &Pos) -> u32 {
         if pos == &Pos::ZERO || pos == &self.target {
             0
         } else if pos.y == 0 {
@@ -100,8 +98,13 @@ impl Cave {
         } else if pos.x == 0 {
             u32::try_from(pos.y).unwrap() * 48271
         } else {
-            self.get(&Pos::new(pos.x - 1, pos.y)).unwrap()
-                * self.get(&Pos::new(pos.x, pos.y - 1)).unwrap()
+            let v1 = self
+                .get_region(&Pos::new(pos.x - 1, pos.y))
+                .get_erosion_level();
+            let v2 = self
+                .get_region(&Pos::new(pos.x, pos.y - 1))
+                .get_erosion_level();
+            v1 * v2
         }
     }
 
@@ -109,50 +112,70 @@ impl Cave {
         (geologic_index + self.depth) % 20183
     }
 
-    fn fill_erosion_levels(&mut self) {
-        for y in 0..self.rows {
-            for x in 0..self.cols {
-                self.set_erosion_level(x, y);
-            }
-        }
-        // println!("{}", self);
+    // Sets the erosion level for the position, recursively filling the map if needed.
+    fn set_erosion_level(&mut self, pos: &Pos) {
+        let geologic_index = self.calc_geologic_index(pos);
+        let erosion_level = self.calc_erosion_level(geologic_index);
+        self.set(pos, RegionType::new(erosion_level));
     }
 
-    fn set_erosion_level(&mut self, x: usize, y: usize) {
-        let pos = Pos::new(x, y);
-        let geologic_index = self.calc_geologic_index(&pos);
-        let erosion_level = self.calc_erosion_level(geologic_index);
-        self.set(&pos, erosion_level);
+    // Fill regions up to the target position.
+    // If the map is empty, this is more efficient than calling just `set_erosion_level(target)`.
+    fn fill_regions(&mut self, rows: usize, cols: usize) {
+        for y in 0..rows {
+            for x in 0..cols {
+                let pos = Pos::new(x, y);
+                self.set_erosion_level(&pos);
+            }
+        }
+    }
+
+    // Returns the position's region.
+    // Fills the map if needed.
+    pub fn get_region(&mut self, pos: &Pos) -> RegionType {
+        if let Some(region) = self.get(pos) {
+            region
+        } else {
+            self.set_erosion_level(pos);
+            self.get(pos).unwrap()
+        }
     }
 
     pub fn risk_level(&self) -> u32 {
-        self.erosion_levels
+        self.regions
             .iter()
-            .map(|erosion_level| RegionType::new(erosion_level.unwrap()).risk_level())
+            .filter_map(|(pos, region)| {
+                if pos.x <= self.target.x && pos.y <= self.target.y {
+                    Some(region.risk_level())
+                } else {
+                    None
+                }
+            })
             .sum()
     }
 }
 
+// Gets a string with the cave until the target.
 impl fmt::Display for Cave {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let target = self.pos(&Pos::new(self.target.x, self.target.y));
-        for row in 0..self.rows {
-            for p in row * self.cols..(row + 1) * self.cols {
+        for y in 0..=self.target.y {
+            for x in 0..=self.target.x {
+                let pos = Pos::new(x, y);
                 write!(
                     f,
                     "{}",
-                    if p == 0 {
+                    if pos == Pos::ZERO {
                         "M".to_string()
-                    } else if p == target {
+                    } else if pos == self.target {
                         "T".to_string()
-                    } else if let Some(erosion_level) = self.erosion_levels[p] {
-                        RegionType::new(erosion_level).to_string()
+                    } else if let Some(region) = self.get(&pos) {
+                        region.to_string()
                     } else {
                         "?".to_string()
                     }
                 )?;
             }
-            if row < self.rows - 1 {
+            if y < self.target.y {
                 writeln!(f)?;
             }
         }
@@ -181,5 +204,11 @@ mod tests {
 .===|=|===T";
         let cave = Cave::new(INPUT_TEST);
         assert_eq!(cave.to_string(), TEST_CAVE);
+    }
+
+    #[test]
+    fn test_map_growing() {
+        let mut cave = Cave::new(INPUT_TEST);
+        assert_eq!(cave.get_region(&Pos::new(15, 15)), RegionType::Narrow(3002));
     }
 }
