@@ -9,5 +9,4 @@ description.workspace = true
 workspace = true
 
 [dependencies]
-itertools = "0.12.1"
 regex = "1.10.3"
