@@ -20,3 +20,9 @@ All challenges are in corresponding year sub-directory, and share a common `Carg
 - Add a `Cargo.toml` file to it (copy from previous year and remove all the "day" entries from "members" section).
 
 Then proceed to do like other days.
+
+## Updating the session cookie
+
+Open the `.adventofcode.session` file from home directory.
+
+In the browser, "Inspect" => "Storage" => "Cookies", copy the session value to the file.
