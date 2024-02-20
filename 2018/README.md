@@ -94,3 +94,7 @@ Maze building. Dijkstra shortest path.
 ### Day 23: [Experimental Emergency Teleportation](day23/README.md) 🌟🌟
 
 Manhattan distance. Octree. Hint needed :-(
+
+### Day 24: [Immune System Simulator 20XX](day24/README.md) 🌟
+
+Regex with named capture groups. Following rules.
