@@ -10,3 +10,6 @@ And of course it had to be implemented while keeping the borrow checker happy.
 
 ## Part 2
 
+For part 2, the fighting code was fast enough that a brute force method was very quick.
+
+As I had noticed during part 1 there could be cases where a fight round results in no kill, adding stalemate detection was quick.

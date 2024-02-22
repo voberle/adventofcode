@@ -140,6 +140,12 @@ impl Army {
     fn units_total(&self) -> u32 {
         self.groups.iter().map(|g| g.units_count).sum()
     }
+
+    fn boost(&mut self, boost: u32) {
+        for g in &mut self.groups {
+            g.attack_damage += boost;
+        }
+    }
 }
 
 // Returns Immune System army followed by Infection one.
@@ -224,7 +230,7 @@ fn attacking_phase<const DEBUG: bool>(
     infection: &mut Army,
     immune_to_infection: &[Option<usize>],
     infection_to_immune: &[Option<usize>],
-) {
+) -> Result<(), &'static str> {
     let attacking_order: Vec<(ArmyName, usize)> = immune_system
         .groups
         .iter()
@@ -241,6 +247,7 @@ fn attacking_phase<const DEBUG: bool>(
         .map(|(name, gr_idx, _)| (name, gr_idx))
         .collect();
 
+    let mut killed_total = 0;
     for (attacker_army_name, attacker_group_idx) in attacking_order {
         let immune_system_is_attacker = matches!(attacker_army_name, ArmyName::ImmuneSystem);
         let targets = if immune_system_is_attacker {
@@ -275,6 +282,7 @@ fn attacking_phase<const DEBUG: bool>(
         } else {
             defender.units_count
         };
+        killed_total += kill_count;
 
         if DEBUG {
             println!(
@@ -287,6 +295,11 @@ fn attacking_phase<const DEBUG: bool>(
         }
         defender.units_count = defender.units_count.saturating_sub(units_killed);
     }
+
+    if killed_total == 0 {
+        return Err("No kills");
+    }
+    Ok(())
 }
 
 #[allow(dead_code)]
@@ -299,31 +312,39 @@ fn print_groups(immune_system: &Army, infection: &Army) {
     println!();
 }
 
-fn winner_remaining_units<const DEBUG: bool>(immune_system: &Army, infection: &Army) -> u32 {
-    let mut immune_system = immune_system.clone();
-    let mut infection = infection.clone();
-
+fn fight<const DEBUG: bool>(
+    immune_system: &mut Army,
+    infection: &mut Army,
+) -> Result<(), &'static str> {
     while immune_system.has_units() && infection.has_units() {
         if DEBUG {
-            print_groups(&immune_system, &infection);
+            print_groups(immune_system, infection);
         }
 
-        let infection_to_immune = target_selection::<DEBUG>(&infection, &immune_system);
-        let immune_to_infection = target_selection::<DEBUG>(&immune_system, &infection);
+        let infection_to_immune = target_selection::<DEBUG>(infection, immune_system);
+        let immune_to_infection = target_selection::<DEBUG>(immune_system, infection);
         if DEBUG {
             println!();
         }
 
         attacking_phase::<DEBUG>(
-            &mut immune_system,
-            &mut infection,
+            immune_system,
+            infection,
             &immune_to_infection,
             &infection_to_immune,
-        );
+        )?;
     }
     if DEBUG {
-        print_groups(&immune_system, &infection);
+        print_groups(immune_system, infection);
     }
+    Ok(())
+}
+
+fn winner_remaining_units(immune_system: &Army, infection: &Army) -> u32 {
+    let mut immune_system = immune_system.clone();
+    let mut infection = infection.clone();
+
+    fight::<false>(&mut immune_system, &mut infection).unwrap();
 
     if immune_system.has_units() {
         immune_system.units_total()
@@ -332,8 +353,23 @@ fn winner_remaining_units<const DEBUG: bool>(immune_system: &Army, infection: &A
     }
 }
 
-fn part2(immune_system: &Army, infection: &Army) -> i64 {
-    0
+fn immune_system_units_with_boost(immune_system: &Army, infection: &Army) -> u32 {
+    for boost in 1.. {
+        let mut immune_system = immune_system.clone();
+        let mut infection = infection.clone();
+        immune_system.boost(boost);
+
+        let stalemate = fight::<false>(&mut immune_system, &mut infection).is_err();
+        if stalemate {
+            continue;
+        }
+
+        if immune_system.has_units() && !infection.has_units() {
+            // println!("Immune won, boost {}", boost);
+            return immune_system.units_total();
+        }
+    }
+    panic!("Failed to find a winning boost");
 }
 
 fn main() {
@@ -345,9 +381,12 @@ fn main() {
 
     println!(
         "Part 1: {}",
-        winner_remaining_units::<false>(&immune_system, &infection)
+        winner_remaining_units(&immune_system, &infection)
     );
-    println!("Part 2: {}", part2(&immune_system, &infection));
+    println!(
+        "Part 2: {}",
+        immune_system_units_with_boost(&immune_system, &infection)
+    );
 }
 
 #[cfg(test)]
@@ -359,15 +398,17 @@ mod tests {
     #[test]
     fn test_part1() {
         let (immune_system, infection) = build_armies(INPUT_TEST);
-        assert_eq!(
-            winner_remaining_units::<true>(&immune_system, &infection),
-            5216
-        );
+        assert_eq!(winner_remaining_units(&immune_system, &infection), 5216);
     }
 
     #[test]
-    fn test_part2() {
-        let (immune_system, infection) = build_armies(INPUT_TEST);
-        assert_eq!(part2(&immune_system, &infection), 0);
+    fn test_fight_with_boost() {
+        let (mut immune_system, mut infection) = build_armies(INPUT_TEST);
+        immune_system.boost(1570);
+        let _ = fight::<false>(&mut immune_system, &mut infection);
+
+        assert!(immune_system.has_units());
+        assert!(!infection.has_units());
+        assert_eq!(immune_system.units_total(), 51);
     }
 }
