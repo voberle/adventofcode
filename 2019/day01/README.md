@@ -7,3 +7,5 @@ Trivial.
 ## Part 2
 
 Very simple as well.
+
+But later learned about `successors`, which creates a new iterator where each successive item is computed based on the preceding one.

@@ -1,11 +1,18 @@
-use std::io::{self, Read};
+use std::{
+    io::{self, Read},
+    iter::successors,
+};
 
 fn build(input: &str) -> Vec<u32> {
     input.lines().map(|line| line.parse().unwrap()).collect()
 }
 
+fn calc_fuel(mass: u32) -> Option<u32> {
+    (mass / 3).checked_sub(2)
+}
+
 fn fuel_req(mass: u32) -> u32 {
-    (mass / 3).saturating_sub(2)
+    calc_fuel(mass).unwrap()
 }
 
 fn fuel_req_sum(masses: &[u32]) -> u32 {
@@ -13,13 +20,7 @@ fn fuel_req_sum(masses: &[u32]) -> u32 {
 }
 
 fn fuel_for_fuel(mass: u32) -> u32 {
-    let mut f = mass;
-    let mut total = 0;
-    while f != 0 {
-        f = fuel_req(f);
-        total += f;
-    }
-    total
+    successors(Some(mass), |f| calc_fuel(*f)).skip(1).sum()
 }
 
 fn fuel_for_fuel_sum(masses: &[u32]) -> u32 {
