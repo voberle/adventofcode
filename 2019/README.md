@@ -6,6 +6,6 @@
 
 Trivial. successors.
 
-### Day 2: [1202 Program Alarm](day02/README.md) 🌟
+### Day 2: [1202 Program Alarm](day02/README.md) 🌟🌟
 
 Intcode.

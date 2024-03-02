@@ -8,3 +8,6 @@ Started easy, main challenge was not to miss the instruction to replace two valu
 
 ## Part 2
 
+Part 2 was easy.
+
+I implemented Intcode so far with a simple match. The interesting question is how to make the design better now.
