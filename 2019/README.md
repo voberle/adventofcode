@@ -14,6 +14,6 @@ Intcode.
 
 Path following, manhattan distance.
 
-### Day 4: [Secure Container](day04/README.md) 🌟
+### Day 4: [Secure Container](day04/README.md) 🌟🌟
 
 Password validation.

@@ -6,3 +6,4 @@ Fairly simple with iterator `windows` and reusing the `get_digits` from [2018 Da
 
 ## Part 2
 
+Ended up counting the number of consecutive digits in the number. Is it the best way? Nice thing is I got the method right on first try, zero bug!
