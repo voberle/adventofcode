@@ -10,6 +10,6 @@ Trivial. successors.
 
 Intcode.
 
-### Day 3: [Crossed Wires](day03/README.md) 🌟
+### Day 3: [Crossed Wires](day03/README.md) 🌟🌟
 
 Path following, manhattan distance.

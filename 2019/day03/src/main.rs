@@ -1,13 +1,14 @@
 use std::io::{self, Read};
 
+use fxhash::FxHashMap;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Direction {
+enum Direction {
     Up,
     Down,
     Left,
     Right,
 }
-use fxhash::FxHashSet;
 use Direction::{Down, Left, Right, Up};
 
 impl Direction {
@@ -19,6 +20,23 @@ impl Direction {
             "R" => Right,
             _ => panic!("Invalid direction char"),
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct Pos {
+    x: i32,
+    y: i32,
+}
+
+impl Pos {
+    fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
+
+    #[allow(clippy::cast_sign_loss)]
+    fn distance(self) -> u32 {
+        (self.x.abs() + self.y.abs()) as u32
     }
 }
 
@@ -38,40 +56,46 @@ fn build(input: &str) -> (Path, Path) {
     )
 }
 
-fn follow_steps(path: &Path) -> FxHashSet<(i32, i32)> {
-    let mut steps: FxHashSet<(i32, i32)> = FxHashSet::default();
-    let mut pos = (0, 0);
+fn follow_steps(path: &Path) -> FxHashMap<Pos, usize> {
+    let mut steps: FxHashMap<Pos, usize> = FxHashMap::default();
+    let mut pos = Pos::new(0, 0);
+    let mut distance = 0;
     for ins in path {
         for _ in 0..ins.1 {
             match ins.0 {
-                Up => pos.1 -= 1,
-                Down => pos.1 += 1,
-                Left => pos.0 -= 1,
-                Right => pos.0 += 1,
+                Up => pos.y -= 1,
+                Down => pos.y += 1,
+                Left => pos.x -= 1,
+                Right => pos.x += 1,
             }
-            steps.insert(pos);
+            steps.insert(pos, distance);
+            distance += 1;
         }
     }
     steps
 }
 
-#[allow(clippy::cast_sign_loss)]
-fn distance(x: i32, y: i32) -> u32 {
-    (x.abs() + y.abs()) as u32
+fn closest_crossing_point(steps1: &FxHashMap<Pos, usize>, steps2: &FxHashMap<Pos, usize>) -> u32 {
+    // For part 1, we could use a set and use intersection, but part 2 requires a map.
+    steps1
+        .iter()
+        .filter(|(p, _)| steps2.contains_key(p))
+        .min_by(|a, b| a.0.distance().cmp(&b.0.distance()))
+        .unwrap()
+        .0
+        .distance()
 }
 
-fn closest_crossing_point(path1: &Path, path2: &Path) -> u32 {
-    let steps1 = follow_steps(path1);
-    let steps2 = follow_steps(path2);
-    let closest = steps1
-        .intersection(&steps2)
-        .min_by(|a, b| distance(a.0, a.1).cmp(&distance(b.0, b.1)))
-        .unwrap();
-    distance(closest.0, closest.1)
-}
-
-fn part2(path1: &Path, path2: &Path) -> u32 {
-    0
+fn fewest_comb_steps_to_inter(
+    steps1: &FxHashMap<Pos, usize>,
+    steps2: &FxHashMap<Pos, usize>,
+) -> usize {
+    steps1
+        .iter()
+        .filter(|(p, _)| steps2.contains_key(p))
+        .map(|(p, d)| d + 1 + steps2.get(p).unwrap() + 1)
+        .min()
+        .unwrap()
 }
 
 fn main() {
@@ -79,8 +103,11 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let (path1, path2) = build(&input);
 
-    println!("Part 1: {}", closest_crossing_point(&path1, &path2));
-    println!("Part 2: {}", part2(&path1, &path2));
+    let steps1 = follow_steps(&path1);
+    let steps2 = follow_steps(&path2);
+
+    println!("Part 1: {}", closest_crossing_point(&steps1, &steps2));
+    println!("Part 2: {}", fewest_comb_steps_to_inter(&steps1, &steps2));
 }
 
 #[cfg(test)]
@@ -91,18 +118,28 @@ mod tests {
     const INPUT_TEST_2: &str = include_str!("../resources/input_test_2");
     const INPUT_TEST_3: &str = include_str!("../resources/input_test_3");
 
+    fn build_steps(input: &str) -> (FxHashMap<Pos, usize>, FxHashMap<Pos, usize>) {
+        let (path1, path2) = build(input);
+        (follow_steps(&path1), follow_steps(&path2))
+    }
+
     #[test]
     fn test_part1() {
-        let (path1, path2) = build(INPUT_TEST_1);
-        assert_eq!(closest_crossing_point(&path1, &path2), 6);
-        let (path1, path2) = build(INPUT_TEST_2);
-        assert_eq!(closest_crossing_point(&path1, &path2), 159);
-        let (path1, path2) = build(INPUT_TEST_3);
-        assert_eq!(closest_crossing_point(&path1, &path2), 135);
+        let (steps1, steps2) = build_steps(INPUT_TEST_1);
+        assert_eq!(closest_crossing_point(&steps1, &steps2), 6);
+        let (steps1, steps2) = build_steps(INPUT_TEST_2);
+        assert_eq!(closest_crossing_point(&steps1, &steps2), 159);
+        let (steps1, steps2) = build_steps(INPUT_TEST_3);
+        assert_eq!(closest_crossing_point(&steps1, &steps2), 135);
     }
 
     #[test]
     fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST_1)), 0);
+        let (steps1, steps2) = build_steps(INPUT_TEST_1);
+        assert_eq!(fewest_comb_steps_to_inter(&steps1, &steps2), 30);
+        let (steps1, steps2) = build_steps(INPUT_TEST_2);
+        assert_eq!(fewest_comb_steps_to_inter(&steps1, &steps2), 610);
+        let (steps1, steps2) = build_steps(INPUT_TEST_3);
+        assert_eq!(fewest_comb_steps_to_inter(&steps1, &steps2), 410);
     }
 }

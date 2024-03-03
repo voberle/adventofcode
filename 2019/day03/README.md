@@ -6,3 +6,4 @@ Nothing complicated here, I brute-forced it by following the paths and saving th
 
 ## Part 2
 
+Second part was mostly refactoring part 1 to use a HashMap instead of a HashSet.
