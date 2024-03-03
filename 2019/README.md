@@ -13,3 +13,7 @@ Intcode.
 ### Day 3: [Crossed Wires](day03/README.md) 🌟🌟
 
 Path following, manhattan distance.
+
+### Day 4: [Secure Container](day04/README.md) 🌟
+
+Password validation.
