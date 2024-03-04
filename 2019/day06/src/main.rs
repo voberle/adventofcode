@@ -27,8 +27,37 @@ fn orbits_count(orbits_map: &FxHashMap<String, String>) -> usize {
     count
 }
 
-fn part2(orbits_map: &FxHashMap<String, String>) -> i64 {
-    0
+fn build_path_to_center(from: &str, orbits_map: &FxHashMap<String, String>) -> Vec<String> {
+    let mut path = Vec::new();
+    let mut o = orbits_map.get(from).unwrap();
+    path.push(o.clone());
+    while let Some(v) = orbits_map.get(o) {
+        path.push(v.clone());
+        o = v;
+    }
+    path
+}
+
+fn you_to_san_move_counts(orbits_map: &FxHashMap<String, String>) -> usize {
+    // We just need to move down from YOU and from SAN, counting how many steps there are until we meet.
+
+    // First get the paths to the center.
+    let you_path = build_path_to_center("YOU", orbits_map);
+    let san_path = build_path_to_center("SAN", orbits_map);
+
+    // Then find the intersection: We start at center and look when paths separate.
+    let intersection = you_path
+        .iter()
+        .rev()
+        .zip(san_path.iter().rev())
+        .take_while(|(y, s)| y == s)
+        .last()
+        .unwrap()
+        .0;
+
+    // Count steps to intersection
+    you_path.iter().position(|o| o == intersection).unwrap()
+        + san_path.iter().position(|o| o == intersection).unwrap()
 }
 
 fn main() {
@@ -37,22 +66,23 @@ fn main() {
     let orbits_map = build(&input);
 
     println!("Part 1: {}", orbits_count(&orbits_map));
-    println!("Part 2: {}", part2(&orbits_map));
+    println!("Part 2: {}", you_to_san_move_counts(&orbits_map));
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const INPUT_TEST: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_1: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_2: &str = include_str!("../resources/input_test_2");
 
     #[test]
     fn test_part1() {
-        assert_eq!(orbits_count(&build(INPUT_TEST)), 42);
+        assert_eq!(orbits_count(&build(INPUT_TEST_1)), 42);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(you_to_san_move_counts(&build(INPUT_TEST_2)), 4);
     }
 }

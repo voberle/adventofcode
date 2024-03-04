@@ -22,6 +22,6 @@ Password validation.
 
 Intcode.
 
-### Day 6: [Universal Orbit Map](day06/README.md) 🌟
+### Day 6: [Universal Orbit Map](day06/README.md) 🌟🌟
 
 Graph.

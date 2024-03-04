@@ -8,3 +8,4 @@ My implementation is not the most efficient, as I don't cache already made count
 
 ## Part 2
 
+Part 2 was simpler than it felt initially. We just need to find the path to the center for each, then find the intersection and count the steps to it.
