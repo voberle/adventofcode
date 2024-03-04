@@ -17,3 +17,7 @@ Path following, manhattan distance.
 ### Day 4: [Secure Container](day04/README.md) 🌟🌟
 
 Password validation.
+
+### Day 5: [Sunny with a Chance of Asteroids](day05/README.md) 🌟
+
+Intcode.
