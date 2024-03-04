@@ -1,40 +1,117 @@
 use std::io::{self, Read};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum ParamModes {
-    Position,
-    Immediate,
+enum Param {
+    Position(usize),
+    Immediate(i32),
 }
-use ParamModes::{Immediate, Position};
+use Param::{Immediate, Position};
 
-impl ParamModes {
-    fn new(i: i32) -> Self {
-        match i {
-            0 => Position,
-            1 => Immediate,
-            _ => panic!("Invalid parameter mode {}", i),
+impl Param {
+    fn new(program: &[i32], loc: usize, mode: i32) -> Self {
+        match mode {
+            0 => Position(program[loc].try_into().unwrap()),
+            1 => Immediate(program[loc]),
+            _ => panic!("Invalid parameter mode {}", mode),
+        }
+    }
+
+    fn get_val(&self, program: &[i32]) -> i32 {
+        match self {
+            Position(addr) => program[*addr],
+            Immediate(val) => *val,
         }
     }
 }
 
-// Extract the opcode and parameter modes from an integer.
-fn get_opcode_parameter_mode(i: i32) -> (i32, [ParamModes; 3]) {
-    assert_eq!(i / 10000, 0); // no more than 3 param modes
-    let opcode = i % 100;
-    let remain = i / 100;
-    (
-        opcode,
-        [
-            ParamModes::new(remain % 10),
-            ParamModes::new(remain / 10 % 10),
-            ParamModes::new(remain / 100 % 10),
-        ],
-    )
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct Address(usize);
+
+impl Address {
+    fn new(program: &[i32], loc: usize, mode: i32) -> Self {
+        match mode {
+            0 => Self(program[loc].try_into().unwrap()),
+            1 => panic!("Immediate mode not supported for writing to"),
+            _ => panic!("Invalid parameter mode {}", mode),
+        }
+    }
+
+    fn get_address(self) -> usize {
+        self.0
+    }
+}
+
+#[derive(Debug)]
+enum Instruction {
+    Add(Param, Param, Address),
+    Mult(Param, Param, Address),
+    Input(Address),
+    Output(Param),
+    JumpIfTrue(Param, Param),
+    JumpIfFalse(Param, Param),
+    LessThan(Param, Param, Address),
+    Equal(Param, Param, Address),
+    Halt,
+}
+
+impl Instruction {
+    // Extract the opcode and parameter modes from an integer.
+    fn get_opcode_mode(i: i32) -> (i32, [i32; 3]) {
+        assert_eq!(i / 10000, 0); // no more than 3 param modes
+        (i % 100, [(i / 100) % 10, (i / 1000) % 10, (i / 10000) % 10])
+    }
+
+    // Builds the instruction that starts at index 0 of this program.
+    fn new(program: &[i32]) -> Self {
+        let (opcode, modes) = Self::get_opcode_mode(program[0]);
+
+        let mut i = 0;
+        let next_p = |index: &mut usize| {
+            let p = Param::new(program, *index + 1, modes[*index]);
+            *index += 1;
+            p
+        };
+        let next_a = |index: &mut usize| {
+            let p = Address::new(program, *index + 1, modes[*index]);
+            *index += 1;
+            p
+        };
+
+        match opcode {
+            1 => Instruction::Add(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
+            2 => Instruction::Mult(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
+            3 => Instruction::Input(next_a(&mut i)),
+            4 => Instruction::Output(next_p(&mut i)),
+            5 => Instruction::JumpIfTrue(next_p(&mut i), next_p(&mut i)),
+            6 => Instruction::JumpIfFalse(next_p(&mut i), next_p(&mut i)),
+            7 => Instruction::LessThan(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
+            8 => Instruction::Equal(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
+            99 => Instruction::Halt,
+            _ => panic!("Unknown opcode {}", opcode),
+        }
+    }
+
+    fn param_count(self) -> usize {
+        match self {
+            Instruction::Halt => 0,
+            Instruction::Input(_) | Instruction::Output(_) => 1,
+            Instruction::JumpIfTrue(_, _) | Instruction::JumpIfFalse(_, _) => 2,
+            Instruction::Add(_, _, _)
+            | Instruction::Mult(_, _, _)
+            | Instruction::LessThan(_, _, _)
+            | Instruction::Equal(_, _, _) => 3,
+        }
+    }
+
+    fn length(self) -> usize {
+        self.param_count() + 1
+    }
 }
 
 #[derive(Debug, Clone)]
 struct IntcodeComputer {
     mem: Vec<i32>,
+    // Should input be a VecDeque to pop from front?
     input: Vec<i32>,
     output: Vec<i32>,
 }
@@ -48,93 +125,64 @@ impl IntcodeComputer {
         }
     }
 
-    fn get_val(&self, loc: usize, mode: ParamModes) -> i32 {
-        match mode {
-            Position => {
-                let addr = self.mem[loc] as usize;
-                self.mem[addr]
-            }
-            Immediate => self.mem[loc],
-        }
+    fn get(&self, p: &Param) -> i32 {
+        p.get_val(&self.mem)
+    }
+
+    fn get_address(&self, p: &Param) -> usize {
+        let addr = self.get(p);
+        addr.try_into().unwrap()
+    }
+
+    fn set(&mut self, p: Address, val: i32) {
+        self.mem[p.get_address()] = val;
     }
 
     fn exec(&mut self) {
         let mut ip = 0;
         loop {
-            let (opcode, modes) = get_opcode_parameter_mode(self.mem[ip]);
-            match opcode {
-                1 => {
-                    // Add
-                    let a = self.get_val(ip + 1, modes[0]);
-                    let b = self.get_val(ip + 2, modes[1]);
-                    assert_eq!(modes[2], Position);
-                    let c = self.mem[ip + 3] as usize;
-                    self.mem[c] = a + b;
-                    ip += 4;
+            let ins = Instruction::new(&self.mem[ip..]);
+            match ins {
+                Instruction::Add(a, b, c) => {
+                    self.set(c, self.get(&a) + self.get(&b));
+                    ip += ins.length();
                 }
-                2 => {
-                    // Mult
-                    let a = self.get_val(ip + 1, modes[0]);
-                    let b = self.get_val(ip + 2, modes[1]);
-                    assert_eq!(modes[2], Position);
-                    let c = self.mem[ip + 3] as usize;
-                    self.mem[c] = a * b;
-                    ip += 4;
+                Instruction::Mult(a, b, c) => {
+                    self.set(c, self.get(&a) * self.get(&b));
+                    ip += ins.length();
                 }
-                3 => {
-                    // Input
-                    assert_eq!(modes[0], Position);
-                    let a = self.mem[ip + 1] as usize;
-                    // Should input be a VecDeque to pop from front?
-                    self.mem[a] = self.input.pop().unwrap();
-                    ip += 2;
+                Instruction::Input(a) => {
+                    let val = self.input.pop().unwrap();
+                    self.set(a, val);
+                    ip += ins.length();
                 }
-                4 => {
-                    // Output
-                    let a = self.get_val(ip + 1, modes[0]);
-                    self.output.push(a);
-                    ip += 2;
+                Instruction::Output(a) => {
+                    self.output.push(self.get(&a));
+                    ip += ins.length();
                 }
-                5 => {
-                    // JumpIfTrue
-                    let a = self.get_val(ip + 1, modes[0]);
-                    if a != 0 {
-                        let b = self.get_val(ip + 2, modes[1]);
-                        ip = b as usize;
+                Instruction::JumpIfTrue(a, b) => {
+                    if self.get(&a) != 0 {
+                        ip = self.get_address(&b);
                     } else {
-                        ip += 3;
+                        ip += ins.length();
                     }
                 }
-                6 => {
-                    // JumpIfFalse
-                    let a = self.get_val(ip + 1, modes[0]);
-                    if a == 0 {
-                        let b = self.get_val(ip + 2, modes[1]);
-                        ip = b as usize;
+                Instruction::JumpIfFalse(a, b) => {
+                    if self.get(&a) == 0 {
+                        ip = self.get_address(&b);
                     } else {
-                        ip += 3;
+                        ip += ins.length();
                     }
                 }
-                7 => {
-                    // LessThan
-                    let a = self.get_val(ip + 1, modes[0]);
-                    let b = self.get_val(ip + 2, modes[1]);
-                    assert_eq!(modes[2], Position);
-                    let c = self.mem[ip + 3] as usize;
-                    self.mem[c] = i32::from(a < b);
-                    ip += 4;
+                Instruction::LessThan(a, b, c) => {
+                    self.set(c, i32::from(self.get(&a) < self.get(&b)));
+                    ip += ins.length();
                 }
-                8 => {
-                    // Equal
-                    let a = self.get_val(ip + 1, modes[0]);
-                    let b = self.get_val(ip + 2, modes[1]);
-                    assert_eq!(modes[2], Position);
-                    let c = self.mem[ip + 3] as usize;
-                    self.mem[c] = i32::from(a == b);
-                    ip += 4;
+                Instruction::Equal(a, b, c) => {
+                    self.set(c, i32::from(self.get(&a) == self.get(&b)));
+                    ip += ins.length();
                 }
-                99 => break, // Halt
-                _ => panic!("Unknown opcode"),
+                Instruction::Halt => break,
             }
         }
     }
@@ -162,18 +210,9 @@ mod tests {
 
     #[test]
     fn test_get_opcode_parameter_mode() {
-        assert_eq!(
-            get_opcode_parameter_mode(3),
-            (3, [Position, Position, Position])
-        );
-        assert_eq!(
-            get_opcode_parameter_mode(101),
-            (1, [Immediate, Position, Position])
-        );
-        assert_eq!(
-            get_opcode_parameter_mode(1002),
-            (2, [Position, Immediate, Position])
-        );
+        assert_eq!(Instruction::get_opcode_mode(3), (3, [0, 0, 0]));
+        assert_eq!(Instruction::get_opcode_mode(101), (1, [1, 0, 0]));
+        assert_eq!(Instruction::get_opcode_mode(1002), (2, [0, 1, 0]));
     }
 
     fn run(code: &str, input: i32) -> i32 {
