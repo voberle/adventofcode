@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use std::io::{self, Read};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -125,6 +126,11 @@ impl IntcodeComputer {
         }
     }
 
+    #[allow(dead_code)]
+    fn dump_memory(&self) -> String {
+        self.mem.iter().join(",")
+    }
+
     fn get(&self, p: &Param) -> i32 {
         p.get_val(&self.mem)
     }
@@ -215,7 +221,25 @@ mod tests {
         assert_eq!(Instruction::get_opcode_mode(1002), (2, [0, 1, 0]));
     }
 
-    fn run(code: &str, input: i32) -> i32 {
+    fn exec(code: &str) -> String {
+        let mut computer = IntcodeComputer::build(code);
+        computer.exec();
+        computer.dump_memory()
+    }
+
+    #[test]
+    fn test_exec() {
+        assert_eq!(
+            exec("1,9,10,3,2,3,11,0,99,30,40,50"),
+            "3500,9,10,70,2,3,11,0,99,30,40,50"
+        );
+        assert_eq!(exec("1,0,0,0,99"), "2,0,0,0,99");
+        assert_eq!(exec("2,3,0,3,99"), "2,3,0,6,99");
+        assert_eq!(exec("2,4,4,5,99,0"), "2,4,4,5,99,9801");
+        assert_eq!(exec("1,1,1,4,99,5,6,0,99"), "30,1,1,4,2,5,6,0,99");
+    }
+
+    fn run_io(code: &str, input: i32) -> i32 {
         let mut computer = IntcodeComputer::build(code);
         computer.input.push(input);
         computer.exec();
@@ -225,34 +249,34 @@ mod tests {
     #[test]
     fn test_cmp() {
         let c = "3,9,8,9,10,9,4,9,99,-1,8";
-        assert_eq!(run(c, 8), 1);
-        assert_eq!(run(c, 3), 0);
+        assert_eq!(run_io(c, 8), 1);
+        assert_eq!(run_io(c, 3), 0);
         let c = "3,9,7,9,10,9,4,9,99,-1,8";
-        assert_eq!(run(c, 3), 1);
-        assert_eq!(run(c, 9), 0);
+        assert_eq!(run_io(c, 3), 1);
+        assert_eq!(run_io(c, 9), 0);
         let c = "3,3,1108,-1,8,3,4,3,99";
-        assert_eq!(run(c, 8), 1);
-        assert_eq!(run(c, 3), 0);
+        assert_eq!(run_io(c, 8), 1);
+        assert_eq!(run_io(c, 3), 0);
         let c = "3,3,1107,-1,8,3,4,3,99";
-        assert_eq!(run(c, 3), 1);
-        assert_eq!(run(c, 9), 0);
+        assert_eq!(run_io(c, 3), 1);
+        assert_eq!(run_io(c, 9), 0);
     }
 
     #[test]
     fn test_jump() {
         let c = "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9";
-        assert_eq!(run(c, 0), 0);
-        assert_eq!(run(c, 4), 1);
+        assert_eq!(run_io(c, 0), 0);
+        assert_eq!(run_io(c, 4), 1);
         let c = "3,3,1105,-1,9,1101,0,0,12,4,12,99,1";
-        assert_eq!(run(c, 0), 0);
-        assert_eq!(run(c, 4), 1);
+        assert_eq!(run_io(c, 0), 0);
+        assert_eq!(run_io(c, 4), 1);
     }
 
     #[test]
     fn test_larger_program() {
         let c = "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99";
-        assert_eq!(run(c, 1), 999);
-        assert_eq!(run(c, 8), 1000);
-        assert_eq!(run(c, 45), 1001);
+        assert_eq!(run_io(c, 1), 999);
+        assert_eq!(run_io(c, 8), 1000);
+        assert_eq!(run_io(c, 45), 1001);
     }
 }
