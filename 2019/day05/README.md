@@ -8,3 +8,4 @@ I'm keeping the design simple for now.
 
 ## Part 2
 
+It took me more time to add the tests than to add the instructions.

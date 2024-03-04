@@ -18,6 +18,6 @@ Path following, manhattan distance.
 
 Password validation.
 
-### Day 5: [Sunny with a Chance of Asteroids](day05/README.md) 🌟
+### Day 5: [Sunny with a Chance of Asteroids](day05/README.md) 🌟🌟
 
 Intcode.
