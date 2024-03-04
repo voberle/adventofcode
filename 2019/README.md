@@ -25,3 +25,7 @@ Intcode.
 ### Day 6: [Universal Orbit Map](day06/README.md) 🌟🌟
 
 Graph.
+
+### Day 7: [Amplification Circuit](day07/README.md) 🌟
+
+Intcode.
