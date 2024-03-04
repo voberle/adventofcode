@@ -1,9 +1,5 @@
 use std::io::{self, Read};
 
-fn build(input: &str) -> Vec<i32> {
-    input.split(',').map(|v| v.parse().unwrap()).collect()
-}
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum ParamModes {
     Position,
@@ -21,6 +17,7 @@ impl ParamModes {
     }
 }
 
+// Extract the opcode and parameter modes from an integer.
 fn get_opcode_parameter_mode(i: i32) -> (i32, [ParamModes; 3]) {
     assert_eq!(i / 10000, 0); // no more than 3 param modes
     let opcode = i % 100;
@@ -35,106 +32,128 @@ fn get_opcode_parameter_mode(i: i32) -> (i32, [ParamModes; 3]) {
     )
 }
 
-fn get_val(program: &mut [i32], loc: usize, mode: ParamModes) -> i32 {
-    match mode {
-        Position => {
-            let addr = program[loc] as usize;
-            program[addr]
+#[derive(Debug, Clone)]
+struct IntcodeComputer {
+    mem: Vec<i32>,
+    input: Vec<i32>,
+    output: Vec<i32>,
+}
+
+impl IntcodeComputer {
+    fn build(input: &str) -> Self {
+        Self {
+            mem: input.split(',').map(|v| v.parse().unwrap()).collect(),
+            input: Vec::new(),
+            output: Vec::new(),
         }
-        Immediate => program[loc],
+    }
+
+    fn get_val(&self, loc: usize, mode: ParamModes) -> i32 {
+        match mode {
+            Position => {
+                let addr = self.mem[loc] as usize;
+                self.mem[addr]
+            }
+            Immediate => self.mem[loc],
+        }
+    }
+
+    fn exec(&mut self) {
+        let mut ip = 0;
+        loop {
+            let (opcode, modes) = get_opcode_parameter_mode(self.mem[ip]);
+            match opcode {
+                1 => {
+                    // Add
+                    let a = self.get_val(ip + 1, modes[0]);
+                    let b = self.get_val(ip + 2, modes[1]);
+                    assert_eq!(modes[2], Position);
+                    let c = self.mem[ip + 3] as usize;
+                    self.mem[c] = a + b;
+                    ip += 4;
+                }
+                2 => {
+                    // Mult
+                    let a = self.get_val(ip + 1, modes[0]);
+                    let b = self.get_val(ip + 2, modes[1]);
+                    assert_eq!(modes[2], Position);
+                    let c = self.mem[ip + 3] as usize;
+                    self.mem[c] = a * b;
+                    ip += 4;
+                }
+                3 => {
+                    // Input
+                    assert_eq!(modes[0], Position);
+                    let a = self.mem[ip + 1] as usize;
+                    // Should input be a VecDeque to pop from front?
+                    self.mem[a] = self.input.pop().unwrap();
+                    ip += 2;
+                }
+                4 => {
+                    // Output
+                    let a = self.get_val(ip + 1, modes[0]);
+                    self.output.push(a);
+                    ip += 2;
+                }
+                5 => {
+                    // JumpIfTrue
+                    let a = self.get_val(ip + 1, modes[0]);
+                    if a != 0 {
+                        let b = self.get_val(ip + 2, modes[1]);
+                        ip = b as usize;
+                    } else {
+                        ip += 3;
+                    }
+                }
+                6 => {
+                    // JumpIfFalse
+                    let a = self.get_val(ip + 1, modes[0]);
+                    if a == 0 {
+                        let b = self.get_val(ip + 2, modes[1]);
+                        ip = b as usize;
+                    } else {
+                        ip += 3;
+                    }
+                }
+                7 => {
+                    // LessThan
+                    let a = self.get_val(ip + 1, modes[0]);
+                    let b = self.get_val(ip + 2, modes[1]);
+                    assert_eq!(modes[2], Position);
+                    let c = self.mem[ip + 3] as usize;
+                    self.mem[c] = i32::from(a < b);
+                    ip += 4;
+                }
+                8 => {
+                    // Equal
+                    let a = self.get_val(ip + 1, modes[0]);
+                    let b = self.get_val(ip + 2, modes[1]);
+                    assert_eq!(modes[2], Position);
+                    let c = self.mem[ip + 3] as usize;
+                    self.mem[c] = i32::from(a == b);
+                    ip += 4;
+                }
+                99 => break, // Halt
+                _ => panic!("Unknown opcode"),
+            }
+        }
     }
 }
 
-fn exec(program: &mut [i32], input: &mut Vec<i32>, output: &mut Vec<i32>) {
-    let mut ip = 0;
-    loop {
-        let (opcode, modes) = get_opcode_parameter_mode(program[ip]);
-        // println!("{}: {:?}", opcode, modes);
-        match opcode {
-            1 => { // Add
-                let a = get_val(program, ip + 1, modes[0]);
-                let b = get_val(program, ip + 2, modes[1]);
-                assert_eq!(modes[2], Position);
-                let c = program[ip + 3] as usize;
-                program[c] = a + b;
-                ip += 4;
-            }
-            2 => { // Mult
-                let a = get_val(program, ip + 1, modes[0]);
-                let b = get_val(program, ip + 2, modes[1]);
-                assert_eq!(modes[2], Position);
-                let c = program[ip + 3] as usize;
-                program[c] = a * b;
-                ip += 4;
-            }
-            3 => { // Input
-                assert_eq!(modes[0], Position);
-                let a = program[ip + 1] as usize;
-                // Should input be a VecDeque to pop from front?
-                program[a] = input.pop().unwrap();
-                ip += 2;
-            }
-            4 => { // Output
-                let a = get_val(program, ip + 1, modes[0]);
-                output.push(a);
-                ip += 2;
-            }
-            5 => { // JumpIfTrue
-                let a = get_val(program, ip + 1, modes[0]);
-                if a != 0 {
-                    let b = get_val(program, ip + 2, modes[1]);
-                    ip = b as usize;
-                } else {
-                    ip += 3;
-                }
-            }
-            6 => { // JumpIfFalse
-                let a = get_val(program, ip + 1, modes[0]);
-                if a == 0 {
-                    let b = get_val(program, ip + 2, modes[1]);
-                    ip = b as usize;
-                } else {
-                    ip += 3;
-                }
-            }
-            7 => { // LessThan
-                let a = get_val(program, ip + 1, modes[0]);
-                let b = get_val(program, ip + 2, modes[1]);
-                assert_eq!(modes[2], Position);
-                let c = program[ip + 3] as usize;
-                program[c] = i32::from(a < b);
-                ip += 4;
-            }
-            8 => { // Equal
-                let a = get_val(program, ip + 1, modes[0]);
-                let b = get_val(program, ip + 2, modes[1]);
-                assert_eq!(modes[2], Position);
-                let c = program[ip + 3] as usize;
-                program[c] = i32::from(a == b);
-                ip += 4;
-            }
-            99 => break, // Halt
-            _ => panic!("Unknown opcode"),
-        }
-    }
-}
-
-fn run_diagnostic_test(program: &[i32], system_to_test_id: i32) -> i32 {
-    let mut program = program.to_vec();
-    let mut input = vec![system_to_test_id];
-    let mut output = Vec::new();
-    exec(&mut program, &mut input, &mut output);
-    // println!("{:?}", output);
-    *output.last().unwrap()
+fn run_diagnostic_test(computer: &IntcodeComputer, system_to_test_id: i32) -> i32 {
+    let mut computer = computer.clone();
+    computer.input.push(system_to_test_id);
+    computer.exec();
+    *computer.output.last().unwrap()
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let program = build(&input);
+    let computer = IntcodeComputer::build(&input);
 
-    println!("Part 1: {}", run_diagnostic_test(&program, 1));
-    println!("Part 2: {}", run_diagnostic_test(&program, 5));
+    println!("Part 1: {}", run_diagnostic_test(&computer, 1));
+    println!("Part 2: {}", run_diagnostic_test(&computer, 5));
 }
 
 #[cfg(test)]
@@ -158,11 +177,10 @@ mod tests {
     }
 
     fn run(code: &str, input: i32) -> i32 {
-        let mut program = build(code);
-        let mut input = vec![input];
-        let mut output = Vec::new();
-        exec(&mut program, &mut input, &mut output);
-        *output.last().unwrap()
+        let mut computer = IntcodeComputer::build(code);
+        computer.input.push(input);
+        computer.exec();
+        *computer.output.last().unwrap()
     }
 
     #[test]
