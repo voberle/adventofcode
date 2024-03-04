@@ -1,4 +1,5 @@
 target/
 input
 input.gv
+*.answer
 a.out

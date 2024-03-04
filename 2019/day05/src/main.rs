@@ -280,3 +280,31 @@ mod tests {
         assert_eq!(run_io(c, 45), 1001);
     }
 }
+
+#[cfg(test)]
+mod previous_days {
+    use std::fs;
+
+    use super::*;
+
+    fn run_noun_verb(computer: &IntcodeComputer, noun: i32, verb: i32) -> i32 {
+        let mut computer = computer.clone();
+        computer.set(Address(1), noun);
+        computer.set(Address(2), verb);
+        computer.exec();
+        computer.mem[0]
+    }
+
+    #[test]
+    #[cfg_attr(not(feature = "previous_days"), ignore)]
+    fn day02_part1() {
+        let input =
+            fs::read_to_string("../day02/resources/input").expect("Unable to read input file");
+        let result = fs::read_to_string("../day02/resources/part1.answer")
+            .expect("Unable to read input file");
+
+        let computer = IntcodeComputer::build(&input);
+        let part1 = run_noun_verb(&computer, 12, 2);
+        assert_eq!(part1.to_string(), result.trim());
+    }
+}

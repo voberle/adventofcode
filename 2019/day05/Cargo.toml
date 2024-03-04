@@ -8,5 +8,8 @@ description.workspace = true
 [lints]
 workspace = true
 
+[features]
+previous_days = []
+
 [dependencies]
 itertools = "0.12.1"
