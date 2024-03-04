@@ -21,3 +21,7 @@ Password validation.
 ### Day 5: [Sunny with a Chance of Asteroids](day05/README.md) 🌟🌟
 
 Intcode.
+
+### Day 6: [Universal Orbit Map](day06/README.md) 🌟
+
+Graph.
