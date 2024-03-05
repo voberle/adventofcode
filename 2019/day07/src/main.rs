@@ -4,6 +4,8 @@ use std::{
     io::{self, Read},
 };
 
+mod previous_days;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Param {
     Position(usize),
@@ -42,6 +44,12 @@ impl Address {
 
     fn get_address(self) -> usize {
         self.0
+    }
+}
+
+impl From<usize> for Address {
+    fn from(item: usize) -> Self {
+        Address(item)
     }
 }
 
@@ -281,72 +289,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_opcode_parameter_mode() {
-        assert_eq!(Instruction::get_opcode_mode(3), (3, [0, 0, 0]));
-        assert_eq!(Instruction::get_opcode_mode(101), (1, [1, 0, 0]));
-        assert_eq!(Instruction::get_opcode_mode(1002), (2, [0, 1, 0]));
-    }
-
-    fn exec(code: &str) -> String {
-        let mut computer = IntcodeComputer::build(code);
-        computer.exec();
-        computer.dump_memory()
-    }
-
-    #[test]
-    fn test_exec() {
-        assert_eq!(
-            exec("1,9,10,3,2,3,11,0,99,30,40,50"),
-            "3500,9,10,70,2,3,11,0,99,30,40,50"
-        );
-        assert_eq!(exec("1,0,0,0,99"), "2,0,0,0,99");
-        assert_eq!(exec("2,3,0,3,99"), "2,3,0,6,99");
-        assert_eq!(exec("2,4,4,5,99,0"), "2,4,4,5,99,9801");
-        assert_eq!(exec("1,1,1,4,99,5,6,0,99"), "30,1,1,4,2,5,6,0,99");
-    }
-
-    fn run_io(code: &str, input: i32) -> i32 {
-        let mut computer = IntcodeComputer::build(code);
-        computer.input.push_back(input);
-        computer.exec();
-        *computer.output.last().unwrap()
-    }
-
-    #[test]
-    fn test_cmp() {
-        let c = "3,9,8,9,10,9,4,9,99,-1,8";
-        assert_eq!(run_io(c, 8), 1);
-        assert_eq!(run_io(c, 3), 0);
-        let c = "3,9,7,9,10,9,4,9,99,-1,8";
-        assert_eq!(run_io(c, 3), 1);
-        assert_eq!(run_io(c, 9), 0);
-        let c = "3,3,1108,-1,8,3,4,3,99";
-        assert_eq!(run_io(c, 8), 1);
-        assert_eq!(run_io(c, 3), 0);
-        let c = "3,3,1107,-1,8,3,4,3,99";
-        assert_eq!(run_io(c, 3), 1);
-        assert_eq!(run_io(c, 9), 0);
-    }
-
-    #[test]
-    fn test_jump() {
-        let c = "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9";
-        assert_eq!(run_io(c, 0), 0);
-        assert_eq!(run_io(c, 4), 1);
-        let c = "3,3,1105,-1,9,1101,0,0,12,4,12,99,1";
-        assert_eq!(run_io(c, 0), 0);
-        assert_eq!(run_io(c, 4), 1);
-    }
-
-    #[test]
-    fn test_larger_program() {
-        let c = "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99";
-        assert_eq!(run_io(c, 1), 999);
-        assert_eq!(run_io(c, 8), 1000);
-        assert_eq!(run_io(c, 45), 1001);
-    }
-
-    #[test]
     fn test_max_thruster_signal() {
         let computer = IntcodeComputer::build("3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0");
         assert_eq!(max_thruster_signal(&computer), 43210);
@@ -369,58 +311,5 @@ mod tests {
 
         let computer = IntcodeComputer::build("3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,-5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10");
         assert_eq!(max_thruster_signal_with_feedback(&computer), 18216);
-    }
-}
-
-#[cfg(test)]
-mod previous_days {
-    use std::fs;
-
-    use super::*;
-
-    fn run_noun_verb(computer: &IntcodeComputer, noun: i32, verb: i32) -> i32 {
-        let mut computer = computer.clone();
-        computer.set(Address(1), noun);
-        computer.set(Address(2), verb);
-        computer.exec();
-        computer.mem[0]
-    }
-
-    #[test]
-    #[cfg_attr(not(feature = "previous_days"), ignore)]
-    fn day02_part1() {
-        let input =
-            fs::read_to_string("../day02/resources/input").expect("Unable to read input file");
-        let result = fs::read_to_string("../day02/resources/part1.answer")
-            .expect("Unable to read input file");
-
-        let computer = IntcodeComputer::build(&input);
-        let part1 = run_noun_verb(&computer, 12, 2);
-        assert_eq!(part1.to_string(), result.trim());
-    }
-
-    fn run_diagnostic_test(computer: &IntcodeComputer, system_to_test_id: i32) -> i32 {
-        let mut computer = computer.clone();
-        computer.input.push_back(system_to_test_id);
-        computer.exec();
-        *computer.output.last().unwrap()
-    }
-
-    #[test]
-    #[cfg_attr(not(feature = "previous_days"), ignore)]
-    fn day05() {
-        let input =
-            fs::read_to_string("../day05/resources/input").expect("Unable to read input file");
-        let result1 = fs::read_to_string("../day05/resources/part1.answer")
-            .expect("Unable to read input file");
-        let result2 = fs::read_to_string("../day05/resources/part2.answer")
-            .expect("Unable to read input file");
-
-        let computer = IntcodeComputer::build(&input);
-        let part1 = run_diagnostic_test(&computer, 1);
-        assert_eq!(part1.to_string(), result1.trim());
-
-        let part2 = run_diagnostic_test(&computer, 5);
-        assert_eq!(part2.to_string(), result2.trim());
     }
 }
