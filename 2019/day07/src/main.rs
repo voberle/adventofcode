@@ -2,6 +2,8 @@ use itertools::Itertools;
 use std::{
     collections::VecDeque,
     io::{self, Read},
+    sync::mpsc::{channel, Receiver, Sender},
+    thread::spawn,
 };
 
 mod previous_days;
@@ -265,6 +267,54 @@ fn get_thruster_signal_with_feedback(computer: &IntcodeComputer, phase_settings:
         e_output = exec_amp(&mut amp_e, d_output);
     }
     e_output
+}
+
+fn exec_thread(
+    amp: &mut IntcodeComputer,
+    receiver: &Receiver<i32>,
+    sender: &Sender<i32>,
+) -> Option<i32> {
+    while !amp.halted {
+        let input = receiver.recv().unwrap();
+        amp.input.push_back(input);
+        amp.exec();
+        let output = amp.output.pop().unwrap();
+        if sender.send(output).is_err() {
+            return Some(output);
+        }
+    }
+    None
+}
+
+// Multi-threaded version with channels. It's however 10 times slower than the normal version.
+#[allow(dead_code)]
+fn get_thruster_signal_multithread(computer: &IntcodeComputer, phase_settings: &[i32]) -> i32 {
+    let mut amp_a = build_amp(computer, phase_settings[0]);
+    let mut amp_b = build_amp(computer, phase_settings[1]);
+    let mut amp_c = build_amp(computer, phase_settings[2]);
+    let mut amp_d = build_amp(computer, phase_settings[3]);
+    let mut amp_e = build_amp(computer, phase_settings[4]);
+
+    let (sender_a, receiver_b) = channel();
+    let (sender_b, receiver_c) = channel();
+    let (sender_c, receiver_d) = channel();
+    let (sender_d, receiver_e) = channel();
+    let (sender_e, receiver_a) = channel();
+    let sender_clone = sender_e.clone();
+
+    let ha = spawn(move || exec_thread(&mut amp_a, &receiver_e, &sender_a));
+    let hb = spawn(move || exec_thread(&mut amp_b, &receiver_a, &sender_b));
+    let hc = spawn(move || exec_thread(&mut amp_c, &receiver_b, &sender_c));
+    let hd = spawn(move || exec_thread(&mut amp_d, &receiver_c, &sender_d));
+    let he = spawn(move || exec_thread(&mut amp_e, &receiver_d, &sender_e));
+
+    sender_clone.send(0).unwrap();
+
+    ha.join().unwrap();
+    hb.join().unwrap();
+    hc.join().unwrap();
+    hd.join().unwrap();
+    he.join().unwrap().unwrap()
 }
 
 fn max_thruster_signal_with_feedback(computer: &IntcodeComputer) -> i32 {
