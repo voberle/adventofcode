@@ -26,6 +26,6 @@ Intcode.
 
 Graph.
 
-### Day 7: [Amplification Circuit](day07/README.md) 🌟
+### Day 7: [Amplification Circuit](day07/README.md) 🌟🌟
 
 Intcode.

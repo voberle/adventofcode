@@ -1,5 +1,8 @@
 use itertools::Itertools;
-use std::io::{self, Read};
+use std::{
+    collections::VecDeque,
+    io::{self, Read},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Param {
@@ -112,17 +115,20 @@ impl Instruction {
 #[derive(Debug, Clone)]
 struct IntcodeComputer {
     mem: Vec<i32>,
-    // Should input be a VecDeque to pop from front?
-    input: Vec<i32>,
+    ip: usize,
+    input: VecDeque<i32>,
     output: Vec<i32>,
+    halted: bool,
 }
 
 impl IntcodeComputer {
     fn build(input: &str) -> Self {
         Self {
             mem: input.split(',').map(|v| v.parse().unwrap()).collect(),
-            input: Vec::new(),
+            ip: 0,
+            input: VecDeque::new(),
             output: Vec::new(),
+            halted: false,
         }
     }
 
@@ -145,69 +151,86 @@ impl IntcodeComputer {
     }
 
     fn exec(&mut self) {
-        let mut ip = 0;
         loop {
-            let ins = Instruction::new(&self.mem[ip..]);
+            let ins = Instruction::new(&self.mem[self.ip..]);
+            // println!("[{}] {:?}", self.ip, ins);
             match ins {
                 Instruction::Add(a, b, c) => {
                     self.set(c, self.get(&a) + self.get(&b));
-                    ip += ins.length();
+                    self.ip += ins.length();
                 }
                 Instruction::Mult(a, b, c) => {
                     self.set(c, self.get(&a) * self.get(&b));
-                    ip += ins.length();
+                    self.ip += ins.length();
                 }
                 Instruction::Input(a) => {
-                    let val = self.input.pop().unwrap();
-                    self.set(a, val);
-                    ip += ins.length();
+                    if let Some(val) = self.input.pop_front() {
+                        self.set(a, val);
+                        self.ip += ins.length();
+                    } else {
+                        // Interrupt the execution loop. Program isn't halted, we are just waiting for more input.
+                        // Since ip is a self variable, program will continue at right instruction.
+                        break;
+                    }
                 }
                 Instruction::Output(a) => {
                     self.output.push(self.get(&a));
-                    ip += ins.length();
+                    self.ip += ins.length();
                 }
                 Instruction::JumpIfTrue(a, b) => {
                     if self.get(&a) != 0 {
-                        ip = self.get_address(&b);
+                        self.ip = self.get_address(&b);
                     } else {
-                        ip += ins.length();
+                        self.ip += ins.length();
                     }
                 }
                 Instruction::JumpIfFalse(a, b) => {
                     if self.get(&a) == 0 {
-                        ip = self.get_address(&b);
+                        self.ip = self.get_address(&b);
                     } else {
-                        ip += ins.length();
+                        self.ip += ins.length();
                     }
                 }
                 Instruction::LessThan(a, b, c) => {
                     self.set(c, i32::from(self.get(&a) < self.get(&b)));
-                    ip += ins.length();
+                    self.ip += ins.length();
                 }
                 Instruction::Equal(a, b, c) => {
                     self.set(c, i32::from(self.get(&a) == self.get(&b)));
-                    ip += ins.length();
+                    self.ip += ins.length();
                 }
-                Instruction::Halt => break,
+                Instruction::Halt => {
+                    self.halted = true;
+                    break;
+                }
             }
         }
     }
 }
 
-fn run_amp(computer: &IntcodeComputer, input: i32, phase_setting: i32) -> i32 {
+fn build_amp(computer: &IntcodeComputer, phase_setting: i32) -> IntcodeComputer {
     let mut amp = computer.clone();
-    amp.input.push(input);
-    amp.input.push(phase_setting);
+    amp.input.push_back(phase_setting);
+    amp
+}
+
+fn exec_amp(amp: &mut IntcodeComputer, input: i32) -> i32 {
+    amp.input.push_back(input);
     amp.exec();
     amp.output.pop().unwrap()
 }
 
+fn build_and_exec(computer: &IntcodeComputer, input: i32, phase_setting: i32) -> i32 {
+    let mut amp = build_amp(computer, phase_setting);
+    exec_amp(&mut amp, input)
+}
+
 fn get_thruster_signal(computer: &IntcodeComputer, phase_settings: &[i32]) -> i32 {
-    let a_output = run_amp(computer, 0, phase_settings[0]);
-    let b_output = run_amp(computer, a_output, phase_settings[1]);
-    let c_output = run_amp(computer, b_output, phase_settings[2]);
-    let d_output = run_amp(computer, c_output, phase_settings[3]);
-    run_amp(computer, d_output, phase_settings[4])
+    let a_output = build_and_exec(computer, 0, phase_settings[0]);
+    let b_output = build_and_exec(computer, a_output, phase_settings[1]);
+    let c_output = build_and_exec(computer, b_output, phase_settings[2]);
+    let d_output = build_and_exec(computer, c_output, phase_settings[3]);
+    build_and_exec(computer, d_output, phase_settings[4])
 }
 
 fn max_thruster_signal(computer: &IntcodeComputer) -> i32 {
@@ -218,13 +241,39 @@ fn max_thruster_signal(computer: &IntcodeComputer) -> i32 {
         .unwrap()
 }
 
+fn get_thruster_signal_with_feedback(computer: &IntcodeComputer, phase_settings: &[i32]) -> i32 {
+    let mut amp_a = build_amp(computer, phase_settings[0]);
+    let mut amp_b = build_amp(computer, phase_settings[1]);
+    let mut amp_c = build_amp(computer, phase_settings[2]);
+    let mut amp_d = build_amp(computer, phase_settings[3]);
+    let mut amp_e = build_amp(computer, phase_settings[4]);
+
+    let mut e_output = 0;
+    while !amp_e.halted {
+        let a_output = exec_amp(&mut amp_a, e_output);
+        let b_output = exec_amp(&mut amp_b, a_output);
+        let c_output = exec_amp(&mut amp_c, b_output);
+        let d_output = exec_amp(&mut amp_d, c_output);
+        e_output = exec_amp(&mut amp_e, d_output);
+    }
+    e_output
+}
+
+fn max_thruster_signal_with_feedback(computer: &IntcodeComputer) -> i32 {
+    (5..=9)
+        .permutations(5)
+        .map(|phase_settings| get_thruster_signal_with_feedback(computer, &phase_settings))
+        .max()
+        .unwrap()
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let computer = IntcodeComputer::build(&input);
 
     println!("Part 1: {}", max_thruster_signal(&computer));
-    // println!("Part 2: {}", run_diagnostic_test(&computer, 5));
+    println!("Part 2: {}", max_thruster_signal_with_feedback(&computer));
 }
 
 #[cfg(test)]
@@ -258,7 +307,7 @@ mod tests {
 
     fn run_io(code: &str, input: i32) -> i32 {
         let mut computer = IntcodeComputer::build(code);
-        computer.input.push(input);
+        computer.input.push_back(input);
         computer.exec();
         *computer.output.last().unwrap()
     }
@@ -310,6 +359,17 @@ mod tests {
         let computer = IntcodeComputer::build("3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0");
         assert_eq!(max_thruster_signal(&computer), 65210);
     }
+
+    #[test]
+    fn test_max_thruster_signal_with_feedback() {
+        let computer = IntcodeComputer::build(
+            "3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5",
+        );
+        assert_eq!(max_thruster_signal_with_feedback(&computer), 139629729);
+
+        let computer = IntcodeComputer::build("3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,-5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10");
+        assert_eq!(max_thruster_signal_with_feedback(&computer), 18216);
+    }
 }
 
 #[cfg(test)]
@@ -341,7 +401,7 @@ mod previous_days {
 
     fn run_diagnostic_test(computer: &IntcodeComputer, system_to_test_id: i32) -> i32 {
         let mut computer = computer.clone();
-        computer.input.push(system_to_test_id);
+        computer.input.push_back(system_to_test_id);
         computer.exec();
         *computer.output.last().unwrap()
     }

@@ -6,3 +6,4 @@ Reusing the Intcode computer. Nothing complicated for part 1.
 
 ## Part 2
 
+Part 2 required supporting interrupting the execution loop.
