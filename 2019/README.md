@@ -29,3 +29,7 @@ Graph.
 ### Day 7: [Amplification Circuit](day07/README.md) 🌟🌟
 
 Intcode.
+
+### Day 8: [Space Image Format](day08/README.md) 🌟
+
+Reading input as bytes. bytecount crate.
