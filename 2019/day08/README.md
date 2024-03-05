@@ -6,5 +6,9 @@ The important part here was to read the input as bytes, not chars, and then use 
 
 Also as suggested by Clippy, I used the [bytecount](https://crates.io/crates/bytecount) crate to count bytes.
 
+Building it as following makes it then twice as fast (under 1 ms):
+
+    cargo build --release --features runtime-dispatch-simd
+
 ## Part 2
 

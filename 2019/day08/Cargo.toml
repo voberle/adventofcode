@@ -10,3 +10,6 @@ workspace = true
 
 [dependencies]
 bytecount = "0.6.7"
+
+[features]
+runtime-dispatch-simd = ["bytecount/runtime-dispatch-simd"]
