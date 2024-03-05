@@ -12,3 +12,6 @@ Building it as following makes it then twice as fast (under 1 ms):
 
 ## Part 2
 
+It was simple with a similar iteration as in part 1.
+
+The main challenge was picking the right Unicode char to make the picture readable!

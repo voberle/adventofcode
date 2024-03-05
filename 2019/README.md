@@ -30,6 +30,6 @@ Graph.
 
 Intcode.
 
-### Day 8: [Space Image Format](day08/README.md) 🌟
+### Day 8: [Space Image Format](day08/README.md) 🌟🌟
 
-Reading input as bytes. bytecount crate.
+Reading input as bytes. bytecount crate. ASCII picture.
