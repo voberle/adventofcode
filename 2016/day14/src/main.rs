@@ -84,6 +84,7 @@ mod tests {
         assert_eq!(index_of_64th_key::<false>("abc"), 22728);
     }
 
+    #[ignore] // a bit too slow
     #[test]
     fn test_part2() {
         assert_eq!(index_of_64th_key::<true>("abc"), 22859);

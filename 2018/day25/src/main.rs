@@ -76,15 +76,10 @@ mod tests {
     const INPUT_TEST_4: &str = include_str!("../resources/input_test_4");
 
     #[test]
-    fn test_part1() {
+    fn test_constellations_count() {
         assert_eq!(constellations_count(&build(INPUT_TEST_1)), 2);
         assert_eq!(constellations_count(&build(INPUT_TEST_2)), 4);
         assert_eq!(constellations_count(&build(INPUT_TEST_3)), 3);
         assert_eq!(constellations_count(&build(INPUT_TEST_4)), 8);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST_1)), 0);
     }
 }

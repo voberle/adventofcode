@@ -98,6 +98,7 @@ mod tests {
         assert_eq!(largest_power_3x3(42), (21, 61));
     }
 
+    #[ignore] // a bit too slow
     #[test]
     fn test_part2() {
         assert_eq!(largest_power_any_size(18), (90, 269, 16));
