@@ -12,3 +12,7 @@ pub const BLUE: &str = "\x1b[94m";
 pub const WHITE: &str = "\x1b[97m";
 pub const HOME: &str = "\x1b[H";
 pub const CLEAR: &str = "\x1b[J";
+
+// Interesting Unicode chars.
+pub const BIG_BLACK_SQUARE: &str = "\u{2B1B}";
+pub const BIG_WHITE_SQUARE: &str = "\u{2B1C}";
