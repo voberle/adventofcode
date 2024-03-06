@@ -33,3 +33,5 @@ Intcode.
 ### Day 8: [Space Image Format](day08/README.md) 🌟🌟
 
 Reading input as bytes. bytecount crate. ASCII picture.
+
+### Day 9: [Sensor Boost](day09/README.md)
