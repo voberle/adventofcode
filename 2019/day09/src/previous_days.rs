@@ -40,7 +40,7 @@ mod day02 {
         assert_eq!(exec("1,1,1,4,99,5,6,0,99"), "30,1,1,4,2,5,6,0,99");
     }
 
-    fn run_noun_verb(computer: &IntcodeComputer, noun: i32, verb: i32) -> i32 {
+    fn run_noun_verb(computer: &IntcodeComputer, noun: i64, verb: i64) -> i64 {
         let mut computer = computer.clone();
         computer.set(Address::from(1), noun);
         computer.set(Address::from(2), verb);
@@ -48,8 +48,8 @@ mod day02 {
         computer.mem[0]
     }
 
-    fn find_noun_verb(computer: &IntcodeComputer) -> i32 {
-        const TARGET: i32 = 19_690_720;
+    fn find_noun_verb(computer: &IntcodeComputer) -> i64 {
+        const TARGET: i64 = 19_690_720;
         for noun in 0..=99 {
             for verb in 0..=99 {
                 let output = run_noun_verb(computer, noun, verb);
@@ -79,7 +79,7 @@ mod day02 {
 mod day05 {
     use crate::{previous_days::get_input_results, IntcodeComputer};
 
-    fn run_io(code: &str, input: i32) -> i32 {
+    fn run_io(code: &str, input: i64) -> i64 {
         let mut computer = IntcodeComputer::build(code);
         computer.input.push_back(input);
         computer.exec();
@@ -120,7 +120,7 @@ mod day05 {
         assert_eq!(run_io(c, 45), 1001);
     }
 
-    fn run_diagnostic_test(computer: &IntcodeComputer, system_to_test_id: i32) -> i32 {
+    fn run_diagnostic_test(computer: &IntcodeComputer, system_to_test_id: i64) -> i64 {
         let mut computer = computer.clone();
         computer.input.push_back(system_to_test_id);
         computer.exec();
@@ -146,24 +146,24 @@ mod day07 {
     use crate::{previous_days::get_input_results, IntcodeComputer};
     use itertools::Itertools;
 
-    fn build_amp(computer: &IntcodeComputer, phase_setting: i32) -> IntcodeComputer {
+    fn build_amp(computer: &IntcodeComputer, phase_setting: i64) -> IntcodeComputer {
         let mut amp = computer.clone();
         amp.input.push_back(phase_setting);
         amp
     }
 
-    fn exec_amp(amp: &mut IntcodeComputer, input: i32) -> i32 {
+    fn exec_amp(amp: &mut IntcodeComputer, input: i64) -> i64 {
         amp.input.push_back(input);
         amp.exec();
         amp.output.pop().unwrap()
     }
 
-    fn build_and_exec(computer: &IntcodeComputer, input: i32, phase_setting: i32) -> i32 {
+    fn build_and_exec(computer: &IntcodeComputer, input: i64, phase_setting: i64) -> i64 {
         let mut amp = build_amp(computer, phase_setting);
         exec_amp(&mut amp, input)
     }
 
-    fn get_thruster_signal(computer: &IntcodeComputer, phase_settings: &[i32]) -> i32 {
+    fn get_thruster_signal(computer: &IntcodeComputer, phase_settings: &[i64]) -> i64 {
         let a_output = build_and_exec(computer, 0, phase_settings[0]);
         let b_output = build_and_exec(computer, a_output, phase_settings[1]);
         let c_output = build_and_exec(computer, b_output, phase_settings[2]);
@@ -171,7 +171,7 @@ mod day07 {
         build_and_exec(computer, d_output, phase_settings[4])
     }
 
-    fn max_thruster_signal(computer: &IntcodeComputer) -> i32 {
+    fn max_thruster_signal(computer: &IntcodeComputer) -> i64 {
         (0..=4)
             .permutations(5)
             .map(|phase_settings| get_thruster_signal(computer, &phase_settings))
@@ -181,8 +181,8 @@ mod day07 {
 
     fn get_thruster_signal_with_feedback(
         computer: &IntcodeComputer,
-        phase_settings: &[i32],
-    ) -> i32 {
+        phase_settings: &[i64],
+    ) -> i64 {
         let mut amp_a = build_amp(computer, phase_settings[0]);
         let mut amp_b = build_amp(computer, phase_settings[1]);
         let mut amp_c = build_amp(computer, phase_settings[2]);
@@ -200,7 +200,7 @@ mod day07 {
         e_output
     }
 
-    fn max_thruster_signal_with_feedback(computer: &IntcodeComputer) -> i32 {
+    fn max_thruster_signal_with_feedback(computer: &IntcodeComputer) -> i64 {
         (5..=9)
             .permutations(5)
             .map(|phase_settings| get_thruster_signal_with_feedback(computer, &phase_settings))

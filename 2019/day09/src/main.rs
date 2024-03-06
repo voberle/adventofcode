@@ -9,12 +9,12 @@ mod previous_days;
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Param {
     Position(usize),
-    Immediate(i32),
+    Immediate(i64),
 }
 use Param::{Immediate, Position};
 
 impl Param {
-    fn new(program: &[i32], loc: usize, mode: i32) -> Self {
+    fn new(program: &[i64], loc: usize, mode: i64) -> Self {
         match mode {
             0 => Position(program[loc].try_into().unwrap()),
             1 => Immediate(program[loc]),
@@ -22,7 +22,7 @@ impl Param {
         }
     }
 
-    fn get_val(&self, program: &[i32]) -> i32 {
+    fn get_val(&self, program: &[i64]) -> i64 {
         match self {
             Position(addr) => program[*addr],
             Immediate(val) => *val,
@@ -34,7 +34,7 @@ impl Param {
 struct Address(usize);
 
 impl Address {
-    fn new(program: &[i32], loc: usize, mode: i32) -> Self {
+    fn new(program: &[i64], loc: usize, mode: i64) -> Self {
         match mode {
             0 => Self(program[loc].try_into().unwrap()),
             1 => panic!("Immediate mode not supported for writing to"),
@@ -68,13 +68,13 @@ enum Instruction {
 
 impl Instruction {
     // Extract the opcode and parameter modes from an integer.
-    fn get_opcode_mode(i: i32) -> (i32, [i32; 3]) {
+    fn get_opcode_mode(i: i64) -> (i64, [i64; 3]) {
         assert_eq!(i / 10000, 0); // no more than 3 param modes
         (i % 100, [(i / 100) % 10, (i / 1000) % 10, (i / 10000) % 10])
     }
 
     // Builds the instruction that starts at index 0 of this program.
-    fn new(program: &[i32]) -> Self {
+    fn new(program: &[i64]) -> Self {
         let (opcode, modes) = Self::get_opcode_mode(program[0]);
 
         let mut i = 0;
@@ -122,10 +122,10 @@ impl Instruction {
 
 #[derive(Debug, Clone)]
 struct IntcodeComputer {
-    mem: Vec<i32>,
+    mem: Vec<i64>,
     ip: usize,
-    input: VecDeque<i32>,
-    output: Vec<i32>,
+    input: VecDeque<i64>,
+    output: Vec<i64>,
     halted: bool,
 }
 
@@ -145,7 +145,7 @@ impl IntcodeComputer {
         self.mem.iter().join(",")
     }
 
-    fn get(&self, p: &Param) -> i32 {
+    fn get(&self, p: &Param) -> i64 {
         p.get_val(&self.mem)
     }
 
@@ -154,7 +154,7 @@ impl IntcodeComputer {
         addr.try_into().unwrap()
     }
 
-    fn set(&mut self, p: Address, val: i32) {
+    fn set(&mut self, p: Address, val: i64) {
         self.mem[p.get_address()] = val;
     }
 
@@ -200,11 +200,11 @@ impl IntcodeComputer {
                     }
                 }
                 Instruction::LessThan(a, b, c) => {
-                    self.set(c, i32::from(self.get(&a) < self.get(&b)));
+                    self.set(c, i64::from(self.get(&a) < self.get(&b)));
                     self.ip += ins.length();
                 }
                 Instruction::Equal(a, b, c) => {
-                    self.set(c, i32::from(self.get(&a) == self.get(&b)));
+                    self.set(c, i64::from(self.get(&a) == self.get(&b)));
                     self.ip += ins.length();
                 }
                 Instruction::Halt => {
@@ -216,11 +216,20 @@ impl IntcodeComputer {
     }
 }
 
-fn part1(computer: &IntcodeComputer) -> i32 {
-    0
+fn get_boost_keycode(computer: &IntcodeComputer) -> i64 {
+    let mut computer = computer.clone();
+    computer.input.push_back(1);
+    computer.exec();
+    assert_eq!(
+        computer.output.len(),
+        1,
+        "Failing opcodes {:?}",
+        computer.output
+    );
+    *computer.output.last().unwrap()
 }
 
-fn part2(computer: &IntcodeComputer) -> i32 {
+fn part2(computer: &IntcodeComputer) -> i64 {
     0
 }
 
@@ -229,7 +238,7 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let computer = IntcodeComputer::build(&input);
 
-    println!("Part 1: {}", part1(&computer));
+    println!("Part 1: {}", get_boost_keycode(&computer));
     println!("Part 2: {}", part2(&computer));
 }
 
@@ -238,8 +247,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_part1() {
-        let computer = IntcodeComputer::build("");
-        assert_eq!(part1(&computer), 0);
+    fn test_large_memory() {
+        let mut computer = IntcodeComputer::build("1102,34915192,34915192,7,4,7,99,0");
+        computer.exec();
+        assert_eq!(computer.output[0], 1219070632396864);
+    }
+
+    #[test]
+    fn test_large_numbers() {
+        let mut computer = IntcodeComputer::build("104,1125899906842624,99");
+        computer.exec();
+        assert_eq!(computer.output[0], 1125899906842624);
     }
 }
