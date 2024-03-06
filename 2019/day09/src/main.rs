@@ -14,10 +14,13 @@ enum Param {
 use Param::{Immediate, Position};
 
 impl Param {
+    const POSITION: i64 = 0;
+    const IMMEDIATE: i64 = 1;
+
     fn new(program: &[i64], loc: usize, mode: i64) -> Self {
         match mode {
-            0 => Position(program[loc].try_into().unwrap()),
-            1 => Immediate(program[loc]),
+            Self::POSITION => Position(program[loc].try_into().unwrap()),
+            Self::IMMEDIATE => Immediate(program[loc]),
             _ => panic!("Invalid parameter mode {}", mode),
         }
     }
@@ -28,41 +31,33 @@ impl Param {
             Immediate(val) => *val,
         }
     }
-}
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-struct Address(usize);
-
-impl Address {
-    fn new(program: &[i64], loc: usize, mode: i64) -> Self {
-        match mode {
-            0 => Self(program[loc].try_into().unwrap()),
-            1 => panic!("Immediate mode not supported for writing to"),
-            _ => panic!("Invalid parameter mode {}", mode),
+    fn get_address(&self) -> usize {
+        match self {
+            Position(addr) => *addr,
+            Immediate(_) => panic!("get_address not supported for immediate mode"),
         }
     }
-
-    fn get_address(self) -> usize {
-        self.0
-    }
 }
 
-impl From<usize> for Address {
+impl From<usize> for Param {
     fn from(item: usize) -> Self {
-        Address(item)
+        Param::Position(item)
     }
 }
+
+type WriteParam = Param;
 
 #[derive(Debug)]
 enum Instruction {
-    Add(Param, Param, Address),
-    Mult(Param, Param, Address),
-    Input(Address),
+    Add(Param, Param, WriteParam),
+    Mult(Param, Param, WriteParam),
+    Input(WriteParam),
     Output(Param),
     JumpIfTrue(Param, Param),
     JumpIfFalse(Param, Param),
-    LessThan(Param, Param, Address),
-    Equal(Param, Param, Address),
+    LessThan(Param, Param, WriteParam),
+    Equal(Param, Param, WriteParam),
     Halt,
 }
 
@@ -84,7 +79,9 @@ impl Instruction {
             p
         };
         let next_a = |index: &mut usize| {
-            let p = Address::new(program, *index + 1, modes[*index]);
+            let mode = modes[*index];
+            assert_ne!(mode, Param::IMMEDIATE);
+            let p = Param::new(program, *index + 1, mode);
             *index += 1;
             p
         };
@@ -154,7 +151,8 @@ impl IntcodeComputer {
         addr.try_into().unwrap()
     }
 
-    fn set(&mut self, p: Address, val: i64) {
+    fn set(&mut self, p: Param, val: i64) {
+        assert!(!matches!(p, Param::Immediate(_)));
         self.mem[p.get_address()] = val;
     }
 
@@ -247,14 +245,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_large_memory() {
+    fn test_large_numbers() {
         let mut computer = IntcodeComputer::build("1102,34915192,34915192,7,4,7,99,0");
         computer.exec();
         assert_eq!(computer.output[0], 1219070632396864);
-    }
 
-    #[test]
-    fn test_large_numbers() {
         let mut computer = IntcodeComputer::build("104,1125899906842624,99");
         computer.exec();
         assert_eq!(computer.output[0], 1125899906842624);

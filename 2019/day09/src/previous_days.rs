@@ -20,7 +20,7 @@ fn get_input_results(day: &str) -> (String, String, String) {
 
 #[cfg(test)]
 mod day02 {
-    use crate::{previous_days::get_input_results, Address, IntcodeComputer};
+    use crate::{previous_days::get_input_results, IntcodeComputer, Param};
 
     fn exec(code: &str) -> String {
         let mut computer = IntcodeComputer::build(code);
@@ -42,8 +42,8 @@ mod day02 {
 
     fn run_noun_verb(computer: &IntcodeComputer, noun: i64, verb: i64) -> i64 {
         let mut computer = computer.clone();
-        computer.set(Address::from(1), noun);
-        computer.set(Address::from(2), verb);
+        computer.set(Param::from(1), noun);
+        computer.set(Param::from(2), verb);
         computer.exec();
         computer.mem[0]
     }
