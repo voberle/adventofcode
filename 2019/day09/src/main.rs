@@ -52,6 +52,7 @@ enum Instruction {
     Halt,
 }
 
+#[allow(clippy::enum_glob_use)]
 impl Instruction {
     // Extract the opcode and parameter modes from an integer.
     fn get_opcode_mode(i: i64) -> (i64, [i64; 4]) {
@@ -68,6 +69,7 @@ impl Instruction {
 
     // Builds the instruction that starts at index 0 of this program.
     fn new(program: &[i64]) -> Self {
+        use Instruction::*;
         let (opcode, modes) = Self::get_opcode_mode(program[0]);
 
         let mut i = 0;
@@ -85,31 +87,27 @@ impl Instruction {
         };
 
         match opcode {
-            1 => Instruction::Add(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
-            2 => Instruction::Mult(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
-            3 => Instruction::Input(next_a(&mut i)),
-            4 => Instruction::Output(next_p(&mut i)),
-            5 => Instruction::JumpIfTrue(next_p(&mut i), next_p(&mut i)),
-            6 => Instruction::JumpIfFalse(next_p(&mut i), next_p(&mut i)),
-            7 => Instruction::LessThan(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
-            8 => Instruction::Equal(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
-            9 => Instruction::ChangeRelativeBase(next_p(&mut i)),
-            99 => Instruction::Halt,
+            1 => Add(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
+            2 => Mult(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
+            3 => Input(next_a(&mut i)),
+            4 => Output(next_p(&mut i)),
+            5 => JumpIfTrue(next_p(&mut i), next_p(&mut i)),
+            6 => JumpIfFalse(next_p(&mut i), next_p(&mut i)),
+            7 => LessThan(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
+            8 => Equal(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
+            9 => ChangeRelativeBase(next_p(&mut i)),
+            99 => Halt,
             _ => panic!("Unknown opcode {}", opcode),
         }
     }
 
     fn param_count(self) -> usize {
+        use Instruction::*;
         match self {
-            Instruction::Halt => 0,
-            Instruction::Input(_) | Instruction::Output(_) | Instruction::ChangeRelativeBase(_) => {
-                1
-            }
-            Instruction::JumpIfTrue(_, _) | Instruction::JumpIfFalse(_, _) => 2,
-            Instruction::Add(_, _, _)
-            | Instruction::Mult(_, _, _)
-            | Instruction::LessThan(_, _, _)
-            | Instruction::Equal(_, _, _) => 3,
+            Halt => 0,
+            Input { .. } | Output { .. } | ChangeRelativeBase { .. } => 1,
+            JumpIfTrue { .. } | JumpIfFalse { .. } => 2,
+            Add { .. } | Mult { .. } | LessThan { .. } | Equal { .. } => 3,
         }
     }
 
@@ -146,6 +144,16 @@ impl IntcodeComputer {
         }
     }
 
+    fn get_mem(&mut self, addr: usize) -> i64 {
+        self.ensure_mem_capacity(addr);
+        self.mem[addr]
+    }
+
+    fn set_mem(&mut self, addr: usize, val: i64) {
+        self.ensure_mem_capacity(addr);
+        self.mem[addr] = val;
+    }
+
     #[allow(dead_code)]
     fn dump_memory(&self) -> String {
         self.mem.iter().join(",")
@@ -153,17 +161,9 @@ impl IntcodeComputer {
 
     fn get(&mut self, p: &Param) -> i64 {
         match p {
-            Position(addr) => {
-                let a = *addr;
-                self.ensure_mem_capacity(a);
-                self.mem[a]
-            }
+            Position(addr) => self.get_mem(*addr),
             Immediate(val) => *val,
-            Relative(addr) => {
-                let a: usize = (self.relative_base + *addr).try_into().unwrap();
-                self.ensure_mem_capacity(a);
-                self.mem[a]
-            }
+            Relative(addr) => self.get_mem((self.relative_base + *addr).try_into().unwrap()),
         }
     }
 
@@ -177,8 +177,7 @@ impl IntcodeComputer {
             Immediate(_) => panic!("Cannot write to immediate mode value"),
             Relative(addr) => (self.relative_base + *addr).try_into().unwrap(),
         };
-        self.ensure_mem_capacity(addr);
-        self.mem[addr] = val;
+        self.set_mem(addr, val);
     }
 
     fn exec(&mut self) {
