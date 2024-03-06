@@ -8,3 +8,4 @@ It turned out to be more complicated than expected, because by separation of Par
 
 ## Part 2
 
+Trivial.

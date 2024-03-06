@@ -35,6 +35,7 @@ impl From<usize> for Param {
     }
 }
 
+// To flag which params are the ones we write to.
 type WriteParam = Param;
 
 #[derive(Debug)]
@@ -173,7 +174,7 @@ impl IntcodeComputer {
     fn set(&mut self, p: &Param, val: i64) {
         let addr: usize = match p {
             Position(addr) => *addr,
-            Immediate(_) => panic!("get_address not supported for immediate mode"),
+            Immediate(_) => panic!("Cannot write to immediate mode value"),
             Relative(addr) => (self.relative_base + *addr).try_into().unwrap(),
         };
         self.ensure_mem_capacity(addr);
@@ -253,21 +254,19 @@ impl IntcodeComputer {
     }
 }
 
-fn get_boost_keycode(computer: &IntcodeComputer) -> i64 {
+fn run(computer: &IntcodeComputer, input: i64) -> i64 {
     let mut computer = computer.clone();
-    computer.input.push_back(1);
+    computer.input.push_back(input);
     computer.exec();
-    assert_eq!(
-        computer.output.len(),
-        1,
-        "Failing opcodes {:?}",
-        computer.output
-    );
     *computer.output.last().unwrap()
 }
 
-fn part2(computer: &IntcodeComputer) -> i64 {
-    0
+fn get_boost_keycode(computer: &IntcodeComputer) -> i64 {
+    run(computer, 1)
+}
+
+fn get_distress_signal_coords(computer: &IntcodeComputer) -> i64 {
+    run(computer, 2)
 }
 
 fn main() {
@@ -276,7 +275,7 @@ fn main() {
     let computer = IntcodeComputer::build(&input);
 
     println!("Part 1: {}", get_boost_keycode(&computer));
-    println!("Part 2: {}", part2(&computer));
+    println!("Part 2: {}", get_distress_signal_coords(&computer));
 }
 
 #[cfg(test)]
