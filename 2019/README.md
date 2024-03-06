@@ -34,4 +34,6 @@ Intcode.
 
 Reading input as bytes. bytecount crate. ASCII picture.
 
-### Day 9: [Sensor Boost](day09/README.md)
+### Day 9: [Sensor Boost](day09/README.md) 🌟
+
+Intcode.

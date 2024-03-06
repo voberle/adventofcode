@@ -10,17 +10,20 @@ mod previous_days;
 enum Param {
     Position(usize),
     Immediate(i64),
+    Relative(i64), // offset can be negative
 }
-use Param::{Immediate, Position};
+use Param::{Immediate, Position, Relative};
 
 impl Param {
     const POSITION: i64 = 0;
     const IMMEDIATE: i64 = 1;
+    const RELATIVE: i64 = 2;
 
     fn new(program: &[i64], loc: usize, mode: i64) -> Self {
         match mode {
             Self::POSITION => Position(program[loc].try_into().unwrap()),
             Self::IMMEDIATE => Immediate(program[loc]),
+            Self::RELATIVE => Relative(program[loc]),
             _ => panic!("Invalid parameter mode {}", mode),
         }
     }
@@ -44,14 +47,22 @@ enum Instruction {
     JumpIfFalse(Param, Param),
     LessThan(Param, Param, WriteParam),
     Equal(Param, Param, WriteParam),
+    ChangeRelativeBase(Param),
     Halt,
 }
 
 impl Instruction {
     // Extract the opcode and parameter modes from an integer.
-    fn get_opcode_mode(i: i64) -> (i64, [i64; 3]) {
-        assert_eq!(i / 10000, 0); // no more than 3 param modes
-        (i % 100, [(i / 100) % 10, (i / 1000) % 10, (i / 10000) % 10])
+    fn get_opcode_mode(i: i64) -> (i64, [i64; 4]) {
+        (
+            i % 100,
+            [
+                (i / 100) % 10,
+                (i / 1_000) % 10,
+                (i / 10_000) % 10,
+                (i / 100_000) % 10,
+            ],
+        )
     }
 
     // Builds the instruction that starts at index 0 of this program.
@@ -81,6 +92,7 @@ impl Instruction {
             6 => Instruction::JumpIfFalse(next_p(&mut i), next_p(&mut i)),
             7 => Instruction::LessThan(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
             8 => Instruction::Equal(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
+            9 => Instruction::ChangeRelativeBase(next_p(&mut i)),
             99 => Instruction::Halt,
             _ => panic!("Unknown opcode {}", opcode),
         }
@@ -89,7 +101,9 @@ impl Instruction {
     fn param_count(self) -> usize {
         match self {
             Instruction::Halt => 0,
-            Instruction::Input(_) | Instruction::Output(_) => 1,
+            Instruction::Input(_) | Instruction::Output(_) | Instruction::ChangeRelativeBase(_) => {
+                1
+            }
             Instruction::JumpIfTrue(_, _) | Instruction::JumpIfFalse(_, _) => 2,
             Instruction::Add(_, _, _)
             | Instruction::Mult(_, _, _)
@@ -107,6 +121,7 @@ impl Instruction {
 struct IntcodeComputer {
     mem: Vec<i64>,
     ip: usize,
+    relative_base: i64,
     input: VecDeque<i64>,
     output: Vec<i64>,
     halted: bool,
@@ -117,9 +132,16 @@ impl IntcodeComputer {
         Self {
             mem: input.split(',').map(|v| v.parse().unwrap()).collect(),
             ip: 0,
+            relative_base: 0,
             input: VecDeque::new(),
             output: Vec::new(),
             halted: false,
+        }
+    }
+
+    fn ensure_mem_capacity(&mut self, capacity: usize) {
+        if self.mem.len() <= capacity {
+            self.mem.resize(capacity + 1, 0);
         }
     }
 
@@ -128,23 +150,34 @@ impl IntcodeComputer {
         self.mem.iter().join(",")
     }
 
-    fn get(&self, p: &Param) -> i64 {
+    fn get(&mut self, p: &Param) -> i64 {
         match p {
-            Position(addr) => self.mem[*addr],
+            Position(addr) => {
+                let a = *addr;
+                self.ensure_mem_capacity(a);
+                self.mem[a]
+            }
             Immediate(val) => *val,
+            Relative(addr) => {
+                let a: usize = (self.relative_base + *addr).try_into().unwrap();
+                self.ensure_mem_capacity(a);
+                self.mem[a]
+            }
         }
     }
 
-    fn get_address(&self, p: &Param) -> usize {
+    fn get_address(&mut self, p: &Param) -> usize {
         self.get(p).try_into().unwrap()
     }
 
     fn set(&mut self, p: &Param, val: i64) {
-        let addr = match p {
-            Position(addr) => addr,
+        let addr: usize = match p {
+            Position(addr) => *addr,
             Immediate(_) => panic!("get_address not supported for immediate mode"),
+            Relative(addr) => (self.relative_base + *addr).try_into().unwrap(),
         };
-        self.mem[*addr] = val;
+        self.ensure_mem_capacity(addr);
+        self.mem[addr] = val;
     }
 
     fn exec(&mut self) {
@@ -153,11 +186,15 @@ impl IntcodeComputer {
             // println!("[{}] {:?}", self.ip, ins);
             match ins {
                 Instruction::Add(a, b, c) => {
-                    self.set(&c, self.get(&a) + self.get(&b));
+                    let a = self.get(&a);
+                    let b = self.get(&b);
+                    self.set(&c, a + b);
                     self.ip += ins.length();
                 }
                 Instruction::Mult(a, b, c) => {
-                    self.set(&c, self.get(&a) * self.get(&b));
+                    let a = self.get(&a);
+                    let b = self.get(&b);
+                    self.set(&c, a * b);
                     self.ip += ins.length();
                 }
                 Instruction::Input(a) => {
@@ -171,7 +208,8 @@ impl IntcodeComputer {
                     }
                 }
                 Instruction::Output(a) => {
-                    self.output.push(self.get(&a));
+                    let a = self.get(&a);
+                    self.output.push(a);
                     self.ip += ins.length();
                 }
                 Instruction::JumpIfTrue(a, b) => {
@@ -189,16 +227,26 @@ impl IntcodeComputer {
                     }
                 }
                 Instruction::LessThan(a, b, c) => {
-                    self.set(&c, i64::from(self.get(&a) < self.get(&b)));
+                    let a = self.get(&a);
+                    let b = self.get(&b);
+                    self.set(&c, i64::from(a < b));
                     self.ip += ins.length();
                 }
                 Instruction::Equal(a, b, c) => {
-                    self.set(&c, i64::from(self.get(&a) == self.get(&b)));
+                    let a = self.get(&a);
+                    let b = self.get(&b);
+                    self.set(&c, i64::from(a == b));
                     self.ip += ins.length();
                 }
                 Instruction::Halt => {
                     self.halted = true;
                     break;
+                }
+                Instruction::ChangeRelativeBase(a) => {
+                    let val = self.get(&a);
+                    self.relative_base += val;
+                    // println!("Relative base changed by {}, now {}", val, self.relative_base);
+                    self.ip += ins.length();
                 }
             }
         }
@@ -244,5 +292,16 @@ mod tests {
         let mut computer = IntcodeComputer::build("104,1125899906842624,99");
         computer.exec();
         assert_eq!(computer.output[0], 1125899906842624);
+    }
+
+    #[test]
+    fn test_relative_mode() {
+        let mut computer =
+            IntcodeComputer::build("109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99");
+        computer.exec();
+        assert_eq!(
+            computer.output.iter().join(","),
+            "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99"
+        );
     }
 }
