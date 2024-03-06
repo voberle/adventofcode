@@ -24,20 +24,6 @@ impl Param {
             _ => panic!("Invalid parameter mode {}", mode),
         }
     }
-
-    fn get_val(&self, program: &[i64]) -> i64 {
-        match self {
-            Position(addr) => program[*addr],
-            Immediate(val) => *val,
-        }
-    }
-
-    fn get_address(&self) -> usize {
-        match self {
-            Position(addr) => *addr,
-            Immediate(_) => panic!("get_address not supported for immediate mode"),
-        }
-    }
 }
 
 impl From<usize> for Param {
@@ -143,17 +129,22 @@ impl IntcodeComputer {
     }
 
     fn get(&self, p: &Param) -> i64 {
-        p.get_val(&self.mem)
+        match p {
+            Position(addr) => self.mem[*addr],
+            Immediate(val) => *val,
+        }
     }
 
     fn get_address(&self, p: &Param) -> usize {
-        let addr = self.get(p);
-        addr.try_into().unwrap()
+        self.get(p).try_into().unwrap()
     }
 
-    fn set(&mut self, p: Param, val: i64) {
-        assert!(!matches!(p, Param::Immediate(_)));
-        self.mem[p.get_address()] = val;
+    fn set(&mut self, p: &Param, val: i64) {
+        let addr = match p {
+            Position(addr) => addr,
+            Immediate(_) => panic!("get_address not supported for immediate mode"),
+        };
+        self.mem[*addr] = val;
     }
 
     fn exec(&mut self) {
@@ -162,16 +153,16 @@ impl IntcodeComputer {
             // println!("[{}] {:?}", self.ip, ins);
             match ins {
                 Instruction::Add(a, b, c) => {
-                    self.set(c, self.get(&a) + self.get(&b));
+                    self.set(&c, self.get(&a) + self.get(&b));
                     self.ip += ins.length();
                 }
                 Instruction::Mult(a, b, c) => {
-                    self.set(c, self.get(&a) * self.get(&b));
+                    self.set(&c, self.get(&a) * self.get(&b));
                     self.ip += ins.length();
                 }
                 Instruction::Input(a) => {
                     if let Some(val) = self.input.pop_front() {
-                        self.set(a, val);
+                        self.set(&a, val);
                         self.ip += ins.length();
                     } else {
                         // Interrupt the execution loop. Program isn't halted, we are just waiting for more input.
@@ -198,11 +189,11 @@ impl IntcodeComputer {
                     }
                 }
                 Instruction::LessThan(a, b, c) => {
-                    self.set(c, i64::from(self.get(&a) < self.get(&b)));
+                    self.set(&c, i64::from(self.get(&a) < self.get(&b)));
                     self.ip += ins.length();
                 }
                 Instruction::Equal(a, b, c) => {
-                    self.set(c, i64::from(self.get(&a) == self.get(&b)));
+                    self.set(&c, i64::from(self.get(&a) == self.get(&b)));
                     self.ip += ins.length();
                 }
                 Instruction::Halt => {

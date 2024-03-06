@@ -42,8 +42,8 @@ mod day02 {
 
     fn run_noun_verb(computer: &IntcodeComputer, noun: i64, verb: i64) -> i64 {
         let mut computer = computer.clone();
-        computer.set(Param::from(1), noun);
-        computer.set(Param::from(2), verb);
+        computer.set(&Param::from(1), noun);
+        computer.set(&Param::from(2), verb);
         computer.exec();
         computer.mem[0]
     }
