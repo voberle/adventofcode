@@ -62,55 +62,56 @@ fn is_same_line(p1: Coords, p2: Coords, p: Coords) -> bool {
     (p.y - p1.y) * (p2.x - p1.x) == (p.x - p1.x) * (p2.y - p1.y)
 }
 
-fn best_position(map: &Map) -> (Coords, usize) {
-    let mut in_sight_count: FxHashMap<Coords, usize> = FxHashMap::default();
+// For each asteroid, we trace a line with all other asteroids.
+// Then we look if any asteroid is on this line. If there are some, and there are further than the one we are checking,
+// we remove them from our in sight list.
+fn find_asteroids_in_sight(map: &Map, asteroid: Coords) -> Vec<Option<Coords>> {
+    // A list of all other asteroids.
+    // Using options so we can clear the ones we have found to be unreachable.
+    let mut in_sight: Vec<Option<Coords>> = map
+        .0
+        .iter()
+        .filter_map(|&c| if c == asteroid { None } else { Some(Some(c)) })
+        .collect();
 
-    // For each asteroid, we trace a line with all other asteroids.
-    // Then we look if any asteroid is on this line. If there are some, and there are further than the one we are checking,
-    // we remove them from our in sight list.
-    for asteroid in &map.0 {
-        // A list of all other asteroids.
-        // Using options so we can clear the ones we have found to be unreachable.
-        let mut others_in_sight: Vec<Option<Coords>> = map
-            .0
-            .iter()
-            .filter_map(|&c| if c == *asteroid { None } else { Some(Some(c)) })
-            .collect();
-
-        // Check all other asteroids that may be in sight
-        for i in 0..others_in_sight.len() {
-            if let Some(ast_i) = others_in_sight[i] {
-                // Finds the one that are on the line.
-                for item_to_check in &mut others_in_sight {
-                    if let Some(ast_to_check) = item_to_check {
-                        if is_same_line(*asteroid, ast_i, *ast_to_check) {
-                            let d_i2check = ast_i.distance(*ast_to_check);
-                            let d_i = asteroid.distance(ast_i);
-                            let d_check = asteroid.distance(*ast_to_check);
-                            // If same side:
-                            if d_i2check != d_i + d_check {
-                                // Keep it only if it is closer.
-                                if d_i < d_check {
-                                    *item_to_check = None;
-                                }
+    // Check all other asteroids that may be in sight
+    for i in 0..in_sight.len() {
+        if let Some(ast_i) = in_sight[i] {
+            // Finds the one that are on the line.
+            for item_to_check in &mut in_sight {
+                if let Some(ast_to_check) = item_to_check {
+                    if is_same_line(asteroid, ast_i, *ast_to_check) {
+                        let d_i2check = ast_i.distance(*ast_to_check);
+                        let d_i = asteroid.distance(ast_i);
+                        let d_check = asteroid.distance(*ast_to_check);
+                        // If same side:
+                        if d_i2check != d_i + d_check {
+                            // Keep it only if it is closer.
+                            if d_i < d_check {
+                                *item_to_check = None;
                             }
                         }
                     }
                 }
             }
         }
-        // println!("{:?} => {:?}", asteroid, others);
-
-        in_sight_count.insert(*asteroid, others_in_sight.iter().filter(|v| v.is_some()).count());
     }
+    // println!("{:?} => {:?}", asteroid, in_sight);
+    in_sight
+}
 
-    // println!("{:#?}", in_sight);
+fn best_position(map: &Map) -> (Coords, usize) {
+    let mut in_sight_count: FxHashMap<Coords, usize> = FxHashMap::default();
+    for asteroid in &map.0 {
+        let in_sight = find_asteroids_in_sight(map, *asteroid);
+        in_sight_count.insert(*asteroid, in_sight.iter().filter(|v| v.is_some()).count());
+    }
 
     let (best_coord, count) = in_sight_count.iter().max_by_key(|(_, v)| **v).unwrap();
     (*best_coord, *count)
 }
 
-fn part2(map: &Map) -> i64 {
+fn asteroid_vaporized(map: &Map, monitoring_loc: Coords, nth: usize) -> usize {
     0
 }
 
@@ -118,10 +119,10 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let map = Map::build(&input);
-    // println!("{:#?}", map.0);
 
-    println!("Part 1: {}", best_position(&map).1);
-    println!("Part 2: {}", part2(&map));
+    let (best_coord, in_sight_count) = best_position(&map);
+    println!("Part 1: {}", in_sight_count);
+    println!("Part 2: {}", asteroid_vaporized(&map, best_coord, 200));
 }
 
 #[cfg(test)]
@@ -159,7 +160,9 @@ mod tests {
     }
 
     #[test]
-    fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), 0);
+    fn test_asteroid_vaporized() {
+        let map = Map::build(INPUT_TEST_5);
+        let best_coord = best_position(&map).0;
+        assert_eq!(asteroid_vaporized(&map, best_coord, 200), 802);
     }
 }
