@@ -38,6 +38,6 @@ Reading input as bytes. bytecount crate. ASCII picture.
 
 Intcode.
 
-### Day 10: [Monitoring Station](day10/README.md) 🌟
+### Day 10: [Monitoring Station](day10/README.md) 🌟🌟
 
 Coordinates in 2D space. Line detection.

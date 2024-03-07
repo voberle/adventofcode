@@ -6,3 +6,4 @@ That ones was a bit harder, but my final solution is fairly simple I feel.
 
 ## Part 2
 
+Very happy with this one: I expected it to be rather tricky, and I got it almost on first try, with only a minor bug in `which_square` (needed smaller or equal).
