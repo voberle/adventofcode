@@ -37,3 +37,7 @@ Reading input as bytes. bytecount crate. ASCII picture.
 ### Day 9: [Sensor Boost](day09/README.md) 🌟🌟
 
 Intcode.
+
+### Day 10: [Monitoring Station](day10/README.md) 🌟
+
+Coordinates in 2D space. Line detection.
