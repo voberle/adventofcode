@@ -256,6 +256,18 @@ impl IntcodeComputer {
 
     /// A few methods to help using the computer.
 
+    // Execute the program with given integer as input, returning last integer from output.
+    ///
+    /// # Panics
+    ///
+    /// Will panic if there is no output.
+    #[must_use]
+    pub fn run(&mut self, input: i64) -> i64 {
+        self.input.push_back(input);
+        self.exec();
+        *self.output.last().unwrap()
+    }
+
     #[must_use]
     pub fn dump_memory(&self) -> String {
         self.mem.iter().join(",")

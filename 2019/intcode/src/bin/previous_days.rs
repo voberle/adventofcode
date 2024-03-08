@@ -78,9 +78,7 @@ mod day05 {
     #[cfg(test)]
     fn run_io(code: &str, input: i64) -> i64 {
         let mut computer = IntcodeComputer::build(code);
-        computer.input.push_back(input);
-        computer.exec();
-        *computer.output.last().unwrap()
+        computer.run(input)
     }
 
     #[test]
@@ -119,9 +117,7 @@ mod day05 {
 
     fn run_diagnostic_test(computer: &IntcodeComputer, system_to_test_id: i64) -> i64 {
         let mut computer = computer.clone();
-        computer.input.push_back(system_to_test_id);
-        computer.exec();
-        *computer.output.last().unwrap()
+        computer.run(system_to_test_id)
     }
 
     pub(crate) fn real_input() {
@@ -147,15 +143,9 @@ mod day07 {
         amp
     }
 
-    fn exec_amp(amp: &mut IntcodeComputer, input: i64) -> i64 {
-        amp.input.push_back(input);
-        amp.exec();
-        amp.output.pop().unwrap()
-    }
-
     fn build_and_exec(computer: &IntcodeComputer, input: i64, phase_setting: i64) -> i64 {
         let mut amp = build_amp(computer, phase_setting);
-        exec_amp(&mut amp, input)
+        amp.run(input)
     }
 
     fn get_thruster_signal(computer: &IntcodeComputer, phase_settings: &[i64]) -> i64 {
@@ -186,11 +176,11 @@ mod day07 {
 
         let mut e_output = 0;
         while !amp_e.halted {
-            let a_output = exec_amp(&mut amp_a, e_output);
-            let b_output = exec_amp(&mut amp_b, a_output);
-            let c_output = exec_amp(&mut amp_c, b_output);
-            let d_output = exec_amp(&mut amp_d, c_output);
-            e_output = exec_amp(&mut amp_e, d_output);
+            let a_output = amp_a.run(e_output);
+            let b_output = amp_b.run(a_output);
+            let c_output = amp_c.run(b_output);
+            let d_output = amp_d.run(c_output);
+            e_output = amp_e.run(d_output);
         }
         e_output
     }
@@ -268,19 +258,14 @@ mod day09 {
         );
     }
 
-    fn run(computer: &IntcodeComputer, input: i64) -> i64 {
-        let mut computer = computer.clone();
-        computer.input.push_back(input);
-        computer.exec();
-        *computer.output.last().unwrap()
-    }
-
     fn get_boost_keycode(computer: &IntcodeComputer) -> i64 {
-        run(computer, 1)
+        let mut computer = computer.clone();
+        computer.run(1)
     }
 
     fn get_distress_signal_coords(computer: &IntcodeComputer) -> i64 {
-        run(computer, 2)
+        let mut computer = computer.clone();
+        computer.run(2)
     }
 
     pub(crate) fn real_input() {
