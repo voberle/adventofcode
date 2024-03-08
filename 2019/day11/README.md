@@ -6,3 +6,4 @@ Here we are using the Intcode computer without having to modify it. Nothing tric
 
 ## Part 2
 
+Like on [day 8](../day08/README.md) we have the painting of an ASCII message.

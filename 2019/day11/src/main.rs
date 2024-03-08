@@ -94,16 +94,20 @@ struct Position {
 }
 
 impl Position {
+    fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
+
     fn zero() -> Self {
         Self { x: 0, y: 0 }
     }
 
     fn move_into(&mut self, dir: Direction) {
         match dir {
-            Direction::North => self.x -= 1,
-            Direction::South => self.x += 1,
-            Direction::West => self.y -= 1,
-            Direction::East => self.y += 1,
+            Direction::North => self.y -= 1,
+            Direction::South => self.y += 1,
+            Direction::West => self.x -= 1,
+            Direction::East => self.x += 1,
         }
     }
 }
@@ -123,10 +127,9 @@ fn run(computer: &mut IntcodeComputer, input: i64) -> Option<(Color, Turn)> {
     }
 }
 
-fn panels_painted_count(computer: &IntcodeComputer) -> usize {
+fn paint(computer: &IntcodeComputer, panels: &mut FxHashMap<Position, Color>) {
     let mut computer = computer.clone();
 
-    let mut panels: FxHashMap<Position, Color> = FxHashMap::default();
     let mut pos = Position::zero();
     let mut dir = Direction::North;
 
@@ -141,11 +144,50 @@ fn panels_painted_count(computer: &IntcodeComputer) -> usize {
             break;
         }
     }
+}
+
+fn panels_painted_count(computer: &IntcodeComputer) -> usize {
+    let mut panels: FxHashMap<Position, Color> = FxHashMap::default();
+    paint(computer, &mut panels);
+    // print_panels(&panels);
     panels.len()
 }
 
-fn part2(computer: &IntcodeComputer) -> i64 {
-    0
+fn borders(panels: &FxHashMap<Position, Color>) -> (Position, Position) {
+    // Not using iterator min / max to keep only one loop.
+    let mut min_pos = Position::new(i32::MAX, i32::MAX);
+    let mut max_pos = Position::new(i32::MIN, i32::MIN);
+    for pos in panels.keys() {
+        min_pos.x = min_pos.x.min(pos.x);
+        max_pos.x = max_pos.x.max(pos.x);
+        min_pos.y = min_pos.y.min(pos.y);
+        max_pos.y = max_pos.y.max(pos.y);
+    }
+    (min_pos, max_pos)
+}
+
+fn print_panels(panels: &FxHashMap<Position, Color>) {
+    let (min_pos, max_pos) = borders(panels);
+    for y in min_pos.y..=max_pos.y {
+        for x in min_pos.x..=max_pos.x {
+            if let Some(color) = panels.get(&Position::new(x, y)) {
+                if *color == Color::White {
+                    print!("\u{2B1B}");
+                    continue;
+                }
+            }
+            print!("\u{2B1C}");
+        }
+        println!();
+    }
+}
+
+fn get_registration_identifier(computer: &IntcodeComputer) -> FxHashMap<Position, Color> {
+    let mut panels: FxHashMap<Position, Color> = FxHashMap::default();
+    panels.insert(Position::zero(), Color::White);
+
+    paint(computer, &mut panels);
+    panels
 }
 
 fn main() {
@@ -155,5 +197,7 @@ fn main() {
     let computer = IntcodeComputer::build(&input);
 
     println!("Part 1: {}", panels_painted_count(&computer));
-    println!("Part 2: {}", part2(&computer));
+    let panels = get_registration_identifier(&computer);
+    println!("Part 2:");
+    print_panels(&panels);
 }

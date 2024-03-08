@@ -42,6 +42,6 @@ Intcode.
 
 Coordinates in 2D space. Line detection.
 
-### Day 11: [Space Police](day11/README.md) 🌟
+### Day 11: [Space Police](day11/README.md) 🌟🌟
 
 Intcode. Moving on map. ASCII picture.
