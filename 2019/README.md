@@ -41,3 +41,7 @@ Intcode.
 ### Day 10: [Monitoring Station](day10/README.md) 🌟🌟
 
 Coordinates in 2D space. Line detection.
+
+### Day 11: [Space Police](day11/README.md) 🌟
+
+Intcode. Moving on map. ASCII picture.
