@@ -14,8 +14,11 @@ struct Coords {
 }
 
 impl Coords {
-    fn new(x: i32, y: i32) -> Self {
-        Self { x, y }
+    fn new(x: usize, y: usize) -> Self {
+        Self {
+            x: x.try_into().unwrap(),
+            y: y.try_into().unwrap(),
+        }
     }
 
     fn distance(self, other: Coords) -> u32 {
@@ -24,37 +27,20 @@ impl Coords {
 }
 
 // We don't need to store all points, but just the positions of each asteroid.
-#[derive(Clone)]
-struct Map(Vec<Coords>);
-
-impl Map {
-    fn build(input: &str) -> Self {
-        let mut rows = 0;
-        let values: Vec<_> = input
-            .lines()
-            .flat_map(|l| {
-                rows += 1;
-                l.chars().map(|c| c == '#').collect::<Vec<_>>()
-            })
-            .collect();
-        assert_eq!(values.len() % rows, 0);
-        let cols = values.len() / rows;
-
-        let pos: Vec<Coords> = values
-            .iter()
-            .enumerate()
-            .filter_map(|(i, v)| {
-                if *v {
-                    let row = i32::try_from(i / cols).unwrap();
-                    let col = i32::try_from(i % cols).unwrap();
+fn build(input: &str) -> Vec<Coords> {
+    input
+        .lines()
+        .enumerate()
+        .flat_map(|(row, l)| {
+            l.chars().enumerate().filter_map(move |(col, c)| {
+                if c == '#' {
                     Some(Coords::new(col, row))
                 } else {
                     None
                 }
             })
-            .collect();
-        Self(pos)
-    }
+        })
+        .collect()
 }
 
 // Check if p is on the same line as p1-p2
@@ -66,11 +52,10 @@ fn is_same_line(p1: Coords, p2: Coords, p: Coords) -> bool {
 // For each asteroid, we trace a line with all other asteroids.
 // Then we look if any asteroid is on this line. If there are some, and there are further than the one we are checking,
 // we remove them from our in sight list.
-fn find_asteroids_in_sight(map: &Map, asteroid: Coords) -> Vec<Coords> {
+fn find_asteroids_in_sight(map: &[Coords], asteroid: Coords) -> Vec<Coords> {
     // A list of all other asteroids.
     // Using options so we can clear the ones we have found to be unreachable.
     let mut in_sight: Vec<Option<Coords>> = map
-        .0
         .iter()
         .filter_map(|&c| if c == asteroid { None } else { Some(Some(c)) })
         .collect();
@@ -100,9 +85,9 @@ fn find_asteroids_in_sight(map: &Map, asteroid: Coords) -> Vec<Coords> {
     in_sight.iter().flatten().copied().collect()
 }
 
-fn best_position(map: &Map) -> (Coords, usize) {
+fn best_position(map: &[Coords]) -> (Coords, usize) {
     let mut in_sight_count: FxHashMap<Coords, usize> = FxHashMap::default();
-    for asteroid in &map.0 {
+    for asteroid in map {
         let in_sight = find_asteroids_in_sight(map, *asteroid);
         in_sight_count.insert(*asteroid, in_sight.len());
     }
@@ -160,14 +145,14 @@ fn cmp_coords(c: Coords, p1: Coords, p2: Coords) -> Ordering {
     }
 }
 
-fn vaporize_until(map: &Map, monitoring_location: Coords, nth: usize) -> Coords {
-    let mut vaporizable_map = map.clone();
+fn vaporize_until(map: &[Coords], monitoring_location: Coords, nth: usize) -> Coords {
+    let mut vaporizable_map = map.to_vec();
     loop {
         let mut round_to_vapor = find_asteroids_in_sight(&vaporizable_map, monitoring_location);
         round_to_vapor.sort_by(|a, b| cmp_coords(monitoring_location, *a, *b));
         let mut vaporized_pos = 0;
         for a in round_to_vapor {
-            vaporizable_map.0.retain(|&x| x != a);
+            vaporizable_map.retain(|&x| x != a);
             vaporized_pos += 1;
             if vaporized_pos == nth {
                 return a;
@@ -176,7 +161,7 @@ fn vaporize_until(map: &Map, monitoring_location: Coords, nth: usize) -> Coords 
     }
 }
 
-fn asteroid_vaporized(map: &Map, monitoring_location: Coords, nth: usize) -> i32 {
+fn asteroid_vaporized(map: &[Coords], monitoring_location: Coords, nth: usize) -> i32 {
     let last_vaporized_asteroid = vaporize_until(map, monitoring_location, nth);
     last_vaporized_asteroid.x * 100 + last_vaporized_asteroid.y
 }
@@ -184,7 +169,7 @@ fn asteroid_vaporized(map: &Map, monitoring_location: Coords, nth: usize) -> i32
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let map = Map::build(&input);
+    let map = build(&input);
 
     let (best_coord, in_sight_count) = best_position(&map);
     println!("Part 1: {}", in_sight_count);
@@ -203,24 +188,12 @@ mod tests {
 
     #[test]
     fn test_best_position() {
+        assert_eq!(best_position(&build(INPUT_TEST_1)), (Coords::new(3, 4), 8));
+        assert_eq!(best_position(&build(INPUT_TEST_2)), (Coords::new(5, 8), 33));
+        assert_eq!(best_position(&build(INPUT_TEST_3)), (Coords::new(1, 2), 35));
+        assert_eq!(best_position(&build(INPUT_TEST_4)), (Coords::new(6, 3), 41));
         assert_eq!(
-            best_position(&Map::build(INPUT_TEST_1)),
-            (Coords::new(3, 4), 8)
-        );
-        assert_eq!(
-            best_position(&Map::build(INPUT_TEST_2)),
-            (Coords::new(5, 8), 33)
-        );
-        assert_eq!(
-            best_position(&Map::build(INPUT_TEST_3)),
-            (Coords::new(1, 2), 35)
-        );
-        assert_eq!(
-            best_position(&Map::build(INPUT_TEST_4)),
-            (Coords::new(6, 3), 41)
-        );
-        assert_eq!(
-            best_position(&Map::build(INPUT_TEST_5)),
+            best_position(&build(INPUT_TEST_5)),
             (Coords::new(11, 13), 210)
         );
     }
@@ -229,14 +202,14 @@ mod tests {
 
     #[test]
     fn test_vaporize_until() {
-        let map = Map::build(INPUT_TEST_6);
+        let map = build(INPUT_TEST_6);
         let station = Coords::new(8, 3);
         assert_eq!(vaporize_until(&map, station, 4), Coords::new(10, 0));
     }
 
     #[test]
     fn test_asteroid_vaporized() {
-        let map = Map::build(INPUT_TEST_5);
+        let map = build(INPUT_TEST_5);
         let station = best_position(&map).0;
         assert_eq!(asteroid_vaporized(&map, station, 200), 802);
     }
