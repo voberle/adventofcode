@@ -113,31 +113,27 @@ impl Instruction {
     }
 }
 
+// Trait that abstracts Input/Output support in the base computer.
+trait Bus {
+    fn read(&mut self) -> Option<i64>;
+    fn write(&mut self, v: i64);
+}
+
 #[derive(Debug, Clone)]
-pub struct IntcodeComputer {
+struct IntcodeBase {
     mem: Vec<i64>,
     ip: usize,
     relative_base: i64,
     halted: bool,
-
-    pub input: VecDeque<i64>,
-    pub output: Vec<i64>,
 }
 
-impl IntcodeComputer {
+impl IntcodeBase {
     /// Builds a Intcode computer from a list of integers separated by commas.
-    ///
-    /// # Panics
-    ///
-    /// Will panic if input is invalid.
-    #[must_use]
-    pub fn build(input: &str) -> Self {
+    fn build(code: &str) -> Self {
         Self {
-            mem: input.split(',').map(|v| v.parse().unwrap()).collect(),
+            mem: code.split(',').map(|v| v.parse().unwrap()).collect(),
             ip: 0,
             relative_base: 0,
-            input: VecDeque::new(),
-            output: Vec::new(),
             halted: false,
         }
     }
@@ -180,12 +176,13 @@ impl IntcodeComputer {
     }
 
     /// Executes the instructions.
+    ///
     /// This function returns when reaching the end of the program (a Halt instruction),
-    /// or if trying to get some input, but the `input` vector is empty.
-    pub fn exec(&mut self) {
+    /// or if trying to get some input, but there isn't any.
+    /// The difference can be checked with the `is_halted()` function.
+    fn exec<B: Bus>(&mut self, bus: &mut B) {
         loop {
             let ins = Instruction::new(&self.mem[self.ip..]);
-            // println!("[{}] {:?}", self.ip, ins);
             match ins {
                 Instruction::Add(a, b, c) => {
                     let a = self.get(&a);
@@ -200,7 +197,7 @@ impl IntcodeComputer {
                     self.ip += ins.length();
                 }
                 Instruction::Input(a) => {
-                    if let Some(val) = self.input.pop_front() {
+                    if let Some(val) = bus.read() {
                         self.set(&a, val);
                         self.ip += ins.length();
                     } else {
@@ -211,7 +208,7 @@ impl IntcodeComputer {
                 }
                 Instruction::Output(a) => {
                     let a = self.get(&a);
-                    self.output.push(a);
+                    bus.write(a);
                     self.ip += ins.length();
                 }
                 Instruction::JumpIfTrue(a, b) => {
@@ -247,19 +244,102 @@ impl IntcodeComputer {
                 Instruction::ChangeRelativeBase(a) => {
                     let val = self.get(&a);
                     self.relative_base += val;
-                    // println!("Relative base changed by {}, now {}", val, self.relative_base);
                     self.ip += ins.length();
                 }
             }
         }
     }
 
-    #[must_use]
-    pub fn is_halted(&self) -> bool {
+    fn is_halted(&self) -> bool {
         self.halted
     }
 
-    /// A few methods to help using the computer.
+    fn dump_memory(&self) -> String {
+        self.mem.iter().join(",")
+    }
+
+    fn read_mem(&mut self, addr: usize) -> i64 {
+        self.mem[addr]
+    }
+
+    fn write_mem(&mut self, addr: usize, val: i64) {
+        self.mem[addr] = val;
+    }
+}
+
+/// Simple vector based implementation if Bus trait.
+#[derive(Debug, Clone)]
+pub struct InputOutput {
+    input: VecDeque<i64>,
+    output: Vec<i64>,
+}
+
+impl InputOutput {
+    fn new() -> Self {
+        Self {
+            input: VecDeque::new(),
+            output: Vec::new(),
+        }
+    }
+
+    // Multiple inputs are added in the order the computer reads them (first add the first one the computer reads).
+    pub fn add_input(&mut self, input: i64) {
+        self.input.push_back(input);
+    }
+
+    pub fn extend_input(&mut self, input: &[i64]) {
+        self.input.extend(input);
+    }
+
+    // Returns first the last output added by the computer.
+    pub fn get_output(&mut self) -> Option<i64> {
+        self.output.pop()
+    }
+
+    #[must_use]
+    pub fn dump_output(&self) -> String {
+        self.output.iter().join(",")
+    }
+}
+
+impl Bus for InputOutput {
+    fn read(&mut self) -> Option<i64> {
+        self.input.pop_front()
+    }
+
+    fn write(&mut self, v: i64) {
+        self.output.push(v);
+    }
+}
+
+/// Intcode computer that uses two vectors for I/O.
+#[derive(Debug, Clone)]
+pub struct IntcodeComputer {
+    base: IntcodeBase,
+    pub io: InputOutput,
+}
+
+impl IntcodeComputer {
+    /// Builds a Intcode computer from a list of integers separated by commas.
+    ///
+    /// # Panics
+    ///
+    /// Will panic if input is invalid.
+    #[must_use]
+    pub fn build(code: &str) -> Self {
+        Self {
+            base: IntcodeBase::build(code),
+            io: InputOutput::new(),
+        }
+    }
+
+    /// Executes the instructions.
+    /// This function returns when reaching the end of the program (a Halt instruction),
+    /// or if trying to get some input, but the `input` vector is empty.
+    /// The difference can be checked with the `is_halted()` function.
+    pub fn exec(&mut self) {
+        self.base.exec(&mut self.io);
+    }
 
     // Execute the program with given integer as input, returning last integer from output.
     ///
@@ -268,22 +348,27 @@ impl IntcodeComputer {
     /// Will panic if there is no output.
     #[must_use]
     pub fn run(&mut self, input: i64) -> i64 {
-        self.input.push_back(input);
+        self.io.input.push_back(input);
         self.exec();
-        *self.output.last().unwrap()
+        *self.io.output.last().unwrap()
+    }
+
+    #[must_use]
+    pub fn is_halted(&self) -> bool {
+        self.base.is_halted()
     }
 
     #[must_use]
     pub fn dump_memory(&self) -> String {
-        self.mem.iter().join(",")
+        self.base.dump_memory()
     }
 
     #[must_use]
     pub fn read_mem(&mut self, addr: usize) -> i64 {
-        self.mem[addr]
+        self.base.read_mem(addr)
     }
 
     pub fn write_mem(&mut self, addr: usize, val: i64) {
-        self.mem[addr] = val;
+        self.base.write_mem(addr, val);
     }
 }

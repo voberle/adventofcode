@@ -1,7 +1,6 @@
 use std::io::{self, Read};
 
 use intcode::IntcodeComputer;
-use itertools::Itertools;
 
 // Executing the Intcode from the file passed as argument.
 // Input to the program is read fron stdin as a set of integers separated by spaces.
@@ -20,8 +19,8 @@ fn main() {
         .collect();
     // println!("{:?}", input_ints);
 
-    computer.input.extend(input_ints);
+    computer.io.extend_input(&input_ints);
     computer.exec();
 
-    println!("{}", computer.output.iter().join(" "));
+    println!("{}", computer.io.dump_output());
 }

@@ -139,7 +139,7 @@ mod day07 {
 
     fn build_amp(computer: &IntcodeComputer, phase_setting: i64) -> IntcodeComputer {
         let mut amp = computer.clone();
-        amp.input.push_back(phase_setting);
+        amp.io.add_input(phase_setting);
         amp
     }
 
@@ -239,21 +239,20 @@ mod day09 {
     fn test_large_numbers() {
         let mut computer = IntcodeComputer::build("1102,34915192,34915192,7,4,7,99,0");
         computer.exec();
-        assert_eq!(computer.output[0], 1219070632396864);
+        assert_eq!(computer.io.get_output().unwrap(), 1219070632396864);
 
         let mut computer = IntcodeComputer::build("104,1125899906842624,99");
         computer.exec();
-        assert_eq!(computer.output[0], 1125899906842624);
+        assert_eq!(computer.io.get_output().unwrap(), 1125899906842624);
     }
 
     #[test]
     fn test_relative_mode() {
-        use itertools::Itertools;
         let mut computer =
             IntcodeComputer::build("109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99");
         computer.exec();
         assert_eq!(
-            computer.output.iter().join(","),
+            computer.io.dump_output(),
             "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99"
         );
     }

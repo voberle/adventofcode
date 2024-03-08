@@ -113,16 +113,15 @@ impl Position {
 }
 
 fn run(computer: &mut IntcodeComputer, input: i64) -> Option<(Color, Turn)> {
-    computer.input.push_back(input);
+    computer.io.add_input(input);
 
     computer.exec();
 
     if computer.is_halted() {
         None
     } else {
-        assert_eq!(computer.output.len(), 2);
-        let direction = Turn::new(computer.output.pop().unwrap());
-        let color = Color::new(computer.output.pop().unwrap());
+        let direction = Turn::new(computer.io.get_output().unwrap());
+        let color = Color::new(computer.io.get_output().unwrap());
         Some((color, direction))
     }
 }
