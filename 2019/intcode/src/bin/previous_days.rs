@@ -175,7 +175,7 @@ mod day07 {
         let mut amp_e = build_amp(computer, phase_settings[4]);
 
         let mut e_output = 0;
-        while !amp_e.halted {
+        while !amp_e.is_halted() {
             let a_output = amp_a.run(e_output);
             let b_output = amp_b.run(a_output);
             let c_output = amp_c.run(b_output);

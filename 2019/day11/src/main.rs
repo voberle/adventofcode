@@ -117,7 +117,7 @@ fn run(computer: &mut IntcodeComputer, input: i64) -> Option<(Color, Turn)> {
 
     computer.exec();
 
-    if computer.halted {
+    if computer.is_halted() {
         None
     } else {
         assert_eq!(computer.output.len(), 2);

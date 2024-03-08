@@ -118,10 +118,10 @@ pub struct IntcodeComputer {
     mem: Vec<i64>,
     ip: usize,
     relative_base: i64,
+    halted: bool,
 
     pub input: VecDeque<i64>,
     pub output: Vec<i64>,
-    pub halted: bool,
 }
 
 impl IntcodeComputer {
@@ -252,6 +252,11 @@ impl IntcodeComputer {
                 }
             }
         }
+    }
+
+    #[must_use]
+    pub fn is_halted(&self) -> bool {
+        self.halted
     }
 
     /// A few methods to help using the computer.
