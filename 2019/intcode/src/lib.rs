@@ -1,5 +1,5 @@
-///! The Intcode computer.
-///!
+//! The Intcode computer.
+//!
 use itertools::Itertools;
 use std::collections::VecDeque;
 
