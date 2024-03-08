@@ -6,4 +6,4 @@ The Intcode computer as a library.
 
 Run all the supported puzzles with:
 
-    cargo r --bin main --release
+    cargo r --bin previous_days --release
