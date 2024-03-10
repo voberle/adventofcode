@@ -45,3 +45,7 @@ Coordinates in 2D space. Line detection.
 ### Day 11: [Space Police](day11/README.md) 🌟🌟
 
 Intcode. Moving on map. ASCII picture.
+
+### Day 12: [The N-Body Problem](day12/README.md) 🌟
+
+Positions in 3D.
