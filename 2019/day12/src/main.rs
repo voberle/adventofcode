@@ -38,31 +38,24 @@ fn build(input: &str) -> Vec<Coords> {
         .collect()
 }
 
-#[allow(clippy::comparison_chain)]
 fn apply_gravity(moons: &[Coords], velocities: &mut [Coords]) {
     for i in 0..velocities.len() {
         for j in i..velocities.len() {
-            if moons[i].x < moons[j].x {
-                velocities[i].x += 1;
-                velocities[j].x -= 1;
-            } else if moons[i].x > moons[j].x {
-                velocities[i].x -= 1;
-                velocities[j].x += 1;
+            macro_rules! adjust_velocity {
+                ($dim:ident) => {
+                    if moons[i].$dim < moons[j].$dim {
+                        velocities[i].$dim += 1;
+                        velocities[j].$dim -= 1;
+                    } else if moons[i].$dim > moons[j].$dim {
+                        velocities[i].$dim -= 1;
+                        velocities[j].$dim += 1;
+                    }
+                };
             }
-            if moons[i].y < moons[j].y {
-                velocities[i].y += 1;
-                velocities[j].y -= 1;
-            } else if moons[i].y > moons[j].y {
-                velocities[i].y -= 1;
-                velocities[j].y += 1;
-            }
-            if moons[i].z < moons[j].z {
-                velocities[i].z += 1;
-                velocities[j].z -= 1;
-            } else if moons[i].z > moons[j].z {
-                velocities[i].z -= 1;
-                velocities[j].z += 1;
-            }
+
+            adjust_velocity!(x);
+            adjust_velocity!(y);
+            adjust_velocity!(z);
         }
     }
 }
