@@ -1,8 +1,9 @@
 use std::io::{self, Read};
 
+use fxhash::FxHashSet;
 use regex::Regex;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Coords {
     x: i32,
     y: i32,
@@ -10,10 +11,6 @@ struct Coords {
 }
 
 impl Coords {
-    fn new(x: i32, y: i32, z: i32) -> Self {
-        Self { x, y, z }
-    }
-
     fn zero() -> Self {
         Self { x: 0, y: 0, z: 0 }
     }
@@ -86,8 +83,20 @@ fn total_energy(moons: &[Coords], steps: usize) -> i32 {
         .sum::<i32>()
 }
 
-fn part2(moons: &[Coords]) -> i64 {
-    0
+fn steps_to_reach_previous_state(moons: &[Coords]) -> usize {
+    let mut states: FxHashSet<(Vec<Coords>, Vec<Coords>)> = FxHashSet::default();
+
+    let mut moons = moons.to_vec();
+    let mut velocities = vec![Coords::zero(); moons.len()];
+    for step in 0.. {
+        apply_gravity(&moons, &mut velocities);
+        apply_velocity(&mut moons, &velocities);
+
+        if !states.insert((moons.clone(), velocities.clone())) {
+            return step;
+        }
+    }
+    panic!("No previous state reached");
 }
 
 fn main() {
@@ -96,7 +105,7 @@ fn main() {
     let moons = build(&input);
 
     println!("Part 1: {}", total_energy(&moons, 1000));
-    println!("Part 2: {}", part2(&moons));
+    println!("Part 2: {}", steps_to_reach_previous_state(&moons));
 }
 
 #[cfg(test)]
@@ -114,6 +123,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(steps_to_reach_previous_state(&build(INPUT_TEST_1)), 2772);
     }
 }
