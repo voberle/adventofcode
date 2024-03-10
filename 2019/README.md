@@ -48,4 +48,4 @@ Intcode. Moving on map. ASCII picture.
 
 ### Day 12: [The N-Body Problem](day12/README.md) 🌟
 
-Positions in 3D.
+Positions in 3D. LCM.

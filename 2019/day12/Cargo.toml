@@ -10,4 +10,5 @@ workspace = true
 
 [dependencies]
 fxhash = "0.2.1"
+num-integer = "0.1.46"
 regex = "1.10.3"

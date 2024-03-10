@@ -1,4 +1,7 @@
-use std::io::{self, Read};
+use std::{
+    io::{self, Read},
+    ops::{Index, IndexMut},
+};
 
 use fxhash::FxHashSet;
 use regex::Regex;
@@ -20,6 +23,31 @@ impl Coords {
     }
 }
 
+// We allow to access x,y,z by index, making it easier to manipulate them.
+impl Index<usize> for Coords {
+    type Output = i32;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("Invalid index"),
+        }
+    }
+}
+
+impl IndexMut<usize> for Coords {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        match index {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            _ => panic!("Invalid index"),
+        }
+    }
+}
+
 fn build(input: &str) -> Vec<Coords> {
     let re = Regex::new(r"<x=(-?\d+), y=(-?\d+), z=(-?\d+)>").unwrap();
     input
@@ -35,24 +63,19 @@ fn build(input: &str) -> Vec<Coords> {
         .collect()
 }
 
+#[allow(clippy::comparison_chain)]
 fn apply_gravity(moons: &[Coords], velocities: &mut [Coords]) {
     for i in 0..velocities.len() {
         for j in i..velocities.len() {
-            macro_rules! adjust_velocity {
-                ($dim:ident) => {
-                    if moons[i].$dim < moons[j].$dim {
-                        velocities[i].$dim += 1;
-                        velocities[j].$dim -= 1;
-                    } else if moons[i].$dim > moons[j].$dim {
-                        velocities[i].$dim -= 1;
-                        velocities[j].$dim += 1;
-                    }
-                };
+            for index in 0..3 {
+                if moons[i][index] < moons[j][index] {
+                    velocities[i][index] += 1;
+                    velocities[j][index] -= 1;
+                } else if moons[i][index] > moons[j][index] {
+                    velocities[i][index] -= 1;
+                    velocities[j][index] += 1;
+                }
             }
-
-            adjust_velocity!(x);
-            adjust_velocity!(y);
-            adjust_velocity!(z);
         }
     }
 }
@@ -71,11 +94,8 @@ fn total_energy(moons: &[Coords], steps: usize) -> i32 {
     for _ in 0..steps {
         apply_gravity(&moons, &mut velocities);
         apply_velocity(&mut moons, &velocities);
-
-        // for i in 0..moons.len() {
-        //     println!("{:?} {:?}", moons[i], velocities[i]);
-        // }
     }
+
     moons
         .iter()
         .zip(velocities.iter())
@@ -84,7 +104,15 @@ fn total_energy(moons: &[Coords], steps: usize) -> i32 {
 }
 
 fn steps_to_reach_previous_state(moons: &[Coords]) -> usize {
-    let mut states: FxHashSet<(Vec<Coords>, Vec<Coords>)> = FxHashSet::default();
+    // The x of all moons positions and velocities depend on each others, same with y and z.
+    // So we find when the x repeat, when the y repeat and when the z repeat.
+    // And then we just take the Least Common Multiple of the 3.
+    let mut states: [FxHashSet<Vec<i32>>; 3] = [
+        FxHashSet::default(),
+        FxHashSet::default(),
+        FxHashSet::default(),
+    ];
+    let mut steps: [usize; 3] = [0; 3];
 
     let mut moons = moons.to_vec();
     let mut velocities = vec![Coords::zero(); moons.len()];
@@ -92,11 +120,26 @@ fn steps_to_reach_previous_state(moons: &[Coords]) -> usize {
         apply_gravity(&moons, &mut velocities);
         apply_velocity(&mut moons, &velocities);
 
-        if !states.insert((moons.clone(), velocities.clone())) {
-            return step;
+        for index in 0..3 {
+            if steps[index] == 0 {
+                // If we haven't found a period when they repeat.
+                let mut key: Vec<i32> = moons.iter().map(|v| v[index]).collect();
+                key.extend(velocities.iter().map(|v| v[index]));
+
+                if !states[index].insert(key) {
+                    steps[index] = step;
+                }
+            }
+        }
+
+        if steps.iter().all(|v| *v != 0) {
+            // Stop once we have the 3 periods.
+            break;
         }
     }
-    panic!("No previous state reached");
+
+    // LCM.
+    steps.iter().fold(1, |n, i| num_integer::lcm(n, *i))
 }
 
 fn main() {
@@ -124,5 +167,9 @@ mod tests {
     #[test]
     fn test_part2() {
         assert_eq!(steps_to_reach_previous_state(&build(INPUT_TEST_1)), 2772);
+        assert_eq!(
+            steps_to_reach_previous_state(&build(INPUT_TEST_2)),
+            4686774924
+        );
     }
 }
