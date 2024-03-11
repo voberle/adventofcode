@@ -46,6 +46,10 @@ Coordinates in 2D space. Line detection.
 
 Intcode. Moving on map. ASCII picture.
 
-### Day 12: [The N-Body Problem](day12/README.md) 🌟
+### Day 12: [The N-Body Problem](day12/README.md) 🌟🌟
 
 Positions in 3D. LCM.
+
+### Day 13: [Care Package](day13/README.md) 🌟
+
+Intcode. Game.
