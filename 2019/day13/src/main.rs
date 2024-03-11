@@ -1,4 +1,8 @@
-use std::io::{self, Read};
+use std::{
+    io::{self, Read},
+    thread,
+    time::Duration,
+};
 
 use itertools::Itertools;
 
@@ -13,6 +17,8 @@ use fxhash::FxHashMap;
 use intcode::IntcodeComputer;
 
 mod terminal;
+
+const WINNING_INPUT: &str = "resources/winning_computer_input";
 
 #[derive(Debug, Clone, Copy)]
 enum TileType {
@@ -159,8 +165,6 @@ fn parse_computer_input(input: &str) -> Vec<i64> {
 }
 
 fn high_score(computer: &IntcodeComputer) -> usize {
-    const WINNING_INPUT: &str = "resources/winning_computer_input";
-
     let mut computer = computer.clone();
     // Enable game mode
     computer.write_mem(0, 2);
@@ -203,20 +207,23 @@ impl App {
         app.computer.write_mem(0, 2);
 
         if use_saved {
-            app.load_input_and_replay();
+            app.load_input(Self::SAVED_FILE);
+            app.replay();
         }
         app
     }
 
-    fn load_input_and_replay(&mut self) {
-        if let Ok(input) = std::fs::read_to_string(Self::SAVED_FILE) {
+    fn load_input(&mut self, saved_file: &str) {
+        if let Ok(input) = std::fs::read_to_string(saved_file) {
             self.saved_inputs = parse_computer_input(&input);
+        }
+    }
 
+    fn replay(&mut self) {
+        self.display.update(&mut self.computer);
+        for i in &self.saved_inputs {
+            self.computer.io.add_input(*i);
             self.display.update(&mut self.computer);
-            for i in &self.saved_inputs {
-                self.computer.io.add_input(*i);
-                self.display.update(&mut self.computer);
-            }
         }
     }
 
@@ -233,6 +240,27 @@ impl App {
             terminal.draw(|frame| self.render_frame(frame))?;
             self.handle_events()?;
         }
+        Ok(())
+    }
+
+    fn auto_run(&mut self, terminal: &mut terminal::Tui) -> io::Result<()> {
+        // let input = std::fs::read_to_string(WINNING_INPUT).expect("Missing saved file");
+        // let saved_inputs: Vec<i64> = parse_computer_input(&input);
+        self.load_input(WINNING_INPUT);
+
+        self.display.update(&mut self.computer);
+        terminal.draw(|frame| self.render_frame(frame))?;
+
+        for i in &self.saved_inputs {
+            thread::sleep(Duration::from_millis(10));
+
+            self.computer.io.add_input(*i);
+            self.display.update(&mut self.computer);
+
+            terminal.draw(|frame| self.render_frame(frame))?;
+        }
+
+        thread::sleep(Duration::from_millis(1000));
         Ok(())
     }
 
@@ -362,11 +390,18 @@ fn main() -> io::Result<()> {
         let input = std::fs::read_to_string("resources/input").expect("Unable to read input file");
         let computer = IntcodeComputer::build(&input);
 
-        let mut terminal = terminal::init()?;
-        let mut app = App::new(&computer, param == "saved");
+        if param == "auto" {
+            let mut terminal = terminal::init(false)?;
+            let mut app = App::new(&computer, param == "saved");
+            let app_result = app.auto_run(&mut terminal);
+            terminal::restore(false)?;
+            return app_result;
+        }
 
+        let mut terminal = terminal::init(true)?;
+        let mut app = App::new(&computer, param == "saved");
         let app_result = app.run(&mut terminal);
-        terminal::restore()?;
+        terminal::restore(true)?;
         return app_result;
     }
 

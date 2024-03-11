@@ -10,15 +10,19 @@ use ratatui::prelude::{CrosstermBackend, Terminal};
 pub type Tui = Terminal<CrosstermBackend<Stdout>>;
 
 /// Initialize the terminal
-pub fn init() -> io::Result<Tui> {
+pub fn init(raw_mode: bool) -> io::Result<Tui> {
     execute!(stdout(), EnterAlternateScreen)?;
-    enable_raw_mode()?;
+    if raw_mode {
+        enable_raw_mode()?;
+    }
     Terminal::new(CrosstermBackend::new(stdout()))
 }
 
 /// Restore the terminal to its original state
-pub fn restore() -> io::Result<()> {
+pub fn restore(raw_mode: bool) -> io::Result<()> {
     execute!(stdout(), LeaveAlternateScreen)?;
-    disable_raw_mode()?;
+    if raw_mode {
+        disable_raw_mode()?;
+    }
     Ok(())
 }

@@ -17,3 +17,7 @@ Run it with:
 To use the saved game data:
 
     cargo r --release -- saved
+
+And to have the full game play on its own:
+
+    cargo r --release -- auto
