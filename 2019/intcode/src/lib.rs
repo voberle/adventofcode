@@ -297,6 +297,11 @@ impl InputOutput {
     }
 
     #[must_use]
+    pub fn dump_input(&self) -> String {
+        self.input.iter().join(",")
+    }
+
+    #[must_use]
     pub fn dump_output(&self) -> String {
         self.output.iter().join(",")
     }
