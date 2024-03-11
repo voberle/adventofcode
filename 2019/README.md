@@ -50,6 +50,6 @@ Intcode. Moving on map. ASCII picture.
 
 Positions in 3D. LCM.
 
-### Day 13: [Care Package](day13/README.md) 🌟
+### Day 13: [Care Package](day13/README.md) 🌟🌟
 
 Intcode. Game.

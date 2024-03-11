@@ -9,4 +9,8 @@ description.workspace = true
 workspace = true
 
 [dependencies]
+crossterm = "0.27.0"
+fxhash = "0.2.1"
 intcode = { path = "../intcode" }
+itertools = "0.12.1"
+ratatui = "0.26.1"
