@@ -1,4 +1,5 @@
 use std::{
+    cmp::Ordering,
     io::{self, Read},
     thread,
     time::Duration,
@@ -20,7 +21,11 @@ mod terminal;
 
 const WINNING_INPUT: &str = "resources/winning_computer_input";
 
-#[derive(Debug, Clone, Copy)]
+const JOYSTICK_NEUTRAL: i64 = 0;
+const JOYSTICK_LEFT: i64 = -1;
+const JOYSTICK_RIGHT: i64 = 1;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum TileType {
     Empty,
     Wall,
@@ -147,6 +152,37 @@ impl Display {
         }
         self.update_borders();
     }
+
+    fn get_tile(&self, tile: TileType) -> Option<Pos> {
+        self.tiles
+            .iter()
+            .find_map(|(p, t)| if *t == tile { Some(*p) } else { None })
+    }
+
+    // Finds where to move the paddle based on where the ball is.
+    fn calc_next_input(&self) -> i64 {
+        let Some(ball) = self.get_tile(TileType::Ball) else {
+            // Sometimes we don't find the ball?!?
+            return JOYSTICK_NEUTRAL;
+        };
+
+        let ball_x = ball.x;
+        let paddle_x = self.get_tile(TileType::Paddle).unwrap().x;
+
+        match ball_x.cmp(&paddle_x) {
+            Ordering::Less => JOYSTICK_LEFT,
+            Ordering::Greater => JOYSTICK_RIGHT,
+            Ordering::Equal => {
+                // Keeping towards the middle (without this we sometimes arrive too late and miss the ball).
+                let middle = self.max_dims.unwrap().x / 2;
+                match ball_x.cmp(&middle) {
+                    Ordering::Less => JOYSTICK_RIGHT,
+                    Ordering::Greater => JOYSTICK_LEFT,
+                    Ordering::Equal => JOYSTICK_NEUTRAL,
+                }
+            }
+        }
+    }
 }
 
 fn block_tiles_count(computer: &IntcodeComputer) -> usize {
@@ -164,22 +200,29 @@ fn parse_computer_input(input: &str) -> Vec<i64> {
     input.split(',').map(|v| v.parse().unwrap()).collect()
 }
 
-fn high_score(computer: &IntcodeComputer) -> usize {
+fn high_score<const FROM_FILE: bool>(computer: &IntcodeComputer) -> usize {
     let mut computer = computer.clone();
     // Enable game mode
     computer.write_mem(0, 2);
 
     let mut display = Display::empty();
-
-    let input = std::fs::read_to_string(WINNING_INPUT).expect("Missing saved file");
-    let saved_inputs: Vec<i64> = parse_computer_input(&input);
-
     display.update(&mut computer);
-    for i in saved_inputs {
-        computer.io.add_input(i);
-        display.update(&mut computer);
+
+    if FROM_FILE {
+        let input = std::fs::read_to_string(WINNING_INPUT).expect("Missing saved file");
+        let saved_inputs: Vec<i64> = parse_computer_input(&input);
+        for i in saved_inputs {
+            computer.io.add_input(i);
+            display.update(&mut computer);
+        }
+        assert!(computer.is_halted());
+    } else {
+        while !computer.is_halted() {
+            let i = display.calc_next_input();
+            computer.io.add_input(i);
+            display.update(&mut computer);
+        }
     }
-    assert!(computer.is_halted());
 
     display.score
 }
@@ -243,11 +286,11 @@ impl App {
         Ok(())
     }
 
-    fn auto_run(&mut self, terminal: &mut terminal::Tui) -> io::Result<()> {
-        // let input = std::fs::read_to_string(WINNING_INPUT).expect("Missing saved file");
-        // let saved_inputs: Vec<i64> = parse_computer_input(&input);
+    /// Plays the game automatically using the moves saved in the winning input file.
+    fn auto_run_from_file(&mut self, terminal: &mut terminal::Tui) -> io::Result<()> {
         self.load_input(WINNING_INPUT);
 
+        // First screen
         self.display.update(&mut self.computer);
         terminal.draw(|frame| self.render_frame(frame))?;
 
@@ -261,6 +304,27 @@ impl App {
         }
 
         thread::sleep(Duration::from_millis(1000));
+        Ok(())
+    }
+
+    /// Plays the game automatically using the moves saved in the winning input file.
+    fn auto_run(&mut self, terminal: &mut terminal::Tui) -> io::Result<()> {
+        // First screen
+        self.display.update(&mut self.computer);
+        terminal.draw(|frame| self.render_frame(frame))?;
+
+        while !self.computer.is_halted() {
+            // Making it quite fast
+            thread::sleep(Duration::from_millis(2));
+
+            let i = self.display.calc_next_input();
+            self.computer.io.add_input(i);
+            self.display.update(&mut self.computer);
+
+            terminal.draw(|frame| self.render_frame(frame))?;
+        }
+
+        thread::sleep(Duration::from_millis(3000));
         Ok(())
     }
 
@@ -296,18 +360,18 @@ impl App {
     }
 
     fn left(&mut self) {
-        self.saved_inputs.push(-1);
-        self.computer.io.add_input(-1);
+        self.saved_inputs.push(JOYSTICK_LEFT);
+        self.computer.io.add_input(JOYSTICK_LEFT);
     }
 
     fn right(&mut self) {
-        self.saved_inputs.push(1);
-        self.computer.io.add_input(1);
+        self.saved_inputs.push(JOYSTICK_RIGHT);
+        self.computer.io.add_input(JOYSTICK_RIGHT);
     }
 
     fn neutral(&mut self) {
-        self.saved_inputs.push(0);
-        self.computer.io.add_input(0);
+        self.saved_inputs.push(JOYSTICK_NEUTRAL);
+        self.computer.io.add_input(JOYSTICK_NEUTRAL);
     }
 }
 
@@ -390,10 +454,14 @@ fn main() -> io::Result<()> {
         let input = std::fs::read_to_string("resources/input").expect("Unable to read input file");
         let computer = IntcodeComputer::build(&input);
 
-        if param == "auto" {
+        if param.starts_with("auto") {
             let mut terminal = terminal::init(false)?;
-            let mut app = App::new(&computer, param == "saved");
-            let app_result = app.auto_run(&mut terminal);
+            let mut app = App::new(&computer, false);
+            let app_result = if param == "auto_file" {
+                app.auto_run_from_file(&mut terminal)
+            } else {
+                app.auto_run(&mut terminal)
+            };
             terminal::restore(false)?;
             return app_result;
         }
@@ -410,7 +478,7 @@ fn main() -> io::Result<()> {
     let computer = IntcodeComputer::build(&input);
 
     println!("Part 1: {}", block_tiles_count(&computer));
-    println!("Part 2: {}", high_score(&computer));
+    println!("Part 2: {}", high_score::<false>(&computer));
 
     Ok(())
 }
