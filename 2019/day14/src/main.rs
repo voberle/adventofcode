@@ -51,6 +51,25 @@ fn build(input: &str) -> Reactions {
         .collect()
 }
 
+// Apply exact conversion on each reactions, to simplify as much as possible.
+fn simplify(reactions: &Reactions) {
+    for (chem, (count, _)) in reactions {
+        let mut amounts: FxHashMap<String, usize> = FxHashMap::default();
+        amounts.insert(chem.clone(), *count);
+
+        convert_amounts_exactly(reactions, &mut amounts);
+        println!(
+            "{} => {} {}",
+            amounts
+                .iter()
+                .map(|(k, v)| format!("{} {}", v, k))
+                .join(", "),
+            count,
+            chem
+        );
+    }
+}
+
 fn min_ore_amount(reactions: &Reactions) -> usize {
     let mut amounts: FxHashMap<String, usize> = FxHashMap::default();
     amounts.insert("FUEL".to_string(), 1);
@@ -177,6 +196,8 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let reactions = build(&input);
+
+    // simplify(&reactions);
 
     println!("Part 1: {}", min_ore_amount(&reactions));
     println!("Part 2: {}", part2(&reactions));
