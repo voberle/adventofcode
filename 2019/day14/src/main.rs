@@ -55,25 +55,26 @@ fn min_ore_amount(reactions: &Reactions) -> usize {
     let mut amounts: FxHashMap<String, usize> = FxHashMap::default();
     amounts.insert("FUEL".to_string(), 1);
 
-    convert_amounts(reactions, &mut amounts);
-
-    println!("{:?}", amounts);
-    *amounts.get("ORE").unwrap()
+    convert_amounts(reactions, &mut amounts)
 }
 
 // Add that material to the amounts.
 fn add(chem: &Chemical, count: usize, amounts: &mut FxHashMap<String, usize>) {
     amounts
-    .entry(chem.clone())
-    .and_modify(|e| *e += count)
-    .or_insert(count);
+        .entry(chem.clone())
+        .and_modify(|e| *e += count)
+        .or_insert(count);
 }
 
 // Add the list of needed materials to the amounts, for that amount of material unit.
-fn convert_and_add(needed_materials: &[Material], unit_of_material: usize, amounts: &mut FxHashMap<String, usize>) {
+fn convert_and_add(
+    needed_materials: &[Material],
+    unit_of_material: usize,
+    amounts: &mut FxHashMap<String, usize>,
+) {
     for m in needed_materials {
         let t = m.unit * unit_of_material;
-        println!("    Need to produce {} of {}", t, m.chemical);
+        // println!("    Need to produce {} of {}", t, m.chemical);
         amounts
             .entry(m.chemical.clone())
             .and_modify(|e| *e += t)
@@ -86,11 +87,11 @@ fn convert_amounts_exactly(reactions: &Reactions, amounts: &mut FxHashMap<String
     loop {
         let mut new_amounts: FxHashMap<String, usize> = FxHashMap::default();
         let mut something_converted = false;
-        println!("----");
+        // println!("----");
 
-        for (chem, count) in &mut *amounts {
+        for (chem, count) in &*amounts {
             let count = *count;
-            println!("{}, {}", chem, count);
+            // println!("{}, {}", chem, count);
 
             if chem == "ORE" {
                 // Special handling for ORE, as it won't be found it the reaction list.
@@ -119,49 +120,53 @@ fn convert_amounts_exactly(reactions: &Reactions, amounts: &mut FxHashMap<String
     }
 }
 
-fn convert_amounts(reactions: &Reactions, amounts: &mut FxHashMap<String, usize>) {
-    loop {
-        convert_amounts_exactly(reactions, amounts);
+fn convert_amounts(reactions: &Reactions, amounts: &mut FxHashMap<String, usize>) -> usize {
+    convert_amounts_exactly(reactions, amounts);
 
-        if amounts.len() == 1 {
-            assert!(amounts.contains_key("ORE"));
-            break;
-        }
-
-        // At this stage, none of the amounts can be converted exactly.
-        // So we have to try converting each with rounding, and go until the end
-        // with each option to find the minimum.
-
-        println!("- Nothing converted precisely, going extended");
-        let mut new_amounts: FxHashMap<String, usize> = FxHashMap::default();
-        for (chem, count) in &mut *amounts {
-            let count = *count;
-            println!("  For {} need at least {}", chem, count);
-
-            if chem == "ORE" {
-                add(chem, count, &mut new_amounts);
-                continue;
-            }
-
-            let (prod_count, needed_materials) = reactions.get(chem).unwrap();
-            let unit_of_material = (count as f32 / *prod_count as f32).ceil() as usize;
-            println!(
-                "    For {} can produce {} with [{}], so need {} unit of material",
-                chem,
-                prod_count,
-                needed_materials.iter().join(", "),
-                unit_of_material
-            );
-            convert_and_add(needed_materials, unit_of_material, &mut new_amounts);
-        }
-
-        std::mem::swap(amounts, &mut new_amounts);
-
-        if amounts.len() == 1 {
-            assert!(amounts.contains_key("ORE"));
-            break;
-        }
+    if amounts.len() == 1 {
+        assert!(amounts.contains_key("ORE"));
+        return *amounts.get("ORE").unwrap();
     }
+
+    // At this stage, none of the amounts can be converted exactly.
+    // So we have to try converting each with rounding, and go until the end
+    // with each option to find the minimum.
+
+    // println!("- Nothing converted precisely, going extended");
+    let mut min: usize = usize::MAX;
+    for (chem, count) in &*amounts {
+        let count = *count;
+        // println!("  For {} need at least {}", chem, count);
+
+        // We convert only one, copying the others.
+        let mut new_amounts: FxHashMap<String, usize> = amounts.clone();
+
+        // if chem == "ORE" {
+        //     add(chem, count, &mut new_amounts);
+        //     continue;
+        // }
+
+        let Some((prod_count, needed_materials)) = reactions.get(chem) else {
+            continue;
+        };
+        // Clear the ones we are converting
+        new_amounts.remove(chem);
+
+        let unit_of_material = (count as f32 / *prod_count as f32).ceil() as usize;
+        // println!(
+        //     "    For {} can produce {} with [{}], so need {} unit of material",
+        //     chem,
+        //     prod_count,
+        //     needed_materials.iter().join(", "),
+        //     unit_of_material
+        // );
+        convert_and_add(needed_materials, unit_of_material, &mut new_amounts);
+
+        let result = convert_amounts(reactions, &mut new_amounts);
+        min = min.min(result);
+    }
+
+    min
 }
 
 fn part2(reactions: &Reactions) -> i64 {
@@ -172,7 +177,6 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let reactions = build(&input);
-    // println!("{:?}", reactions);
 
     println!("Part 1: {}", min_ore_amount(&reactions));
     println!("Part 2: {}", part2(&reactions));
