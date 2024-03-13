@@ -57,3 +57,7 @@ Intcode. Game.
 ### Day 14: [Space Stoichiometry](day14/README.md)
 
 Reactions.
+
+### Day 15: [Oxygen System](day15/README.md)
+
+Intcode. Maze.
