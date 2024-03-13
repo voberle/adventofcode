@@ -86,13 +86,14 @@ impl Pos {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Element {
     Wall,
     Empty,
-    OxygenSystem,
+    Oxygen,
 }
 
+#[derive(Clone)]
 struct Maze(FxHashMap<Pos, Element>);
 
 impl Maze {
@@ -104,7 +105,7 @@ impl Maze {
         *self
             .0
             .iter()
-            .find(|(_, v)| **v == Element::OxygenSystem)
+            .find(|(_, v)| **v == Element::Oxygen)
             .unwrap()
             .0
     }
@@ -131,6 +132,7 @@ impl Maze {
 
     fn print_with_droid(&self, droid: Option<Pos>) {
         const RED: &str = "\x1b[31m";
+        const BLUE: &str = "\x1b[94m";
         const RESET: &str = "\x1b[0m";
         let (min_pos, max_pos) = self.borders();
         for y in min_pos.y..=max_pos.y {
@@ -138,7 +140,7 @@ impl Maze {
                 let pos = Pos::new(x, y);
                 if let Some(droid_pos) = droid {
                     if droid_pos == pos {
-                        print!("D");
+                        print!("{RED}D{RESET}");
                         continue;
                     }
                 }
@@ -146,7 +148,7 @@ impl Maze {
                     match elt {
                         Element::Wall => print!("#"),
                         Element::Empty => print!("."),
-                        Element::OxygenSystem => print!("{RED}O{RESET}"),
+                        Element::Oxygen => print!("{BLUE}O{RESET}"),
                     }
                 } else {
                     print!(" ");
@@ -196,7 +198,7 @@ fn discover_maze(computer: &IntcodeComputer) -> Maze {
                     continue 'outer;
                 }
                 Status::MovedAndFound => {
-                    maze.0.insert(next_pos, Element::OxygenSystem);
+                    maze.0.insert(next_pos, Element::Oxygen);
                     // println!("!!! Found the system at {:?}", next_pos);
                     path.push((pos, dir));
                     pos = next_pos;
@@ -214,7 +216,7 @@ fn discover_maze(computer: &IntcodeComputer) -> Maze {
             break;
         }
     }
-    maze.print_with_droid(Some(Pos::zero()));
+    //maze.print_with_droid(Some(Pos::zero()));
 
     maze
 }
@@ -294,8 +296,41 @@ fn shortest_path_to_droid(maze: &Maze) -> usize {
     find_shortest_path(maze)
 }
 
-fn part2(computer: &IntcodeComputer) -> i64 {
-    0
+fn oxygen_time_to_fill(maze: &Maze) -> usize {
+    let mut time = 0;
+    let mut maze = maze.clone();
+
+    loop {
+        let positions_to_fill: Vec<Pos> = maze
+            .0
+            .iter()
+            .filter(|(_, elt)| **elt == Element::Oxygen)
+            .flat_map(|(pos, _)| {
+                ALL_DIRECTIONS.iter().filter_map(|d| {
+                    let next_pos = pos.move_towards(*d);
+                    if let Some(next_elt) = maze.0.get(&next_pos) {
+                        if *next_elt == Element::Empty {
+                            return Some(next_pos);
+                        }
+                    }
+                    None
+                })
+            })
+            .collect();
+
+        if positions_to_fill.is_empty() {
+            break;
+        }
+
+        for p in positions_to_fill {
+            maze.0.insert(p, Element::Oxygen);
+        }
+        // maze.print();
+        // println!();
+
+        time += 1;
+    }
+    time
 }
 
 fn main() {
@@ -307,5 +342,5 @@ fn main() {
     // maze.print();
 
     println!("Part 1: {}", shortest_path_to_droid(&maze));
-    println!("Part 2: {}", part2(&computer));
+    println!("Part 2: {}", oxygen_time_to_fill(&maze));
 }

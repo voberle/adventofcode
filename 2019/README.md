@@ -58,6 +58,6 @@ Intcode. Game.
 
 Reactions.
 
-### Day 15: [Oxygen System](day15/README.md) 🌟
+### Day 15: [Oxygen System](day15/README.md) 🌟🌟
 
 Intcode. Maze. Dijkstra.
