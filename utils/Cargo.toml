@@ -11,4 +11,5 @@ match_same_arms = "warn"
 range_plus_one = "warn"
 
 [dependencies]
+fxhash = "0.2.1"
 md5 = "0.7.0"
