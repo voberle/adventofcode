@@ -53,3 +53,5 @@ Positions in 3D. LCM.
 ### Day 13: [Care Package](day13/README.md) 🌟🌟
 
 Intcode. Game.
+
+### Day 14: [Space Stoichiometry](day14/README.md)
