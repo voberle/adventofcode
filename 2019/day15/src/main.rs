@@ -1,6 +1,9 @@
-use std::io::{self, Read};
+use std::{
+    collections::BinaryHeap,
+    io::{self, Read},
+};
 
-use fxhash::FxHashMap;
+use fxhash::{FxHashMap, FxHashSet};
 use intcode::IntcodeComputer;
 
 #[derive(Debug, Clone, Copy)]
@@ -73,7 +76,7 @@ impl Pos {
         Self { x: 0, y: 0 }
     }
 
-    fn move_towards(&self, dir: Direction) -> Self {
+    fn move_towards(self, dir: Direction) -> Self {
         match dir {
             North => Self::new(self.x, self.y - 1),
             South => Self::new(self.x, self.y + 1),
@@ -83,6 +86,7 @@ impl Pos {
     }
 }
 
+#[derive(Debug, PartialEq)]
 enum Element {
     Wall,
     Empty,
@@ -94,6 +98,23 @@ struct Maze(FxHashMap<Pos, Element>);
 impl Maze {
     fn new() -> Self {
         Self(FxHashMap::default())
+    }
+
+    fn get_end_pos(&self) -> Pos {
+        *self
+            .0
+            .iter()
+            .find(|(_, v)| **v == Element::OxygenSystem)
+            .unwrap()
+            .0
+    }
+
+    fn is_allowed(&self, pos: Pos) -> bool {
+        if let Some(elt) = self.0.get(&pos) {
+            *elt == Element::Empty
+        } else {
+            false
+        }
     }
 
     fn borders(&self) -> (Pos, Pos) {
@@ -135,6 +156,7 @@ impl Maze {
         }
     }
 
+    #[allow(dead_code)]
     fn print(&self) {
         self.print_with_droid(None);
     }
@@ -197,8 +219,79 @@ fn discover_maze(computer: &IntcodeComputer) -> Maze {
     maze
 }
 
-fn shortest_path_to_droid(computer: &IntcodeComputer) -> usize {
-    0
+// Node we are exploring with Dijkstra.
+#[derive(Debug, PartialEq, Eq)]
+struct Node {
+    pos: Pos,
+    cost: usize,
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+// Dijkstra shortest path.
+fn find_shortest_path(maze: &Maze) -> usize {
+    let mut visited: FxHashSet<Pos> = FxHashSet::default();
+    let mut distance: FxHashMap<Pos, usize> = FxHashMap::default();
+    let mut shortest_distance = usize::MAX;
+    let start = Pos::zero();
+    let end = maze.get_end_pos();
+
+    let mut queue: BinaryHeap<Node> = BinaryHeap::new();
+    queue.push(Node {
+        pos: start,
+        cost: 0,
+    });
+
+    while let Some(Node { pos, cost }) = queue.pop() {
+        // Mark node as visited
+        visited.insert(pos);
+
+        if pos == end {
+            shortest_distance = usize::min(shortest_distance, cost);
+            continue;
+        }
+
+        queue.extend(ALL_DIRECTIONS.iter().filter_map(|d| {
+            let next_pos = pos.move_towards(*d);
+            if !maze.is_allowed(pos) {
+                return None;
+            }
+
+            if visited.contains(&next_pos) {
+                return None;
+            }
+
+            let next_cost = cost + 1;
+            if let Some(prevcost) = distance.get(&next_pos) {
+                if *prevcost <= next_cost {
+                    return None;
+                }
+            }
+
+            distance.insert(next_pos, next_cost);
+
+            Some(Node {
+                pos: next_pos,
+                cost: next_cost,
+            })
+        }));
+    }
+
+    shortest_distance
+}
+
+fn shortest_path_to_droid(maze: &Maze) -> usize {
+    find_shortest_path(maze)
 }
 
 fn part2(computer: &IntcodeComputer) -> i64 {
@@ -213,6 +306,6 @@ fn main() {
     let maze = discover_maze(&computer);
     // maze.print();
 
-    println!("Part 1: {}", shortest_path_to_droid(&computer));
+    println!("Part 1: {}", shortest_path_to_droid(&maze));
     println!("Part 2: {}", part2(&computer));
 }
