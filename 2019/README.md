@@ -54,7 +54,7 @@ Positions in 3D. LCM.
 
 Intcode. Game.
 
-### Day 14: [Space Stoichiometry](day14/README.md)
+### Day 14: [Space Stoichiometry](day14/README.md) 🌟
 
 Reactions.
 
