@@ -8,3 +8,4 @@ Later I realized there was a simpler approach that didn't need to explore many o
 
 ## Part 2
 
+For part 2 I used the fact that part 1 algo is really fast to just implement it with a binary search.

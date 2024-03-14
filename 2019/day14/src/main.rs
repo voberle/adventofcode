@@ -63,12 +63,16 @@ fn add(chem: &Chemical, count: usize, amounts: &mut FxHashMap<Chemical, usize>) 
         .or_insert(count);
 }
 
-#[allow(clippy::cast_sign_loss, clippy::cast_precision_loss, clippy::cast_possible_truncation)]
+#[allow(
+    clippy::cast_sign_loss,
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation
+)]
 fn div_round_up(a: usize, b: usize) -> usize {
-    (a as f32 / b as f32).ceil() as usize
+    (a as f64 / b as f64).ceil() as usize
 }
 
-fn min_ore_amount(reactions: &Reactions) -> usize {
+fn min_ore_amount(reactions: &Reactions, fuel_amount: usize) -> usize {
     // Since each chemical can only be produced by one reaction,
     // if we need a certain chemical, it's sure we will have to produce that reaction.
     // If we have leftovers from the reaction, we park them and possibly use them later.
@@ -79,11 +83,13 @@ fn min_ore_amount(reactions: &Reactions) -> usize {
     // What we have produced already and may reuse.
     let mut available: FxHashMap<Chemical, usize> = FxHashMap::default();
 
-    needed.insert("FUEL".to_string(), 1);
+    needed.insert("FUEL".to_string(), fuel_amount);
 
     loop {
-        // Use a second vector for putting needed stuff on each loop, as it's not practical
-        // to iterator and modify the same vector.
+        // Use a second map for putting needed stuff on each loop, as it's not practical
+        // to iterator and modify the same map.
+        // We could use vectors as well, especially if we would replace
+        // the chemical strings with just integers, but it's fast enough as it is.
         let mut next_needed: FxHashMap<Chemical, usize> = FxHashMap::default();
 
         for (chem, amount) in &needed {
@@ -128,7 +134,7 @@ fn min_ore_amount(reactions: &Reactions) -> usize {
                 let leftover = reaction_prod_count * react_times - to_produce;
 
                 add(&src.chemical, min_to_produce, &mut next_needed);
-                
+
                 if leftover > 0 {
                     // we can just insert, we had no previous leftover at this stage
                     available.insert(chem.clone(), leftover);
@@ -145,8 +151,40 @@ fn min_ore_amount(reactions: &Reactions) -> usize {
     }
 }
 
-fn part2(reactions: &Reactions) -> i64 {
-    0
+fn fuel_for_trillion_ore(reactions: &Reactions) -> usize {
+    const ONE_TRILLION: usize = 1_000_000_000_000;
+
+    // Producing FUEL for one trillion ORE will result in a number of fuel
+    // bigger than with 1 ORE. Since min_ore_amount is quite fast, a binary search approach works.
+
+    // Initial low and high FUEL amounts.
+    let mut low_fuel = ONE_TRILLION / min_ore_amount(reactions, 1);
+    let mut high_fuel = 6 * low_fuel;
+
+    // Check that we picked low and high correctly.
+    assert!(min_ore_amount(reactions, low_fuel) < ONE_TRILLION);
+    assert!(min_ore_amount(reactions, high_fuel) > ONE_TRILLION);
+
+    // We search when ORE amount is closest to one trillion.
+    while low_fuel <= high_fuel {
+        let mid_fuel = ((high_fuel - low_fuel) / 2) + low_fuel;
+        let val = min_ore_amount(reactions, mid_fuel);
+
+        if val == ONE_TRILLION {
+            return mid_fuel;
+        }
+        if val < ONE_TRILLION {
+            low_fuel = mid_fuel + 1;
+        }
+        if val > ONE_TRILLION {
+            high_fuel = mid_fuel - 1;
+        }
+    }
+
+    assert!(min_ore_amount(reactions, high_fuel) < ONE_TRILLION);
+    assert!(min_ore_amount(reactions, high_fuel + 1) > ONE_TRILLION);
+
+    high_fuel
 }
 
 fn main() {
@@ -154,8 +192,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let reactions = build(&input);
 
-    println!("Part 1: {}", min_ore_amount(&reactions));
-    println!("Part 2: {}", part2(&reactions));
+    println!("Part 1: {}", min_ore_amount(&reactions, 1));
+    println!("Part 2: {}", fuel_for_trillion_ore(&reactions));
 }
 
 #[cfg(test)]
@@ -170,15 +208,17 @@ mod tests {
 
     #[test]
     fn test_min_ore_amount() {
-        assert_eq!(min_ore_amount(&build(INPUT_TEST_1)), 31);
-        assert_eq!(min_ore_amount(&build(INPUT_TEST_2)), 165);
-        assert_eq!(min_ore_amount(&build(INPUT_TEST_3)), 13312);
-        assert_eq!(min_ore_amount(&build(INPUT_TEST_4)), 180697);
-        assert_eq!(min_ore_amount(&build(INPUT_TEST_5)), 2210736);
+        assert_eq!(min_ore_amount(&build(INPUT_TEST_1), 1), 31);
+        assert_eq!(min_ore_amount(&build(INPUT_TEST_2), 1), 165);
+        assert_eq!(min_ore_amount(&build(INPUT_TEST_3), 1), 13312);
+        assert_eq!(min_ore_amount(&build(INPUT_TEST_4), 1), 180697);
+        assert_eq!(min_ore_amount(&build(INPUT_TEST_5), 1), 2210736);
     }
 
     #[test]
-    fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), 0);
+    fn test_fuel_for_trillion_ore() {
+        assert_eq!(fuel_for_trillion_ore(&build(INPUT_TEST_3)), 82892753);
+        assert_eq!(fuel_for_trillion_ore(&build(INPUT_TEST_4)), 5586022);
+        assert_eq!(fuel_for_trillion_ore(&build(INPUT_TEST_5)), 460664);
     }
 }
