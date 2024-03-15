@@ -271,14 +271,14 @@ impl IntcodeBase {
 #[derive(Debug, Clone)]
 pub struct InputOutput {
     input: VecDeque<i64>,
-    output: Vec<i64>,
+    output: VecDeque<i64>,
 }
 
 impl InputOutput {
     fn new() -> Self {
         Self {
             input: VecDeque::new(),
-            output: Vec::new(),
+            output: VecDeque::new(),
         }
     }
 
@@ -291,9 +291,9 @@ impl InputOutput {
         self.input.extend(input);
     }
 
-    // Returns first the last output added by the computer.
+    // Returns first the oldest output of the computer.
     pub fn get_output(&mut self) -> Option<i64> {
-        self.output.pop()
+        self.output.pop_front()
     }
 
     #[must_use]
@@ -313,7 +313,7 @@ impl Bus for InputOutput {
     }
 
     fn write(&mut self, v: i64) {
-        self.output.push(v);
+        self.output.push_back(v);
     }
 }
 
@@ -353,9 +353,9 @@ impl IntcodeComputer {
     /// Will panic if there is no output.
     #[must_use]
     pub fn run(&mut self, input: i64) -> i64 {
-        self.io.input.push_back(input);
+        self.io.add_input(input);
         self.exec();
-        *self.io.output.last().unwrap()
+        self.io.get_output().unwrap()
     }
 
     #[must_use]

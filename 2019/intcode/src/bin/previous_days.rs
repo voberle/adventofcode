@@ -115,20 +115,26 @@ mod day05 {
         assert_eq!(run_io(c, 45), 1001);
     }
 
-    fn run_diagnostic_test(computer: &IntcodeComputer, system_to_test_id: i64) -> i64 {
-        let mut computer = computer.clone();
-        computer.run(system_to_test_id)
-    }
-
     pub(crate) fn real_input() {
         let (input, result1, result2) = get_input_results("day05");
         let computer = IntcodeComputer::build(&input);
 
-        let part1 = run_diagnostic_test(&computer, 1);
-        assert_eq!(part1.to_string(), result1.trim());
+        {
+            let mut computer = computer.clone();
+            let _ = computer.run(1);
+            // There are 10 outputs in the queue, so we have to skip 8 more
+            for _ in 0..8 {
+                let _ = computer.io.get_output();
+            }
+            let part1 = computer.io.get_output().unwrap();
+            assert_eq!(part1.to_string(), result1.trim());
+        }
 
-        let part2 = run_diagnostic_test(&computer, 5);
-        assert_eq!(part2.to_string(), result2.trim());
+        {
+            let mut computer = computer.clone();
+            let part2 = computer.run(5);
+            assert_eq!(part2.to_string(), result2.trim());
+        }
     }
 }
 

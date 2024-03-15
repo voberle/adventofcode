@@ -120,8 +120,8 @@ fn run(computer: &mut IntcodeComputer, input: i64) -> Option<(Color, Turn)> {
     if computer.is_halted() {
         None
     } else {
-        let direction = Turn::new(computer.io.get_output().unwrap());
         let color = Color::new(computer.io.get_output().unwrap());
+        let direction = Turn::new(computer.io.get_output().unwrap());
         Some((color, direction))
     }
 }

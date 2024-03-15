@@ -87,9 +87,9 @@ impl Output {
 }
 
 fn last_output(computer: &mut IntcodeComputer) -> Output {
-    if let Some(third_val) = computer.io.get_output() {
+    if let Some(x) = computer.io.get_output() {
         let y = computer.io.get_output().unwrap();
-        let x = computer.io.get_output().unwrap();
+        let third_val = computer.io.get_output().unwrap();
         if x == -1 && y == 0 {
             Output::score(third_val)
         } else {
