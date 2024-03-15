@@ -61,3 +61,7 @@ Reactions.
 ### Day 15: [Oxygen System](day15/README.md) 🌟🌟
 
 Intcode. Maze. Dijkstra.
+
+### Day 16: [Flawed Frequency Transmission](day16/README.md) 🌟
+
+Iterator repeat, cycle, take
