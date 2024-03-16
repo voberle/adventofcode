@@ -65,3 +65,7 @@ Intcode. Maze. Dijkstra.
 ### Day 16: [Flawed Frequency Transmission](day16/README.md) 🌟🌟
 
 Iterator repeat, cycle, take.
+
+### Day 17: [Set and Forget](day17/README.md) 🌟
+
+Intcode.
