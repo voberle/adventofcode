@@ -62,6 +62,6 @@ Reactions.
 
 Intcode. Maze. Dijkstra.
 
-### Day 16: [Flawed Frequency Transmission](day16/README.md) 🌟
+### Day 16: [Flawed Frequency Transmission](day16/README.md) 🌟🌟
 
-Iterator repeat, cycle, take
+Iterator repeat, cycle, take.
