@@ -13,3 +13,7 @@ The insight was that if we want the nth digit, we only need to calculate things 
 Also, if the offset is bigger than half the signal, then all pattern digits we need to use are 1. It simplifies things as there is no need to do complex pattern stuff.
 
 That made it possible to brute-force it, as it run in a few minutes on the real input.
+
+## Part 2 optimization
+
+Looking at other solution, I saw the optimization I had missed, as it's simply possible to compute the signal in each phase using the property that signal[n-1] = previous[n-1] + signal[n] (modulo 10).

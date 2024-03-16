@@ -85,13 +85,20 @@ fn get_real_message(input: &[i32]) -> String {
     let mut signal = input.repeat(REPEAT_COUNT)[offset..].to_vec();
 
     for _phase in 0..PHASES_COUNT {
-        signal = (0..signal.len())
-            .map(|pos| {
-                let sum: i32 = signal.iter().skip(pos).sum();
-                // Keep last digit only
-                sum.abs() % 10
-            })
-            .collect();
+        // Initial more naive version.
+        // signal = (0..signal.len())
+        //     .map(|pos| {
+        //         let sum: i32 = signal.iter().skip(pos).sum();
+        //         // Keep last digit only
+        //         sum.abs() % 10
+        //     })
+        //     .collect();
+
+        // Optimized version that computes them from the end.
+        for pos in (0..signal.len() - 1).rev() {
+            let sum = signal[pos] + signal[pos + 1];
+            signal[pos] = sum % 10;
+        }
     }
 
     signal_to_string(&signal)
