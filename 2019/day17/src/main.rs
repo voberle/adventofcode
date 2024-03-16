@@ -1,13 +1,12 @@
+use itertools::Itertools;
 use std::io::{self, Read};
 
 use intcode::IntcodeComputer;
 
-fn get_scaffolds_view(computer: &IntcodeComputer) -> Vec<char> {
-    let mut scaffolds: Vec<char> = Vec::new();
-
-    let mut computer = computer.clone();
+fn get_scaffolds_view(computer: &mut IntcodeComputer) -> Vec<char> {
     computer.exec();
 
+    let mut scaffolds: Vec<char> = Vec::new();
     while let Some(i) = computer.io.get_output() {
         scaffolds.push(char::from_u32(u32::try_from(i).unwrap()).unwrap());
     }
@@ -15,6 +14,7 @@ fn get_scaffolds_view(computer: &IntcodeComputer) -> Vec<char> {
     scaffolds
 }
 
+#[allow(dead_code)]
 fn print_scaffolds_view(scaffolds: &[char]) {
     for c in scaffolds {
         print!("{}", c);
@@ -30,7 +30,6 @@ enum Direction {
 }
 use Direction::{East, North, South, West};
 
-#[derive(Debug, Clone, PartialEq)]
 struct Grid {
     values: Vec<char>,
     rows: usize,
@@ -110,20 +109,96 @@ impl Grid {
 }
 
 fn alignment_params_sum(computer: &IntcodeComputer) -> usize {
-    let scaffolds_view = get_scaffolds_view(computer);
-    print_scaffolds_view(&scaffolds_view);
+    let mut computer = computer.clone();
+
+    let scaffolds_view = get_scaffolds_view(&mut computer);
+    // print_scaffolds_view(&scaffolds_view);
 
     let scaffolds = Grid::convert(&scaffolds_view);
-    let intersections = scaffolds.get_intersections();
 
+    let intersections = scaffolds.get_intersections();
     intersections
         .iter()
         .map(|p| scaffolds.get_alignment_parameter(*p))
         .sum()
 }
 
-fn part2(computer: &IntcodeComputer) -> i64 {
-    0
+#[allow(dead_code)]
+#[derive(Clone, Copy)]
+enum Instruction {
+    A,
+    B,
+    C,
+    Left(usize),
+    Right(usize),
+    VideoFeedOn,
+    VideoFeedOff,
+}
+use Instruction::{Left, Right, VideoFeedOff, VideoFeedOn, A, B, C};
+
+impl Instruction {
+    fn get_string(self) -> String {
+        match self {
+            A => "A".to_string(),
+            B => "B".to_string(),
+            C => "C".to_string(),
+            Left(n) => format!("L,{}", n),
+            Right(n) => format!("R,{}", n),
+            VideoFeedOn => "y".to_string(),
+            VideoFeedOff => "n".to_string(),
+        }
+    }
+}
+
+fn build_computer_string(input: &[Instruction]) -> String {
+    input.iter().map(|i| i.get_string()).join(",")
+}
+
+fn computer_write_line(computer: &mut IntcodeComputer, input: &[Instruction]) {
+    const NEWLINE: i64 = 10;
+
+    let s = build_computer_string(input);
+    assert!(s.len() <= 20, "Input string too big: {}", s.len());
+
+    s.chars().map(|c| c as i64).for_each(|i| {
+        computer.io.add_input(i);
+    });
+    computer.io.add_input(NEWLINE);
+}
+
+fn collected_dust_amount(computer: &IntcodeComputer) -> i64 {
+    let mut computer = computer.clone();
+    // Wake the robot up.
+    computer.write_mem(0, 2);
+
+    // The path was computed by following the scaffolds ignoring the intersections,
+    // and then finding the common parts in it by hand.
+    // A: R10,L12,R6
+    // B: R6,R10,R12,R6
+    // C: R10,L12,L12
+    // A,A,B,C,B,C,B,C,B,A
+    let movement_fcts = vec![A, A, B, C, B, C, B, C, B, A];
+    let a_fct = vec![Right(10), Left(12), Right(6)];
+    let b_fct = vec![Right(6), Right(10), Right(12), Right(6)];
+    let c_fct = vec![Right(10), Left(12), Left(12)];
+    let video_feed = vec![VideoFeedOff];
+
+    computer_write_line(&mut computer, &movement_fcts);
+    computer_write_line(&mut computer, &a_fct);
+    computer_write_line(&mut computer, &b_fct);
+    computer_write_line(&mut computer, &c_fct);
+    computer_write_line(&mut computer, &video_feed);
+
+    computer.exec();
+
+    // The robot prints all its map even if the feed is off, so skipping it
+    while let Some(i) = computer.io.get_output() {
+        if i > 255 {
+            // Not an ASCII code
+            return i;
+        }
+    }
+    panic!("No dust amount found");
 }
 
 fn main() {
@@ -132,5 +207,5 @@ fn main() {
     let computer = IntcodeComputer::build(&input);
 
     println!("Part 1: {}", alignment_params_sum(&computer));
-    println!("Part 2: {}", part2(&computer));
+    println!("Part 2: {}", collected_dust_amount(&computer));
 }

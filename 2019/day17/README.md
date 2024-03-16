@@ -8,3 +8,8 @@ I convert the scaffolds view into my usual `Grid`, for easier manipulation.
 
 ## Part 2
 
+That was again a surprising puzzle.
+
+I ended up printing the map and figuring out the instructions manually. I initially thought one might have to turn at some intersections, but that wasn't necessary, so it was easy to find the set of instructions to reach the end. Then Visual Studio word highlighting helped to identify the 3 functions.
+
+Somehow the dust question left me confused at first, it took a bit of time to realize it was simply what the computer was printing last.

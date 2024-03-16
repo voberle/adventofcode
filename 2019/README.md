@@ -66,6 +66,6 @@ Intcode. Maze. Dijkstra.
 
 Iterator repeat, cycle, take.
 
-### Day 17: [Set and Forget](day17/README.md) 🌟
+### Day 17: [Set and Forget](day17/README.md) 🌟🌟
 
-Intcode.
+Intcode. Path following.
