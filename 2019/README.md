@@ -69,3 +69,5 @@ Iterator repeat, cycle, take.
 ### Day 17: [Set and Forget](day17/README.md) 🌟🌟
 
 Intcode. Path following.
+
+### Day 18: [Many-Worlds Interpretation](day18/README.md)
