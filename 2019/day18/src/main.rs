@@ -355,7 +355,25 @@ fn shortest_path_all_keys(map: &Map) -> usize {
     shortest_distance
 }
 
-fn part2(map: &Map) -> i64 {
+fn update_map(map: &Map) -> Map {
+    let mut map = map.clone();
+    let entrance_pos = map.get_entrance_pos();
+    // North
+    map.values[entrance_pos - map.cols - 1] = Entrance;
+    map.values[entrance_pos - map.cols] = Wall;
+    map.values[entrance_pos - map.cols + 1] = Entrance;
+    // Middle
+    map.values[entrance_pos + 1] = Wall;
+    map.values[entrance_pos] = Wall;
+    map.values[entrance_pos - 1] = Wall;
+    // South
+    map.values[entrance_pos + map.cols - 1] = Entrance;
+    map.values[entrance_pos + map.cols] = Wall;
+    map.values[entrance_pos + map.cols + 1] = Entrance;
+    map
+}
+
+fn shortest_path_4_robots(map: &Map) -> i64 {
     0
 }
 
@@ -365,8 +383,12 @@ fn main() {
     let map = Map::build(&input);
     // map.print();
 
-    println!("Part 1: {}", shortest_path_all_keys(&map));
-    println!("Part 2: {}", part2(&map));
+    // println!("Part 1: {}", shortest_path_all_keys(&map));
+
+    let updated_map = update_map(&map);
+    // updated_map.print();
+
+    println!("Part 2: {}", shortest_path_4_robots(&updated_map));
 }
 
 #[cfg(test)]
@@ -388,8 +410,16 @@ mod tests {
         assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_5)), 81);
     }
 
+    const INPUT_TEST_6: &str = include_str!("../resources/input_test_6");
+    const INPUT_TEST_7: &str = include_str!("../resources/input_test_7");
+    const INPUT_TEST_8: &str = include_str!("../resources/input_test_8");
+    const INPUT_TEST_9: &str = include_str!("../resources/input_test_9");
+
     #[test]
     fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(shortest_path_4_robots(&Map::build(INPUT_TEST_6)), 8);
+        assert_eq!(shortest_path_4_robots(&Map::build(INPUT_TEST_7)), 24);
+        assert_eq!(shortest_path_4_robots(&Map::build(INPUT_TEST_8)), 32);
+        assert_eq!(shortest_path_4_robots(&Map::build(INPUT_TEST_9)), 72);
     }
 }
