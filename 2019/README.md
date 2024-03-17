@@ -70,6 +70,6 @@ Iterator repeat, cycle, take.
 
 Intcode. Path following.
 
-### Day 18: [Many-Worlds Interpretation](day18/README.md) 🌟
+### Day 18: [Many-Worlds Interpretation](day18/README.md) 🌟🌟
 
 Map, shortest path, finding keys and unlocking doors.

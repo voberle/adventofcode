@@ -12,3 +12,8 @@ I haven't found how to optimize it better for now.
 
 ## Part 2
 
+Modifying the code to handle 4 entrance positions works nicely.
+
+It's actually even faster than for part 1.
+
+But the recursion is still not stopping for the real input (does for tests). I'm stuck as to how to fix that.

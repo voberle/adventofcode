@@ -38,6 +38,7 @@ impl Element {
         }
     }
 
+    // Does does specified key open this door?
     fn is_door_for_key(self, key: Self) -> bool {
         if let Door(door_val) = self {
             if let Key(key_val) = key {
@@ -97,6 +98,7 @@ impl Map {
         }
     }
 
+    // Does going into this direction keep us on the map?
     fn is_dir_on_map(&self, pos: usize, direction: Direction) -> bool {
         !match direction {
             North => pos < self.cols,
@@ -119,39 +121,30 @@ impl Map {
     fn is_pos_allowed(&self, pos: usize) -> bool {
         let elt = self.values[pos];
         match elt {
-            // Door is allowed, shortest path method filters them separately
+            // Door is allowed, shortest path method filters them separately.
             Entrance | Open | Key(_) | Door(_) => true,
             Wall => false,
         }
     }
 
-    fn get_entrance_pos(&self) -> usize {
+    fn get_positions_of(&self, match_fn: fn(Element) -> bool) -> Vec<usize> {
         self.values
             .iter()
-            .position(|&e| matches!(e, Entrance))
-            .unwrap()
+            .enumerate()
+            .filter_map(|(pos, e)| if match_fn(*e) { Some(pos) } else { None })
+            .collect()
+    }
+
+    fn get_entrance_positions(&self) -> Vec<usize> {
+        self.get_positions_of(|e| matches!(e, Entrance))
     }
 
     fn get_keys_positions(&self) -> Vec<usize> {
-        self.values
-            .iter()
-            .enumerate()
-            .filter_map(|(pos, e)| if matches!(e, Key(_)) { Some(pos) } else { None })
-            .collect()
+        self.get_positions_of(|e| matches!(e, Key(_)))
     }
 
     fn get_doors_positions(&self) -> Vec<usize> {
-        self.values
-            .iter()
-            .enumerate()
-            .filter_map(|(pos, e)| {
-                if matches!(e, Door(_)) {
-                    Some(pos)
-                } else {
-                    None
-                }
-            })
-            .collect()
+        self.get_positions_of(|e| matches!(e, Door(_)))
     }
 }
 
@@ -205,6 +198,7 @@ fn find_shortest_path(
             if !map.is_pos_allowed(pos) {
                 return None;
             }
+            // Don't walk into closed doors.
             if doors_positions.contains(&pos) {
                 return None;
             }
@@ -239,49 +233,55 @@ fn find_shortest_path(
 // Recursive function.
 fn find_keys(
     map: &Map,
-    from: usize,
+    robots_positions: &[usize],
     keys_positions: &[usize],
     doors_positions: &[usize],
     distance_so_far: usize,
     shortest_distance: &mut usize,
-    cache: &mut FxHashSet<(usize, usize, Vec<usize>)>,
+    cache: &mut FxHashSet<(usize, Vec<usize>, Vec<usize>)>,
     path_cache: &mut FxHashMap<(usize, usize, Vec<usize>), Option<usize>>,
 ) {
-    // keys_positions was sorted when created
-    if !cache.insert((distance_so_far, from, keys_positions.to_vec())) {
+    // robots_positions and keys_positions remain sorted.
+    if !cache.insert((
+        distance_so_far,
+        robots_positions.to_vec(),
+        keys_positions.to_vec(),
+    )) {
         return;
     }
 
-    let mut reachable_keys: Vec<(usize, usize)> = keys_positions
-        .iter()
-        .filter_map(|&pos| {
+    // Robot position, Key position, Distance
+    let mut reachable_keys: Vec<(usize, usize, usize)> = Vec::new();
+    for robot_pos in robots_positions {
+        let from = *robot_pos;
+        reachable_keys.extend(keys_positions.iter().filter_map(|k_pos| {
+            let pos = *k_pos;
+            // Cache to the shortest path function results.
             if let Some(opt_d) = path_cache.get(&(from, pos, doors_positions.to_vec())) {
-                opt_d.map(|d| (pos, d))
+                opt_d.map(|d| (from, pos, d))
             } else if let Some(dist_to_key) = find_shortest_path(map, doors_positions, from, pos) {
                 path_cache.insert((from, pos, doors_positions.to_vec()), Some(dist_to_key));
-                Some((pos, dist_to_key))
+                Some((from, pos, dist_to_key))
             } else {
                 path_cache.insert((from, pos, doors_positions.to_vec()), None);
                 None
             }
-        })
-        .collect();
+        }));
+    }
 
     // Sort by distance, to explore the closest ones first.
-    reachable_keys.sort_unstable_by_key(|e| e.1);
+    reachable_keys.sort_unstable_by_key(|e| e.2);
 
-    for (key_pos, dist_to_key) in reachable_keys {
-        let key = map.values[key_pos];
-        assert!(matches!(key, Key(_)));
+    for (robot_pos, key_pos, dist_to_key) in reachable_keys {
         let new_dist = distance_so_far + dist_to_key;
 
         if new_dist >= *shortest_distance {
-            // We have better already
+            // We have better already.
             continue;
         }
 
         if keys_positions.len() == 1 {
-            // Last key we needed to find
+            // This is the last key we needed to find.
             *shortest_distance = new_dist.min(*shortest_distance);
             println!(
                 "Last key, dist to it {}, dist {}, shortest {}",
@@ -289,6 +289,20 @@ fn find_keys(
             );
             continue;
         }
+
+        let key = map.values[key_pos];
+        assert!(matches!(key, Key(_)));
+
+        let new_robot_position: Vec<usize> = robots_positions
+            .iter()
+            .map(|&p| if p == robot_pos { key_pos } else { p })
+            .collect();
+
+        let new_keys_positions: Vec<usize> = keys_positions
+            .iter()
+            .filter(|&&p| p != key_pos)
+            .copied()
+            .collect();
 
         let new_doors_positions: Vec<usize> =
             if let Some(door_pos) = map.values.iter().position(|&e| e.is_door_for_key(key)) {
@@ -303,16 +317,9 @@ fn find_keys(
                 doors_positions.to_vec()
             };
 
-        let mut new_keys_positions: Vec<usize> = keys_positions
-            .iter()
-            .filter(|&&p| p != key_pos)
-            .copied()
-            .collect();
-        new_keys_positions.sort_unstable(); // for adding to cache later
-
         find_keys(
             map,
-            key_pos,
+            &new_robot_position,
             &new_keys_positions,
             &new_doors_positions,
             new_dist,
@@ -332,18 +339,19 @@ fn shortest_path_all_keys(map: &Map) -> usize {
 
     let mut shortest_distance = usize::MAX;
 
-    let entrance_pos = map.get_entrance_pos();
-    let doors_positions = map.get_doors_positions();
+    let entrance_positions = map.get_entrance_positions();
     let keys_positions = map.get_keys_positions();
+    let doors_positions = map.get_doors_positions();
+    // println!("Keys {}; Doors {}", keys_positions.len(), doors_positions.len());
 
     // Cache of "distance so far" + "from where we are searching" + "positions of remaining keys to find".
-    let mut cache: FxHashSet<(usize, usize, Vec<usize>)> = FxHashSet::default();
+    let mut cache: FxHashSet<(usize, Vec<usize>, Vec<usize>)> = FxHashSet::default();
     // Cache for Dijkstra shortest path function.
     let mut path_cache: FxHashMap<(usize, usize, Vec<usize>), Option<usize>> = FxHashMap::default();
 
     find_keys(
         map,
-        entrance_pos,
+        &entrance_positions,
         &keys_positions,
         &doors_positions,
         0,
@@ -357,7 +365,9 @@ fn shortest_path_all_keys(map: &Map) -> usize {
 
 fn update_map(map: &Map) -> Map {
     let mut map = map.clone();
-    let entrance_pos = map.get_entrance_pos();
+    let entrance_positions = map.get_entrance_positions();
+    assert_eq!(entrance_positions.len(), 1);
+    let entrance_pos = entrance_positions[0];
     // North
     map.values[entrance_pos - map.cols - 1] = Entrance;
     map.values[entrance_pos - map.cols] = Wall;
@@ -373,22 +383,17 @@ fn update_map(map: &Map) -> Map {
     map
 }
 
-fn shortest_path_4_robots(map: &Map) -> i64 {
-    0
-}
-
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let map = Map::build(&input);
     // map.print();
 
-    // println!("Part 1: {}", shortest_path_all_keys(&map));
+    println!("Part 1: {}", shortest_path_all_keys(&map));
 
     let updated_map = update_map(&map);
     // updated_map.print();
-
-    println!("Part 2: {}", shortest_path_4_robots(&updated_map));
+    println!("Part 2: {}", shortest_path_all_keys(&updated_map));
 }
 
 #[cfg(test)]
@@ -417,9 +422,9 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(shortest_path_4_robots(&Map::build(INPUT_TEST_6)), 8);
-        assert_eq!(shortest_path_4_robots(&Map::build(INPUT_TEST_7)), 24);
-        assert_eq!(shortest_path_4_robots(&Map::build(INPUT_TEST_8)), 32);
-        assert_eq!(shortest_path_4_robots(&Map::build(INPUT_TEST_9)), 72);
+        assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_6)), 8);
+        assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_7)), 24);
+        assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_8)), 32);
+        assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_9)), 72);
     }
 }
