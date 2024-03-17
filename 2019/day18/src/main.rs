@@ -86,6 +86,7 @@ impl Map {
         Self { values, rows, cols }
     }
 
+    #[allow(dead_code)]
     fn print(&self) {
         for row in 0..self.rows {
             for p in row * self.cols..(row + 1) * self.cols {
@@ -118,8 +119,9 @@ impl Map {
     fn is_pos_allowed(&self, pos: usize) -> bool {
         let elt = self.values[pos];
         match elt {
-            Entrance | Open | Key(_) => true,
-            Wall | Door(_) => false,
+            // Door is allowed, shortest path method filters them separately
+            Entrance | Open | Key(_) | Door(_) => true,
+            Wall => false,
         }
     }
 
@@ -130,10 +132,6 @@ impl Map {
             .unwrap()
     }
 
-    fn count_keys(&self) -> usize {
-        self.values.iter().filter(|&&e| matches!(e, Key(_))).count()
-    }
-
     fn get_keys_positions(&self) -> Vec<usize> {
         self.values
             .iter()
@@ -142,19 +140,18 @@ impl Map {
             .collect()
     }
 
-    // Remove the key and corresponding door from the map.
-    // Finds the door corresponding to the key and replaces it with an open space.
-    fn collect_key_and_open_door(&mut self, key_pos: usize) {
-        let key = self.values[key_pos];
-        assert!(matches!(key, Key(_)));
-
-        self.values[key_pos] = Open;
-
-        // println!("For key {} we have door {}", key, door);
-        if let Some(door_pos) = self.values.iter().position(|&e| e.is_door_for_key(key)) {
-            // Some keys don't have a corresponding door.
-            self.values[door_pos] = Open;
-        }
+    fn get_doors_positions(&self) -> Vec<usize> {
+        self.values
+            .iter()
+            .enumerate()
+            .filter_map(|(pos, e)| {
+                if matches!(e, Door(_)) {
+                    Some(pos)
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 }
 
@@ -177,7 +174,12 @@ impl PartialOrd for Node {
 }
 
 // Dijkstra shortest path.
-fn find_shortest_path(map: &Map, start: usize, end: usize) -> Option<usize> {
+fn find_shortest_path(
+    map: &Map,
+    doors_positions: &[usize],
+    start: usize,
+    end: usize,
+) -> Option<usize> {
     let mut visited: FxHashSet<usize> = FxHashSet::default();
     let mut distance: FxHashMap<usize, usize> = FxHashMap::default();
     let mut shortest_distance = usize::MAX;
@@ -201,6 +203,9 @@ fn find_shortest_path(map: &Map, start: usize, end: usize) -> Option<usize> {
             }
             let next_pos = map.next_pos(pos, *d);
             if !map.is_pos_allowed(pos) {
+                return None;
+            }
+            if doors_positions.contains(&pos) {
                 return None;
             }
 
@@ -235,44 +240,86 @@ fn find_shortest_path(map: &Map, start: usize, end: usize) -> Option<usize> {
 fn find_keys(
     map: &Map,
     from: usize,
-    keys_to_find_count: usize,
+    keys_positions: &[usize],
+    doors_positions: &[usize],
     distance_so_far: usize,
     shortest_distance: &mut usize,
+    cache: &mut FxHashSet<(usize, usize, Vec<usize>)>,
+    path_cache: &mut FxHashMap<(usize, usize, Vec<usize>), Option<usize>>,
 ) {
-    let all_keys_pos = map.get_keys_positions();
-    for key_pos in all_keys_pos {
-        if let Some(dist_to_key) = find_shortest_path(map, from, key_pos) {
-            // This key is reachable
-            let key = map.values[key_pos];
-            assert!(matches!(key, Key(_)));
-            let new_dist = distance_so_far + dist_to_key;
+    // keys_positions was sorted when created
+    if !cache.insert((distance_so_far, from, keys_positions.to_vec())) {
+        return;
+    }
 
-            if new_dist >= *shortest_distance {
-                // We have better already
-                continue;
+    let mut reachable_keys: Vec<(usize, usize)> = keys_positions
+        .iter()
+        .filter_map(|&pos| {
+            if let Some(opt_d) = path_cache.get(&(from, pos, doors_positions.to_vec())) {
+                opt_d.map(|d| (pos, d))
+            } else if let Some(dist_to_key) = find_shortest_path(map, doors_positions, from, pos) {
+                path_cache.insert((from, pos, doors_positions.to_vec()), Some(dist_to_key));
+                Some((pos, dist_to_key))
+            } else {
+                path_cache.insert((from, pos, doors_positions.to_vec()), None);
+                None
             }
+        })
+        .collect();
 
-            // println!("Key reachable: {}, dist so far {}", key, new_dist);
+    // Sort by distance, to explore the closest ones first.
+    reachable_keys.sort_unstable_by_key(|e| e.1);
 
-            if keys_to_find_count == 1 {
-                // Last key we needed to find
-                *shortest_distance = new_dist.min(*shortest_distance);
-                continue;
-            }
+    for (key_pos, dist_to_key) in reachable_keys {
+        let key = map.values[key_pos];
+        assert!(matches!(key, Key(_)));
+        let new_dist = distance_so_far + dist_to_key;
 
-            let mut map_copy = map.clone();
-            map_copy.collect_key_and_open_door(key_pos);
-
-            // map_copy.print();
-
-            find_keys(
-                &map_copy,
-                key_pos,
-                keys_to_find_count - 1,
-                new_dist,
-                shortest_distance,
-            );
+        if new_dist >= *shortest_distance {
+            // We have better already
+            continue;
         }
+
+        if keys_positions.len() == 1 {
+            // Last key we needed to find
+            *shortest_distance = new_dist.min(*shortest_distance);
+            println!(
+                "Last key, dist to it {}, dist {}, shortest {}",
+                dist_to_key, new_dist, shortest_distance
+            );
+            continue;
+        }
+
+        let new_doors_positions: Vec<usize> =
+            if let Some(door_pos) = map.values.iter().position(|&e| e.is_door_for_key(key)) {
+                // Some keys don't have a corresponding door.
+                doors_positions
+                    .iter()
+                    .filter(|&&p| p != door_pos)
+                    .copied()
+                    .collect()
+            } else {
+                // we could maybe save this clone
+                doors_positions.to_vec()
+            };
+
+        let mut new_keys_positions: Vec<usize> = keys_positions
+            .iter()
+            .filter(|&&p| p != key_pos)
+            .copied()
+            .collect();
+        new_keys_positions.sort_unstable(); // for adding to cache later
+
+        find_keys(
+            map,
+            key_pos,
+            &new_keys_positions,
+            &new_doors_positions,
+            new_dist,
+            shortest_distance,
+            cache,
+            path_cache,
+        );
     }
 }
 
@@ -285,17 +332,24 @@ fn shortest_path_all_keys(map: &Map) -> usize {
 
     let mut shortest_distance = usize::MAX;
 
-    let keys_to_find_count = map.count_keys();
     let entrance_pos = map.get_entrance_pos();
+    let doors_positions = map.get_doors_positions();
+    let keys_positions = map.get_keys_positions();
 
-    println!("Need to find {} keys", keys_to_find_count);
+    // Cache of "distance so far" + "from where we are searching" + "positions of remaining keys to find".
+    let mut cache: FxHashSet<(usize, usize, Vec<usize>)> = FxHashSet::default();
+    // Cache for Dijkstra shortest path function.
+    let mut path_cache: FxHashMap<(usize, usize, Vec<usize>), Option<usize>> = FxHashMap::default();
 
     find_keys(
         map,
         entrance_pos,
-        keys_to_find_count,
+        &keys_positions,
+        &doors_positions,
         0,
         &mut shortest_distance,
+        &mut cache,
+        &mut path_cache,
     );
 
     shortest_distance
@@ -309,7 +363,7 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let map = Map::build(&input);
-    map.print();
+    // map.print();
 
     println!("Part 1: {}", shortest_path_all_keys(&map));
     println!("Part 2: {}", part2(&map));
