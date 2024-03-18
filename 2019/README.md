@@ -74,6 +74,6 @@ Intcode. Path following.
 
 Map, shortest path, finding keys and unlocking doors.
 
-### Day 19: [Tractor Beam](day19/README.md) 🌟
+### Day 19: [Tractor Beam](day19/README.md) 🌟🌟
 
 Intcode.
