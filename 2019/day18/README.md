@@ -20,6 +20,8 @@ But the recursion is still not stopping for the real input (does for tests). I'm
 
 ## Update
 
+### Part 1
+
 The recursive approach can be replaced by another Dijkstra shortest path implementation, using "Position + Keys to Find" as the position.
 
 Implementation is relatively simple, and this time it stops for the real input on part 1, but it's still slow, taking 5-10 minutes.
@@ -30,4 +32,10 @@ One optimization might be to transform the map into a graph before, but I'm not 
 
 My implementation also uses multiple clone().
 
-I didn't implement that approach for part 2 for now.
+### Part 2
+
+For part 2, I used the assumption that when a robot reaches a door where the key is in another quadrant, that key will eventually become available without the robot having to move anywhere else.
+
+So we can treat it the same as if the key was already available.
+
+So that worked for the real input, but for some unclear reason didn't for the test case 9.

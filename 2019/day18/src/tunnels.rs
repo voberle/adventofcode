@@ -94,6 +94,14 @@ impl Map {
         }
     }
 
+    fn col(&self, index: usize) -> usize {
+        index % self.cols
+    }
+
+    fn row(&self, index: usize) -> usize {
+        index / self.cols
+    }
+
     // Does going into this direction keep us on the map?
     fn is_dir_on_map(&self, pos: usize, direction: Direction) -> bool {
         !match direction {
@@ -170,6 +178,21 @@ impl Map {
         map.values[entrance_pos + map.cols] = Wall;
         map.values[entrance_pos + map.cols + 1] = Entrance;
         map
+    }
+
+    // Quadrants are numbered 0 to 3
+    pub fn is_in_quadrant(&self, pos: usize, entrance_pos: usize, quadrant: usize) -> bool {
+        let row = self.row(pos);
+        let col = self.col(pos);
+        let e_row = self.row(entrance_pos);
+        let e_col = self.col(entrance_pos);
+        match quadrant {
+            0 => row <= e_row && col <= e_col,
+            1 => row <= e_row && col >= e_col,
+            2 => row >= e_row && col <= e_col,
+            3 => row >= e_row && col >= e_col,
+            _ => panic!("Invalid quadrant {}", quadrant)
+        }
     }
 }
 
