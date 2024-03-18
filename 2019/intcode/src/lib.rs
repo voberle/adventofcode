@@ -181,6 +181,7 @@ impl IntcodeBase {
     /// or if trying to get some input, but there isn't any.
     /// The difference can be checked with the `is_halted()` function.
     fn exec<B: Bus>(&mut self, bus: &mut B) {
+        assert!(!self.is_halted(), "Computer isn't running");
         loop {
             let ins = Instruction::new(&self.mem[self.ip..]);
             match ins {
