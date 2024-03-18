@@ -79,15 +79,12 @@ fn santa_ship_position(computer: &IntcodeComputer) -> usize {
     // then move the top-right up until the border, and the bottom-left left until the border.
 
     // Find a spot where it fits.
-    // We looked on the picture that following coords are pulled:
-    const Y1: usize = 16;
-    const X1: usize = 21;
-    assert!(is_drone_pulled(computer, X1, Y1));
-    // Then take something on that line much further.
     let mut x = 5000;
-    let mut y = Y1 * x / X1;
-    assert!(is_drone_pulled(computer, x, y));
-    assert!(is_ship_in_beam(computer, x, y));
+    let mut y = 1000;
+    // Note that this might not work well if the beam is very vertical.
+    while !is_ship_in_beam(computer, x, y) {
+        y += 50;
+    }
 
     // Now move as close as possible to the zero.
     loop {

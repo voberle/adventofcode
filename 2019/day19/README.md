@@ -7,6 +7,7 @@ Intcode again. Nothing complicated in part 1, besides nothing that the computer 
 ## Part 2
 
 My initial solution was to look on the printout for a position within the beam and use that to find another position in the beam much further, where the ship fits for sure.
+I later removed this hard-coding of the initial position.
 
 Then progressively get the ship as high as possible.
 
