@@ -1,11 +1,15 @@
 use fxhash::{FxHashMap, FxHashSet};
-use std::io::{self, Read};
+use std::{
+    collections::BinaryHeap,
+    io::{self, Read},
+};
 
 mod tunnels;
 
 use tunnels::Map;
 
 // Recursive function.
+#[allow(clippy::too_many_arguments)]
 fn find_keys(
     map: &Map,
     robots_positions: &[usize],
@@ -104,7 +108,10 @@ fn find_keys(
     }
 }
 
-fn shortest_path_all_keys(map: &Map) -> usize {
+// Recursive version of the solution.
+// This prints out the solution relatively quickly,
+// but it fails to stop, runs forever / for a very long time.
+fn shortest_path_rec(map: &Map) -> usize {
     // Find which keys are reachable and their distance.
     // Recursively:
     // - Unlock each.
@@ -137,17 +144,122 @@ fn shortest_path_all_keys(map: &Map) -> usize {
     shortest_distance
 }
 
+// Node for Dijkstra shortest path on whole map / set of keys.
+#[derive(Debug, PartialEq, Eq)]
+struct Node {
+    pos: usize,
+    keys_to_find: Vec<usize>,
+    cost: usize,
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+// Dijkstra shortest path version of the solution.
+// It's not fast, takes 5+ minutes to get the answer, but gets it.
+// NB: Only supports part 1 for now.
+fn shortest_path_dijkstra(map: &Map) -> usize {
+    let entrance_positions = map.get_entrance_positions();
+    let keys_positions = map.get_keys_positions();
+
+    let mut visited: FxHashSet<(usize, Vec<usize>)> = FxHashSet::default();
+    let mut distance: FxHashMap<(usize, Vec<usize>), usize> = FxHashMap::default();
+    let mut shortest_distance = usize::MAX;
+
+    let mut path_cache: FxHashMap<(usize, usize, Vec<usize>), Option<usize>> = FxHashMap::default();
+
+    let mut queue: BinaryHeap<Node> = BinaryHeap::new();
+    queue.push(Node {
+        pos: entrance_positions[0],
+        keys_to_find: keys_positions,
+        cost: 0,
+    });
+
+    while let Some(Node {
+        pos,
+        keys_to_find,
+        cost,
+    }) = queue.pop()
+    {
+        visited.insert((pos, keys_to_find.clone()));
+
+        if keys_to_find.is_empty() {
+            shortest_distance = usize::min(shortest_distance, cost);
+            // println!("Last key, shortest {}", shortest_distance);
+            continue;
+        }
+
+        let doors_positions: Vec<usize> = keys_to_find
+            .iter()
+            .filter_map(|kp| map.get_door_position_for_key(*kp))
+            .collect();
+
+        queue.extend(keys_to_find.iter().filter_map(|key_pos| {
+            let dist_to_key_opt =
+                if let Some(opt_d) = path_cache.get(&(pos, *key_pos, doors_positions.clone())) {
+                    *opt_d
+                } else {
+                    let dist_to_key_opt =
+                        tunnels::find_shortest_path(map, &doors_positions, pos, *key_pos);
+                    path_cache.insert((pos, *key_pos, doors_positions.clone()), dist_to_key_opt);
+                    dist_to_key_opt
+                };
+
+            // If unreachable
+            dist_to_key_opt?;
+            // Above line is same as: if dist_to_key_opt.is_none() { return None; }
+
+            let next_pos = *key_pos;
+            let next_keys_to_find: Vec<usize> = keys_to_find
+                .iter()
+                .filter(|&&p| p != *key_pos)
+                .copied()
+                .collect();
+
+            if visited.contains(&(next_pos, next_keys_to_find.clone())) {
+                return None;
+            }
+
+            let next_cost = cost + dist_to_key_opt.unwrap();
+            if let Some(prevcost) = distance.get(&(next_pos, next_keys_to_find.clone())) {
+                if *prevcost <= next_cost {
+                    return None;
+                }
+            }
+
+            distance.insert((next_pos, next_keys_to_find.clone()), next_cost);
+
+            Some(Node {
+                pos: next_pos,
+                keys_to_find: next_keys_to_find,
+                cost: next_cost,
+            })
+        }));
+    }
+
+    shortest_distance
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let map = Map::build(&input);
     // map.print();
 
-    println!("Part 1: {}", shortest_path_all_keys(&map));
+    println!("Part 1: {}", shortest_path_dijkstra(&map));
 
     let updated_map = map.update_map();
     // updated_map.print();
-    println!("Part 2: {}", shortest_path_all_keys(&updated_map));
+    println!("Part 2: {}", shortest_path_rec(&updated_map));
 }
 
 #[cfg(test)]
@@ -162,11 +274,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_1)), 8);
-        assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_2)), 86);
-        assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_3)), 132);
-        assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_4)), 136);
-        assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_5)), 81);
+        assert_eq!(shortest_path_dijkstra(&Map::build(INPUT_TEST_1)), 8);
+        assert_eq!(shortest_path_dijkstra(&Map::build(INPUT_TEST_2)), 86);
+        assert_eq!(shortest_path_dijkstra(&Map::build(INPUT_TEST_3)), 132);
+        assert_eq!(shortest_path_dijkstra(&Map::build(INPUT_TEST_4)), 136);
+        assert_eq!(shortest_path_dijkstra(&Map::build(INPUT_TEST_5)), 81);
     }
 
     const INPUT_TEST_6: &str = include_str!("../resources/input_test_6");
@@ -176,9 +288,9 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_6)), 8);
-        assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_7)), 24);
-        assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_8)), 32);
-        assert_eq!(shortest_path_all_keys(&Map::build(INPUT_TEST_9)), 72);
+        assert_eq!(shortest_path_rec(&Map::build(INPUT_TEST_6)), 8);
+        assert_eq!(shortest_path_rec(&Map::build(INPUT_TEST_7)), 24);
+        assert_eq!(shortest_path_rec(&Map::build(INPUT_TEST_8)), 32);
+        assert_eq!(shortest_path_rec(&Map::build(INPUT_TEST_9)), 72);
     }
 }
