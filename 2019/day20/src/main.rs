@@ -21,12 +21,22 @@ const ALL_DIRECTIONS: [Direction; 4] = [North, East, South, West];
 enum Element {
     Wall,
     OpenPassage,
-    Portal(String),
+    Entry, // AA
+    Exit,  // BB
+    InnerPortal(String),
+    OuterPortal(String),
     Space,
 }
-use Element::{OpenPassage, Portal, Space, Wall};
+use Element::{Entry, Exit, InnerPortal, OpenPassage, OuterPortal, Space, Wall};
 
-impl Element {}
+impl Element {
+    fn is_portal_for(&self, name: &str) -> bool {
+        match self {
+            InnerPortal(n) | OuterPortal(n) => name == n,
+            _ => false,
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 struct Maze {
@@ -61,9 +71,22 @@ impl Maze {
 
         // Finally inject the portals
         values.iter_mut().enumerate().for_each(|(p, e)| {
-            if let Some(portal) = portals.get(&p) {
+            if let Some(name) = portals.get(&p) {
                 assert_eq!(*e, OpenPassage);
-                *e = Portal(portal.clone());
+                if name == "AA" {
+                    *e = Entry;
+                } else if name == "ZZ" {
+                    *e = Exit;
+                } else {
+                    // We identify outer portals by the fact that their position is close to the border.
+                    let col = p % cols;
+                    let row = p / cols;
+                    if col < 3 || col > cols - 4 || row < 3 || row > rows - 4 {
+                        *e = OuterPortal(name.clone());
+                    } else {
+                        *e = InnerPortal(name.clone());
+                    }
+                }
             }
         });
 
@@ -77,7 +100,10 @@ impl Maze {
                 let c = match self.values.get(p) {
                     Some(Wall) => '#',
                     Some(OpenPassage) => '.',
-                    Some(Portal(_)) => 'O',
+                    Some(Entry) => 'A',
+                    Some(Exit) => 'Z',
+                    Some(OuterPortal(_)) => 'O',
+                    Some(InnerPortal(_)) => 'X',
                     Some(Space) => ' ',
                     None => panic!("Bug in print()"),
                 };
@@ -96,19 +122,20 @@ impl Maze {
         }
     }
 
-    // Use only for AA or ZZ, when there is only one portal.
-    fn get_portal_pos(&self, portal: &str) -> usize {
-        let elt = Portal(portal.to_string());
-        self.values.iter().position(|e| *e == elt).unwrap()
+    fn get_entry(&self) -> usize {
+        self.values.iter().position(|e| matches!(e, Entry)).unwrap()
     }
 
-    fn get_other_portal_pos(&self, portal: &str, current_pos: usize) -> Option<usize> {
-        let elt = Portal(portal.to_string());
+    fn get_exit(&self) -> usize {
+        self.values.iter().position(|e| matches!(e, Exit)).unwrap()
+    }
+
+    fn get_other_portal_pos(&self, portal_name: &str, current_pos: usize) -> Option<usize> {
         if let Some((pos, _)) = self
             .values
             .iter()
             .enumerate()
-            .find(|(i, e)| *i != current_pos && **e == elt)
+            .find(|(i, e)| *i != current_pos && e.is_portal_for(portal_name))
         {
             Some(pos)
         } else {
@@ -137,7 +164,10 @@ impl PartialOrd for Node {
 }
 
 // Dijkstra shortest path.
-fn find_shortest_path(maze: &Maze, start: usize, end: usize) -> usize {
+fn find_shortest_path(maze: &Maze) -> usize {
+    let start = maze.get_entry();
+    let end = maze.get_exit();
+
     let mut visited: FxHashSet<usize> = FxHashSet::default();
     let mut distance: FxHashMap<usize, usize> = FxHashMap::default();
     let mut shortest_distance = usize::MAX;
@@ -162,7 +192,7 @@ fn find_shortest_path(maze: &Maze, start: usize, end: usize) -> usize {
             let mut next_cost = cost + 1;
 
             match maze.values.get(next_pos) {
-                Some(Portal(name)) => {
+                Some(InnerPortal(name) | OuterPortal(name)) => {
                     if let Some(other_portal_pos) = maze.get_other_portal_pos(name, next_pos) {
                         // Teleporting!
                         next_pos = other_portal_pos;
@@ -170,7 +200,7 @@ fn find_shortest_path(maze: &Maze, start: usize, end: usize) -> usize {
                         next_cost += 1;
                     }
                 }
-                Some(OpenPassage) => {}
+                Some(OpenPassage | Entry | Exit) => {}
                 Some(Wall | Space) | None => return None,
             }
 
@@ -192,13 +222,11 @@ fn find_shortest_path(maze: &Maze, start: usize, end: usize) -> usize {
     shortest_distance
 }
 
-fn aa_to_zz_path_length(maze: &Maze) -> usize {
-    let start = maze.get_portal_pos("AA");
-    let end = maze.get_portal_pos("ZZ");
-    find_shortest_path(maze, start, end)
+fn path_length(maze: &Maze) -> usize {
+    find_shortest_path(maze)
 }
 
-fn part2(maze: &Maze) -> i64 {
+fn path_length_recursive(maze: &Maze) -> i64 {
     0
 }
 
@@ -206,10 +234,10 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let maze = Maze::build(&input);
-    // maze.print();
+    maze.print();
 
-    println!("Part 1: {}", aa_to_zz_path_length(&maze));
-    println!("Part 2: {}", part2(&maze));
+    println!("Part 1: {}", path_length(&maze));
+    println!("Part 2: {}", path_length_recursive(&maze));
 }
 
 #[cfg(test)]
@@ -221,12 +249,14 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(aa_to_zz_path_length(&Maze::build(INPUT_TEST_1)), 23);
-        assert_eq!(aa_to_zz_path_length(&Maze::build(INPUT_TEST_2)), 58);
+        assert_eq!(path_length(&Maze::build(INPUT_TEST_1)), 23);
+        assert_eq!(path_length(&Maze::build(INPUT_TEST_2)), 58);
     }
+
+    const INPUT_TEST_3: &str = include_str!("../resources/input_test_3");
 
     #[test]
     fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), 0);
+        // assert_eq!(path_length_recursive(&Maze::build(INPUT_TEST_3)), 396);
     }
 }
