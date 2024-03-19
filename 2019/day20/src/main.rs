@@ -148,6 +148,7 @@ impl Maze {
 #[derive(Debug, PartialEq, Eq)]
 struct Node {
     pos: usize,
+    level: usize,
     cost: usize,
 }
 
@@ -164,24 +165,25 @@ impl PartialOrd for Node {
 }
 
 // Dijkstra shortest path.
-fn find_shortest_path(maze: &Maze) -> usize {
+fn find_shortest_path<const RECURSIVE: bool>(maze: &Maze) -> usize {
     let start = maze.get_entry();
     let end = maze.get_exit();
 
-    let mut visited: FxHashSet<usize> = FxHashSet::default();
-    let mut distance: FxHashMap<usize, usize> = FxHashMap::default();
+    let mut visited: FxHashSet<(usize, usize)> = FxHashSet::default();
+    let mut distance: FxHashMap<(usize, usize), usize> = FxHashMap::default();
     let mut shortest_distance = usize::MAX;
 
     let mut queue: BinaryHeap<Node> = BinaryHeap::new();
     queue.push(Node {
         pos: start,
+        level: 0,
         cost: 0,
     });
 
-    while let Some(Node { pos, cost }) = queue.pop() {
-        visited.insert(pos);
+    while let Some(Node { pos, level, cost }) = queue.pop() {
+        visited.insert((pos, level));
 
-        if pos == end {
+        if pos == end && level == 0 {
             shortest_distance = shortest_distance.min(cost);
             continue;
         }
@@ -189,32 +191,56 @@ fn find_shortest_path(maze: &Maze) -> usize {
         queue.extend(ALL_DIRECTIONS.iter().filter_map(|d| {
             // We don't need to check if next_pos is on grid, as it's take care of by the None arm of following match.
             let mut next_pos = maze.next_pos(pos, *d);
+            let mut next_level = level;
             let mut next_cost = cost + 1;
 
             match maze.values.get(next_pos) {
-                Some(InnerPortal(name) | OuterPortal(name)) => {
-                    if let Some(other_portal_pos) = maze.get_other_portal_pos(name, next_pos) {
-                        // Teleporting!
-                        next_pos = other_portal_pos;
-                        // Teleporting costs a step.
-                        next_cost += 1;
+                Some(InnerPortal(name)) => {
+                    next_pos = maze.get_other_portal_pos(name, next_pos).unwrap();
+                    next_cost += 1; // Teleporting costs a step.
+                    if RECURSIVE {
+                        next_level += 1;
                     }
                 }
-                Some(OpenPassage | Entry | Exit) => {}
+                Some(OuterPortal(name)) => {
+                    if RECURSIVE && level == 0 {
+                        // At top level, outer portals don't work.
+                        return None;
+                    }
+                    next_pos = maze.get_other_portal_pos(name, next_pos).unwrap();
+                    next_cost += 1;
+                    if RECURSIVE {
+                        next_level -= 1;
+                    }
+                }
+                Some(OpenPassage) => {}
+                Some(Entry | Exit) => {
+                    // Entry and exits are walls at lower levels.
+                    if level > 0 {
+                        return None;
+                    }
+                }
                 Some(Wall | Space) | None => return None,
             }
 
-            if visited.contains(&next_pos) {
+            if visited.contains(&(next_pos, next_level)) {
                 return None;
             }
-            if let Some(prevcost) = distance.get(&next_pos) {
+
+            // Avoid going too far
+            if next_cost >= shortest_distance {
+                return None;
+            }
+
+            if let Some(prevcost) = distance.get(&(next_pos, next_level)) {
                 if *prevcost <= next_cost {
                     return None;
                 }
             }
-            distance.insert(next_pos, next_cost);
+            distance.insert((next_pos, next_level), next_cost);
             Some(Node {
                 pos: next_pos,
+                level: next_level,
                 cost: next_cost,
             })
         }));
@@ -223,18 +249,18 @@ fn find_shortest_path(maze: &Maze) -> usize {
 }
 
 fn path_length(maze: &Maze) -> usize {
-    find_shortest_path(maze)
+    find_shortest_path::<false>(maze)
 }
 
-fn path_length_recursive(maze: &Maze) -> i64 {
-    0
+fn path_length_recursive(maze: &Maze) -> usize {
+    find_shortest_path::<true>(maze)
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let maze = Maze::build(&input);
-    maze.print();
+    // maze.print();
 
     println!("Part 1: {}", path_length(&maze));
     println!("Part 2: {}", path_length_recursive(&maze));
@@ -257,6 +283,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        // assert_eq!(path_length_recursive(&Maze::build(INPUT_TEST_3)), 396);
+        assert_eq!(path_length_recursive(&Maze::build(INPUT_TEST_3)), 396);
     }
 }
