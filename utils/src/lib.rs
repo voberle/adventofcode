@@ -3,11 +3,11 @@
 #![allow(dead_code)]
 
 mod ansi;
-mod array;
+mod array_wrapping;
 mod direction;
 mod grid;
-mod map;
+mod map_in_hashmap;
 mod md5;
+mod overlapping_ranges;
 mod parsing;
 mod pipe;
-mod ranges;
