@@ -30,7 +30,7 @@ impl Direction {
     }
 }
 
-const ALL_DIRECTIONS: [Direction; 4] = [North, East, South, West];
+pub const ALL_DIRECTIONS: [Direction; 4] = [North, East, South, West];
 
 impl fmt::Display for Direction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

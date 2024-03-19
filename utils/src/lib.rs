@@ -4,6 +4,7 @@
 
 mod ansi;
 mod array_wrapping;
+mod dijkstra;
 mod direction;
 mod grid;
 mod map_in_hashmap;
