@@ -48,6 +48,12 @@ impl Grid {
         self.print_with_pos(&[]);
     }
 
+    // To explore the grid column by column:
+    // for col in 0..grid.cols {
+    //     for p in (col..(col + grid.cols * grid.rows)).step_by(grid.cols) {
+    // To get the next row element in a column:
+    //         let p1 = p + grid.cols;
+
     pub fn pos(&self, row: usize, col: usize) -> usize {
         row * self.cols + col
     }
