@@ -77,3 +77,5 @@ Map, shortest path, finding keys and unlocking doors.
 ### Day 19: [Tractor Beam](day19/README.md) 🌟🌟
 
 Intcode.
+
+### Day 20: [Donut Maze](day20/README.md)
