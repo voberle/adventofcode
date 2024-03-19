@@ -78,4 +78,6 @@ Map, shortest path, finding keys and unlocking doors.
 
 Intcode.
 
-### Day 20: [Donut Maze](day20/README.md)
+### Day 20: [Donut Maze](day20/README.md) 🌟
+
+Maze with teleportation.

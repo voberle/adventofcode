@@ -1,5 +1,8 @@
-use fxhash::FxHashMap;
-use std::io::{self, Read};
+use fxhash::{FxHashMap, FxHashSet};
+use std::{
+    collections::BinaryHeap,
+    io::{self, Read},
+};
 
 mod portals;
 
@@ -67,6 +70,7 @@ impl Maze {
         Self { values, rows, cols }
     }
 
+    #[allow(dead_code)]
     fn print(&self) {
         for row in 0..self.rows {
             for p in row * self.cols..(row + 1) * self.cols {
@@ -75,7 +79,7 @@ impl Maze {
                     Some(OpenPassage) => '.',
                     Some(Portal(_)) => 'O',
                     Some(Space) => ' ',
-                    None => panic!("Bug in print()")
+                    None => panic!("Bug in print()"),
                 };
                 print!("{}", c);
             }
@@ -83,34 +87,6 @@ impl Maze {
         }
     }
 
-    fn pos(&self, row: usize, col: usize) -> usize {
-        row * self.cols + col
-    }
-
-    fn col(&self, index: usize) -> usize {
-        index % self.cols
-    }
-
-    fn row(&self, index: usize) -> usize {
-        index / self.cols
-    }
-
-    fn pos_as_str(&self, index: usize) -> String {
-        format!("({},{})", self.row(index), self.col(index))
-    }
-
-    // Check we don't go outside grid.
-    fn allowed(&self, pos: usize, direction: Direction) -> bool {
-        !match direction {
-            North => pos < self.cols,
-            East => pos % self.cols == self.cols - 1,
-            South => pos / self.cols == self.rows - 1,
-            West => pos % self.cols == 0,
-        }
-    }
-
-    // Returns the index of the next position in that direction.
-    // Assumes validity of the move has been checked before with `allowed`.
     fn next_pos(&self, pos: usize, direction: Direction) -> usize {
         match direction {
             North => pos - self.cols,
@@ -120,17 +96,106 @@ impl Maze {
         }
     }
 
-    fn try_next_pos(&self, pos: usize, direction: Direction) -> Option<usize> {
-        if self.allowed(pos, direction) {
-            Some(self.next_pos(pos, direction))
+    // Use only for AA or ZZ, when there is only one portal.
+    fn get_portal_pos(&self, portal: &str) -> usize {
+        let elt = Portal(portal.to_string());
+        self.values.iter().position(|e| *e == elt).unwrap()
+    }
+
+    fn get_other_portal_pos(&self, portal: &str, current_pos: usize) -> Option<usize> {
+        let elt = Portal(portal.to_string());
+        if let Some((pos, _)) = self
+            .values
+            .iter()
+            .enumerate()
+            .find(|(i, e)| *i != current_pos && **e == elt)
+        {
+            Some(pos)
         } else {
             None
         }
     }
 }
 
-fn aa_to_zz_path_length(maze: &Maze) -> i64 {
-    0
+// Node we are exploring with Dijkstra.
+#[derive(Debug, PartialEq, Eq)]
+struct Node {
+    pos: usize,
+    cost: usize,
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+// Dijkstra shortest path.
+fn find_shortest_path(maze: &Maze, start: usize, end: usize) -> usize {
+    let mut visited: FxHashSet<usize> = FxHashSet::default();
+    let mut distance: FxHashMap<usize, usize> = FxHashMap::default();
+    let mut shortest_distance = usize::MAX;
+
+    let mut queue: BinaryHeap<Node> = BinaryHeap::new();
+    queue.push(Node {
+        pos: start,
+        cost: 0,
+    });
+
+    while let Some(Node { pos, cost }) = queue.pop() {
+        visited.insert(pos);
+
+        if pos == end {
+            shortest_distance = shortest_distance.min(cost);
+            continue;
+        }
+
+        queue.extend(ALL_DIRECTIONS.iter().filter_map(|d| {
+            // We don't need to check if next_pos is on grid, as it's take care of by the None arm of following match.
+            let mut next_pos = maze.next_pos(pos, *d);
+            let mut next_cost = cost + 1;
+
+            match maze.values.get(next_pos) {
+                Some(Portal(name)) => {
+                    if let Some(other_portal_pos) = maze.get_other_portal_pos(name, next_pos) {
+                        // Teleporting!
+                        next_pos = other_portal_pos;
+                        // Teleporting costs a step.
+                        next_cost += 1;
+                    }
+                }
+                Some(OpenPassage) => {}
+                Some(Wall | Space) | None => return None,
+            }
+
+            if visited.contains(&next_pos) {
+                return None;
+            }
+            if let Some(prevcost) = distance.get(&next_pos) {
+                if *prevcost <= next_cost {
+                    return None;
+                }
+            }
+            distance.insert(next_pos, next_cost);
+            Some(Node {
+                pos: next_pos,
+                cost: next_cost,
+            })
+        }));
+    }
+    shortest_distance
+}
+
+fn aa_to_zz_path_length(maze: &Maze) -> usize {
+    let start = maze.get_portal_pos("AA");
+    let end = maze.get_portal_pos("ZZ");
+    find_shortest_path(maze, start, end)
 }
 
 fn part2(maze: &Maze) -> i64 {
@@ -141,7 +206,7 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let maze = Maze::build(&input);
-    maze.print();
+    // maze.print();
 
     println!("Part 1: {}", aa_to_zz_path_length(&maze));
     println!("Part 2: {}", part2(&maze));

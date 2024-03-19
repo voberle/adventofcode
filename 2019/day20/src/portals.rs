@@ -23,14 +23,6 @@ impl Grid {
         let cols = values.len() / rows;
         Self { values, rows, cols }
     }
-
-    fn col(&self, index: usize) -> usize {
-        index % self.cols
-    }
-
-    fn row(&self, index: usize) -> usize {
-        index / self.cols
-    }
 }
 
 fn is_portal(c: char) -> bool {
