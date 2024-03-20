@@ -19,3 +19,16 @@ I took the approach of building a logical expression in classical C format when 
 Converting that expression to springscript was hard as well, since my logical expression used parenthesis (or AND operator precedence over OR), but springscript doesn't have this.
 
 I wrote a test that checks all possible combinations of registers for both the springscript and the logical expression version, and that was very helpful in checking I that my springscript code did what it was supposed to.
+
+## Update
+
+On Reddit AoC there are lots of cool solutions to this one, including multiple smart ways of brute-forcing it, very impressive.
+
+Seems the shortest springscript that works is following, and it even doesn't use the T register:
+
+    NOT(H, J),
+    OR (C, J),
+    AND(B, J),
+    AND(A, J),
+    NOT(J, J),
+    AND(D, J),
