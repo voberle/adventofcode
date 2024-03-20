@@ -12,3 +12,10 @@ As I was experimenting more and adding a 4th instruction to see if I would get o
 
 ## Part 2
 
+Of course with part 2 I couldn't rely on luck anymore, and brute-forcing wasn't an option either.
+
+I took the approach of building a logical expression in classical C format when doing the analysis, improving it with each new pattern I found. It wasn't easy, but by [carefully writing each step](analysis.md), I got to the end of it.
+
+Converting that expression to springscript was hard as well, since my logical expression used parenthesis (or AND operator precedence over OR), but springscript doesn't have this.
+
+I wrote a test that checks all possible combinations of registers for both the springscript and the logical expression version, and that was very helpful in checking I that my springscript code did what it was supposed to.

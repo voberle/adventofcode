@@ -7,6 +7,7 @@ use std::{
 use intcode::IntcodeComputer;
 
 #[derive(Clone, Copy)]
+#[allow(dead_code)]
 enum Reg {
     T,
     J,
@@ -22,7 +23,7 @@ enum Reg {
 }
 
 impl Reg {
-    fn is_writable(&self) -> bool {
+    fn is_writable(self) -> bool {
         matches!(self, Reg::T | Reg::J)
     }
 
@@ -69,6 +70,7 @@ enum Instruction {
 }
 
 impl Instruction {
+    #[allow(dead_code)]
     fn exec(&self, reg: &mut [bool]) {
         match self {
             Instruction::And(x, y) => reg[y.index()] = reg[x.index()] && reg[y.index()],
@@ -191,8 +193,8 @@ fn survey_hull_part1(computer: &IntcodeComputer) -> i64 {
 }
 
 fn get_run_instructions() -> Vec<Instruction> {
-    use Reg::{A, B, C, D, E, F, G, H, I, J, T};
-    // Just jump above:
+    use Reg::{A, B, C, D, E, H, J, T};
+    // Supports jumping over following:
     // #####.###########
     // #####.#..########
     // #####...#########
@@ -203,19 +205,27 @@ fn get_run_instructions() -> Vec<Instruction> {
     // #####..###...####
     // #####.###..#.####
 
-    // (!b && !e && d) || (!a && d) || (!c && h && d)
+    // (!b && d && !e) || (!a && d) || (!b && c && d) || (!c && h && d)
     vec![
+        // !b && d && !e
         NOT(B, T), // T = NOT B
         NOT(E, J), // J = NOT E
         AND(T, J), // J = NOT B AND NOT E
         AND(D, J), // J = NOT B AND NOT E AND D
+        // !a && d
         NOT(A, T), // T = NOT A
         AND(D, T), // T = NOT A AND D
         OR(T, J),  // J = (NOT B AND NOT E AND D) OR (NOT A AND D)
+        // !b && c && d
+        NOT(B, T), // T = NOT B
+        AND(C, T), // T = NOT B AND C
+        AND(D, T), // T = NOT B AND C AND D
+        OR(T, J),  // J = (NOT B AND NOT E AND D) OR (NOT A AND D) OR (NOT B AND C AND D)
+        // !c && h && d
         NOT(C, T), // T = NOT C
-        AND(H, T), // T = NOT C AND H
-        AND(D, T), // T = NOT C AND H AND D
-        OR(T, J),  // J = (NOT B AND NOT E AND D) OR (NOT A AND D) OR (NOT C AND H AND D)
+        AND(D, T), // T = NOT C AND D
+        AND(H, T), // T = NOT C AND D AND H
+        OR(T, J), // J = (NOT B AND NOT E AND D) OR (NOT A AND D) OR (NOT B AND C AND D) OR (NOT C AND D AND H)
     ]
 }
 
@@ -244,54 +254,35 @@ mod tests {
         regs
     }
 
+    // Executes the given springscript for the set if position registers.
     fn exec_springscript(instructions: &[Instruction], regs: &[bool]) -> bool {
         let mut regs = regs.to_vec();
-        println!("Pos regs: {:?}", &regs[2..]);
+        // println!("Pos regs: {:?}", &regs[2..]);
         for ins in instructions {
             ins.exec(&mut regs);
-            println!(
-                "{}: J={} T={}",
-                ins,
-                regs[Reg::J.index()],
-                regs[Reg::T.index()]
-            );
+            // println!(
+            //     "{}: J={} T={}",
+            //     ins,
+            //     regs[Reg::J.index()],
+            //     regs[Reg::T.index()]
+            // );
         }
         regs[Reg::J.index()]
     }
 
+    // Executes the logical expression equivalent to the WALK springscript.
     fn exec_walk(r: &[bool]) -> bool {
         let (a, _b, c, d) = (r[2], r[3], r[4], r[5]);
         (!a || !c) && d
     }
 
+    // Executes the logical expression equivalent to the RUN springscript.
     fn exec_run(r: &[bool]) -> bool {
-        let (a, b, c, d, e, f, g, h, i) = (r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10]);
-        (!b && !e && d) || (!a && d) || (!c && h && d)
+        let (a, b, c, d, e, _f, _g, h, _i) = (r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10]);
+        (!b && d && !e) || (!a && d) || (!b && c && d) || (!c && d && h)
     }
 
-    #[test]
-    fn test_walk_instructions() {
-        let instructions = get_walk_instructions();
-        let exec = exec_springscript;
-        assert!(!exec(&instructions, &regs(&[false, false, false, false])));
-        assert!(exec(&instructions, &regs(&[false, false, false, true])));
-        assert!(!exec(&instructions, &regs(&[false, false, true, false])));
-        assert!(exec(&instructions, &regs(&[false, false, true, true])));
-        assert!(!exec(&instructions, &regs(&[false, true, false, false])));
-        assert!(exec(&instructions, &regs(&[false, true, false, true])));
-        assert!(!exec(&instructions, &regs(&[false, true, true, false])));
-        assert!(exec(&instructions, &regs(&[false, true, true, true])));
-
-        assert!(!exec(&instructions, &regs(&[true, false, false, false])));
-        assert!(exec(&instructions, &regs(&[true, false, false, true])));
-        assert!(!exec(&instructions, &regs(&[true, false, true, false])));
-        assert!(!exec(&instructions, &regs(&[true, false, true, true])));
-        assert!(!exec(&instructions, &regs(&[true, true, false, false])));
-        assert!(exec(&instructions, &regs(&[true, true, false, true])));
-        assert!(!exec(&instructions, &regs(&[true, true, true, false])));
-        assert!(!exec(&instructions, &regs(&[true, true, true, true])));
-    }
-
+    // Runs all the possible combinations of registers for both the springscript and the logical expression.
     fn verify_instructions(
         instructions: &[Instruction],
         sensor_view: usize,

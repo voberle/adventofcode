@@ -80,9 +80,67 @@ Removing the parenthesis on this one:
 ---
        XX    X
     #####..###...####
-        ABCDEFGHI
+
+This one passes.
 
 ---
-       X   X   X
+       ^   X   X   V
     #####.###..#.####
-        O   X     => Bad jump
+        ABCDEFGHI
+
+That last one required a dedicated extra condition:
+
+    !b && c && d
+
+## Part 2 verification
+
+So the expression we got:
+
+    (!b && d && !e) || (!a && d) || (!c && d && h) || (!b && c && d)
+
+Verifying it for each pattern:
+
+        ^   V
+    #####.###########
+         ABCDEFGHI      !a && d
+    
+      ^   X   V
+    #####.#..########
+       ABCDEFGHI        !c && d && h
+           ABCDEFGHI    !a && d
+    
+        ^   V
+    #####...#########   !a && d
+         ABCDEFGHI
+    
+        ^   X   X   V
+    #####...##.##.###
+         ABCDEFGHI      !a && d
+             ABCDEFGHI  !b && d && !e
+                 ABCDEFGHI  !a && d
+    
+        ^   V
+    #####..##########
+         ABCDEFGHI      !a && d
+    
+        ^   X   V
+    #####.#.#..######
+         ABCDEFGHI      !c && d && h
+             ABCDEFGHI  !a && d
+    
+      ^   X   X   V
+    #####.##..#.#####
+       ABCDEFGHI        !c && d && h
+           ABCDEFGHI    !c && d && h
+           ABCDEFGHI    !b && d && !e
+               ABCDEFGHI    !a && d
+    
+        ^   V^   V
+    #####..###...####
+         ABCDEFGHI      !a && d
+              ABCDEFGHI !a && d
+    
+       ^   X   X   V
+    #####.###..#.####
+        ABCDEFGHI       !b && c && d
+            ABCDEFGHI   !b && d && !e
