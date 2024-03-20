@@ -6,6 +6,7 @@ use std::{
 
 use intcode::IntcodeComputer;
 
+#[derive(Clone, Copy)]
 enum Reg {
     T,
     J,
@@ -13,11 +14,32 @@ enum Reg {
     B,
     C,
     D,
+    E,
+    F,
+    G,
+    H,
+    I,
 }
 
 impl Reg {
     fn is_writable(&self) -> bool {
         matches!(self, Reg::T | Reg::J)
+    }
+
+    fn index(self) -> usize {
+        match self {
+            Reg::T => 0,
+            Reg::J => 1,
+            Reg::A => 2,
+            Reg::B => 3,
+            Reg::C => 4,
+            Reg::D => 5,
+            Reg::E => 6,
+            Reg::F => 7,
+            Reg::G => 8,
+            Reg::H => 9,
+            Reg::I => 10,
+        }
     }
 }
 
@@ -30,6 +52,11 @@ impl fmt::Display for Reg {
             Reg::B => 'B',
             Reg::C => 'C',
             Reg::D => 'D',
+            Reg::E => 'E',
+            Reg::F => 'F',
+            Reg::G => 'G',
+            Reg::H => 'H',
+            Reg::I => 'I',
         };
         write!(f, "{}", c)
     }
@@ -39,6 +66,16 @@ enum Instruction {
     And(Reg, Reg),
     Or(Reg, Reg),
     Not(Reg, Reg),
+}
+
+impl Instruction {
+    fn exec(&self, reg: &mut [bool]) {
+        match self {
+            Instruction::And(x, y) => reg[y.index()] = reg[x.index()] && reg[y.index()],
+            Instruction::Or(x, y) => reg[y.index()] = reg[x.index()] || reg[y.index()],
+            Instruction::Not(x, y) => reg[y.index()] = !reg[x.index()],
+        }
+    }
 }
 
 fn AND(x: Reg, y: Reg) -> Instruction {
@@ -114,11 +151,11 @@ impl ComputerOutput {
     }
 }
 
-fn survey_hull(computer: &IntcodeComputer, instructions: &[Instruction]) -> i64 {
+fn survey_hull(computer: &IntcodeComputer, instructions: &[Instruction], run: bool) -> i64 {
     let mut computer = computer.clone();
     write_instruction(&mut computer, instructions);
 
-    write_string(&mut computer, "WALK");
+    write_string(&mut computer, if run { "RUN" } else { "WALK" });
 
     computer.exec();
 
@@ -127,24 +164,48 @@ fn survey_hull(computer: &IntcodeComputer, instructions: &[Instruction]) -> i64 
         ComputerOutput::LastMoments(_) => output.print(),
         ComputerOutput::HullDamage(damage) => return damage,
     }
-    0
+    panic!("Didn't make it across");
+}
+
+fn get_walk_instructions() -> Vec<Instruction> {
+    use Reg::{A, C, D, J, T};
+    // Supports jumping over following:
+    // #####.###########
+    // #####...#########
+    // #####.#..########
+    vec![
+        NOT(A, J), // 1-away is empty
+        NOT(C, T),
+        OR(T, J),  // or 3-away is empty
+        AND(D, J), // and 4-away is ground
+    ]
 }
 
 fn survey_hull_part1(computer: &IntcodeComputer) -> i64 {
-    use Reg::{A, B, C, D, J, T};
-    let instructions = vec![
+    let instructions = get_walk_instructions();
+    survey_hull(computer, &instructions, false)
+}
+
+fn get_run_instructions() -> Vec<Instruction> {
+    use Reg::{A, B, C, D, E, F, G, H, I, J, T};
+    // Just jump above:
+    // #####.###########
+    // #####.#..########
+    // #####...#########
+    // #####...##.##.###
+    // #####..##########
+    vec![
         NOT(A, J), // 1-away is empty
         NOT(C, T),
-        OR(T, J), // or 3-away is empty
+        OR(T, J),  // or 3-away is empty
         AND(D, J), // and 4-away is ground
-    ];
-    let damage = survey_hull(computer, &instructions);
-    assert!(damage > 0, "Didn't make it across");
-    damage
+        // TO BE COMPLETED
+    ]
 }
 
 fn survey_hull_part2(computer: &IntcodeComputer) -> i64 {
-    0
+    let instructions = get_run_instructions();
+    survey_hull(computer, &instructions, true)
 }
 
 fn main() {
@@ -154,4 +215,68 @@ fn main() {
 
     println!("Part 1: {}", survey_hull_part1(&computer));
     println!("Part 2: {}", survey_hull_part2(&computer));
+}
+
+#[cfg(test)]
+mod tests {
+    use itertools::Itertools;
+
+    use super::*;
+
+    fn run_springscript(instructions: &[Instruction], regs: &[bool]) -> bool {
+        let mut regs = regs.to_vec();
+        for ins in instructions {
+            ins.exec(&mut regs);
+        }
+        regs[Reg::J.index()]
+    }
+
+    fn run_converted(_instructions: &[Instruction], regs: &[bool]) -> bool {
+        let (a, _b, c, d) = (regs[2], regs[3], regs[4], regs[5]);
+        (!a || !c) && d
+    }
+
+    fn regs(pos_regs: &[bool]) -> Vec<bool> {
+        let mut regs = vec![false, false]; // J and T
+        regs.extend(pos_regs);
+        regs
+    }
+
+    #[test]
+    fn test_walk_instructions() {
+        let instructions = get_walk_instructions();
+        let exec = run_springscript;
+        assert!(!exec(&instructions, &regs(&[false, false, false, false])));
+        assert!(exec(&instructions, &regs(&[false, false, false, true])));
+        assert!(!exec(&instructions, &regs(&[false, false, true, false])));
+        assert!(exec(&instructions, &regs(&[false, false, true, true])));
+        assert!(!exec(&instructions, &regs(&[false, true, false, false])));
+        assert!(exec(&instructions, &regs(&[false, true, false, true])));
+        assert!(!exec(&instructions, &regs(&[false, true, true, false])));
+        assert!(exec(&instructions, &regs(&[false, true, true, true])));
+
+        assert!(!exec(&instructions, &regs(&[true, false, false, false])));
+        assert!(exec(&instructions, &regs(&[true, false, false, true])));
+        assert!(!exec(&instructions, &regs(&[true, false, true, false])));
+        assert!(!exec(&instructions, &regs(&[true, false, true, true])));
+        assert!(!exec(&instructions, &regs(&[true, true, false, false])));
+        assert!(exec(&instructions, &regs(&[true, true, false, true])));
+        assert!(!exec(&instructions, &regs(&[true, true, true, false])));
+        assert!(!exec(&instructions, &regs(&[true, true, true, true])));
+    }
+
+    #[test]
+    fn test_walk_instructions_automatic() {
+        let instructions = get_walk_instructions();
+
+        let combi: Vec<_> = itertools::repeat_n([false, true].iter(), 4)
+            .multi_cartesian_product()
+            .collect();
+        for p in combi {
+            let r: Vec<bool> = p.iter().cloned().cloned().collect(); // ugly..
+            let springscript_result = run_springscript(&instructions, &regs(&r));
+            let converted_result = run_converted(&instructions, &regs(&r));
+            assert_eq!(springscript_result, converted_result)
+        }
+    }
 }

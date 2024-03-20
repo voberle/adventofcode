@@ -10,3 +10,4 @@ workspace = true
 
 [dependencies]
 intcode = { path = "../intcode" }
+itertools = "0.12.1"

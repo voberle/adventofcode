@@ -263,6 +263,7 @@ name = "day21"
 version = "0.1.0"
 dependencies = [
  "intcode",
+ "itertools",
 ]
 
 [[package]]
