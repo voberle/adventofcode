@@ -81,3 +81,5 @@ Intcode.
 ### Day 20: [Donut Maze](day20/README.md) 🌟🌟
 
 Maze with teleportation. Dijkstra.
+
+### Day 21: [Springdroid Adventure](day21/README.md)
