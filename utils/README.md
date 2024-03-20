@@ -26,6 +26,10 @@ To get the whole standard input to a String:
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
 
+To print all output in tests:
+
+    cargo test -- --color always --nocapture
+
 ### Graphviz
 
 Generate a PDF:
