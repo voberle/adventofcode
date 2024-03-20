@@ -152,6 +152,8 @@ impl ComputerOutput {
 }
 
 fn survey_hull(computer: &IntcodeComputer, instructions: &[Instruction], run: bool) -> i64 {
+    assert!(instructions.len() <= 15, "Too many instructions, max is 15");
+
     let mut computer = computer.clone();
     write_instruction(&mut computer, instructions);
 
@@ -173,6 +175,8 @@ fn get_walk_instructions() -> Vec<Instruction> {
     // #####.###########
     // #####...#########
     // #####.#..########
+
+    // (!a || !c) && d
     vec![
         NOT(A, J), // 1-away is empty
         NOT(C, T),
@@ -194,12 +198,24 @@ fn get_run_instructions() -> Vec<Instruction> {
     // #####...#########
     // #####...##.##.###
     // #####..##########
+    // #####.#.#..######
+    // #####.##..#.#####
+    // #####..###...####
+    // #####.###..#.####
+
+    // (!b && !e && d) || (!a && d) || (!c && h && d)
     vec![
-        NOT(A, J), // 1-away is empty
-        NOT(C, T),
-        OR(T, J),  // or 3-away is empty
-        AND(D, J), // and 4-away is ground
-        // TO BE COMPLETED
+        NOT(B, T), // T = NOT B
+        NOT(E, J), // J = NOT E
+        AND(T, J), // J = NOT B AND NOT E
+        AND(D, J), // J = NOT B AND NOT E AND D
+        NOT(A, T), // T = NOT A
+        AND(D, T), // T = NOT A AND D
+        OR(T, J),  // J = (NOT B AND NOT E AND D) OR (NOT A AND D)
+        NOT(C, T), // T = NOT C
+        AND(H, T), // T = NOT C AND H
+        AND(D, T), // T = NOT C AND H AND D
+        OR(T, J),  // J = (NOT B AND NOT E AND D) OR (NOT A AND D) OR (NOT C AND H AND D)
     ]
 }
 
@@ -219,22 +235,8 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use itertools::Itertools;
-
     use super::*;
-
-    fn run_springscript(instructions: &[Instruction], regs: &[bool]) -> bool {
-        let mut regs = regs.to_vec();
-        for ins in instructions {
-            ins.exec(&mut regs);
-        }
-        regs[Reg::J.index()]
-    }
-
-    fn run_converted(_instructions: &[Instruction], regs: &[bool]) -> bool {
-        let (a, _b, c, d) = (regs[2], regs[3], regs[4], regs[5]);
-        (!a || !c) && d
-    }
+    use itertools::Itertools;
 
     fn regs(pos_regs: &[bool]) -> Vec<bool> {
         let mut regs = vec![false, false]; // J and T
@@ -242,10 +244,35 @@ mod tests {
         regs
     }
 
+    fn exec_springscript(instructions: &[Instruction], regs: &[bool]) -> bool {
+        let mut regs = regs.to_vec();
+        println!("Pos regs: {:?}", &regs[2..]);
+        for ins in instructions {
+            ins.exec(&mut regs);
+            println!(
+                "{}: J={} T={}",
+                ins,
+                regs[Reg::J.index()],
+                regs[Reg::T.index()]
+            );
+        }
+        regs[Reg::J.index()]
+    }
+
+    fn exec_walk(r: &[bool]) -> bool {
+        let (a, _b, c, d) = (r[2], r[3], r[4], r[5]);
+        (!a || !c) && d
+    }
+
+    fn exec_run(r: &[bool]) -> bool {
+        let (a, b, c, d, e, f, g, h, i) = (r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10]);
+        (!b && !e && d) || (!a && d) || (!c && h && d)
+    }
+
     #[test]
     fn test_walk_instructions() {
         let instructions = get_walk_instructions();
-        let exec = run_springscript;
+        let exec = exec_springscript;
         assert!(!exec(&instructions, &regs(&[false, false, false, false])));
         assert!(exec(&instructions, &regs(&[false, false, false, true])));
         assert!(!exec(&instructions, &regs(&[false, false, true, false])));
@@ -265,18 +292,31 @@ mod tests {
         assert!(!exec(&instructions, &regs(&[true, true, true, true])));
     }
 
-    #[test]
-    fn test_walk_instructions_automatic() {
-        let instructions = get_walk_instructions();
-
-        let combi: Vec<_> = itertools::repeat_n([false, true].iter(), 4)
+    fn verify_instructions(
+        instructions: &[Instruction],
+        sensor_view: usize,
+        exec_fn: fn(&[bool]) -> bool,
+    ) {
+        let combi: Vec<_> = itertools::repeat_n([false, true].iter(), sensor_view)
             .multi_cartesian_product()
             .collect();
         for p in combi {
             let r: Vec<bool> = p.iter().cloned().cloned().collect(); // ugly..
-            let springscript_result = run_springscript(&instructions, &regs(&r));
-            let converted_result = run_converted(&instructions, &regs(&r));
-            assert_eq!(springscript_result, converted_result)
+            let springscript_result = exec_springscript(&instructions, &regs(&r));
+            let converted_result = exec_fn(&regs(&r));
+            assert_eq!(springscript_result, converted_result, "Failed for {:?}", r);
         }
+    }
+
+    #[test]
+    fn test_walk() {
+        let instructions = get_walk_instructions();
+        verify_instructions(&instructions, 4, exec_walk);
+    }
+
+    #[test]
+    fn test_run() {
+        let instructions = get_run_instructions();
+        verify_instructions(&instructions, 9, exec_run);
     }
 }
