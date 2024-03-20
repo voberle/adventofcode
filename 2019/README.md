@@ -82,4 +82,6 @@ Intcode.
 
 Maze with teleportation. Dijkstra.
 
-### Day 21: [Springdroid Adventure](day21/README.md)
+### Day 21: [Springdroid Adventure](day21/README.md) 🌟
+
+Intcode. Springscript.

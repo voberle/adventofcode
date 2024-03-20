@@ -83,7 +83,7 @@ fn write_instruction(computer: &mut IntcodeComputer, instructions: &[Instruction
 
 enum ComputerOutput {
     LastMoments(Vec<char>),
-    HullDamage(usize),
+    HullDamage(i64),
 }
 
 impl ComputerOutput {
@@ -92,7 +92,7 @@ impl ComputerOutput {
         while let Some(i) = computer.io.get_output() {
             if i > 255 {
                 // Output is outside ASCII range, so it's hull damage
-                return Self::HullDamage(usize::try_from(i).unwrap());
+                return Self::HullDamage(i);
             }
             output.push(char::from_u32(u32::try_from(i).unwrap()).unwrap());
         }
@@ -114,37 +114,36 @@ impl ComputerOutput {
     }
 }
 
-fn survey_hull(computer: &IntcodeComputer) -> i64 {
-    use Reg::{A, B, C, D, J, T};
-
+fn survey_hull(computer: &IntcodeComputer, instructions: &[Instruction]) -> i64 {
     let mut computer = computer.clone();
-
-    // jump if the tile immediately in front of me is not ground
-    let instructions = vec![NOT(A, J)];
-
-    // jumps if a three-tile-wide hole (with ground on the other side of the hole) is detected
-    let _instructions = vec![
-        NOT(A, J),
-        NOT(B, T),
-        AND(T, J),
-        NOT(C, T),
-        AND(T, J),
-        AND(D, J),
-    ];
-
-    write_instruction(&mut computer, &instructions);
+    write_instruction(&mut computer, instructions);
 
     write_string(&mut computer, "WALK");
 
     computer.exec();
 
     let output = ComputerOutput::read(&mut computer);
-    output.print();
-
+    match output {
+        ComputerOutput::LastMoments(_) => output.print(),
+        ComputerOutput::HullDamage(damage) => return damage,
+    }
     0
 }
 
-fn part2(computer: &IntcodeComputer) -> i64 {
+fn survey_hull_part1(computer: &IntcodeComputer) -> i64 {
+    use Reg::{A, B, C, D, J, T};
+    let instructions = vec![
+        NOT(A, J), // 1-away is empty
+        NOT(C, T),
+        OR(T, J), // or 3-away is empty
+        AND(D, J), // and 4-away is ground
+    ];
+    let damage = survey_hull(computer, &instructions);
+    assert!(damage > 0, "Didn't make it across");
+    damage
+}
+
+fn survey_hull_part2(computer: &IntcodeComputer) -> i64 {
     0
 }
 
@@ -153,21 +152,6 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let computer = IntcodeComputer::build(&input);
 
-    println!("Part 1: {}", survey_hull(&computer));
-    println!("Part 2: {}", part2(&computer));
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_part1() {
-        // assert_eq!(part1(&build(INPUT_TEST)), 0);
-    }
-
-    #[test]
-    fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), 0);
-    }
+    println!("Part 1: {}", survey_hull_part1(&computer));
+    println!("Part 2: {}", survey_hull_part2(&computer));
 }
