@@ -167,7 +167,11 @@ impl PartialOrd for Node {
 
 // Dijkstra shortest path version of the solution.
 // It's not fast, takes 5+ minutes to get the answer, but gets it.
-fn shortest_path_dijkstra(map: &Map, entrance_position: usize, keys_positions: Vec<usize>) -> usize {
+fn shortest_path_dijkstra(
+    map: &Map,
+    entrance_position: usize,
+    keys_positions: Vec<usize>,
+) -> usize {
     let mut visited: FxHashSet<(usize, Vec<usize>)> = FxHashSet::default();
     let mut distance: FxHashMap<(usize, Vec<usize>), usize> = FxHashMap::default();
     let mut shortest_distance = usize::MAX;
@@ -264,16 +268,22 @@ fn shortest_path_4robots(map: &Map) -> usize {
     // that key will eventually become available without the robot having to move anywhere else.
     // So we can treat it the same as if the key was already available.
     // Or meaning we give each robot all of the keys from the other quadrants at the start.
-    entrance_positions.iter().enumerate().map(|(quadrant, entrance_pos)| {
-        // Only looking for the keys to find in this quadrant.
-        let keys_positions: Vec<usize> = map.get_keys_positions().iter()
-            .filter(|&&kp| map.is_in_quadrant(kp, *entrance_pos, quadrant))
-            .copied()
-            .collect();
-        // println!("Quadrant {}: Searching {} keys", quadrant, keys_positions.len());
+    entrance_positions
+        .iter()
+        .enumerate()
+        .map(|(quadrant, entrance_pos)| {
+            // Only looking for the keys to find in this quadrant.
+            let keys_positions: Vec<usize> = map
+                .get_keys_positions()
+                .iter()
+                .filter(|&&kp| map.is_in_quadrant(kp, *entrance_pos, quadrant))
+                .copied()
+                .collect();
+            // println!("Quadrant {}: Searching {} keys", quadrant, keys_positions.len());
 
-        shortest_path_dijkstra(map, *entrance_pos, keys_positions)
-    }).sum()
+            shortest_path_dijkstra(map, *entrance_pos, keys_positions)
+        })
+        .sum()
 }
 
 fn main() {

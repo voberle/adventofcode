@@ -191,7 +191,7 @@ impl Map {
             1 => row <= e_row && col >= e_col,
             2 => row >= e_row && col <= e_col,
             3 => row >= e_row && col >= e_col,
-            _ => panic!("Invalid quadrant {}", quadrant)
+            _ => panic!("Invalid quadrant {}", quadrant),
         }
     }
 }
