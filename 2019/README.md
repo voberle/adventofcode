@@ -86,6 +86,6 @@ Maze with teleportation. Dijkstra.
 
 Intcode. Springscript.
 
-### Day 22: [Slam Shuffle](day22/README.md) 🌟
+### Day 22: [Slam Shuffle](day22/README.md) 🌟🌟
 
-Card deck.
+Card deck. Linear functions.

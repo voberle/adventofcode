@@ -1,4 +1,4 @@
-///! Shuffle functions that manipulate the full deck.
+//! Shuffle functions that manipulate the full deck.
 
 use crate::Technique;
 

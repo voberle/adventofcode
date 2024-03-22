@@ -1,5 +1,5 @@
-///! Shuffle functions that track only one card.
-///! It's the position of the card that is tracked.
+//! Shuffle functions that track only one card.
+//! It's the position of the card that is tracked.
 
 use std::cmp::Ordering;
 
@@ -10,6 +10,7 @@ fn deal_new_stack(deck_size: usize, pos: usize) -> usize {
 }
 
 fn deal_new_stack_reversed(deck_size: usize, pos: usize) -> usize {
+    // Same as: (deck_size - 1 - pos) % deck_size
     deck_size - 1 - pos
 }
 
@@ -83,7 +84,7 @@ pub fn shuffle_reversed(techniques: &[Technique], deck_size: usize, pos: &mut us
 pub fn shuffle_position_of(techniques: &[Technique], card: u64) -> usize {
     const DECK_SIZE: usize = 10007;
     // In the initial deck, the cards are ordered, so the position is the same as card number.
-    let mut pos = card as usize;
+    let mut pos = usize::try_from(card).unwrap();
     shuffle(techniques, DECK_SIZE, &mut pos);
     pos
 }
