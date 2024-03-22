@@ -269,6 +269,9 @@ dependencies = [
 [[package]]
 name = "day22"
 version = "0.1.0"
+dependencies = [
+ "modinverse",
+]
 
 [[package]]
 name = "either"
@@ -376,6 +379,15 @@ dependencies = [
  "log",
  "wasi",
  "windows-sys",
+]
+
+[[package]]
+name = "modinverse"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f62f577f148cc1a9466e7065a22e59466a7d537cceba5e77e57181d0f706633"
+dependencies = [
+ "num-integer",
 ]
 
 [[package]]

@@ -1,5 +1,6 @@
 use std::io::{self, Read};
 
+mod card_only;
 mod full_deck;
 
 #[derive(Debug)]
@@ -27,11 +28,21 @@ fn build(input: &str) -> Vec<Technique> {
 }
 
 fn shuffle_position_of(techniques: &[Technique], card: u64) -> usize {
-    full_deck::shuffle_position_of(techniques, card)
+    // full_deck::shuffle_position_of(techniques, card)
+    card_only::shuffle_position_of(techniques, card)
 }
 
+// We want to know the card that is at a specific position at the end.
+// Could we start with the end, and follow what is at that position backwards?
 fn shuffle_number_of_card_at(techniques: &[Technique], position: usize) -> u64 {
-    0
+    const DECK_SIZE: usize = 119_315_717_514_047;
+    const SHUFFLE_COUNT: usize = 101_741_582_076_661;
+
+    let mut pos = position;
+    for _ in 0..SHUFFLE_COUNT {
+        // shuffle_reversed(techniques, DECK_SIZE, &mut pos);
+    }
+    pos as u64
 }
 
 fn main() {

@@ -1,3 +1,5 @@
+///! Shuffle functions that manipulate the full deck.
+
 use crate::Technique;
 
 type Deck = Vec<u64>;
@@ -44,6 +46,8 @@ fn create_deck(cards_count: usize) -> Deck {
     (0..cards_count).map(|v| v.try_into().unwrap()).collect()
 }
 
+// Part 1
+#[allow(dead_code)]
 pub fn shuffle_position_of(techniques: &[Technique], card: u64) -> usize {
     let mut deck = create_deck(10007);
     shuffle(techniques, &mut deck);
@@ -55,6 +59,7 @@ pub fn shuffle_position_of(techniques: &[Technique], card: u64) -> usize {
 #[cfg(test)]
 mod tests {
     use crate::build;
+    use crate::tests::*;
 
     use super::*;
 
@@ -87,21 +92,9 @@ mod tests {
 
     #[test]
     fn test_shuffle() {
-        assert_eq!(
-            shuffle_10(&build(crate::tests::INPUT_TEST_1)),
-            crate::tests::RESULT_1
-        );
-        assert_eq!(
-            shuffle_10(&build(crate::tests::INPUT_TEST_2)),
-            crate::tests::RESULT_2
-        );
-        assert_eq!(
-            shuffle_10(&build(crate::tests::INPUT_TEST_3)),
-            crate::tests::RESULT_3
-        );
-        assert_eq!(
-            shuffle_10(&build(crate::tests::INPUT_TEST_4)),
-            crate::tests::RESULT_4
-        );
+        assert_eq!(shuffle_10(&build(INPUT_TEST_1)), RESULT_1);
+        assert_eq!(shuffle_10(&build(INPUT_TEST_2)), RESULT_2);
+        assert_eq!(shuffle_10(&build(INPUT_TEST_3)), RESULT_3);
+        assert_eq!(shuffle_10(&build(INPUT_TEST_4)), RESULT_4);
     }
 }
