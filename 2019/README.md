@@ -89,3 +89,7 @@ Intcode. Springscript.
 ### Day 22: [Slam Shuffle](day22/README.md) 🌟🌟
 
 Card deck. Linear functions.
+
+### Day 23: [Category Six](day23/README.md) 🌟
+
+Intcode.
