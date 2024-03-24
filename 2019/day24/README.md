@@ -8,3 +8,6 @@ Only point worth noting is that we can use the diversity rating as hash for the 
 
 ## Part 2
 
+Part 2 was mostly about writing correctly the function that counts adjacent bugs in 3D.
+
+I use a VecDeque to hold the space, as this allows to add scans easily on both sides.

@@ -94,5 +94,6 @@ Card deck. Linear functions.
 
 Intcode.
 
-### Day 24: [Planet of Discord](day24/README.md) 🌟
+### Day 24: [Planet of Discord](day24/README.md) 🌟🌟
 
+3D grid/space modification.
