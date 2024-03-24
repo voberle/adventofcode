@@ -93,3 +93,6 @@ Card deck. Linear functions.
 ### Day 23: [Category Six](day23/README.md) 🌟🌟
 
 Intcode.
+
+### Day 24: [Planet of Discord](day24/README.md) 🌟
+
