@@ -90,6 +90,6 @@ Intcode. Springscript.
 
 Card deck. Linear functions.
 
-### Day 23: [Category Six](day23/README.md) 🌟
+### Day 23: [Category Six](day23/README.md) 🌟🌟
 
 Intcode.

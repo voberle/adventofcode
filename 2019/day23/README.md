@@ -6,3 +6,10 @@ The description makes you feel you should put each Intcode computer in its own t
 
 ## Part 2
 
+Part 2 wasn't hard, a simple extension of part 1.
+
+## Multi-threaded version?
+
+It would be a good exercise to convert this to using threads or even better futures. For part 1, it should be simple, but I'm not sure how easy part 2 would be.
+
+I'm also still wondering if my Intcode exec() function should return a status (say `Output(i64), WaitingForInput, Halted`) like many others have done, or not?
