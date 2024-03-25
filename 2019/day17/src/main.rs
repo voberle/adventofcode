@@ -3,23 +3,23 @@ use std::io::{self, Read};
 
 use intcode::IntcodeComputer;
 
-fn get_scaffolds_view(computer: &mut IntcodeComputer) -> Vec<char> {
-    computer.exec();
+    fn get_scaffolds_view(computer: &mut IntcodeComputer) -> Vec<char> {
+        computer.exec();
 
-    let mut scaffolds: Vec<char> = Vec::new();
-    while let Some(i) = computer.io.get_output() {
-        scaffolds.push(char::from_u32(u32::try_from(i).unwrap()).unwrap());
+        let mut scaffolds: Vec<char> = Vec::new();
+        while let Some(i) = computer.io.get_output() {
+            scaffolds.push(char::from_u32(u32::try_from(i).unwrap()).unwrap());
+        }
+
+        scaffolds
     }
 
-    scaffolds
-}
-
-#[allow(dead_code)]
-fn print_scaffolds_view(scaffolds: &[char]) {
-    for c in scaffolds {
-        print!("{}", c);
+    #[allow(dead_code)]
+    fn print_scaffolds_view(scaffolds: &[char]) {
+        for c in scaffolds {
+            print!("{}", c);
+        }
     }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Direction {

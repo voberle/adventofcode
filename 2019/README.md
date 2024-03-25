@@ -68,7 +68,7 @@ Iterator repeat, cycle, take.
 
 ### Day 17: [Set and Forget](day17/README.md) 🌟🌟
 
-Intcode. Path following.
+Intcode. ASCII-capable. Path following.
 
 ### Day 18: [Many-Worlds Interpretation](day18/README.md) 🌟🌟
 
@@ -84,7 +84,7 @@ Maze with teleportation. Dijkstra.
 
 ### Day 21: [Springdroid Adventure](day21/README.md) 🌟🌟
 
-Intcode. Springscript.
+Intcode. ASCII-capable. Springscript.
 
 ### Day 22: [Slam Shuffle](day22/README.md) 🌟🌟
 
@@ -97,3 +97,7 @@ Intcode.
 ### Day 24: [Planet of Discord](day24/README.md) 🌟🌟
 
 3D grid/space modification.
+
+### Day 25: [Cryostasis](day25/README.md)
+
+Intcode. ASCII-capable.
