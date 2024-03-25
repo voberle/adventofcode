@@ -5,15 +5,6 @@ use std::{
 
 use fxhash::FxHashSet;
 
-#[derive(Clone, Copy)]
-enum Direction {
-    North,
-    East,
-    South,
-    West,
-}
-use Direction::{East, North, South, West};
-
 #[derive(Debug, Clone)]
 struct Scan {
     values: Vec<bool>,
@@ -67,44 +58,43 @@ impl Scan {
         self.values.iter().filter(|b| **b).count()
     }
 
-    fn is_bug_in_dir(&self, pos: usize, direction: Direction) -> bool {
-        match direction {
-            North => {
-                if pos < self.cols {
-                    false
-                } else {
-                    self.is_bug(pos - self.cols)
-                }
-            }
-            East => {
-                if pos % self.cols == self.cols - 1 {
-                    false
-                } else {
-                    self.is_bug(pos + 1)
-                }
-            }
-            South => {
-                if pos / self.cols == self.rows - 1 {
-                    false
-                } else {
-                    self.is_bug(pos + self.cols)
-                }
-            }
-            West => {
-                if pos % self.cols == 0 {
-                    false
-                } else {
-                    self.is_bug(pos - 1)
-                }
-            }
+    fn is_bug_in_north(&self, pos: usize) -> bool {
+        if pos < self.cols {
+            false
+        } else {
+            self.is_bug(pos - self.cols)
+        }
+    }
+
+    fn is_bug_in_east(&self, pos: usize) -> bool {
+        if pos % self.cols == self.cols - 1 {
+            false
+        } else {
+            self.is_bug(pos + 1)
+        }
+    }
+
+    fn is_bug_in_south(&self, pos: usize) -> bool {
+        if pos / self.cols == self.rows - 1 {
+            false
+        } else {
+            self.is_bug(pos + self.cols)
+        }
+    }
+
+    fn is_bug_in_west(&self, pos: usize) -> bool {
+        if pos % self.cols == 0 {
+            false
+        } else {
+            self.is_bug(pos - 1)
         }
     }
 
     fn get_adjacent_bugs_count(&self, pos: usize) -> usize {
-        [North, East, South, West]
-            .iter()
-            .filter(|dir| self.is_bug_in_dir(pos, **dir))
-            .count()
+        usize::from(self.is_bug_in_north(pos))
+            + usize::from(self.is_bug_in_east(pos))
+            + usize::from(self.is_bug_in_south(pos))
+            + usize::from(self.is_bug_in_west(pos))
     }
 
     fn get_bio_diversity_rating(&self) -> u64 {
