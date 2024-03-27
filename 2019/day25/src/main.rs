@@ -188,11 +188,25 @@ fn print(map: &FxHashMap<Pos, String>) {
     print_with_positions(map, &[]);
 }
 
+fn build_saved_commands(saved_cmds: &str) -> Vec<String> {
+    let mut replay_cmds: Vec<String> = saved_cmds
+        .lines()
+        .filter_map(|s| {
+            if s.starts_with('#') {
+                None
+            } else {
+                Some(s.to_string())
+            }
+        })
+        .collect();
+    replay_cmds.reverse();
+    replay_cmds
+}
+
 fn play(computer: &IntcodeComputer, saved_cmds: &str) {
     let mut computer = computer.clone();
 
-    let mut replay_cmds: Vec<String> = saved_cmds.lines().map(ToString::to_string).collect();
-    replay_cmds.reverse();
+    let mut replay_cmds = build_saved_commands(saved_cmds);
 
     let mut map: FxHashMap<Pos, String> = FxHashMap::default();
     let mut pos = Pos::zero();

@@ -12,5 +12,30 @@ take dark matter
 south
 south
 east
-drop dark matter
 west
+north
+east
+east
+north
+# Observatory
+take sand
+east
+west
+west
+take coin
+north
+take jam
+south
+west
+# Gift Wrapping Center
+south
+take wreath
+west
+take fuel cell
+east
+north
+north
+# Engineering
+west
+# At this stage we have collected all objects
+#south
