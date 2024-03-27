@@ -2,6 +2,7 @@ use std::io::{self, BufRead, Read};
 
 use fxhash::FxHashMap;
 use intcode::IntcodeComputer;
+use itertools::Itertools;
 
 fn read_line() -> String {
     let mut line = String::new();
@@ -223,10 +224,10 @@ fn play(computer: &IntcodeComputer, saved_cmds: &str) {
         let output = Output::parse(&s);
         // println!("{:?}", output);
 
-        if let Some(room) = output.room {
-            map.insert(pos, room);
-            print_with_positions(&map, &[pos]);
-        }
+        // if let Some(room) = output.room {
+        //     map.insert(pos, room);
+        //     print_with_positions(&map, &[pos]);
+        // }
 
         // for item in output.items {
         //     write_string(&mut computer, &format!("take {}", item));
@@ -237,6 +238,9 @@ fn play(computer: &IntcodeComputer, saved_cmds: &str) {
             println!("{}", cmd);
             cmd
         } else {
+            try_all_combinations(&mut computer);
+            break;
+
             read_line()
         };
 
@@ -245,6 +249,66 @@ fn play(computer: &IntcodeComputer, saved_cmds: &str) {
         }
 
         write_string(&mut computer, &input);
+    }
+}
+
+fn generate_all_combinations() -> Vec<Vec<String>> {
+    let items = vec![
+        "jam",
+        "coin",
+        "fuel cell",
+        "planetoid",
+        "sand",
+        "spool of cat6",
+        "dark matter",
+        "wreath",
+    ];
+    let mut all_combinations: Vec<Vec<String>> = Vec::new();
+    for n in 1..=items.len() {
+        let n_combi = items.iter().combinations(n).map(|v| v.iter().map(|e| e.to_string()).collect::<Vec<String>>());
+        all_combinations.extend(n_combi);
+    }
+    all_combinations
+}
+
+fn try_all_combinations(computer: &mut IntcodeComputer) {
+    let all_combinations = generate_all_combinations();
+    // println!("all {}", all_combinations.len());
+    // return;
+
+    let mut last_combi: Vec<String> = Vec::new();
+    for (attempt_nb, next_combi) in all_combinations.iter().enumerate() {
+        println!("ATTEMPT {}", attempt_nb);
+
+        computer.exec();
+        let s = get_output(computer);
+        println!("{}", s);
+
+        if computer.is_halted() {
+            println!("Game over");
+            break;
+        }
+
+        let output = Output::parse(&s);
+        if let Some(room) = output.room {
+            if room != "Security Checkpoint" {
+                println!("FOUND IT");
+                break;
+            }
+        }
+
+        for i in last_combi {
+            write_string(computer, &format!("drop {}", i));
+            computer.exec();
+            let _ = get_output(computer);
+        }
+        last_combi = next_combi.to_vec();
+        for i in &last_combi {
+            write_string(computer, &format!("take {}", i));
+            computer.exec();
+            let _ = get_output(computer);
+        }
+        write_string(computer, "south");
     }
 }
 

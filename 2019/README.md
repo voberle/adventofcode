@@ -98,6 +98,6 @@ Intcode.
 
 3D grid/space modification.
 
-### Day 25: [Cryostasis](day25/README.md)
+### Day 25: [Cryostasis](day25/README.md) 🌟🌟
 
-Intcode. ASCII-capable.
+Intcode. ASCII-capable. Small game.
