@@ -293,7 +293,6 @@ dependencies = [
 name = "day25"
 version = "0.1.0"
 dependencies = [
- "fxhash",
  "intcode",
  "itertools",
 ]

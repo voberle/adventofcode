@@ -9,6 +9,5 @@ description.workspace = true
 workspace = true
 
 [dependencies]
-fxhash = "0.2.1"
 intcode = { path = "../intcode" }
 itertools = "0.12.1"
