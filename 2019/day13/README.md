@@ -2,7 +2,7 @@
 
 ## Part 1
 
-The description of this day looks so excting, a game!
+The description of this day looks so exciting, a game!
 
 ## Part 2
 

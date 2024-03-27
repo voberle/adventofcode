@@ -1,5 +1,25 @@
 # Advent of Code 2019
 
+## Wrapup
+
+This was my 6th AoC, after 2023 and 2015 to 2018.
+
+It was of course the famous Intcode year, with many days using the Intcode interpreter to provide for more fun challenges. This is a very smart trick, since the input is then a program instead of just a static piece of data.
+
+There were quite a few hard ones after the first 10 days. Some of the more interesting stuff:
+
+- My Intcode implementation isn't very sophisticated, but it's simple and clean I feel, and it runs very fast.
+- Day 10 felt complicated but got it on first attempt.
+- Day 12 was tricky.
+- The breakout game in day 13 was super cool.
+- Day 14 was complicated as well, as my first attempt with recursion didn't scale. Sleeping over it got me the right approach.
+- Day 16 was again complicated, but I was quite proud I ended up seeing enough optimizations to make it work.
+- Day 17 was original and fun. The Intcode mechanism enables interesting stuff.
+- Day 18 was hard, as my first attempt was just too slow. I had to refactor a good chunk at the end, and it was lots of code.
+- Day 21 was the springscript one, difficult but fun, proud to have solved it at the end.
+- The card shuffling in day 22 was very hard, and I needed some hints to finish it.
+- And day 25 to finish was a very nice way to conclude with Intcode puzzles.
+
 ## Days
 
 ### Day 1: [The Tyranny of the Rocket Equation](day01/README.md) 🌟🌟
