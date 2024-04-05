@@ -1,10 +1,7 @@
 //! The Intcode computer.
 //!
 use itertools::Itertools;
-use std::{
-    collections::VecDeque,
-    io::{self, IsTerminal, Read},
-};
+use std::{collections::VecDeque, io::Read};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Param {
@@ -383,30 +380,21 @@ impl IntcodeComputer {
 }
 
 /// Stdin/stdout based implementation of Bus trait.
-pub struct ASCIIInputOutput {
-    input: VecDeque<i64>,
-}
+pub struct ASCIIInputOutput {}
 
 impl ASCIIInputOutput {
     fn new() -> Self {
-        // Reads all stdin if there is any.
-        let mut input = String::new();
-        if !io::stdin().is_terminal() {
-            io::stdin().read_to_string(&mut input).unwrap();
-        }
-
-        Self {
-            input: input.chars().map(|c| c as i64).collect(),
-        }
+        Self {}
     }
 }
 
 impl Bus for ASCIIInputOutput {
     fn read(&mut self) -> Option<i64> {
-        if self.input.is_empty() {
-            std::process::exit(1);
-        }
-        self.input.pop_front()
+        std::io::stdin()
+            .bytes()
+            .next()
+            .and_then(std::result::Result::ok)
+            .map(i64::from)
     }
 
     fn write(&mut self, v: i64) {

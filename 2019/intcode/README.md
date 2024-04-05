@@ -12,11 +12,17 @@ For example:
 
 ## ASCII interface
 
-To use the Aft Scaffolding Control and Information Interface (ASCII), for example to run the [Intcode assembler](https://github.com/matushorvath/xzintbit?tab=readme-ov-file):
+To use the Aft Scaffolding Control and Information Interface (ASCII), there is the ascii binary.
 
-    cargo r --bin ascii --release -- as.input < hello-world.s > hello-world.o
-    echo .$ | cat hello-world.o - | cargo r --bin ascii --release -- ld.input > hello-world.input
-    cargo r --bin ascii --release -- hello-world.input
+For example to run the [Intcode assembler](https://github.com/matushorvath/xzintbit?tab=readme-ov-file):
+
+    cargo r --bin ascii --release -- xzintbit/as.input < xzintbit/hello-world.s > xzintbit/hello-world.o
+    echo .$ | cat xzintbit/hello-world.o - | cargo r --bin ascii --release -- xzintbit/ld.input > xzintbit/hello-world.input
+    cargo r --bin ascii --release -- xzintbit/hello-world.input
+
+Or the day 25 game:
+
+    cargo r --bin ascii --release -- ../day25/resources/input
 
 ## Testing
 
