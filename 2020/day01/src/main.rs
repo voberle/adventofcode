@@ -9,8 +9,12 @@ fn build(input: &str) -> Vec<u32> {
 fn sum_2020_product_2_entries(expense_report: &[u32]) -> u32 {
     for a in expense_report {
         for b in expense_report {
-            if a + b == 2020 {
+            let s = a + b;
+            if s == 2020 {
                 return a * b;
+            }
+            if s > 2020 {
+                break;
             }
         }
     }
@@ -21,8 +25,12 @@ fn sum_2020_product_3_entries(expense_report: &[u32]) -> u32 {
     for a in expense_report {
         for b in expense_report {
             for c in expense_report {
-                if a + b + c == 2020 {
+                let s = a + b + c;
+                if s == 2020 {
                     return a * b * c;
+                }
+                if s > 2020 {
+                    break;
                 }
             }
         }
@@ -44,11 +52,15 @@ fn sums(expense_report: &[u32], combi_len: usize) -> u32 {
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let expense_report = build(&input);
+    let mut expense_report = build(&input);
+
+    // Using a sorted array allows to interupt the loop and speed things up.
+    expense_report.sort_unstable();
 
     println!("Part 1: {}", sum_2020_product_2_entries(&expense_report));
     println!("Part 2: {}", sum_2020_product_3_entries(&expense_report));
 
+    // Itertools with combinations version. Much slower than naive version.
     // println!("Part 1: {}", sums(&expense_report, 2));
     // println!("Part 2: {}", sums(&expense_report, 3));
 }
