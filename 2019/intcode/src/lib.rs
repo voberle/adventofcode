@@ -1,7 +1,10 @@
 //! The Intcode computer.
 //!
 use itertools::Itertools;
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    io::{self, IsTerminal, Read},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Param {
@@ -385,7 +388,13 @@ pub struct ASCIIInputOutput {
 }
 
 impl ASCIIInputOutput {
-    fn new(input: &str) -> Self {
+    fn new() -> Self {
+        // Reads all stdin if there is any.
+        let mut input = String::new();
+        if !io::stdin().is_terminal() {
+            io::stdin().read_to_string(&mut input).unwrap();
+        }
+
         Self {
             input: input.chars().map(|c| c as i64).collect(),
         }
@@ -420,10 +429,11 @@ impl ASCIIIntcodeComputer {
     ///
     /// Will panic if input is invalid.
     #[must_use]
-    pub fn build(code: &str, input: &str) -> Self {
+    pub fn build(code: &str) -> Self {
         Self {
-            base: IntcodeBase::build(code),
-            io: ASCIIInputOutput::new(input),
+            // Trim to avoid trouble with extra new line at the end.
+            base: IntcodeBase::build(code.trim()),
+            io: ASCIIInputOutput::new(),
         }
     }
 
