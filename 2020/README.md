@@ -9,3 +9,7 @@ Warm-up.
 ### Day 2: [Password Philosophy](day02/README.md) 🌟🌟
 
 Simple.
+
+### Day 3: [Toboggan Trajectory](day03/README.md) 🌟
+
+Infinite grid.
