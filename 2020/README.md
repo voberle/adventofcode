@@ -6,6 +6,6 @@
 
 Warm-up.
 
-### Day 2: [Password Philosophy](day02/README.md) 🌟
+### Day 2: [Password Philosophy](day02/README.md) 🌟🌟
 
 Simple.

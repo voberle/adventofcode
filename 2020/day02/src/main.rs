@@ -4,9 +4,22 @@ use regex::Regex;
 
 #[derive(Debug)]
 struct Policy {
-    min: usize,
-    max: usize,
+    number1: usize,
+    number2: usize,
     letter: char,
+}
+
+impl Policy {
+    fn check_policy1(&self, password: &str) -> bool {
+        let count = password.chars().filter(|c| *c == self.letter).count();
+        self.number1 <= count && count <= self.number2
+    }
+
+    fn check_policy2(&self, password: &str) -> bool {
+        let letter1 = password.chars().nth(self.number1 - 1).unwrap();
+        let letter2 = password.chars().nth(self.number2 - 1).unwrap();
+        (self.letter == letter1) != (self.letter == letter2)
+    }
 }
 
 fn build(input: &str) -> Vec<(Policy, String)> {
@@ -17,8 +30,8 @@ fn build(input: &str) -> Vec<(Policy, String)> {
             let parts = re.captures(line).unwrap();
             (
                 Policy {
-                    min: parts[1].parse().unwrap(),
-                    max: parts[2].parse().unwrap(),
+                    number1: parts[1].parse().unwrap(),
+                    number2: parts[2].parse().unwrap(),
                     letter: parts[3].chars().next().unwrap(),
                 },
                 parts[4].to_string(),
@@ -27,17 +40,10 @@ fn build(input: &str) -> Vec<(Policy, String)> {
         .collect()
 }
 
-fn valid_passwords_count(list: &[(Policy, String)]) -> usize {
+fn valid_password_count(list: &[(Policy, String)], policy_fn: fn(&Policy, &str) -> bool) -> usize {
     list.iter()
-        .filter(|(policy, password)| {
-            let count = password.chars().filter(|c| *c == policy.letter).count();
-            policy.min <= count && count <= policy.max
-        })
+        .filter(|(policy, password)| policy_fn(policy, password))
         .count()
-}
-
-fn part2(list: &[(Policy, String)]) -> i64 {
-    0
 }
 
 fn main() {
@@ -45,8 +51,14 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let list = build(&input);
 
-    println!("Part 1: {}", valid_passwords_count(&list));
-    println!("Part 2: {}", part2(&list));
+    println!(
+        "Part 1: {}",
+        valid_password_count(&list, Policy::check_policy1)
+    );
+    println!(
+        "Part 2: {}",
+        valid_password_count(&list, Policy::check_policy2)
+    );
 }
 
 #[cfg(test)]
@@ -57,11 +69,17 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(valid_passwords_count(&build(INPUT_TEST)), 2);
+        assert_eq!(
+            valid_password_count(&build(INPUT_TEST), Policy::check_policy1),
+            2
+        );
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(
+            valid_password_count(&build(INPUT_TEST), Policy::check_policy2),
+            1
+        );
     }
 }
