@@ -27,24 +27,31 @@ impl Grid {
     }
 }
 
-fn tree_count(grid: &Grid) -> usize {
+fn tree_count(grid: &Grid, right: usize, down: usize) -> usize {
     let mut row: usize = 0;
     let mut col: usize = 0;
     let mut trees = 0;
-    
+
     while row < grid.rows {
         if grid.is_tree(row, col) {
             trees += 1;
         }
         // Moving
-        col = (col + 3).rem_euclid(grid.cols);
-        row += 1;
+        col = (col + right).rem_euclid(grid.cols);
+        row += down;
     }
     trees
 }
 
-fn part2(grid: &Grid) -> i64 {
-    0
+fn tree_count_simple(grid: &Grid) -> usize {
+    tree_count(grid, 3, 1)
+}
+
+fn tree_count_complex(grid: &Grid) -> usize {
+    [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)]
+        .iter()
+        .map(|(right, down)| tree_count(grid, *right, *down))
+        .product()
 }
 
 fn main() {
@@ -52,8 +59,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let map = Grid::build(&input);
 
-    println!("Part 1: {}", tree_count(&map));
-    println!("Part 2: {}", part2(&map));
+    println!("Part 1: {}", tree_count_simple(&map));
+    println!("Part 2: {}", tree_count_complex(&map));
 }
 
 #[cfg(test)]
@@ -64,11 +71,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(tree_count(&Grid::build(INPUT_TEST)), 7);
+        assert_eq!(tree_count_simple(&Grid::build(INPUT_TEST)), 7);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        assert_eq!(tree_count_complex(&Grid::build(INPUT_TEST)), 336);
     }
 }

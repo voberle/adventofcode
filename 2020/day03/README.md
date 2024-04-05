@@ -6,3 +6,4 @@ Nothing complicated here, reusing my Grid code, and the infinite aspect is easy 
 
 ## Part 2
 
+Simple extension of part 1.
