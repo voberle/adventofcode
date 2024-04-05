@@ -7,3 +7,7 @@ Trivial.
 ## Part 2
 
 Idem.
+
+## Update
+
+I added a version that uses itertools `combinations` and same code for part 1 and 2. It looks better, but it's 8 times slower than the dumb for loop version.
