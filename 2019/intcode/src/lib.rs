@@ -268,7 +268,7 @@ impl IntcodeBase {
     }
 }
 
-/// Simple vector based implementation if Bus trait.
+/// Simple vector based implementation of Bus trait.
 #[derive(Debug, Clone)]
 pub struct InputOutput {
     input: VecDeque<i64>,
@@ -376,5 +376,62 @@ impl IntcodeComputer {
 
     pub fn write_mem(&mut self, addr: usize, val: i64) {
         self.base.write_mem(addr, val);
+    }
+}
+
+/// Stdin/stdout based implementation of Bus trait.
+pub struct ASCIIInputOutput {
+    input: VecDeque<i64>,
+}
+
+impl ASCIIInputOutput {
+    fn new(input: &str) -> Self {
+        Self {
+            input: input.chars().map(|c| c as i64).collect(),
+        }
+    }
+}
+
+impl Bus for ASCIIInputOutput {
+    fn read(&mut self) -> Option<i64> {
+        if self.input.is_empty() {
+            std::process::exit(1);
+        }
+        self.input.pop_front()
+    }
+
+    fn write(&mut self, v: i64) {
+        // Convert the value to ASCII.
+        let c = char::from_u32(u32::try_from(v).unwrap()).unwrap();
+        print!("{}", c);
+    }
+}
+
+/// ASCII Intcode computer.
+pub struct ASCIIIntcodeComputer {
+    base: IntcodeBase,
+    io: ASCIIInputOutput,
+}
+
+impl ASCIIIntcodeComputer {
+    /// Builds a Intcode computer from a list of integers separated by commas.
+    ///
+    /// # Panics
+    ///
+    /// Will panic if input is invalid.
+    #[must_use]
+    pub fn build(code: &str, input: &str) -> Self {
+        Self {
+            base: IntcodeBase::build(code),
+            io: ASCIIInputOutput::new(input),
+        }
+    }
+
+    /// Executes the instructions.
+    ///
+    /// This function returns when reaching the end of the program (a Halt instruction).
+    /// It quits if if trying to get some input, but the `input` vector is empty.
+    pub fn exec(&mut self) {
+        self.base.exec(&mut self.io);
     }
 }
