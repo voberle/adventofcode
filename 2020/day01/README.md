@@ -2,6 +2,8 @@
 
 ## Part 1
 
+Trivial.
 
 ## Part 2
 
+Idem.

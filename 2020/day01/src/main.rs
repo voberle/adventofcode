@@ -4,7 +4,7 @@ fn build(input: &str) -> Vec<u32> {
     input.lines().map(|line| line.parse().unwrap()).collect()
 }
 
-fn sum_2020_product(expense_report: &[u32]) -> u32 {
+fn sum_2020_product_2_entries(expense_report: &[u32]) -> u32 {
     for a in expense_report {
         for b in expense_report {
             if a + b == 2020 {
@@ -15,8 +15,17 @@ fn sum_2020_product(expense_report: &[u32]) -> u32 {
     panic!("No answer");
 }
 
-fn part2(expense_report: &[u32]) -> u32 {
-    0
+fn sum_2020_product_3_entries(expense_report: &[u32]) -> u32 {
+    for a in expense_report {
+        for b in expense_report {
+            for c in expense_report {
+                if a + b + c == 2020 {
+                    return a * b * c;
+                }
+            }
+        }
+    }
+    panic!("No answer");
 }
 
 fn main() {
@@ -24,8 +33,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let input_parsed = build(&input);
 
-    println!("Part 1: {}", sum_2020_product(&input_parsed));
-    println!("Part 2: {}", part2(&input_parsed));
+    println!("Part 1: {}", sum_2020_product_2_entries(&input_parsed));
+    println!("Part 2: {}", sum_2020_product_3_entries(&input_parsed));
 }
 
 #[cfg(test)]
@@ -36,11 +45,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(sum_2020_product(&build(INPUT_TEST)), 514579);
+        assert_eq!(sum_2020_product_2_entries(&build(INPUT_TEST)), 514579);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(sum_2020_product_3_entries(&build(INPUT_TEST)), 241861950);
     }
 }
