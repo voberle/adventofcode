@@ -51,6 +51,7 @@ version = "0.1.0"
 name = "day06"
 version = "0.1.0"
 dependencies = [
+ "fxhash",
  "itertools",
 ]
 

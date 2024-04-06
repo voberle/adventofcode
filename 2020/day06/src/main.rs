@@ -1,5 +1,6 @@
 use std::io::{self, Read};
 
+use fxhash::FxHashSet;
 use itertools::Itertools;
 
 type Group = Vec<Vec<char>>;
@@ -16,15 +17,25 @@ fn build(input: &str) -> Vec<Group> {
     groups
 }
 
-fn sum_of_counts(groups: &[Group]) -> usize {
+fn sum_of_counts_anyone(groups: &[Group]) -> usize {
     groups
         .iter()
         .map(|g| g.iter().flatten().sorted_unstable().dedup().count())
         .sum()
 }
 
-fn part2(groups: &[Group]) -> usize {
-    0
+fn sum_of_counts_everyone(groups: &[Group]) -> usize {
+    groups
+        .iter()
+        .map(|g| {
+            let mut set: FxHashSet<char> = g[0].iter().copied().collect();
+            for p in g {
+                let other_set: FxHashSet<char> = p.iter().copied().collect();
+                set = set.intersection(&other_set).copied().collect();
+            }
+            set.len()
+        })
+        .sum()
 }
 
 fn main() {
@@ -32,8 +43,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let groups = build(&input);
 
-    println!("Part 1: {}", sum_of_counts(&groups));
-    println!("Part 2: {}", part2(&groups));
+    println!("Part 1: {}", sum_of_counts_anyone(&groups));
+    println!("Part 2: {}", sum_of_counts_everyone(&groups));
 }
 
 #[cfg(test)]
@@ -44,11 +55,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(sum_of_counts(&build(INPUT_TEST)), 11);
+        assert_eq!(sum_of_counts_anyone(&build(INPUT_TEST)), 11);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(sum_of_counts_everyone(&build(INPUT_TEST)), 6);
     }
 }

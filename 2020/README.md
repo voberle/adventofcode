@@ -22,6 +22,6 @@ Field validation.
 
 Binary space partitioning.
 
-### Day 6: [Custom Customs](day06/README.md) 🌟
+### Day 6: [Custom Customs](day06/README.md) 🌟🌟
 
 Iterators.
