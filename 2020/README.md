@@ -21,3 +21,7 @@ Field validation.
 ### Day 5: [Binary Boarding](day05/README.md) 🌟🌟
 
 Binary space partitioning.
+
+### Day 6: [Custom Customs](day06/README.md) 🌟
+
+Iterators.
