@@ -14,6 +14,6 @@ Simple.
 
 Infinite grid.
 
-### Day 4: [Passport Processing](day04/README.md) 🌟
+### Day 4: [Passport Processing](day04/README.md) 🌟🌟
 
 Field validation.

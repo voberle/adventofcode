@@ -6,3 +6,4 @@ Nothing particular, main thing to be careful is parsing the data so that it hand
 
 ## Part 2
 
+Main question here was how to write the validation methods in the nicest way. I didn't use regex and tried to keep them as simple as possible.
