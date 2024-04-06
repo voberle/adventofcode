@@ -28,12 +28,10 @@ fn sum_of_counts_everyone(groups: &[Group]) -> usize {
     groups
         .iter()
         .map(|g| {
-            let mut set: FxHashSet<char> = g[0].iter().copied().collect();
-            for p in g {
-                let other_set: FxHashSet<char> = p.iter().copied().collect();
-                set = set.intersection(&other_set).copied().collect();
-            }
-            set.len()
+            let set: FxHashSet<char> = g[0].iter().copied().collect();
+            set.iter()
+                .filter(|k| g[1..].iter().all(|s| s.contains(k)))
+                .count()
         })
         .sum()
 }
