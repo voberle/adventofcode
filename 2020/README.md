@@ -18,6 +18,6 @@ Infinite grid.
 
 Field validation.
 
-### Day 5: [Binary Boarding](day05/README.md) 🌟
+### Day 5: [Binary Boarding](day05/README.md) 🌟🌟
 
 Binary space partitioning.

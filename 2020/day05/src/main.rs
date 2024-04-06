@@ -1,5 +1,9 @@
 use std::io::{self, Read};
 
+fn calc_seat_id(row: usize, col: usize) -> usize {
+    row * 8 + col
+}
+
 enum Dir {
     Front,
     Back,
@@ -30,7 +34,7 @@ impl BoardingPass {
         }
     }
 
-    fn partition(dirs: &[Dir], mut low: u32, mut high: u32) -> u32 {
+    fn partition(dirs: &[Dir], mut low: usize, mut high: usize) -> usize {
         for d in dirs {
             let mid = (high - low) / 2 + 1;
             match d {
@@ -43,16 +47,16 @@ impl BoardingPass {
         low
     }
 
-    fn seat(&self) -> (u32, u32) {
+    fn seat(&self) -> (usize, usize) {
         (
             Self::partition(&self.dirs[0..7], 0, 127),
             Self::partition(&self.dirs[7..10], 0, 7),
         )
     }
 
-    fn seat_id(&self) -> u32 {
+    fn seat_id(&self) -> usize {
         let (row, col) = self.seat();
-        row * 8 + col
+        calc_seat_id(row, col)
     }
 }
 
@@ -60,7 +64,7 @@ fn build(input: &str) -> Vec<BoardingPass> {
     input.lines().map(BoardingPass::build).collect()
 }
 
-fn highest_seat_id(boarding_passes: &[BoardingPass]) -> u32 {
+fn highest_seat_id(boarding_passes: &[BoardingPass]) -> usize {
     boarding_passes
         .iter()
         .map(BoardingPass::seat_id)
@@ -68,8 +72,20 @@ fn highest_seat_id(boarding_passes: &[BoardingPass]) -> u32 {
         .unwrap()
 }
 
-fn part2(boarding_passes: &[BoardingPass]) -> u32 {
-    0
+fn my_seat_id(boarding_passes: &[BoardingPass]) -> usize {
+    // Build the seating plan.
+    let mut seating_plan = vec![false; 8 * 128];
+    for p in boarding_passes {
+        // Seat ID happens to be exactly how we can index a vector to map a 2-dimension grid.
+        seating_plan[p.seat_id()] = true;
+    }
+
+    // Find my free seat: It's the free one with occupied on both sides.
+    seating_plan
+        .windows(3)
+        .position(|w| w[0] && !w[1] && w[2])
+        .unwrap()
+        + 1
 }
 
 fn main() {
@@ -78,7 +94,7 @@ fn main() {
     let boarding_passes = build(&input);
 
     println!("Part 1: {}", highest_seat_id(&boarding_passes));
-    println!("Part 2: {}", part2(&boarding_passes));
+    println!("Part 2: {}", my_seat_id(&boarding_passes));
 }
 
 #[cfg(test)]

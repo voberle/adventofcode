@@ -6,3 +6,4 @@ Nothing complicated there. I probably didn't need the Dir enum for such a small 
 
 ## Part 2
 
+Here using a simple vector to map the grid turned out very pratical, as the seat ID happens to be the index of the vector to use.
