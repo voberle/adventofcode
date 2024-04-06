@@ -17,3 +17,7 @@ Infinite grid.
 ### Day 4: [Passport Processing](day04/README.md) 🌟🌟
 
 Field validation.
+
+### Day 5: [Binary Boarding](day05/README.md) 🌟
+
+Binary space partitioning.
