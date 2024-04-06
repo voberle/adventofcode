@@ -57,10 +57,9 @@ fn check_eyr(data: &str) -> bool {
 fn check_hgt(data: &str) -> bool {
     if data.len() >= 3 {
         let nb = &data[0..data.len() - 2];
-        let pf = &data[data.len() - 2..data.len()];
-        if pf == "cm" {
+        if data.ends_with("cm") {
             return check_number(nb, 150, 193);
-        } else if pf == "in" {
+        } else if data.ends_with("in") {
             return check_number(nb, 59, 76);
         }
     }
@@ -69,6 +68,7 @@ fn check_hgt(data: &str) -> bool {
 
 // hcl (Hair Color) - a # followed by exactly six characters 0-9 or a-f.
 fn check_hcl(data: &str) -> bool {
+    // This one would be simpler with regex.
     data.len() == 7
         && data.starts_with('#')
         && data
