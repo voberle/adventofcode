@@ -10,6 +10,10 @@ Warm-up.
 
 Simple.
 
-### Day 3: [Toboggan Trajectory](day03/README.md) 🌟
+### Day 3: [Toboggan Trajectory](day03/README.md) 🌟🌟
 
 Infinite grid.
+
+### Day 4: [Passport Processing](day04/README.md) 🌟
+
+Field validation.

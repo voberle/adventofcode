@@ -26,4 +26,4 @@ I try to have all exercises free of any default Clippy warnings.
 
 I also run Clippy in pedantic mode regularly, and add interesting checks to the workspace cargo file.
 
-    cargo clippy -- -W clippy::all -W clippy::pedantic
+    cargo clippy -- -W clippy::all -W clippy::pedantic -A clippy::uninlined_format_args
