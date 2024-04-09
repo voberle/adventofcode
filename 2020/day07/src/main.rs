@@ -50,12 +50,16 @@ fn build(input: &str) -> RuleList {
     RuleList { colors, rules }
 }
 
-fn shiny_gold_bags_count(rule_list: &RuleList) -> usize {
-    let shiny_gold_idx = rule_list
+fn get_shiny_gold_index(rule_list: &RuleList) -> usize {
+    rule_list
         .colors
         .iter()
         .position(|c| c == "shiny gold")
-        .unwrap();
+        .unwrap()
+}
+
+fn bags_containing_shiny_gold(rule_list: &RuleList) -> usize {
+    let shiny_gold_idx = get_shiny_gold_index(rule_list);
 
     let mut bags_containing_gold = vec![false; rule_list.colors.len()];
     bags_containing_gold[shiny_gold_idx] = true;
@@ -83,33 +87,60 @@ fn shiny_gold_bags_count(rule_list: &RuleList) -> usize {
     bags_containing_gold.iter().filter(|v| **v).count() - 1
 }
 
-fn part2(rule_list: &RuleList) -> usize {
-    0
+fn bags_inside_shiny_gold(rule_list: &RuleList) -> usize {
+    let shiny_gold_idx = get_shiny_gold_index(rule_list);
+
+    // List of bags to add on each round.
+    let mut bags_to_add: Vec<usize> = vec![0; rule_list.colors.len()];
+    bags_to_add[shiny_gold_idx] = 1;
+
+    let mut total_bags = 0;
+    loop {
+        let mut add_this_round: Vec<usize> = vec![0; rule_list.colors.len()];
+
+        for rule in &rule_list.rules {
+            if bags_to_add[rule.outer_bag] > 0 {
+                for (count, color_idx) in &rule.inner_bags {
+                    add_this_round[*color_idx] += bags_to_add[rule.outer_bag] * count;
+                }
+            }
+        }
+
+        let add_this_round_count: usize = add_this_round.iter().sum();
+        if add_this_round_count == 0 {
+            break;
+        }
+
+        total_bags += add_this_round_count;
+        std::mem::swap(&mut bags_to_add, &mut add_this_round);
+    }
+    total_bags
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let rule_list = build(&input);
-    // println!("{:?}", rule_list);
 
-    println!("Part 1: {}", shiny_gold_bags_count(&rule_list));
-    println!("Part 2: {}", part2(&rule_list));
+    println!("Part 1: {}", bags_containing_shiny_gold(&rule_list));
+    println!("Part 2: {}", bags_inside_shiny_gold(&rule_list));
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const INPUT_TEST: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_1: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_2: &str = include_str!("../resources/input_test_2");
 
     #[test]
     fn test_part1() {
-        assert_eq!(shiny_gold_bags_count(&build(INPUT_TEST)), 4);
+        assert_eq!(bags_containing_shiny_gold(&build(INPUT_TEST_1)), 4);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(bags_inside_shiny_gold(&build(INPUT_TEST_1)), 32);
+        assert_eq!(bags_inside_shiny_gold(&build(INPUT_TEST_2)), 126);
     }
 }

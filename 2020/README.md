@@ -26,6 +26,6 @@ Binary space partitioning.
 
 Iterators.
 
-### Day 7: [Handy Haversacks](day07/README.md) 🌟
+### Day 7: [Handy Haversacks](day07/README.md) 🌟🌟
 
 Rules into a graph.

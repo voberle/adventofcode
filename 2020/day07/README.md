@@ -6,3 +6,4 @@ For part 1, I created a data structure where each color is represent by an index
 
 ## Part 2
 
+I used a similar approach for part 2, looping on the list of rules until there isn't anything to do anymore. That worked well, with fairly simple code and it is fast.
