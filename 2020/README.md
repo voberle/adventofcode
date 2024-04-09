@@ -30,6 +30,6 @@ Iterators.
 
 Rules into a graph.
 
-### Day 8: [Handheld Halting](day08/README.md) 🌟
+### Day 8: [Handheld Halting](day08/README.md) 🌟🌟
 
 Instructions.
