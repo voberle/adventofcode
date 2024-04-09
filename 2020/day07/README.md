@@ -2,6 +2,7 @@
 
 ## Part 1
 
+For part 1, I created a data structure where each color is represent by an index. Then I loop on the set of rules, marking all bags that can contain gold, until we cannot mark anything anymore. This is a method I've used in some previous days on another year.
 
 ## Part 2
 
