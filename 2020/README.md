@@ -29,3 +29,7 @@ Iterators.
 ### Day 7: [Handy Haversacks](day07/README.md) 🌟🌟
 
 Rules into a graph.
+
+### Day 8: [Handheld Halting](day08/README.md) 🌟
+
+Instructions.
