@@ -25,3 +25,5 @@ Binary space partitioning.
 ### Day 6: [Custom Customs](day06/README.md) 🌟🌟
 
 Iterators.
+
+### Day 7: [Handy Haversacks](day07/README.md)
