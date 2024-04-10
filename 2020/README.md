@@ -37,3 +37,7 @@ Instructions.
 ### Day 9: [Encoding Error](day09/README.md) 🌟🌟
 
 Cypher.
+
+### Day 10: [Adapter Array](day10/README.md) 🌟
+
+Graph traversal.
