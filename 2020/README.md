@@ -41,3 +41,7 @@ Cypher.
 ### Day 10: [Adapter Array](day10/README.md) 🌟🌟
 
 Graph traversal.
+
+### Day 11: [Seating System](day11/README.md) 🌟
+
+Game of life. Grid, neighbors in 8 directions.
