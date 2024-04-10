@@ -6,3 +6,4 @@ Part 1 was easy to brute force with iterators.
 
 ## Part 2
 
+That part brute forces itself well too.
