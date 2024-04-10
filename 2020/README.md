@@ -34,6 +34,6 @@ Rules into a graph.
 
 Instructions.
 
-### Day 9: [Encoding Error](day09/README.md) 🌟
+### Day 9: [Encoding Error](day09/README.md) 🌟🌟
 
 Cypher.

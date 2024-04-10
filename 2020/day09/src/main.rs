@@ -15,8 +15,8 @@ fn first_invalid_number(numbers: &[u64], preamble_size: usize) -> u64 {
             numbers[i - preamble_size..*i]
                 .iter()
                 .filter(|p| p <= number) // small optimization, doesn't change much.
-                .combinations(2)
-                .map(|combi| combi[0] + combi[1])
+                .tuple_combinations() // tuple_combinations() instead of combinations() is quite a bit faster.
+                .map(|(a, b)| a + b)
                 .all(|sum| sum != **number)
         })
         .unwrap()
