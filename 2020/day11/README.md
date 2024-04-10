@@ -6,3 +6,4 @@ Part 1 is a classical game of life type of exercise, with detection of when noth
 
 ## Part 2
 
+Part 2 wasn't too complicated, just a matter of writting another adjacent counting method.

@@ -112,7 +112,6 @@ impl Grid {
         }
     }
 
-    // Assumes validity of the move has been checked before with `can_go`.
     fn position_in(&self, pos: usize, direction: &Direction) -> usize {
         match direction {
             North => pos - self.cols,
@@ -126,24 +125,37 @@ impl Grid {
         }
     }
 
-    // Get the up to 8 positions around
-    fn neighbors(&self, pos: usize) -> Vec<usize> {
+    fn count_adjacents_occupied(&self, pos: usize) -> usize {
         ALL_DIRECTIONS
             .iter()
             .filter(|d| !self.direction_forbidden(pos, d))
             .map(|d| self.position_in(pos, d))
-            .collect()
-    }
-
-    fn count_adjacents_occupied(&self, pos: usize) -> usize {
-        self.neighbors(pos)
-            .iter()
-            .filter(|&&p| self.values[p] == SeatState::Occupied)
+            .filter(|&p| self.values[p] == SeatState::Occupied)
             .count()
     }
 
-    fn apply_rule(&self, pos: usize) -> SeatState {
-        let occ_count = self.count_adjacents_occupied(pos);
+    fn count_adjacents_occupied_all_direction(&self, pos: usize) -> usize {
+        ALL_DIRECTIONS
+            .iter()
+            .filter(|d| {
+                let mut p = pos;
+                loop {
+                    if self.direction_forbidden(p, d) {
+                        return false;
+                    }
+                    p = self.position_in(p, d);
+                    if self.values[p] == SeatState::Occupied {
+                        return true;
+                    }
+                    if self.values[p] == SeatState::Empty {
+                        return false;
+                    }
+                }
+            })
+            .count()
+    }
+
+    fn apply_rule(&self, pos: usize, occ_count: usize, occupied_limit: usize) -> SeatState {
         match self.values.get(pos) {
             Some(SeatState::Empty) => {
                 if occ_count == 0 {
@@ -151,7 +163,7 @@ impl Grid {
                 }
             }
             Some(SeatState::Occupied) => {
-                if occ_count >= 4 {
+                if occ_count >= occupied_limit {
                     return SeatState::Empty;
                 }
             }
@@ -168,26 +180,36 @@ impl Grid {
     }
 }
 
-fn occupied_count_end(grid: &Grid) -> usize {
+fn occupied_count_end(
+    grid: &Grid,
+    count_adjacents_occupied_fn: fn(&Grid, usize) -> usize,
+    occupied_limit: usize,
+) -> usize {
     let mut grid = grid.clone();
     let mut next_values: Vec<SeatState> = Vec::new();
     loop {
         for pos in 0..grid.values.len() {
-            next_values.push(grid.apply_rule(pos));
+            let occ_count = count_adjacents_occupied_fn(&grid, pos);
+            next_values.push(grid.apply_rule(pos, occ_count, occupied_limit));
         }
+
         if grid.values == next_values {
             break;
         }
+
         std::mem::swap(&mut grid.values, &mut next_values);
         next_values.clear();
     }
 
-    // grid.print();
     grid.count_occupied_seats()
 }
 
-fn part2(grid: &Grid) -> usize {
-    0
+fn occupied_count_end_rule1(grid: &Grid) -> usize {
+    occupied_count_end(grid, Grid::count_adjacents_occupied, 4)
+}
+
+fn occupied_count_end_rule2(grid: &Grid) -> usize {
+    occupied_count_end(grid, Grid::count_adjacents_occupied_all_direction, 5)
 }
 
 fn main() {
@@ -195,8 +217,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let grid = Grid::build(&input);
 
-    println!("Part 1: {}", occupied_count_end(&grid));
-    println!("Part 2: {}", part2(&grid));
+    println!("Part 1: {}", occupied_count_end_rule1(&grid));
+    println!("Part 2: {}", occupied_count_end_rule2(&grid));
 }
 
 #[cfg(test)]
@@ -207,11 +229,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(occupied_count_end(&Grid::build(INPUT_TEST)), 37);
+        assert_eq!(occupied_count_end_rule1(&Grid::build(INPUT_TEST)), 37);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        assert_eq!(occupied_count_end_rule2(&Grid::build(INPUT_TEST)), 26);
     }
 }
