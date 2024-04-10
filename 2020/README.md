@@ -33,3 +33,7 @@ Rules into a graph.
 ### Day 8: [Handheld Halting](day08/README.md) 🌟🌟
 
 Instructions.
+
+### Day 9: [Encoding Error](day09/README.md) 🌟
+
+Cypher.
