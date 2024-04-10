@@ -138,6 +138,31 @@ fn total_arrangements(_adapters: &[u32], graph: &[Vec<usize>]) -> usize {
     arrangements
 }
 
+// Very short and smart version inspired from
+// https://www.reddit.com/r/adventofcode/comments/ka8z8x/comment/gg67dlp/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+#[allow(dead_code)]
+fn smart_way(adapters: &[u32]) {
+    let mut adapters = adapters.to_vec();
+    adapters.push(0);
+    adapters.sort_unstable();
+    adapters.push(adapters.last().unwrap() + 3);
+
+    let mut diffs: Vec<usize> = vec![0; 30];
+    let mut counts: Vec<usize> = vec![0; *adapters.iter().max().unwrap() as usize + 1];
+    counts[0] = 1;
+
+    for (&a, &b) in adapters.iter().skip(1).zip(adapters.iter()) {
+        diffs[(a - b) as usize] += 1;
+        let a = a as usize;
+        counts[a] = counts.get(a - 3).unwrap_or(&0)
+            + counts.get(a - 2).unwrap_or(&0)
+            + counts.get(a - 1).unwrap_or(&0);
+    }
+
+    println!(" Part 1: {}", diffs[1] * diffs[3]);
+    println!(" Part 2: {}", counts[*adapters.last().unwrap() as usize]);
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
@@ -152,6 +177,8 @@ fn main() {
     let (d1, d3) = jolt_differences(&extended_adapters, &graph);
     println!("Part 1: {}", d1 * d3);
     println!("Part 2: {}", total_arrangements(&extended_adapters, &graph));
+
+    // smart_way(&adapters);
 }
 
 #[cfg(test)]
