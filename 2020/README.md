@@ -38,6 +38,6 @@ Instructions.
 
 Cypher.
 
-### Day 10: [Adapter Array](day10/README.md) 🌟
+### Day 10: [Adapter Array](day10/README.md) 🌟🌟
 
 Graph traversal.

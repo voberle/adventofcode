@@ -73,26 +73,69 @@ fn find_path(graph: &[Vec<usize>], current: usize, path_so_far: &mut Vec<usize>)
     false
 }
 
-fn jolt_differences(adapters: &[u32]) -> (u32, u32) {
-    let extended_adapters = extend_adapter_list(adapters);
-
-    // Create a graph from the list of adapters.
-    let graph = create_graph(&extended_adapters);
-
+fn jolt_differences(adapters: &[u32], graph: &[Vec<usize>]) -> (u32, u32) {
     // Start is the charging outlet, with joltage 0, so in first position in the sorted list.
     let start = 0;
 
     let mut path = Vec::new();
     path.push(start);
 
-    find_path(&graph, start, &mut path);
-    // println!("Path {:?}", path);
+    find_path(graph, start, &mut path);
 
-    count_jold_differences(&extended_adapters, &path)
+    count_jold_differences(adapters, &path)
 }
 
-fn total_arrangements(adapters: &[u32]) -> usize {
-    0
+fn total_arrangements(_adapters: &[u32], graph: &[Vec<usize>]) -> usize {
+    // We detect which patters are in the graph, each having a specific number of options.
+    // Then we just need to multiply the options count for each pattern.
+    //
+    // There are 3 types of patterns:
+    //
+    // [7, 8]
+    // [8]
+    // => 2 options
+    //
+    // [3, 4, 5]
+    // [4, 5]
+    // [5]
+    // => 4 options
+    //
+    // [1, 2, 3]
+    // [2, 3, 4]
+    // [3, 4]
+    // [4]
+    // => 4 + 3 = 7 options
+
+    let options_counts: Vec<usize> = graph.iter().map(Vec::len).collect();
+    let mut arrangements = 1;
+
+    let mut i = 0;
+    while i < options_counts.len() - 1 {
+        // skip last one
+        let options = options_counts[i];
+        if options == 2 {
+            arrangements *= 2;
+            assert_eq!(options_counts[i + 1], 1);
+            assert_eq!(options_counts[i + 2], 1);
+        }
+        if options == 3 {
+            if options_counts[i + 1] == 2 {
+                arrangements *= 4;
+                assert_eq!(options_counts[i + 2], 1);
+                i += 1;
+            }
+            if options_counts[i + 1] == 3 {
+                arrangements *= 7;
+                assert_eq!(options_counts[i + 2], 2);
+                assert_eq!(options_counts[i + 3], 1);
+                i += 2;
+            }
+        }
+
+        i += 1;
+    }
+
+    arrangements
 }
 
 fn main() {
@@ -100,9 +143,15 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let adapters = build(&input);
 
-    let (d1, d3) = jolt_differences(&adapters);
+    // Extend the adapter list with the charging outlet.
+    let extended_adapters = extend_adapter_list(&adapters);
+    // Create a graph from the list of adapters.
+    let graph = create_graph(&extended_adapters);
+    // print_graph(&extended_adapters, &graph);
+
+    let (d1, d3) = jolt_differences(&extended_adapters, &graph);
     println!("Part 1: {}", d1 * d3);
-    println!("Part 2: {}", total_arrangements(&adapters));
+    println!("Part 2: {}", total_arrangements(&extended_adapters, &graph));
 }
 
 #[cfg(test)]
@@ -113,14 +162,30 @@ mod tests {
     const INPUT_TEST_2: &str = include_str!("../resources/input_test_2");
 
     #[test]
-    fn test_part1() {
-        assert_eq!(jolt_differences(&build(INPUT_TEST_1)), (7, 5));
-        assert_eq!(jolt_differences(&build(INPUT_TEST_2)), (22, 10));
+    fn test_part1_1() {
+        let adapters = extend_adapter_list(&build(INPUT_TEST_1));
+        let graph = create_graph(&adapters);
+        assert_eq!(jolt_differences(&adapters, &graph), (7, 5));
     }
 
     #[test]
-    fn test_part2() {
-        assert_eq!(total_arrangements(&build(INPUT_TEST_1)), 8);
-        assert_eq!(total_arrangements(&build(INPUT_TEST_2)), 19208);
+    fn test_part1_2() {
+        let adapters = extend_adapter_list(&build(INPUT_TEST_2));
+        let graph = create_graph(&adapters);
+        assert_eq!(jolt_differences(&adapters, &graph), (22, 10));
+    }
+
+    #[test]
+    fn test_part2_1() {
+        let adapters = extend_adapter_list(&build(INPUT_TEST_1));
+        let graph = create_graph(&adapters);
+        assert_eq!(total_arrangements(&adapters, &graph), 8);
+    }
+
+    #[test]
+    fn test_part2_2() {
+        let adapters = extend_adapter_list(&build(INPUT_TEST_2));
+        let graph = create_graph(&adapters);
+        assert_eq!(total_arrangements(&adapters, &graph), 19208);
     }
 }
