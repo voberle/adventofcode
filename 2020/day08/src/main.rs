@@ -1,7 +1,4 @@
-use std::{
-    fmt,
-    io::{self, Read},
-};
+use std::io::{self, Read};
 
 #[derive(Debug, Clone, Copy)]
 enum Instruction {
@@ -38,16 +35,6 @@ impl Instruction {
     }
 }
 
-impl fmt::Display for Instruction {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self {
-            Instruction::Acc(arg) => write!(f, "acc {}", arg),
-            Instruction::Jmp(arg) => write!(f, "jmp {}", arg),
-            Instruction::Nop(arg) => write!(f, "nop {}", arg),
-        }
-    }
-}
-
 #[allow(clippy::match_on_vec_items)]
 fn build(input: &str) -> Vec<Instruction> {
     input
@@ -65,47 +52,28 @@ fn build(input: &str) -> Vec<Instruction> {
         .collect()
 }
 
-#[allow(dead_code)]
-fn print(instructions: &[Instruction]) {
-    for ins in instructions {
-        println!("{}", ins);
+// Return true if stopped by repeating an instruction, false if we stopped because the program ended.
+fn exec_until_repeat(instructions: &[Instruction], accumulator: &mut i32) -> bool {
+    let mut ip = 0;
+
+    // Detecting when instructions repeat.
+    let mut ins_already_executed = vec![false; instructions.len()];
+    while ip < instructions.len() {
+        if ins_already_executed[ip] {
+            return true;
+        }
+        let ins = &instructions[ip];
+        ins_already_executed[ip] = true;
+
+        ins.exec(&mut ip, accumulator);
     }
+    false
 }
 
 fn accumulator_after_one_run(instructions: &[Instruction]) -> i32 {
-    let mut ip = 0;
     let mut accumulator = 0;
-
-    // Detecting when instructions repeat.
-    let mut exec_count = vec![0; instructions.len()];
-    while ip < instructions.len() {
-        if exec_count[ip] > 0 {
-            break;
-        }
-        let ins = &instructions[ip];
-        exec_count[ip] += 1;
-
-        ins.exec(&mut ip, &mut accumulator);
-    }
+    exec_until_repeat(instructions, &mut accumulator);
     accumulator
-}
-
-fn exec(instructions: &[Instruction], max_ins_to_exec: usize) -> Option<i32> {
-    let mut ip = 0;
-    let mut accumulator = 0;
-
-    let mut c = 0;
-    while ip < instructions.len() {
-        let ins = &instructions[ip];
-        ins.exec(&mut ip, &mut accumulator);
-
-        c += 1;
-        if c > max_ins_to_exec {
-            return None;
-        }
-    }
-    // println!("Value found after {} instructions", c);
-    Some(accumulator)
 }
 
 fn accumulator_after_fix(instructions: &[Instruction]) -> i32 {
@@ -114,12 +82,11 @@ fn accumulator_after_fix(instructions: &[Instruction]) -> i32 {
 
         if let Some(inv) = instructions[i].invert() {
             instructions[i] = inv;
-            // print(&instructions);
 
-            // Initially I set the value to 100_000, and it was still super fast, but 1000 is enough.
-            if let Some(acc) = exec(&instructions, 1000) {
-                // println!("Modified instruction: {}", i);
-                return acc;
+            let mut accumulator = 0;
+            // If we repeat an instruction, it means we are in a loop and can give up.
+            if !exec_until_repeat(&instructions, &mut accumulator) {
+                return accumulator;
             }
         }
     }
