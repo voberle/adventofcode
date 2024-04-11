@@ -45,3 +45,7 @@ Graph traversal.
 ### Day 11: [Seating System](day11/README.md) 🌟🌟
 
 Game of life. Grid, neighbors in 8 directions.
+
+### Day 12: [Rain Risk](day12/README.md) 🌟
+
+Moving following instructions.
