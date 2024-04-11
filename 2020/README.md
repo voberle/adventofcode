@@ -46,6 +46,6 @@ Graph traversal.
 
 Game of life. Grid, neighbors in 8 directions.
 
-### Day 12: [Rain Risk](day12/README.md) 🌟
+### Day 12: [Rain Risk](day12/README.md) 🌟🌟
 
 Moving following instructions.

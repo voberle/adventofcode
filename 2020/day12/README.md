@@ -6,3 +6,4 @@ A simple implementation of moving following instructions.
 
 ## Part 2
 
+This was just modifying the move instructions, and there only the waypoint turning was a bit tricky, but drawing it made it clear.

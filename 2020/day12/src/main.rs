@@ -73,19 +73,12 @@ impl Pos {
 }
 
 enum Instruction {
-    // Action N means to move north by the given value.
     North(i32),
-    // Action S means to move south by the given value.
     South(i32),
-    // Action E means to move east by the given value.
     East(i32),
-    // Action W means to move west by the given value.
     West(i32),
-    // Action L means to turn left the given number of degrees.
     Left(i32),
-    // Action R means to turn right the given number of degrees.
     Right(i32),
-    // Action F means to move forward by the given value in the direction the ship is currently facing.
     Forward(i32),
 }
 
@@ -105,28 +98,74 @@ impl Instruction {
         }
     }
 
-    fn apply(&self, pos: &mut Pos, dir: &mut Direction) {
+    fn apply(&self, ship_pos: &mut Pos, dir: &mut Direction) {
         match self {
             Instruction::North(val) => {
-                *pos = pos.move_to(Direction::North, *val);
+                // Action N means to move north by the given value.
+                *ship_pos = ship_pos.move_to(Direction::North, *val);
             }
             Instruction::South(val) => {
-                *pos = pos.move_to(Direction::South, *val);
+                *ship_pos = ship_pos.move_to(Direction::South, *val);
             }
             Instruction::East(val) => {
-                *pos = pos.move_to(Direction::East, *val);
+                *ship_pos = ship_pos.move_to(Direction::East, *val);
             }
             Instruction::West(val) => {
-                *pos = pos.move_to(Direction::West, *val);
+                *ship_pos = ship_pos.move_to(Direction::West, *val);
             }
             Instruction::Left(val) => {
+                // Action L means to turn left the given number of degrees.
                 *dir = dir.turn_left(*val);
             }
             Instruction::Right(val) => {
                 *dir = dir.turn_right(*val);
             }
             Instruction::Forward(val) => {
-                *pos = pos.move_to(*dir, *val);
+                // Action F means to move forward by the given value in the direction the ship is currently facing.
+                *ship_pos = ship_pos.move_to(*dir, *val);
+            }
+        }
+    }
+
+    fn apply_with_waypoint(&self, ship_pos: &mut Pos, waypoint_relative_pos: &mut Pos) {
+        match self {
+            Instruction::North(val) => {
+                // Action N means to move the waypoint north by the given value.
+                *waypoint_relative_pos = waypoint_relative_pos.move_to(Direction::North, *val);
+            }
+            Instruction::South(val) => {
+                *waypoint_relative_pos = waypoint_relative_pos.move_to(Direction::South, *val);
+            }
+            Instruction::East(val) => {
+                *waypoint_relative_pos = waypoint_relative_pos.move_to(Direction::East, *val);
+            }
+            Instruction::West(val) => {
+                *waypoint_relative_pos = waypoint_relative_pos.move_to(Direction::West, *val);
+            }
+            Instruction::Left(val) => {
+                // Action L means to rotate the waypoint around the ship left (counter-clockwise) the given number of degrees.
+                let turn_count = (val / 90) % 4;
+                for _ in 0..turn_count {
+                    *waypoint_relative_pos = Pos {
+                        x: waypoint_relative_pos.y,
+                        y: -waypoint_relative_pos.x,
+                    };
+                }
+            }
+            Instruction::Right(val) => {
+                let turn_count = (val / 90) % 4;
+                for _ in 0..turn_count {
+                    *waypoint_relative_pos = Pos {
+                        x: -waypoint_relative_pos.y,
+                        y: waypoint_relative_pos.x,
+                    };
+                }
+            }
+            Instruction::Forward(val) => {
+                // Action F means to move forward to the waypoint a number of times equal to the given value.
+                ship_pos.x += waypoint_relative_pos.x * val;
+                ship_pos.y += waypoint_relative_pos.y * val;
+                // The waypoint is relative to the ship; that is, if the ship moves, the waypoint moves with it.
             }
         }
     }
@@ -138,15 +177,21 @@ fn build(input: &str) -> Vec<Instruction> {
 
 fn distance_from_start(instructions: &[Instruction]) -> i32 {
     let mut dir = Direction::East;
-    let mut pos = Pos { x: 0, y: 0 };
+    let mut ship_pos = Pos { x: 0, y: 0 };
     for ins in instructions {
-        ins.apply(&mut pos, &mut dir);
+        ins.apply(&mut ship_pos, &mut dir);
     }
-    pos.distance_from_zero()
+    ship_pos.distance_from_zero()
 }
 
-fn part2(instructions: &[Instruction]) -> i32 {
-    0
+fn distance_with_waypoint(instructions: &[Instruction]) -> i32 {
+    let mut ship_pos = Pos { x: 0, y: 0 };
+    // 10 units east and 1 unit north of the ship.
+    let mut waypoint = Pos { x: 10, y: -1 };
+    for ins in instructions {
+        ins.apply_with_waypoint(&mut ship_pos, &mut waypoint);
+    }
+    ship_pos.distance_from_zero()
 }
 
 fn main() {
@@ -155,7 +200,7 @@ fn main() {
     let instructions = build(&input);
 
     println!("Part 1: {}", distance_from_start(&instructions));
-    println!("Part 2: {}", part2(&instructions));
+    println!("Part 2: {}", distance_with_waypoint(&instructions));
 }
 
 #[cfg(test)]
@@ -171,6 +216,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(distance_with_waypoint(&build(INPUT_TEST)), 286);
     }
 }
