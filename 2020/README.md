@@ -50,6 +50,6 @@ Game of life. Grid, neighbors in 8 directions.
 
 Moving following instructions.
 
-### Day 13: [Shuttle Search](day13/README.md) 🌟
+### Day 13: [Shuttle Search](day13/README.md) 🌟🌟
 
-Bus times.
+Bus times. LCM with offset.
