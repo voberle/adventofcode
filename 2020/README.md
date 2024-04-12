@@ -49,3 +49,7 @@ Game of life. Grid, neighbors in 8 directions.
 ### Day 12: [Rain Risk](day12/README.md) 🌟🌟
 
 Moving following instructions.
+
+### Day 13: [Shuttle Search](day13/README.md) 🌟
+
+Bus times.
