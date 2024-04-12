@@ -33,18 +33,27 @@ fn opt_depart_time(bus_ids: &[Option<u64>]) -> u64 {
         .enumerate()
         .filter_map(|(offset, id)| id.as_ref().map(|time| (*time, offset as u64)))
         .collect();
-    // NB: Optimize by sorting by time desc??
+
+    // We can biggest time as "base".
+    let max_timeoffset = *time_offset.iter().max_by_key(|(time, _)| *time).unwrap();
+
+    let start = 1;
+    // For real input, description tells us it's at least that big.
+    // let start = 100_000_000_000_000 / max_timeoffset.0;
 
     // For n = 1, n++
     // - Take first element, candidate = time * n.
     // - For all other elements in the list, check if:
     //   (candidate + offset) % time == 0
-    for n in 1.. {
-        let time = time_offset[0].0;
-        let candidate = time * n;
+    for n in start.. {
+        let candidate = max_timeoffset.0 * n - max_timeoffset.1;
+
+        if n % 10_000_000_000 == 0 {
+            println!("candidate {}", candidate);
+        }
+
         if time_offset
             .iter()
-            .skip(1)
             .all(|(time, offset)| (candidate + offset) % time == 0)
         {
             return candidate;
