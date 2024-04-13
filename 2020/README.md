@@ -53,3 +53,7 @@ Moving following instructions.
 ### Day 13: [Shuttle Search](day13/README.md) 🌟🌟
 
 Bus times. LCM with offset.
+
+### Day 14: [Docking Data](day14/README.md) 🌟
+
+Bitmasks.
