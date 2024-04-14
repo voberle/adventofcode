@@ -56,6 +56,49 @@ impl Bitmask {
         )
     }
 
+    fn is_no_overlap(&self, other: &Bitmask) -> bool {
+        self.0
+            .chars()
+            .zip(other.0.chars())
+            .filter(|(old_m, new_m)| *old_m != 'X' && *new_m != 'X')
+            .any(|(old_m, new_m)| old_m != new_m)
+    }
+
+    fn intersect(&self, other: &Bitmask) -> Option<Bitmask> {
+        // Example:
+        //  0X1101X
+        //  001X0XX
+        //  & -----
+        //  001101X
+        // Logic:
+        // - If no X and vals are different, then no overlap.
+        // - If no X and vals are same, then val.
+        // - If both are X, then X.
+        // - If one X, then val.
+
+        // This method is a bit clumsy, could be improved.
+
+        if self.is_no_overlap(other) {
+            return None;
+        }
+
+        let bstr: String = self
+            .0
+            .chars()
+            .zip(other.0.chars())
+            .map(|(old_m, new_m)| {
+                if old_m == new_m {
+                    old_m
+                } else if old_m == 'X' {
+                    new_m
+                } else {
+                    old_m
+                }
+            })
+            .collect();
+        Some(Bitmask(bstr))
+    }
+
     fn count_x(&self) -> usize {
         self.0.chars().filter(|&v| v == 'X').count()
     }
@@ -140,6 +183,44 @@ fn memory_sum(instructions: &[Instruction], write_mem_fn: WriteMemFn) -> u64 {
     memory.values().sum()
 }
 
+// Idea to add memory sections with negative values came
+// https://github.com/gr-g/advent-of-code-2020/blob/main/src/bin/14.rs
+#[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+fn memory_sum_v2_optimized(instructions: &[Instruction]) -> u64 {
+    // Memory where each address is a masked address.
+    // Using signed integer as we will add negative values.
+    let mut memory: Vec<(Bitmask, i64)> = Vec::new();
+
+    let mut bitmask = MaybeUninit::<&Bitmask>::uninit();
+    for ins in instructions {
+        match ins {
+            Instruction::Mask(mask) => {
+                bitmask.write(mask);
+            }
+            Instruction::Memory(address, value) => {
+                let mask = unsafe { std::mem::MaybeUninit::assume_init(bitmask) };
+                let masked_address = mask.apply_to_address(*address);
+
+                // Before storing the address range, check if it overlaps with other ranges
+                // and compensate by adding a range with the opposite of the value for the
+                // overwritten part.
+                let mut memory_overlaps: Vec<_> = memory
+                    .iter()
+                    .filter_map(|(a, v)| masked_address.intersect(a).map(|o| (o, -v)))
+                    .collect();
+                memory.append(&mut memory_overlaps);
+
+                memory.push((masked_address, *value as i64));
+            }
+        }
+    }
+
+    memory
+        .iter()
+        .map(|(mask, val)| 2_i64.pow(u32::try_from(mask.count_x()).unwrap()) * val)
+        .sum::<i64>() as u64
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
@@ -147,6 +228,11 @@ fn main() {
 
     println!("Part 1: {}", memory_sum(&instructions, write_mem_v1));
     println!("Part 2: {}", memory_sum(&instructions, write_mem_v2));
+
+    println!(
+        "Part 2 optimized: {}",
+        memory_sum_v2_optimized(&instructions)
+    );
 }
 
 #[cfg(test)]
@@ -171,5 +257,7 @@ mod tests {
     #[test]
     fn test_part2() {
         assert_eq!(memory_sum(&build(INPUT_TEST_2), write_mem_v2), 208);
+
+        assert_eq!(memory_sum_v2_optimized(&build(INPUT_TEST_2)), 208);
     }
 }
