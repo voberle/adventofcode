@@ -103,6 +103,9 @@ dependencies = [
 [[package]]
 name = "day15"
 version = "0.1.0"
+dependencies = [
+ "fxhash",
+]
 
 [[package]]
 name = "either"

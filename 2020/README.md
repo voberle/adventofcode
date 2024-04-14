@@ -58,6 +58,6 @@ Bus times. LCM with offset.
 
 Bitmasks.
 
-### Day 15: [Rambunctious Recitation](day15/README.md) 🌟
+### Day 15: [Rambunctious Recitation](day15/README.md) 🌟🌟
 
 Sequence generation.
