@@ -54,6 +54,6 @@ Moving following instructions.
 
 Bus times. LCM with offset.
 
-### Day 14: [Docking Data](day14/README.md) 🌟
+### Day 14: [Docking Data](day14/README.md) 🌟🌟
 
 Bitmasks.

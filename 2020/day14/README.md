@@ -10,3 +10,4 @@ Second one was how to have a reference to the bitmask when applying the instruct
 
 ## Part 2
 
+Second part took me way longer than it should have, because I got confused and assumed that it couldn't be brute-forced. But since there no more than 9 Xs in a masked address, it's not so many combinations and brute-forcing is all fine.
