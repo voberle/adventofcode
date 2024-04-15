@@ -61,3 +61,5 @@ Bitmasks.
 ### Day 15: [Rambunctious Recitation](day15/README.md) 🌟🌟
 
 Sequence generation.
+
+### Day 16: [Ticket Translation](day16/README.md)
