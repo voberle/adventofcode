@@ -2,6 +2,7 @@
 
 ## Part 1
 
+Most work went into parsing the input.
 
 ## Part 2
 

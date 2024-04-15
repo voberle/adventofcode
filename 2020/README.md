@@ -62,4 +62,6 @@ Bitmasks.
 
 Sequence generation.
 
-### Day 16: [Ticket Translation](day16/README.md)
+### Day 16: [Ticket Translation](day16/README.md) 🌟
+
+Checking rules.

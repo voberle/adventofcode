@@ -9,6 +9,13 @@ struct Rule {
     range2: (u32, u32),
 }
 
+impl Rule {
+    fn in_range(&self, val: u32) -> bool {
+        (self.range1.0..=self.range1.1).contains(&val)
+            || (self.range2.0..=self.range2.1).contains(&val)
+    }
+}
+
 #[derive(Debug)]
 struct Puzzle {
     rules: Vec<Rule>,
@@ -27,6 +34,7 @@ impl Puzzle {
                 break;
             }
             let parts = rule_re.captures(line).unwrap();
+
             rules.push(Rule {
                 name: parts[1].to_string(),
                 range1: (parts[2].parse().unwrap(), parts[3].parse().unwrap()),
@@ -61,7 +69,12 @@ impl Puzzle {
 }
 
 fn scanning_error_rate(puzzle: &Puzzle) -> u32 {
-    0
+    puzzle
+        .nearby_tickets
+        .iter()
+        .flatten()
+        .filter(|&&val| puzzle.rules.iter().all(|rule| !rule.in_range(val)))
+        .sum()
 }
 
 fn part2(puzzle: &Puzzle) -> u32 {
@@ -72,7 +85,6 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let puzzle = Puzzle::build(&input);
-    println!("{:?}", puzzle);
 
     println!("Part 1: {}", scanning_error_rate(&puzzle));
     println!("Part 2: {}", part2(&puzzle));
