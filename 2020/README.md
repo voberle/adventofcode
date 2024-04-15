@@ -62,6 +62,6 @@ Bitmasks.
 
 Sequence generation.
 
-### Day 16: [Ticket Translation](day16/README.md) 🌟
+### Day 16: [Ticket Translation](day16/README.md) 🌟🌟
 
-Checking rules.
+Checking rules. Pruning a list of options.
