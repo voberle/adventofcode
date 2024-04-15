@@ -2,6 +2,7 @@ use std::io::{self, Read};
 
 use fxhash::FxHashSet;
 use itertools::{repeat_n, Itertools};
+use lazy_static::lazy_static;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Coord {
@@ -38,33 +39,41 @@ fn build(input: &str) -> FxHashSet<Coord> {
         .collect()
 }
 
-fn build_neighbors_coords<const DIMS: usize>(pos: &Coord) -> Vec<Coord> {
-    if DIMS == 3 {
+type Diff = (i32, i32, i32, i32);
+
+lazy_static! {
+    static ref DIFFS_3D: Vec<Diff> = {
         repeat_n([-1, 0, 1].iter(), 3)
             .multi_cartesian_product()
             .filter(|p| *p[0] != 0 || *p[1] != 0 || *p[2] != 0)
-            .map(|p| Coord::new(pos.x + p[0], pos.y + p[1], pos.z + p[2], 0))
+            .map(|p| (*p[0], *p[1], *p[2], 0))
             .collect()
-    } else if DIMS == 4 {
+    };
+    static ref DIFFS_4D: Vec<Diff> = {
         repeat_n([-1, 0, 1].iter(), 4)
             .multi_cartesian_product()
             .filter(|p| *p[0] != 0 || *p[1] != 0 || *p[2] != 0 || *p[3] != 0)
-            .map(|p| Coord::new(pos.x + p[0], pos.y + p[1], pos.z + p[2], pos.w + p[3]))
+            .map(|p| (*p[0], *p[1], *p[2], *p[3]))
             .collect()
-    } else {
-        panic!("Invalid dim count")
-    }
+    };
 }
 
-fn count_neighbors<const DIMS: usize>(dimension: &FxHashSet<Coord>, pos: &Coord) -> usize {
-    let neighbors_coords = build_neighbors_coords::<DIMS>(pos);
+fn build_neighbors_coords(pos: &Coord, diffs: &[Diff]) -> Vec<Coord> {
+    diffs
+        .iter()
+        .map(|d| Coord::new(pos.x + d.0, pos.y + d.1, pos.z + d.2, pos.w + d.3))
+        .collect()
+}
+
+fn count_neighbors(dimension: &FxHashSet<Coord>, pos: &Coord, diffs: &[Diff]) -> usize {
+    let neighbors_coords = build_neighbors_coords(pos, diffs);
     neighbors_coords
         .iter()
         .filter(|c| dimension.contains(c))
         .count()
 }
 
-fn active_cubes_count<const DIMS: usize>(dimension: &FxHashSet<Coord>) -> usize {
+fn active_cubes_count(dimension: &FxHashSet<Coord>, diffs: &[Diff]) -> usize {
     const CYCLES_COUNT: usize = 6;
 
     let mut dimension = dimension.clone();
@@ -72,12 +81,16 @@ fn active_cubes_count<const DIMS: usize>(dimension: &FxHashSet<Coord>) -> usize 
     for _ in 0..CYCLES_COUNT {
         // Get all coordinates to examine.
         let mut coords_to_check = dimension.clone();
-        coords_to_check.extend(dimension.iter().flat_map(build_neighbors_coords::<DIMS>));
+        coords_to_check.extend(
+            dimension
+                .iter()
+                .flat_map(|c| build_neighbors_coords(c, diffs)),
+        );
 
         // Generate new dimension.
         let mut next_dimension: FxHashSet<Coord> = FxHashSet::default();
         for coords in coords_to_check {
-            let neighbors_active = count_neighbors::<DIMS>(&dimension, &coords);
+            let neighbors_active = count_neighbors(&dimension, &coords, diffs);
 
             if dimension.contains(&coords) {
                 if neighbors_active == 2 || neighbors_active == 3 {
@@ -99,8 +112,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let dimension = build(&input);
 
-    println!("Part 1: {}", active_cubes_count::<3>(&dimension));
-    println!("Part 2: {}", active_cubes_count::<4>(&dimension));
+    println!("Part 1: {}", active_cubes_count(&dimension, &DIFFS_3D));
+    println!("Part 2: {}", active_cubes_count(&dimension, &DIFFS_4D));
 }
 
 #[cfg(test)]
@@ -111,11 +124,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(active_cubes_count::<3>(&build(INPUT_TEST)), 112);
+        assert_eq!(active_cubes_count(&build(INPUT_TEST), &DIFFS_3D), 112);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(active_cubes_count::<4>(&build(INPUT_TEST)), 848);
+        assert_eq!(active_cubes_count(&build(INPUT_TEST), &DIFFS_4D), 848);
     }
 }
