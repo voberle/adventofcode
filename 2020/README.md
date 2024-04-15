@@ -66,6 +66,6 @@ Sequence generation.
 
 Checking rules. Pruning a list of options.
 
-### Day 17: [Conway Cubes](day17/README.md) 🌟
+### Day 17: [Conway Cubes](day17/README.md) 🌟🌟
 
 3 and 4 dimensions.

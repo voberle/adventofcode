@@ -119,6 +119,7 @@ name = "day17"
 version = "0.1.0"
 dependencies = [
  "fxhash",
+ "itertools",
 ]
 
 [[package]]
