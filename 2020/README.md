@@ -65,3 +65,7 @@ Sequence generation.
 ### Day 16: [Ticket Translation](day16/README.md) 🌟🌟
 
 Checking rules. Pruning a list of options.
+
+### Day 17: [Conway Cubes](day17/README.md) 🌟
+
+3 and 4 dimensions.
