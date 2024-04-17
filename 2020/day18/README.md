@@ -8,3 +8,4 @@ So I looked up how parsing of mathematical expressions is typically done, and fo
 
 ## Part 2
 
+With that implementation, part 2 was super easy, as I just needed to adjust the precedence function.
