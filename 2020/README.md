@@ -69,3 +69,7 @@ Checking rules. Pruning a list of options.
 ### Day 17: [Conway Cubes](day17/README.md) 🌟🌟
 
 3 and 4 dimensions. lazy_static.
+
+### Day 18: [Operation Order](day18/README.md) 🌟
+
+Evaluate math expression. Shunting yard algorithm.
