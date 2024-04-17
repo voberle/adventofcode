@@ -73,3 +73,5 @@ Checking rules. Pruning a list of options.
 ### Day 18: [Operation Order](day18/README.md) 🌟🌟
 
 Evaluate math expression. Shunting yard algorithm.
+
+### Day 19: [Monster Messages](day19/README.md)
