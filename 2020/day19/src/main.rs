@@ -33,7 +33,7 @@ impl Rule {
     }
 }
 
-fn build(input: &str) -> (Vec<Rule>, Vec<String>) {
+fn build(input: &str) -> (Vec<Rule>, Vec<Vec<char>>) {
     let mut it = input.lines();
     // Rules are not sorted in the input.
     let mut rules_map: HashMap<usize, Rule> = HashMap::new();
@@ -57,16 +57,104 @@ fn build(input: &str) -> (Vec<Rule>, Vec<String>) {
 
     let mut messages = Vec::new();
     for line in it {
-        messages.push(line.to_string());
+        messages.push(line.chars().collect());
     }
     (rules, messages)
 }
 
-fn messages_matching_rule0(rules: &[Rule], messages: &[String]) -> usize {
-    0
+#[derive(Debug, Clone, Copy)]
+enum Element {
+    Char(char),
+    Index(usize),
 }
 
-fn part2(rules: &[Rule], messages: &[String]) -> usize {
+fn build_matching_messages(rules: &[Rule]) -> Vec<Vec<char>> {
+    let mut messages: Vec<Vec<Element>> = Vec::new();
+    messages.push(vec![Element::Index(0)]);
+    loop {
+        let mut new_messages: Vec<Vec<Element>> = Vec::new();
+        for msg in &messages {
+            // A vector, as each msg may produce several.
+            let mut new_msg: Vec<Vec<Element>> = vec![Vec::new()];
+            for e in msg {
+                match e {
+                    // Already a char, unchanged.
+                    Element::Char(_) => {
+                        for m in &mut new_msg {
+                            m.push(*e);
+                        }
+                    }
+                    // An index, go find the corresponding rule.
+                    Element::Index(i) => {
+                        let r = &rules[*i];
+                        match r {
+                            Rule::Char(c) => {
+                                for m in &mut new_msg {
+                                    m.push(Element::Char(*c));
+                                }
+                            }
+                            Rule::SubRule(sub_rule) => {
+                                if sub_rule.len() == 1 {
+                                    for m in &mut new_msg {
+                                        m.extend(sub_rule[0].iter().map(|s| Element::Index(*s)));
+                                    }
+                                } else if sub_rule.len() == 2 {
+                                    let mut second_new_msg = new_msg.clone();
+                                    for m in &mut new_msg {
+                                        m.extend(sub_rule[0].iter().map(|s| Element::Index(*s)));
+                                    }
+                                    for m in &mut second_new_msg {
+                                        m.extend(sub_rule[1].iter().map(|s| Element::Index(*s)));
+                                    }
+                                    new_msg.extend(second_new_msg);
+                                } else {
+                                    panic!("Invalid sub rule count");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if !new_msg.is_empty() {
+                new_messages.extend(new_msg);
+            }
+        }
+        std::mem::swap(&mut messages, &mut new_messages);
+
+        // We can optimize things by putting ready messages into a separate list.
+        if messages
+            .iter()
+            .flatten()
+            .all(|e| matches!(e, Element::Char(_)))
+        {
+            break;
+        }
+    }
+
+    messages
+        .iter()
+        .map(|msg| {
+            msg.iter()
+                .map(|e| match e {
+                    Element::Char(c) => *c,
+                    Element::Index(_) => panic!("Impossible"),
+                })
+                .collect()
+        })
+        .collect()
+}
+
+fn messages_matching_rule0(rules: &[Rule], messages: &[Vec<char>]) -> usize {
+    let matching_messages = build_matching_messages(rules);
+    // println!("{:?}", messages);
+    // println!("{:?}", matching_messages);
+    messages
+        .iter()
+        .filter(|msg| matching_messages.contains(msg))
+        .count()
+}
+
+fn part2(rules: &[Rule], messages: &[Vec<char>]) -> usize {
     0
 }
 
@@ -74,8 +162,6 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let (rules, messages) = build(&input);
-    // println!("{:?}", rules);
-    // println!("Messages: {:?} {}-{}", messages.len(), messages.first().unwrap(), messages.last().unwrap());
 
     println!("Part 1: {}", messages_matching_rule0(&rules, &messages));
     println!("Part 2: {}", part2(&rules, &messages));
