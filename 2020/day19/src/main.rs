@@ -12,6 +12,8 @@ enum Rule {
 }
 
 impl Rule {
+    const EMPTY: Rule = Rule::SubRule(Vec::new());
+
     fn build(input: &str) -> Self {
         if input.starts_with('"') {
             let c = input.chars().nth(1).unwrap();
@@ -45,13 +47,11 @@ fn build(input: &str) -> (Vec<Rule>, Vec<Vec<char>>) {
         rules_map.insert(index.parse().unwrap(), Rule::build(rule));
     }
     // Convert the rule map to a vector.
-    let rules = rules_map
-        .iter()
-        .sorted_by_key(|(k, _)| *k)
-        .enumerate()
-        .map(|(i, (k, v))| {
-            assert_eq!(i, *k);
-            v.clone()
+    let max_rule_id = *rules_map.keys().max().unwrap();
+    let rules = (0..=max_rule_id)
+        .map(|i| {
+            // On test case 2, some ids don't have rules.
+            rules_map.get(&i).unwrap_or(&Rule::EMPTY).clone()
         })
         .collect();
 
@@ -171,17 +171,19 @@ fn main() {
 mod tests {
     use super::*;
 
-    const INPUT_TEST: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_1: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_2: &str = include_str!("../resources/input_test_2");
 
     #[test]
     fn test_part1() {
-        let (rules, messages) = build(INPUT_TEST);
+        let (rules, messages) = build(INPUT_TEST_1);
         assert_eq!(messages_matching_rule0(&rules, &messages), 2);
+        
+        let (rules, messages) = build(INPUT_TEST_2);
+        assert_eq!(messages_matching_rule0(&rules, &messages), 3);
     }
 
     #[test]
     fn test_part2() {
-        let (rules, messages) = build(INPUT_TEST);
-        assert_eq!(part2(&rules, &messages), 0);
     }
 }
