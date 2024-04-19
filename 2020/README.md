@@ -77,3 +77,5 @@ Evaluate math expression. Shunting yard algorithm.
 ### Day 19: [Monster Messages](day19/README.md) 🌟
 
 Rules and matching strings.
+
+### Day 20: [Jurassic Jigsaw](day20/README.md)
