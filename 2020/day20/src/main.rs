@@ -261,7 +261,9 @@ fn are_border_ids_matching(border_ids: &[u32], surrounding_ids: &[u32]) -> bool 
         .all(|p| p.0 == p.1)
 }
 
-fn assemble_image(tiles: &[Tile], graph: &[Vec<usize>]) {
+// Assembles the image.
+// Returns the list of tiles in correct orientation and their positions in the puzzle.
+fn assemble_image(tiles: &[Tile], graph: &[Vec<usize>]) -> (Vec<Tile>, Vec<Vec<usize>>) {
     // We know which tiles connect to which.
     // Also, there should be only one way to connect a tile to another one.
 
@@ -364,13 +366,51 @@ fn assemble_image(tiles: &[Tile], graph: &[Vec<usize>]) {
             }
         }
     }
-    println!("{:?}", puzzle);
+    // println!("{:?}", puzzle);
+    (tiles, puzzle)
 }
 
-fn part2(tiles: &[Tile]) -> i64 {
+// Removes tile borders and merges them.
+#[allow(clippy::needless_range_loop)]
+fn merge_tiles(tiles: &[Tile], puzzle: &[Vec<usize>]) -> Vec<Vec<char>> {
+    let picture_tiles_count = sqrt(tiles.len());
+    let picture_size = picture_tiles_count * (Tile::SIZE - 2);
+
+    let mut picture: Vec<Vec<char>> = vec![vec!['_'; picture_size]; picture_size];
+
+    for row in 0..picture_tiles_count {
+        for col in 0..picture_tiles_count {
+            let tid = puzzle[row][col];
+            let tile = &tiles[tid];
+            for r in 1..Tile::SIZE - 1 {
+                for c in 1..Tile::SIZE - 1 {
+                    let rp = row * (Tile::SIZE - 2) + r - 1;
+                    let rc = col * (Tile::SIZE - 2) + c - 1;
+                    let p = pos(Tile::SIZE, r, c);
+                    picture[rp][rc] = if tile.grid[p] { '#' } else { '.' };
+                }
+            }
+        }
+    }
+    picture
+}
+
+#[allow(dead_code)]
+fn print_picture(picture: &[Vec<char>]) {
+    for row in 0..picture.len() {
+        for col in 0..picture.len() {
+            print!("{}", picture[row][col]);
+        }
+        println!();
+    }
+}
+
+fn count_vals_not_in_sea_monster(tiles: &[Tile]) -> usize {
     let graph = build_image_graph(tiles);
 
-    assemble_image(tiles, &graph);
+    let (tiles, puzzle) = assemble_image(tiles, &graph);
+    let picture = merge_tiles(&tiles, &puzzle);
+    print_picture(&picture);
     0
 }
 
@@ -384,7 +424,7 @@ fn main() {
     // }
 
     println!("Part 1: {}", find_assembled_image_corners_result(&tiles));
-    println!("Part 2: {}", part2(&tiles));
+    println!("Part 2: {}", count_vals_not_in_sea_monster(&tiles));
 }
 
 #[cfg(test)]
@@ -413,6 +453,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(count_vals_not_in_sea_monster(&build(INPUT_TEST)), 273);
     }
 }
