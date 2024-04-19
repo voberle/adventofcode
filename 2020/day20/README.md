@@ -14,3 +14,6 @@ NB: I was a bit stuck as to how to find which tiles fit together. I explained wh
 
 ## Part 2
 
+Unfortunately my shortcut for part 1 to find only the corners wasn't enough for part 2, we really need to assemble the image.
+
+Assembling the image wasn't that easy. I started with a corner, and tried all tile orientations until one works, then moved to the next tile and so on.
