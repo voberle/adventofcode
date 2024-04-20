@@ -21,3 +21,5 @@ Assembling the image wasn't that easy. I started with a corner, and tried all ti
 Then once I had the tiles positions and correct orientations, removing their borders and merging them was a matter of a simpler loop.
 
 I made the square grid code reusable between tiles and the assembled picture to be able to reuse the rotation and flipping code. This then made finding the sea monsters easy.
+
+*Performance*: Quite good I would say, it runs in 3 ms. By comparaison, [another Rust solution](https://www.reddit.com/r/adventofcode/comments/kgo01p/comment/ghgspb0/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button) takes 40 ms.

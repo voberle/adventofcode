@@ -47,15 +47,27 @@ impl SquareGrid {
         Self { values, size }
     }
 
-    #[allow(dead_code)]
-    pub fn print(&self) {
+    pub fn print_with_position(&self, positions: &[(usize, usize)]) {
+        const RED: &str = "\x1b[31m";
+        const RESET: &str = "\x1b[0m";
         for row in 0..self.size {
             for p in row * self.size..(row + 1) * self.size {
                 let c = self.values[p];
-                print!("{}", if c { '#' } else { '.' });
+                let col = p - row * self.size;
+                if positions.contains(&(row, col)) {
+                    assert!(c);
+                    print!("{RED}O{RESET}");
+                } else {
+                    print!("{}", if c { '#' } else { '.' });
+                }
             }
             println!();
         }
+    }
+
+    #[allow(dead_code)]
+    pub fn print(&self) {
+        self.print_with_position(&[]);
     }
 
     // Rotate by +90 degres

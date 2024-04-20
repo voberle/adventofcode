@@ -354,21 +354,38 @@ fn is_monster(picture: &SquareGrid, row: usize, col: usize, offsets: &[(usize, u
     })
 }
 
+#[allow(dead_code)]
+fn print_picture_with_monsters(
+    picture: &mut SquareGrid,
+    monsters_locations: &[(usize, usize)],
+    monster_offsets: &[(usize, usize)],
+) {
+    println!("Found {} monsters in:", monsters_locations.len());
+    let locations: Vec<(usize, usize)> = monsters_locations
+        .iter()
+        .flat_map(|(r, c)| {
+            monster_offsets
+                .iter()
+                .map(move |(r_off, c_off)| (r + r_off, c + c_off))
+        })
+        .collect();
+    picture.print_with_position(&locations);
+}
+
 // Finds the correct orientations of the picture and returns the number of sea monsters in it.
-fn count_sea_monsters(picture: &mut SquareGrid, sea_monster_offsets: &[(usize, usize)]) -> usize {
+fn count_sea_monsters(picture: &mut SquareGrid, monster_offsets: &[(usize, usize)]) -> usize {
     for tile_orientation in 0..12 {
-        let mut monster_count = 0;
+        let mut monsters_locations: Vec<(usize, usize)> = Vec::new();
         for row in 0..picture.size - SEA_MONSTER_HEIGHT {
             for col in 0..picture.size - SEA_MONSTER_WIDTH {
-                if is_monster(picture, row, col, sea_monster_offsets) {
-                    monster_count += 1;
+                if is_monster(picture, row, col, monster_offsets) {
+                    monsters_locations.push((row, col));
                 }
             }
         }
-        if monster_count > 0 {
-            // println!("Found {} monsters in:", monster_count);
-            // picture.print();
-            return monster_count;
+        if !monsters_locations.is_empty() {
+            // print_picture_with_monsters(picture, &monsters_locations, monster_offsets);
+            return monsters_locations.len();
         }
         // If no monsters found, try next tile orientation.
         picture.next_orientation(tile_orientation);
