@@ -6,3 +6,4 @@ Nothing complicated in part 1.
 
 ## Part 2
 
+Part 2 was mostly about understanding the instructions and manipulating the `VecDeque` correctly.

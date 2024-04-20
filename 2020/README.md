@@ -86,6 +86,6 @@ Jigsaw puzzle. Graph. Picture assembling.
 
 Sets, intersections. Pruning a list of options.
 
-### Day 22: [Crab Combat](day22/README.md) 🌟
+### Day 22: [Crab Combat](day22/README.md) 🌟🌟
 
 Card game.
