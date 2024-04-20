@@ -1,4 +1,10 @@
-use std::io::{self, Read};
+use std::{
+    io::{self, Read},
+    vec,
+};
+
+mod square_grid;
+use square_grid::SquareGrid;
 
 // Convert a vector of booleans representing a binary number to an integer.
 fn bin_to_int(bits: &[bool]) -> u32 {
@@ -14,40 +20,6 @@ fn reverse_bits(v: u32) -> u32 {
     v.reverse_bits() >> (32 - Tile::SIZE)
 }
 
-fn pos(cols: usize, row: usize, col: usize) -> usize {
-    row * cols + col
-}
-
-fn transpose(from: &[bool], size: usize) -> Vec<bool> {
-    let mut to = vec![false; from.len()];
-    for i in 0..size {
-        for j in 0..size {
-            to[pos(size, i, j)] = from[pos(size, j, i)];
-        }
-    }
-    to
-}
-
-fn reverse_rows(from: &[bool], size: usize) -> Vec<bool> {
-    let mut to = vec![false; from.len()];
-    for i in 0..size {
-        for j in 0..size {
-            to[pos(size, i, j)] = from[pos(size, i, size - 1 - j)];
-        }
-    }
-    to
-}
-
-fn reverse_columns(from: &[bool], size: usize) -> Vec<bool> {
-    let mut to = vec![false; from.len()];
-    for j in 0..size {
-        for i in 0..size {
-            to[pos(size, i, j)] = from[pos(size, size - 1 - i, j)];
-        }
-    }
-    to
-}
-
 #[allow(
     clippy::cast_sign_loss,
     clippy::cast_precision_loss,
@@ -60,39 +32,35 @@ fn sqrt(v: usize) -> usize {
 #[derive(Clone)]
 struct Tile {
     id: u64,
-    grid: Vec<bool>,
+    grid: SquareGrid,
 }
 
 impl Tile {
     const SIZE: usize = 10;
 
-    #[allow(dead_code)]
-    fn print(&self) {
-        for row in 0..Tile::SIZE {
-            for p in row * Tile::SIZE..(row + 1) * Tile::SIZE {
-                let c = self.grid[p];
-                print!("{}", if c { '#' } else { '.' });
-            }
-            println!();
-        }
-    }
-
     fn get_top_id(&self) -> u32 {
-        bin_to_int(&self.grid[0..Tile::SIZE])
+        bin_to_int(&self.grid.values[0..Tile::SIZE])
     }
 
     fn get_bottom_id(&self) -> u32 {
-        bin_to_int(&self.grid[self.grid.len() - Tile::SIZE..self.grid.len()])
+        bin_to_int(&self.grid.values[self.grid.values.len() - Tile::SIZE..self.grid.values.len()])
     }
 
     fn get_left_id(&self) -> u32 {
-        let bits: Vec<bool> = self.grid.iter().step_by(Tile::SIZE).copied().collect();
+        let bits: Vec<bool> = self
+            .grid
+            .values
+            .iter()
+            .step_by(Tile::SIZE)
+            .copied()
+            .collect();
         bin_to_int(&bits)
     }
 
     fn get_right_id(&self) -> u32 {
         let bits: Vec<bool> = self
             .grid
+            .values
             .iter()
             .skip(Tile::SIZE - 1)
             .step_by(Tile::SIZE)
@@ -127,49 +95,6 @@ impl Tile {
             reverse_bits(border_ids[3]),
         ]
     }
-
-    // Rotate by +90 degres
-    fn rotate(&self) -> Self {
-        let g = transpose(&self.grid, Self::SIZE);
-        let result = reverse_rows(&g, Self::SIZE);
-        Self {
-            id: self.id,
-            grid: result,
-        }
-    }
-
-    fn flip_horizontally(&self) -> Self {
-        let result = reverse_columns(&self.grid, Self::SIZE);
-        Self {
-            id: self.id,
-            grid: result,
-        }
-    }
-
-    fn flip_vertically(&self) -> Self {
-        let result = reverse_rows(&self.grid, Self::SIZE);
-        Self {
-            id: self.id,
-            grid: result,
-        }
-    }
-
-    fn next_orientation(&mut self, orientation: usize) {
-        match orientation % 3 {
-            0 => {
-                *self = self.flip_horizontally();
-            }
-            1 => {
-                *self = self.flip_horizontally();
-                *self = self.flip_vertically();
-            }
-            2 => {
-                *self = self.flip_vertically();
-                *self = self.rotate();
-            }
-            _ => panic!("Invalid orientation"),
-        }
-    }
 }
 
 fn build(input: &str) -> Vec<Tile> {
@@ -180,7 +105,10 @@ fn build(input: &str) -> Vec<Tile> {
     let mut grid = Vec::new();
     for line in it {
         if line.is_empty() {
-            tiles.push(Tile { id, grid });
+            tiles.push(Tile {
+                id,
+                grid: SquareGrid::new(grid, Tile::SIZE),
+            });
             id = 0;
             grid = Vec::new();
             continue;
@@ -196,7 +124,10 @@ fn build(input: &str) -> Vec<Tile> {
         }
         grid.extend(line.chars().map(|c| c == '#'));
     }
-    tiles.push(Tile { id, grid });
+    tiles.push(Tile {
+        id,
+        grid: SquareGrid::new(grid, Tile::SIZE),
+    });
     tiles
 }
 
@@ -361,7 +292,7 @@ fn assemble_image(tiles: &[Tile], graph: &[Vec<usize>]) -> (Vec<Tile>, Vec<Vec<u
                     }
 
                     // If it doesn't fit, try next tile orientation.
-                    tile.next_orientation(tile_orientation);
+                    tile.grid.next_orientation(tile_orientation);
                 }
             }
         }
@@ -372,11 +303,12 @@ fn assemble_image(tiles: &[Tile], graph: &[Vec<usize>]) -> (Vec<Tile>, Vec<Vec<u
 
 // Removes tile borders and merges them.
 #[allow(clippy::needless_range_loop)]
-fn merge_tiles(tiles: &[Tile], puzzle: &[Vec<usize>]) -> Vec<Vec<char>> {
+fn merge_tiles(tiles: &[Tile], puzzle: &[Vec<usize>]) -> SquareGrid {
     let picture_tiles_count = sqrt(tiles.len());
     let picture_size = picture_tiles_count * (Tile::SIZE - 2);
+    let picture_len = picture_size * picture_size;
 
-    let mut picture: Vec<Vec<char>> = vec![vec!['_'; picture_size]; picture_size];
+    let mut picture: SquareGrid = SquareGrid::new(vec![false; picture_len], picture_size);
 
     for row in 0..picture_tiles_count {
         for col in 0..picture_tiles_count {
@@ -386,23 +318,15 @@ fn merge_tiles(tiles: &[Tile], puzzle: &[Vec<usize>]) -> Vec<Vec<char>> {
                 for c in 1..Tile::SIZE - 1 {
                     let rp = row * (Tile::SIZE - 2) + r - 1;
                     let rc = col * (Tile::SIZE - 2) + c - 1;
-                    let p = pos(Tile::SIZE, r, c);
-                    picture[rp][rc] = if tile.grid[p] { '#' } else { '.' };
+                    let rpos = square_grid::pos(picture_size, rp, rc);
+
+                    let p = square_grid::pos(Tile::SIZE, r, c);
+                    picture.values[rpos] = tile.grid.values[p];
                 }
             }
         }
     }
     picture
-}
-
-#[allow(dead_code)]
-fn print_picture(picture: &[Vec<char>]) {
-    for row in 0..picture.len() {
-        for col in 0..picture.len() {
-            print!("{}", picture[row][col]);
-        }
-        println!();
-    }
 }
 
 const SEA_MONSTER: &str = r"                  # 
@@ -423,10 +347,10 @@ fn sea_monster_offsets() -> Vec<(usize, usize)> {
         .collect()
 }
 
-fn is_monster(picture: &[Vec<char>], row: usize, col: usize, offsets: &[(usize, usize)]) -> bool {
+fn is_monster(picture: &SquareGrid, row: usize, col: usize, offsets: &[(usize, usize)]) -> bool {
     offsets.iter().all(|(r_off, c_off)| {
-        let e = picture[row + r_off][col + c_off];
-        e == '#'
+        let pos = square_grid::pos(picture.size, row + r_off, col + c_off);
+        picture.values[pos]
     })
 }
 
@@ -435,12 +359,12 @@ fn count_vals_not_in_sea_monster(tiles: &[Tile]) -> usize {
 
     let (tiles, puzzle) = assemble_image(tiles, &graph);
     let picture = merge_tiles(&tiles, &puzzle);
-    print_picture(&picture);
+    picture.print();
 
     let sea_monster_offsets = sea_monster_offsets();
     let mut monster_count = 0;
-    for row in 0..picture.len() - SEA_MONSTER_HEIGHT {
-        for col in 0..picture[0].len() - SEA_MONSTER_WIDTH {
+    for row in 0..picture.size - SEA_MONSTER_HEIGHT {
+        for col in 0..picture.size - SEA_MONSTER_WIDTH {
             if is_monster(&picture, row, col, &sea_monster_offsets) {
                 monster_count += 1;
             }
