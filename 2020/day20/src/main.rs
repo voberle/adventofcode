@@ -354,24 +354,46 @@ fn is_monster(picture: &SquareGrid, row: usize, col: usize, offsets: &[(usize, u
     })
 }
 
+// Finds the correct orientations of the picture and returns the number of sea monsters in it.
+fn count_sea_monsters(picture: &mut SquareGrid, sea_monster_offsets: &[(usize, usize)]) -> usize {
+    for tile_orientation in 0..12 {
+        let mut monster_count = 0;
+        for row in 0..picture.size - SEA_MONSTER_HEIGHT {
+            for col in 0..picture.size - SEA_MONSTER_WIDTH {
+                if is_monster(picture, row, col, sea_monster_offsets) {
+                    monster_count += 1;
+                }
+            }
+        }
+        if monster_count > 0 {
+            // println!("Found {} monsters in:", monster_count);
+            // picture.print();
+            return monster_count;
+        }
+        // If no monsters found, try next tile orientation.
+        picture.next_orientation(tile_orientation);
+    }
+    panic!("No monsters found");
+}
+
 fn count_vals_not_in_sea_monster(tiles: &[Tile]) -> usize {
     let graph = build_image_graph(tiles);
 
     let (tiles, puzzle) = assemble_image(tiles, &graph);
-    let picture = merge_tiles(&tiles, &puzzle);
-    picture.print();
+    let mut picture = merge_tiles(&tiles, &puzzle);
+    // println!("Assembled picture:");
+    // picture.print();
 
     let sea_monster_offsets = sea_monster_offsets();
-    let mut monster_count = 0;
-    for row in 0..picture.size - SEA_MONSTER_HEIGHT {
-        for col in 0..picture.size - SEA_MONSTER_WIDTH {
-            if is_monster(&picture, row, col, &sea_monster_offsets) {
-                monster_count += 1;
-            }
-        }
-    }
 
-    monster_count
+    let monsters_count = count_sea_monsters(&mut picture, &sea_monster_offsets);
+
+    // Number of '#' in picture.
+    let picture_hash_count = picture.values.iter().filter(|v| **v).count();
+    // Number of '#' in one monster.
+    let monster_hash_count = sea_monster_offsets.len();
+
+    picture_hash_count - monsters_count * monster_hash_count
 }
 
 fn main() {

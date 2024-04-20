@@ -78,6 +78,6 @@ Evaluate math expression. Shunting yard algorithm.
 
 Rules and matching strings.
 
-### Day 20: [Jurassic Jigsaw](day20/README.md) 🌟
+### Day 20: [Jurassic Jigsaw](day20/README.md) 🌟🌟
 
-Jigsaw puzzle. Graph.
+Jigsaw puzzle. Graph. Picture assembling.

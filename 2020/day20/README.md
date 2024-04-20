@@ -17,3 +17,7 @@ NB: I was a bit stuck as to how to find which tiles fit together. I explained wh
 Unfortunately my shortcut for part 1 to find only the corners wasn't enough for part 2, we really need to assemble the image.
 
 Assembling the image wasn't that easy. I started with a corner, and tried all tile orientations until one works, then moved to the next tile and so on.
+
+Then once I had the tiles positions and correct orientations, removing their borders and merging them was a matter of a simpler loop.
+
+I made the square grid code reusable between tiles and the assembled picture to be able to reuse the rotation and flipping code. This then made finding the sea monsters easy.
