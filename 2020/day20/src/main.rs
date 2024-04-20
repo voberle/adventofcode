@@ -405,13 +405,49 @@ fn print_picture(picture: &[Vec<char>]) {
     }
 }
 
+const SEA_MONSTER: &str = r"                  # 
+#    ##    ##    ###
+ #  #  #  #  #  #   ";
+const SEA_MONSTER_WIDTH: usize = 20;
+const SEA_MONSTER_HEIGHT: usize = 3;
+
+fn sea_monster_offsets() -> Vec<(usize, usize)> {
+    SEA_MONSTER
+        .lines()
+        .enumerate()
+        .flat_map(|(row, line)| {
+            line.chars()
+                .enumerate()
+                .filter_map(move |(col, c)| if c == '#' { Some((row, col)) } else { None })
+        })
+        .collect()
+}
+
+fn is_monster(picture: &[Vec<char>], row: usize, col: usize, offsets: &[(usize, usize)]) -> bool {
+    offsets.iter().all(|(r_off, c_off)| {
+        let e = picture[row + r_off][col + c_off];
+        e == '#'
+    })
+}
+
 fn count_vals_not_in_sea_monster(tiles: &[Tile]) -> usize {
     let graph = build_image_graph(tiles);
 
     let (tiles, puzzle) = assemble_image(tiles, &graph);
     let picture = merge_tiles(&tiles, &puzzle);
     print_picture(&picture);
-    0
+
+    let sea_monster_offsets = sea_monster_offsets();
+    let mut monster_count = 0;
+    for row in 0..picture.len() - SEA_MONSTER_HEIGHT {
+        for col in 0..picture[0].len() - SEA_MONSTER_WIDTH {
+            if is_monster(&picture, row, col, &sea_monster_offsets) {
+                monster_count += 1;
+            }
+        }
+    }
+
+    monster_count
 }
 
 fn main() {
