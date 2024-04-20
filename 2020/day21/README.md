@@ -1,0 +1,10 @@
+# Day 21: [Allergen Assessment](https://adventofcode.com/2020/day/21)
+
+## Part 1
+
+With the list of foods that contain each allergen, we take the intersection of each. This gives us a small set of ingredient candidates for each allergen.
+
+Then it's candidate pruning like in [day 16](../day16/README.md).
+
+## Part 2
+

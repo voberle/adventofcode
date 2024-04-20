@@ -81,3 +81,7 @@ Rules and matching strings.
 ### Day 20: [Jurassic Jigsaw](day20/README.md) 🌟🌟
 
 Jigsaw puzzle. Graph. Picture assembling.
+
+### Day 21: [Allergen Assessment](day21/README.md) 🌟
+
+Sets, intersections. Pruning a list of options.
