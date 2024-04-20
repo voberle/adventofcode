@@ -1,9 +1,10 @@
 use std::{
     collections::VecDeque,
+    hash::{Hash, Hasher},
     io::{self, Read},
 };
 
-use fxhash::FxHashSet;
+use fxhash::{FxHashSet, FxHasher};
 
 fn build(input: &str) -> (Vec<u32>, Vec<u32>) {
     let mut deck1 = Vec::new();
@@ -56,22 +57,28 @@ fn get_subdeck(deck: &VecDeque<u32>, nb_cards: usize) -> VecDeque<u32> {
     copy_deck
 }
 
+fn deck_hash(deck: &VecDeque<u32>) -> u64 {
+    let mut hasher = FxHasher::default();
+    deck.hash(&mut hasher);
+    hasher.finish()
+}
+
 fn play_recursive(deck1: &mut VecDeque<u32>, deck2: &mut VecDeque<u32>) {
-    // Is a VecDeque the best to put in the set?
-    let mut prev_decks1: FxHashSet<VecDeque<u32>> = FxHashSet::default();
-    let mut prev_decks2: FxHashSet<VecDeque<u32>> = FxHashSet::default();
+    // We put only a hash in the set, not the full queue.
+    let mut prev_decks1: FxHashSet<u64> = FxHashSet::default();
+    let mut prev_decks2: FxHashSet<u64> = FxHashSet::default();
     recursive_combat(deck1, deck2, &mut prev_decks1, &mut prev_decks2);
 }
 
 fn recursive_combat(
     deck1: &mut VecDeque<u32>,
     deck2: &mut VecDeque<u32>,
-    prev_decks1: &mut FxHashSet<VecDeque<u32>>,
-    prev_decks2: &mut FxHashSet<VecDeque<u32>>,
+    prev_decks1: &mut FxHashSet<u64>,
+    prev_decks2: &mut FxHashSet<u64>,
 ) {
     while !deck1.is_empty() && !deck2.is_empty() {
         // Infinite games prevention.
-        if !prev_decks1.insert(deck1.clone()) || !prev_decks2.insert(deck2.clone()) {
+        if !prev_decks1.insert(deck_hash(deck1)) || !prev_decks2.insert(deck_hash(deck2)) {
             // Player 1 won, clearing deck 2 to make him loose.
             deck2.clear();
             return;
