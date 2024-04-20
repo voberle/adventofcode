@@ -2,52 +2,63 @@ use std::io::{self, Read};
 
 use fxhash::{FxHashMap, FxHashSet};
 use itertools::Itertools;
-use regex::Regex;
 
 #[derive(Debug)]
-struct Food {
-    ingredients: Vec<String>,
-    allergens: Vec<String>,
+struct Food<'a> {
+    ingredients: Vec<&'a str>,
+    allergens: Vec<&'a str>,
+}
+
+impl<'a> Food<'a> {
+    fn new(line: &'a str) -> Self {
+        let mut tokens_it = line.split_ascii_whitespace();
+        let mut ingredients: Vec<&'a str> = Vec::new();
+        loop {
+            let token = tokens_it.next().unwrap();
+            if token.starts_with('(') {
+                // skip "(contains" and move on to allergens
+                break;
+            }
+            ingredients.push(token);
+        }
+
+        let mut allergens: Vec<&'a str> = Vec::new();
+        for mut token in tokens_it {
+            token = token.strip_suffix(',').unwrap_or(token);
+            token = token.strip_suffix(')').unwrap_or(token);
+            allergens.push(token);
+        }
+
+        Food {
+            ingredients,
+            allergens,
+        }
+    }
 }
 
 fn build(input: &str) -> Vec<Food> {
-    let re = Regex::new(r"(.+)\(contains (.+)\)").unwrap();
-    input
-        .lines()
-        .map(|line| {
-            let parts = re.captures(line).unwrap();
-            let ingredients: Vec<String> = parts[1]
-                .split_whitespace()
-                .map(ToString::to_string)
-                .collect();
-            let allergens: Vec<String> = parts[2].split(", ").map(ToString::to_string).collect();
-            Food {
-                ingredients,
-                allergens,
-            }
-        })
-        .collect()
+    input.lines().map(Food::new).collect()
 }
 
-fn find_ingredients_with_allergens(foods: &[Food]) -> FxHashMap<String, String> {
+fn find_ingredients_with_allergens<'a>(foods: &'a [Food]) -> FxHashMap<&'a str, &'a str> {
     // Rules:
     // - Each allergen is found in exactly one ingredient.
     // - Each ingredient contains zero or one allergen.
 
     // For each allergen, have the list of foods that contain it.
-    let mut allergens_in: FxHashMap<String, Vec<FxHashSet<String>>> = FxHashMap::default();
+    let mut allergens_in: FxHashMap<&str, Vec<FxHashSet<&str>>> = FxHashMap::default();
     for food in foods {
         for allergen in &food.allergens {
             allergens_in
-                .entry(allergen.clone())
+                .entry(allergen)
                 .and_modify(|ingredients| {
-                    let ingredients_set: FxHashSet<String> =
-                        food.ingredients.iter().cloned().collect();
+                    let ingredients_set: FxHashSet<&str> =
+                        food.ingredients.iter().copied().collect();
                     ingredients.push(ingredients_set);
                 })
                 .or_insert({
-                    let ingredients_set: FxHashSet<String> =
-                        food.ingredients.iter().cloned().collect();
+                    let ingredients_set: FxHashSet<&str> =
+                        food.ingredients.iter().copied().collect();
                     vec![ingredients_set]
                 });
         }
@@ -56,18 +67,18 @@ fn find_ingredients_with_allergens(foods: &[Food]) -> FxHashMap<String, String> 
 
     // Ingredients candidates that may contain the allergens.
     // This is the interestion of the foods that contain the allergen.
-    let mut allergens_in_reduced: FxHashMap<String, FxHashSet<String>> = FxHashMap::default();
+    let mut allergens_in_reduced: FxHashMap<&str, FxHashSet<&str>> = FxHashMap::default();
     for (allergens, ingredients_sets) in &mut allergens_in {
         let mut iter = ingredients_sets.iter();
         let intersection = iter
             .next()
             .map(|set| {
                 iter.fold(set.clone(), |set1, set2| {
-                    set1.intersection(set2).cloned().collect()
+                    set1.intersection(set2).copied().collect()
                 })
             })
             .unwrap();
-        allergens_in_reduced.insert(allergens.clone(), intersection);
+        allergens_in_reduced.insert(allergens, intersection);
     }
     // println!("{:#?}", allergens_in_reduced);
 
@@ -77,11 +88,11 @@ fn find_ingredients_with_allergens(foods: &[Food]) -> FxHashMap<String, String> 
         .any(|candidates| candidates.len() > 1)
     {
         // Get all ingredients we know.
-        let ingredients_we_know: Vec<String> = allergens_in_reduced
+        let ingredients_we_know: Vec<&str> = allergens_in_reduced
             .values()
             .filter_map(|ingredients| {
                 if ingredients.len() == 1 {
-                    Some(ingredients.iter().next().unwrap().clone())
+                    Some(*ingredients.iter().next().unwrap())
                 } else {
                     None
                 }
@@ -98,18 +109,16 @@ fn find_ingredients_with_allergens(foods: &[Food]) -> FxHashMap<String, String> 
 
     allergens_in_reduced
         .iter()
-        .map(|(allergen, ingredients)| {
-            (allergen.clone(), ingredients.iter().next().unwrap().clone())
-        })
+        .map(|(allergen, ingredients)| (*allergen, *ingredients.iter().next().unwrap()))
         .collect()
 }
 
 fn ingredients_without_allergens_count(
     foods: &[Food],
-    ingredients_with_allergens: &FxHashMap<String, String>,
+    ingredients_with_allergens: &FxHashMap<&str, &str>,
 ) -> usize {
     // Extract the list of ingredients that have allergens.
-    let ingredients: FxHashSet<String> = ingredients_with_allergens.values().cloned().collect();
+    let ingredients: FxHashSet<&str> = ingredients_with_allergens.values().copied().collect();
 
     // Just count how many times we see ingredients without allergens.
     foods
@@ -123,9 +132,7 @@ fn ingredients_without_allergens_count(
         .sum()
 }
 
-fn canonical_dangerous_ingredient(
-    ingredients_with_allergens: &FxHashMap<String, String>,
-) -> String {
+fn canonical_dangerous_ingredient(ingredients_with_allergens: &FxHashMap<&str, &str>) -> String {
     // Sorted alphabetically by their allergen
     ingredients_with_allergens
         .iter()
