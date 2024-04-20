@@ -85,3 +85,7 @@ Jigsaw puzzle. Graph. Picture assembling.
 ### Day 21: [Allergen Assessment](day21/README.md) 🌟🌟
 
 Sets, intersections. Pruning a list of options.
+
+### Day 22: [Crab Combat](day22/README.md) 🌟
+
+Card game.
