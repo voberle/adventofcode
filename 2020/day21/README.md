@@ -8,3 +8,6 @@ Then it's candidate pruning like in [day 16](../day16/README.md).
 
 ## Part 2
 
+I did most of the work in part 1, so part 2 was easy.
+
+My implementation does clone lots of strings, but input is small so no big deal (runs in 2 ms).

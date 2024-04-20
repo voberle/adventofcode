@@ -82,6 +82,6 @@ Rules and matching strings.
 
 Jigsaw puzzle. Graph. Picture assembling.
 
-### Day 21: [Allergen Assessment](day21/README.md) 🌟
+### Day 21: [Allergen Assessment](day21/README.md) 🌟🌟
 
 Sets, intersections. Pruning a list of options.

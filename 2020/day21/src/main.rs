@@ -1,6 +1,7 @@
 use std::io::{self, Read};
 
 use fxhash::{FxHashMap, FxHashSet};
+use itertools::Itertools;
 use regex::Regex;
 
 #[derive(Debug)]
@@ -28,7 +29,7 @@ fn build(input: &str) -> Vec<Food> {
         .collect()
 }
 
-fn find_ingredients_with_allergens(foods: &[Food]) -> FxHashSet<String> {
+fn find_ingredients_with_allergens(foods: &[Food]) -> FxHashMap<String, String> {
     // Rules:
     // - Each allergen is found in exactly one ingredient.
     // - Each ingredient contains zero or one allergen.
@@ -95,15 +96,20 @@ fn find_ingredients_with_allergens(foods: &[Food]) -> FxHashSet<String> {
     }
     // println!("{:#?}", allergens_in_reduced);
 
-    // Extract the list of ingredients that have allergens.
-    let ingredients_with_allergens: FxHashSet<String> =
-        allergens_in_reduced.values().flatten().cloned().collect();
-
-    ingredients_with_allergens
+    allergens_in_reduced
+        .iter()
+        .map(|(allergen, ingredients)| {
+            (allergen.clone(), ingredients.iter().next().unwrap().clone())
+        })
+        .collect()
 }
 
-fn ingredients_without_allergens_count(foods: &[Food]) -> usize {
-    let ingredients_with_allergens = find_ingredients_with_allergens(foods);
+fn ingredients_without_allergens_count(
+    foods: &[Food],
+    ingredients_with_allergens: &FxHashMap<String, String>,
+) -> usize {
+    // Extract the list of ingredients that have allergens.
+    let ingredients: FxHashSet<String> = ingredients_with_allergens.values().cloned().collect();
 
     // Just count how many times we see ingredients without allergens.
     foods
@@ -111,24 +117,38 @@ fn ingredients_without_allergens_count(foods: &[Food]) -> usize {
         .map(|food| {
             food.ingredients
                 .iter()
-                .filter(|i| !ingredients_with_allergens.contains(*i))
+                .filter(|i| !ingredients.contains(*i))
                 .count()
         })
         .sum()
 }
 
-fn part2(foods: &[Food]) -> i64 {
-    0
+fn canonical_dangerous_ingredient(
+    ingredients_with_allergens: &FxHashMap<String, String>,
+) -> String {
+    // Sorted alphabetically by their allergen
+    ingredients_with_allergens
+        .iter()
+        .sorted_unstable_by_key(|(allergen, _)| *allergen)
+        .map(|(_, ingredient)| ingredient)
+        .join(",")
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let foods = build(&input);
-    // println!("{:?}", foods);
 
-    println!("Part 1: {}", ingredients_without_allergens_count(&foods));
-    println!("Part 2: {}", part2(&foods));
+    let ingredients_with_allergens = find_ingredients_with_allergens(&foods);
+
+    println!(
+        "Part 1: {}",
+        ingredients_without_allergens_count(&foods, &ingredients_with_allergens)
+    );
+    println!(
+        "Part 2: {}",
+        canonical_dangerous_ingredient(&ingredients_with_allergens)
+    );
 }
 
 #[cfg(test)]
@@ -139,11 +159,21 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(ingredients_without_allergens_count(&build(INPUT_TEST)), 5);
+        let foods = build(INPUT_TEST);
+        let ingredients_with_allergens = find_ingredients_with_allergens(&foods);
+        assert_eq!(
+            ingredients_without_allergens_count(&foods, &ingredients_with_allergens),
+            5
+        );
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        let foods = build(INPUT_TEST);
+        let ingredients_with_allergens = find_ingredients_with_allergens(&foods);
+        assert_eq!(
+            canonical_dangerous_ingredient(&ingredients_with_allergens),
+            "mxmxvkd,sqjhc,fvjkl"
+        );
     }
 }
