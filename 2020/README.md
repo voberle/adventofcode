@@ -89,3 +89,7 @@ Sets, intersections. Pruning a list of options.
 ### Day 22: [Crab Combat](day22/README.md) 🌟🌟
 
 Card game. Hashes in HashSet.
+
+### Day 23: [Crab Cups](day23/README.md) 🌟
+
+Cups game.
