@@ -8,4 +8,7 @@ This is a hexa grid, like in [2017 Day 11](../../2017/day11/README.md). I reused
 
 Calculating the new floor each time is fairly easy.
 
-But I found the answer while having a bug, and when fixing this bug I don't get the correct answer anymore.. I'm confused.
+Curiously, I found the answer while having two bugs, which neutralized each other:
+
+- In the first condition, I counted black tiles as `black_count >= 2` instead of `black_count > 2`.
+- In the second condition, I forgot to filter out black tiles.

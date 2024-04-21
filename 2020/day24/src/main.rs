@@ -111,21 +111,23 @@ fn black_tiles_after_days(floor: &FxHashSet<CubeCoords>) -> usize {
         // is flipped to white.
         for t in &floor {
             let adjs = t.adjacents();
-            let black_adjacents = adjs.iter().filter(|c| floor.contains(c)).count();
-            if black_adjacents == 0 || black_adjacents >= 2 {
+            let black_count = adjs.iter().filter(|c| floor.contains(c)).count();
+            if black_count == 0 || black_count > 2 {
                 new_floor.remove(t);
             }
+
             all_adjacents.extend(adjs);
         }
 
         // Any white tile with exactly 2 black tiles immediately adjacent to it is flipped to black.
         for t in all_adjacents {
-            // if floor.contains(&t) {
-            //     continue;
-            // }
+            // We should only look at white tiles, so we skip black ones.
+            if floor.contains(&t) {
+                continue;
+            }
             let adjs = t.adjacents();
-            let black_adjacents = adjs.iter().filter(|c| floor.contains(c)).count();
-            if black_adjacents == 2 {
+            let black_count = adjs.iter().filter(|c| floor.contains(c)).count();
+            if black_count == 2 {
                 new_floor.insert(t);
             }
         }
