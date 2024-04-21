@@ -93,3 +93,7 @@ Card game. Hashes in HashSet.
 ### Day 23: [Crab Cups](day23/README.md) 🌟🌟
 
 Cups game.
+
+### Day 24: [Lobby Layout](day24/README.md) 🌟
+
+Hex grid.
