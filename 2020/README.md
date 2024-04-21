@@ -90,6 +90,6 @@ Sets, intersections. Pruning a list of options.
 
 Card game. Hashes in HashSet.
 
-### Day 23: [Crab Cups](day23/README.md) 🌟
+### Day 23: [Crab Cups](day23/README.md) 🌟🌟
 
 Cups game.
