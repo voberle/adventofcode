@@ -94,6 +94,6 @@ Card game. Hashes in HashSet.
 
 Cups game.
 
-### Day 24: [Lobby Layout](day24/README.md) 🌟
+### Day 24: [Lobby Layout](day24/README.md) 🌟🌟
 
 Hex grid.

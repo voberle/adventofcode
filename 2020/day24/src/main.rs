@@ -1,5 +1,7 @@
 use std::io::{self, Read};
 
+use fxhash::FxHashSet;
+
 // Cube coordinates
 // See https://www.redblobgames.com/grids/hexagons/
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -13,6 +15,13 @@ impl CubeCoords {
     fn new(q: i32, r: i32, s: i32) -> Self {
         CubeCoords { q, r, s }
     }
+
+    fn adjacents(&self) -> Vec<CubeCoords> {
+        [East, NorthEast, NorthWest, SouthEast, SouthWest, West]
+            .iter()
+            .map(|dir| dir.next_pos(self))
+            .collect()
+    }
 }
 
 #[derive(Debug)]
@@ -24,7 +33,6 @@ enum Dir {
     NorthWest,
     NorthEast,
 }
-use fxhash::FxHashSet;
 use Dir::{East, NorthEast, NorthWest, SouthEast, SouthWest, West};
 
 impl Dir {
@@ -72,7 +80,7 @@ fn build(input: &str) -> Vec<Vec<Dir>> {
         .collect()
 }
 
-fn black_tiles_count(tiles_list: &[Vec<Dir>]) -> usize {
+fn get_floor(tiles_list: &[Vec<Dir>]) -> FxHashSet<CubeCoords> {
     let mut floor: FxHashSet<CubeCoords> = FxHashSet::default();
     for tiles in tiles_list {
         let mut pos = CubeCoords::new(0, 0, 0);
@@ -86,11 +94,46 @@ fn black_tiles_count(tiles_list: &[Vec<Dir>]) -> usize {
             floor.insert(pos);
         }
     }
-    floor.len()
+    floor
 }
 
-fn part2(tiles_list: &[Vec<Dir>]) -> i64 {
-    0
+fn black_tiles_after_days(floor: &FxHashSet<CubeCoords>) -> usize {
+    const DAYS_COUNT: usize = 100;
+
+    let mut floor = floor.clone();
+    for _ in 0..DAYS_COUNT {
+        let mut new_floor = floor.clone();
+
+        // We collect all tiles adjacent to black, as tiles that may be white and are worth checking.
+        let mut all_adjacents: Vec<CubeCoords> = Vec::new();
+
+        // Any black tile with zero or more than 2 black tiles immediately adjacent to it
+        // is flipped to white.
+        for t in &floor {
+            let adjs = t.adjacents();
+            let black_adjacents = adjs.iter().filter(|c| floor.contains(c)).count();
+            if black_adjacents == 0 || black_adjacents >= 2 {
+                new_floor.remove(t);
+            }
+            all_adjacents.extend(adjs);
+        }
+
+        // Any white tile with exactly 2 black tiles immediately adjacent to it is flipped to black.
+        for t in all_adjacents {
+            // if floor.contains(&t) {
+            //     continue;
+            // }
+            let adjs = t.adjacents();
+            let black_adjacents = adjs.iter().filter(|c| floor.contains(c)).count();
+            if black_adjacents == 2 {
+                new_floor.insert(t);
+            }
+        }
+
+        std::mem::swap(&mut floor, &mut new_floor);
+    }
+
+    floor.len()
 }
 
 fn main() {
@@ -98,8 +141,10 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let tiles_list = build(&input);
 
-    println!("Part 1: {}", black_tiles_count(&tiles_list));
-    println!("Part 2: {}", part2(&tiles_list));
+    let floor = get_floor(&tiles_list);
+
+    println!("Part 1: {}", floor.len());
+    println!("Part 2: {}", black_tiles_after_days(&floor));
 }
 
 #[cfg(test)]
@@ -110,11 +155,13 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(black_tiles_count(&build(INPUT_TEST)), 10);
+        let floor = get_floor(&build(INPUT_TEST));
+        assert_eq!(floor.len(), 10);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        let floor = get_floor(&build(INPUT_TEST));
+        assert_eq!(black_tiles_after_days(&floor), 2208);
     }
 }
