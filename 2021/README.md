@@ -2,6 +2,6 @@
 
 ## Days
 
-### Day 1: [Sonar Sweep](day01/README.md) 🌟
+### Day 1: [Sonar Sweep](day01/README.md) 🌟🌟
 
-Simple.
+Simple. Itertools tuple_windows().

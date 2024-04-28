@@ -1,5 +1,7 @@
 use std::io::{self, Read};
 
+use itertools::Itertools;
+
 fn build(input: &str) -> Vec<u32> {
     input.lines().map(|line| line.parse().unwrap()).collect()
 }
@@ -8,8 +10,13 @@ fn depth_increase_count(depths: &[u32]) -> usize {
     depths.windows(2).filter(|d| d[1] > d[0]).count()
 }
 
-fn part2(depths: &[u32]) -> i64 {
-    0
+fn sum_increase_count(depths: &[u32]) -> usize {
+    depths
+        .windows(3)
+        .map(|d| d.iter().sum::<u32>())
+        .tuple_windows()
+        .filter(|(a, b)| b > a)
+        .count()
 }
 
 fn main() {
@@ -18,7 +25,7 @@ fn main() {
     let depths = build(&input);
 
     println!("Part 1: {}", depth_increase_count(&depths));
-    println!("Part 2: {}", part2(&depths));
+    println!("Part 2: {}", sum_increase_count(&depths));
 }
 
 #[cfg(test)]
@@ -34,6 +41,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(sum_increase_count(&build(INPUT_TEST)), 5);
     }
 }
