@@ -74,7 +74,7 @@ Checking rules. Pruning a list of options.
 
 Evaluate math expression. Shunting yard algorithm.
 
-### Day 19: [Monster Messages](day19/README.md) 🌟
+### Day 19: [Monster Messages](day19/README.md) 🌟🌟
 
 Rules and matching strings.
 

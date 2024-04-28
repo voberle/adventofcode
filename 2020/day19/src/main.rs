@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fmt,
     io::{self, Read},
 };
 
@@ -32,6 +33,39 @@ impl Rule {
                     .collect(),
             )
         }
+    }
+
+    // Checks if there are no sub-rules.
+    fn is_empty(&self) -> bool {
+        match self {
+            Rule::Char(_) => false,
+            Rule::SubRule(sub_rule) => sub_rule.is_empty(),
+        }
+    }
+
+    // Checks if any of the sub-rules contain any of the rule numbers.
+    fn contains(&self, rule_numbers: &[usize]) -> bool {
+        match self {
+            Rule::Char(_) => false,
+            Rule::SubRule(sub_rule) => sub_rule
+                .iter()
+                .any(|r| r.iter().any(|i| rule_numbers.contains(i))),
+        }
+    }
+}
+
+impl fmt::Display for Rule {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Rule::Char(c) => c.to_string(),
+                Rule::SubRule(sub_rule) => {
+                    sub_rule.iter().map(|r| r.iter().join(" ")).join(" | ")
+                }
+            }
+        )
     }
 }
 
@@ -68,9 +102,9 @@ enum Element {
     Index(usize),
 }
 
-fn build_matching_messages(rules: &[Rule]) -> Vec<Vec<char>> {
+fn build_matching_messages_for(rules: &[Rule], rule_nb: usize) -> Vec<Vec<char>> {
     let mut messages: Vec<Vec<Element>> = Vec::new();
-    messages.push(vec![Element::Index(0)]);
+    messages.push(vec![Element::Index(rule_nb)]);
     loop {
         let mut new_messages: Vec<Vec<Element>> = Vec::new();
         for msg in &messages {
@@ -144,18 +178,99 @@ fn build_matching_messages(rules: &[Rule]) -> Vec<Vec<char>> {
         .collect()
 }
 
-fn messages_matching_rule0(rules: &[Rule], messages: &[Vec<char>]) -> usize {
-    let matching_messages = build_matching_messages(rules);
-    // println!("{:?}", messages);
-    // println!("{:?}", matching_messages);
+fn messages_matching_0(rules: &[Rule], messages: &[Vec<char>]) -> usize {
+    let matching_messages = build_matching_messages_for(rules, 0);
     messages
         .iter()
         .filter(|msg| matching_messages.contains(msg))
         .count()
 }
 
-fn part2(rules: &[Rule], messages: &[Vec<char>]) -> usize {
-    0
+fn matching_messages_to_string(messages: &[Vec<char>]) -> String {
+    messages.iter().map(|r| r.iter().join("")).join(" | ")
+}
+
+// Builds each rule as far as possible.
+// nb_to_ignore allows to specify some rule numbers to skip, in our case the ones that are looping.
+#[allow(dead_code)]
+fn print_expanded_rules(rules: &[Rule], nb_to_ignore: &[usize]) {
+    for rule_nb in 0..rules.len() {
+        if rules[rule_nb].is_empty() {
+            continue;
+        }
+        if nb_to_ignore.contains(&rule_nb) {
+            println!("{}: {}", rule_nb, rules[rule_nb]);
+            continue;
+        }
+        if rules[rule_nb].contains(nb_to_ignore) {
+            println!("{}: {}", rule_nb, rules[rule_nb]);
+            continue;
+        }
+        let m = build_matching_messages_for(rules, rule_nb);
+        println!("{}: {}", rule_nb, matching_messages_to_string(&m));
+    }
+}
+
+fn messages_matching_0_updated(rules: &[Rule], messages: &[Vec<char>]) -> usize {
+    // print_expanded_rules(rules, &[8, 11]);
+
+    // The message must start with a sequence from 42 and finish with one of 31.
+    let starting_tokens = build_matching_messages_for(rules, 42);
+    let ending_tokens = build_matching_messages_for(rules, 31);
+
+    let token_size = starting_tokens.first().unwrap().len();
+    assert_eq!(ending_tokens.first().unwrap().len(), token_size);
+
+    messages
+        .iter()
+        .filter(|msg| {
+            let chunks: Vec<Vec<char>> = msg.chunks(token_size).map(<[char]>::to_vec).collect();
+            // Size must be at least 3.
+            if chunks.len() < 3 {
+                return false;
+            }
+            // First 2 must be 42, last must be 31
+            if !starting_tokens.contains(&chunks[0]) {
+                return false;
+            }
+            if !starting_tokens.contains(&chunks[1]) {
+                return false;
+            }
+            if !ending_tokens.contains(chunks.last().unwrap()) {
+                return false;
+            }
+            let mut count_42 = 0;
+            let mut count_31 = 0;
+
+            let mut zone = 1;
+            for chunk in chunks {
+                if zone == 1 {
+                    if starting_tokens.contains(&chunk) {
+                        count_42 += 1;
+                        continue;
+                    } else if ending_tokens.contains(&chunk) {
+                        count_31 += 1;
+                        zone = 2;
+                        continue;
+                    }
+                    return false;
+                }
+                if zone == 2 {
+                    if ending_tokens.contains(&chunk) {
+                        count_31 += 1;
+                        continue;
+                    }
+                    return false;
+                }
+                panic!("Should never get here");
+            }
+            // There must be more 42 than 31.
+            if count_42 <= count_31 {
+                return false;
+            }
+            true
+        })
+        .count()
 }
 
 fn main() {
@@ -163,8 +278,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let (rules, messages) = build(&input);
 
-    println!("Part 1: {}", messages_matching_rule0(&rules, &messages));
-    println!("Part 2: {}", part2(&rules, &messages));
+    println!("Part 1: {}", messages_matching_0(&rules, &messages));
+    println!("Part 2: {}", messages_matching_0_updated(&rules, &messages));
 }
 
 #[cfg(test)]
@@ -177,13 +292,9 @@ mod tests {
     #[test]
     fn test_part1() {
         let (rules, messages) = build(INPUT_TEST_1);
-        assert_eq!(messages_matching_rule0(&rules, &messages), 2);
-        
-        let (rules, messages) = build(INPUT_TEST_2);
-        assert_eq!(messages_matching_rule0(&rules, &messages), 3);
-    }
+        assert_eq!(messages_matching_0(&rules, &messages), 2);
 
-    #[test]
-    fn test_part2() {
+        let (rules, messages) = build(INPUT_TEST_2);
+        assert_eq!(messages_matching_0(&rules, &messages), 3);
     }
 }
