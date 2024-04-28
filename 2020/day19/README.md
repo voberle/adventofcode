@@ -43,3 +43,7 @@ Rule 11 is made of one or more 42, followed by the same number of 31:
 So we conclude the message must start with a sequence from 42 and finish with a sequence of 31. It also must have at least 2 42 at the beginning and 1 at the end. Finally, there must be more 42 than 31.
 
 Checking for all these rules gave me the correct number of matching messages.
+
+## Update
+
+Turns out using regular expressions was probably the simplest approach, although many people also managed to do it with recursion, the first approach I had tried.
