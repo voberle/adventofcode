@@ -97,3 +97,5 @@ Cups game.
 ### Day 24: [Lobby Layout](day24/README.md) 🌟🌟
 
 Hex grid.
+
+### Day 25: [Combo Breaker](day25/README.md)
