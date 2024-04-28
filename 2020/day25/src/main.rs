@@ -5,26 +5,38 @@ fn build(input: &str) -> Vec<u64> {
 }
 
 #[allow(clippy::unreadable_literal)]
+const TRANSFORM_CONST: u64 = 20201227;
+
 fn transform_subject_number(subject_number: u64, loop_size: usize) -> u64 {
     let mut value: u64 = 1;
     for _ in 0..loop_size {
         value *= subject_number;
-        value %= 20201227;
+        value %= TRANSFORM_CONST;
     }
     value
 }
 
-fn encryption_key(public_keys: &[u64]) -> u64 {
-    let mut loop_size = 1;
-    loop {
-        let t = transform_subject_number(7, loop_size);
-        if t == public_keys[0] {
-            break;
-        }
-        loop_size += 1;
-    }
+fn find_loop_size(public_keys: &[u64]) -> (usize, usize) {
+    const SUBJECT_NUMBER: u64 = 7;
 
-    transform_subject_number(public_keys[1], loop_size)
+    let mut value: u64 = 1;
+    for loop_size in 1.. {
+        value *= SUBJECT_NUMBER;
+        value %= TRANSFORM_CONST;
+        if public_keys[0] == value {
+            return (0, loop_size);
+        }
+        if public_keys[1] == value {
+            return (1, loop_size);
+        }
+    }
+    panic!("No loop size found")
+}
+
+fn encryption_key(public_keys: &[u64]) -> u64 {
+    let (idx, loop_size) = find_loop_size(public_keys);
+
+    transform_subject_number(public_keys[1 - idx], loop_size)
 }
 
 fn main() {

@@ -98,4 +98,6 @@ Cups game.
 
 Hex grid.
 
-### Day 25: [Combo Breaker](day25/README.md)
+### Day 25: [Combo Breaker](day25/README.md) 🌟🌟
+
+Asymmetric cryptography.
