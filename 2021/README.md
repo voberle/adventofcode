@@ -6,6 +6,6 @@
 
 Simple. Itertools tuple_windows().
 
-### Day 2: [Dive!](day02/README.md) 🌟
+### Day 2: [Dive!](day02/README.md) 🌟🌟
 
 Moving instructions.

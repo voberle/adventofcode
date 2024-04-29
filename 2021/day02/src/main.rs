@@ -5,7 +5,7 @@ enum Instruction {
     Down(u32),
     Up(u32),
 }
-use Instruction::{Forward, Down, Up};
+use Instruction::{Down, Forward, Up};
 
 fn build(input: &str) -> Vec<Instruction> {
     input
@@ -37,8 +37,21 @@ fn final_hor_x_depth(instructions: &[Instruction]) -> u32 {
     position * depth
 }
 
-fn part2(instructions: &[Instruction]) -> u32 {
-    0
+fn final_hor_x_depth_new_meaning(instructions: &[Instruction]) -> u32 {
+    let mut position = 0;
+    let mut depth = 0;
+    let mut aim = 0;
+    for ins in instructions {
+        match ins {
+            Forward(val) => {
+                position += val;
+                depth += val * aim;
+            }
+            Down(val) => aim += val,
+            Up(val) => aim -= val,
+        }
+    }
+    position * depth
 }
 
 fn main() {
@@ -47,7 +60,7 @@ fn main() {
     let instructions = build(&input);
 
     println!("Part 1: {}", final_hor_x_depth(&instructions));
-    println!("Part 2: {}", part2(&instructions));
+    println!("Part 2: {}", final_hor_x_depth_new_meaning(&instructions));
 }
 
 #[cfg(test)]
@@ -63,6 +76,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(final_hor_x_depth_new_meaning(&build(INPUT_TEST)), 900);
     }
 }
