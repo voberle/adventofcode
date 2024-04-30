@@ -7,12 +7,6 @@ enum Spot {
     Marked(u32),
 }
 
-enum PlacementResult {
-    Unplaced,
-    Placed,
-    Win,
-}
-
 #[derive(Debug, Clone)]
 struct Board(Vec<Vec<Spot>>);
 
@@ -23,7 +17,7 @@ impl Board {
 
     #[allow(dead_code)]
     fn print(&self) {
-        const RED: &str = "\x1b[31m";
+        const RED: &str = "\x1b[1m";
         const RESET: &str = "\x1b[0m";
         for row in 0..self.0.len() {
             for col in 0..self.0[row].len() {
@@ -45,22 +39,20 @@ impl Board {
         (0..5).all(|row| matches!(self.0[row][col], Spot::Marked(_)))
     }
 
-    // Try to place a number on a board.
-    fn place_number(&mut self, number: u32) -> PlacementResult {
+    // Try to place a number on a board. Returns true if it causes the board to be won.
+    fn place_number(&mut self, number: u32) -> bool {
         for row in 0..5 {
             for col in 0..5 {
                 if matches!(self.0[row][col], Spot::Unmarked(n) if n == number) {
                     self.0[row][col] = Spot::Marked(number);
 
-                    return if self.row_wins(row) || self.col_wins(col) {
-                        PlacementResult::Win
-                    } else {
-                        PlacementResult::Placed
-                    };
+                    if self.row_wins(row) || self.col_wins(col) {
+                        return true;
+                    }
                 }
             }
         }
-        PlacementResult::Unplaced
+        false
     }
 
     fn unmarked_sum(&self) -> u32 {
@@ -110,14 +102,10 @@ fn build(input: &str) -> (Vec<u32>, Vec<Board>) {
 fn place_number(boards: &mut [Board], number: u32) -> Vec<usize> {
     let mut winning_boards = Vec::new();
     for (i, board) in boards.iter_mut().enumerate() {
-        let res = board.place_number(number);
-        match res {
-            PlacementResult::Unplaced | PlacementResult::Placed => {}
-            PlacementResult::Win => {
-                // We don't return here but place on all boards even if we won,
-                // since it matters for part 2.
-                winning_boards.push(i);
-            }
+        if board.place_number(number) {
+            // A number can be on multiple boards, make sure we place it on all
+            // even if we have a winning one.
+            winning_boards.push(i);
         }
     }
     winning_boards
