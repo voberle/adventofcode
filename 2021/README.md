@@ -13,3 +13,7 @@ Moving instructions.
 ### Day 3: [Binary Diagnostic](day03/README.md) 🌟🌟
 
 Binary numbers.
+
+### Day 4: [Giant Squid](day04/README.md) 🌟
+
+Bingo game. Parsing.
