@@ -14,6 +14,6 @@ Moving instructions.
 
 Binary numbers.
 
-### Day 4: [Giant Squid](day04/README.md) 🌟
+### Day 4: [Giant Squid](day04/README.md) 🌟🌟
 
 Bingo game. Parsing.

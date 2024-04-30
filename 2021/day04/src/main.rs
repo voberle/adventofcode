@@ -106,26 +106,60 @@ fn build(input: &str) -> (Vec<u32>, Vec<Board>) {
     (numbers, boards)
 }
 
+// Returns the indexes of the winning boards, if any.
+fn place_number(boards: &mut [Board], number: u32) -> Vec<usize> {
+    let mut winning_boards = Vec::new();
+    for (i, board) in boards.iter_mut().enumerate() {
+        let res = board.place_number(number);
+        match res {
+            PlacementResult::Unplaced | PlacementResult::Placed => {}
+            PlacementResult::Win => {
+                // We don't return here but place on all boards even if we won,
+                // since it matters for part 2.
+                winning_boards.push(i);
+            }
+        }
+    }
+    winning_boards
+}
+
 fn final_score(numbers: &[u32], boards: &[Board]) -> u32 {
     let mut boards = boards.to_vec();
 
     for number in numbers {
-        for board in &mut boards {
-            let res = board.place_number(*number);
-            match res {
-                PlacementResult::Unplaced | PlacementResult::Placed => {}
-                PlacementResult::Win => {
-                    // board.print();
-                    return board.unmarked_sum() * number;
-                }
+        let winning_boards = place_number(&mut boards, *number);
+        if !winning_boards.is_empty() {
+            assert_eq!(winning_boards.len(), 1);
+            let idx = *winning_boards.first().unwrap();
+            return boards[idx].unmarked_sum() * number;
+        }
+    }
+    panic!("No winner")
+}
+
+fn squid_final_score(numbers: &[u32], boards: &[Board]) -> u32 {
+    let mut boards = boards.to_vec();
+
+    for number in numbers {
+        let winning_boards = place_number(&mut boards, *number);
+
+        if !winning_boards.is_empty() {
+            // If it was the last board, squid won.
+            if boards.len() == 1 {
+                assert_eq!(winning_boards.len(), 1);
+                let idx = *winning_boards.first().unwrap();
+                // println!("Last number {}", number);
+                // boards[idx].print();
+                return boards[idx].unmarked_sum() * number;
+            }
+
+            // Remove winning boards.
+            for idx in winning_boards.iter().rev() {
+                boards.remove(*idx);
             }
         }
     }
-    0
-}
-
-fn part2(numbers: &[u32], boards: &[Board]) -> i64 {
-    0
+    panic!("No winner")
 }
 
 fn main() {
@@ -134,7 +168,7 @@ fn main() {
     let (numbers, boards) = build(&input);
 
     println!("Part 1: {}", final_score(&numbers, &boards));
-    println!("Part 2: {}", part2(&numbers, &boards));
+    println!("Part 2: {}", squid_final_score(&numbers, &boards));
 }
 
 #[cfg(test)]
@@ -152,6 +186,6 @@ mod tests {
     #[test]
     fn test_part2() {
         let (numbers, boards) = build(INPUT_TEST);
-        assert_eq!(part2(&numbers, &boards), 0);
+        assert_eq!(squid_final_score(&numbers, &boards), 1924);
     }
 }
