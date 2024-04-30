@@ -1,16 +1,42 @@
-use std::io::{self, Read};
+use std::{
+    io::{self, Read},
+    ops::{Index, IndexMut},
+};
 
 #[derive(Clone)]
 struct Number(Vec<u32>);
 
 impl Number {
-    fn new(s: &str) -> Self {
+    fn new(len: usize) -> Self {
+        Self(vec![0; len])
+    }
+
+    fn to_number(&self) -> u32 {
+        self.0.iter().fold(0, |acc, v| (acc << 1) + v)
+    }
+}
+
+impl From<&str> for Number {
+    fn from(s: &str) -> Self {
         Self(s.chars().map(|c| c.to_digit(10).unwrap()).collect())
     }
 }
 
+impl Index<usize> for Number {
+    type Output = u32;
+    fn index(&self, idx: usize) -> &Self::Output {
+        &self.0[idx]
+    }
+}
+
+impl IndexMut<usize> for Number {
+    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
+        &mut self.0[idx]
+    }
+}
+
 fn build(input: &str) -> Vec<Number> {
-    input.lines().map(Number::new).collect()
+    input.lines().map(Number::from).collect()
 }
 
 // Count the number of 0s and 1s for the specified position.
@@ -31,8 +57,8 @@ fn count_values_at(numbers: &[Number], pos: usize) -> (usize, usize) {
 fn power_consumption(numbers: &[Number]) -> u32 {
     let len = numbers.first().unwrap().0.len();
 
-    let mut gamma_rate_bytes = vec![0; len]; // most common
-    let mut epsilon_rate_bytes = vec![0; len]; // least common
+    let mut gamma_rate_bytes = Number::new(len); // most common
+    let mut epsilon_rate_bytes = Number::new(len); // least common
     for i in 0..len {
         let (zeros, ones) = count_values_at(numbers, i);
         if zeros > ones {
@@ -44,10 +70,7 @@ fn power_consumption(numbers: &[Number]) -> u32 {
         }
     }
 
-    let gamma_rate = gamma_rate_bytes.iter().fold(0, |acc, v| (acc << 1) + v);
-    let epsilon_rate = epsilon_rate_bytes.iter().fold(0, |acc, v| (acc << 1) + v);
-
-    gamma_rate * epsilon_rate
+    gamma_rate_bytes.to_number() * epsilon_rate_bytes.to_number()
 }
 
 fn get_rating(numbers: &[Number], keep_zeros_fn: fn(usize, usize) -> bool) -> u32 {
@@ -57,13 +80,13 @@ fn get_rating(numbers: &[Number], keep_zeros_fn: fn(usize, usize) -> bool) -> u3
     while numbers.len() > 1 {
         let (zeros, ones) = count_values_at(&numbers, current_bit_pos);
         if keep_zeros_fn(zeros, ones) {
-            numbers.retain(|n| n.0[current_bit_pos] == 0);
+            numbers.retain(|n| n[current_bit_pos] == 0);
         } else {
-            numbers.retain(|n| n.0[current_bit_pos] == 1);
+            numbers.retain(|n| n[current_bit_pos] == 1);
         }
         current_bit_pos += 1;
     }
-    numbers[0].0.iter().fold(0, |acc, v| (acc << 1) + v)
+    numbers.first().unwrap().to_number()
 }
 
 fn life_support_rating(numbers: &[Number]) -> u32 {
