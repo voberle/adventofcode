@@ -9,3 +9,7 @@ Simple. Itertools tuple_windows().
 ### Day 2: [Dive!](day02/README.md) 🌟🌟
 
 Moving instructions.
+
+### Day 3: [Binary Diagnostic](day03/README.md) 🌟
+
+Binary numbers.
