@@ -10,6 +10,6 @@ Simple. Itertools tuple_windows().
 
 Moving instructions.
 
-### Day 3: [Binary Diagnostic](day03/README.md) 🌟
+### Day 3: [Binary Diagnostic](day03/README.md) 🌟🌟
 
 Binary numbers.

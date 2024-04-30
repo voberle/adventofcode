@@ -1,5 +1,6 @@
 use std::io::{self, Read};
 
+#[derive(Clone)]
 struct Number(Vec<u32>);
 
 impl Number {
@@ -12,26 +13,29 @@ fn build(input: &str) -> Vec<Number> {
     input.lines().map(Number::new).collect()
 }
 
-fn power_consumption(numbers: &[Number]) -> u32 {
-    let len = numbers.first().unwrap().0.len();
-
-    // Count the number of 0s and 1s for each position.
-    let mut zeros = vec![0; len];
-    let mut ones = vec![0; len];
+// Count the number of 0s and 1s for the specified position.
+fn count_values_at(numbers: &[Number], pos: usize) -> (usize, usize) {
+    let mut zeros = 0;
+    let mut ones = 0;
     for n in numbers {
-        for (i, b) in n.0.iter().enumerate() {
-            if *b == 0 {
-                zeros[i] += 1;
-            } else if *b == 1 {
-                ones[i] += 1;
-            }
+        let b = n.0[pos];
+        if b == 0 {
+            zeros += 1;
+        } else if b == 1 {
+            ones += 1;
         }
     }
+    (zeros, ones)
+}
+
+fn power_consumption(numbers: &[Number]) -> u32 {
+    let len = numbers.first().unwrap().0.len();
 
     let mut gamma_rate_bytes = vec![0; len]; // most common
     let mut epsilon_rate_bytes = vec![0; len]; // least common
     for i in 0..len {
-        if zeros[i] > ones[i] {
+        let (zeros, ones) = count_values_at(numbers, i);
+        if zeros > ones {
             gamma_rate_bytes[i] = 0;
             epsilon_rate_bytes[i] = 1;
         } else {
@@ -46,8 +50,27 @@ fn power_consumption(numbers: &[Number]) -> u32 {
     gamma_rate * epsilon_rate
 }
 
-fn part2(numbers: &[Number]) -> u32 {
-    0
+fn get_rating(numbers: &[Number], keep_zeros_fn: fn(usize, usize) -> bool) -> u32 {
+    let mut numbers = numbers.to_vec();
+    let mut current_bit_pos = 0;
+
+    while numbers.len() > 1 {
+        let (zeros, ones) = count_values_at(&numbers, current_bit_pos);
+        if keep_zeros_fn(zeros, ones) {
+            numbers.retain(|n| n.0[current_bit_pos] == 0);
+        } else {
+            numbers.retain(|n| n.0[current_bit_pos] == 1);
+        }
+        current_bit_pos += 1;
+    }
+    numbers[0].0.iter().fold(0, |acc, v| (acc << 1) + v)
+}
+
+fn life_support_rating(numbers: &[Number]) -> u32 {
+    let oxygen_generator_rating = get_rating(numbers, |zeros, ones| zeros > ones);
+    let co2_scrubber_rating = get_rating(numbers, |zeros, ones| zeros <= ones);
+
+    oxygen_generator_rating * co2_scrubber_rating
 }
 
 fn main() {
@@ -56,7 +79,7 @@ fn main() {
     let numbers = build(&input);
 
     println!("Part 1: {}", power_consumption(&numbers));
-    println!("Part 2: {}", part2(&numbers));
+    println!("Part 2: {}", life_support_rating(&numbers));
 }
 
 #[cfg(test)]
@@ -72,6 +95,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(life_support_rating(&build(INPUT_TEST)), 230);
     }
 }
