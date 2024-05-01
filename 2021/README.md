@@ -29,3 +29,7 @@ Line intersections.
 ### Day 6: [Lanternfish](day06/README.md) 🌟🌟
 
 Optimization of exponentially growing problem.
+
+### Day 7: [The Treachery of Whales](day07/README.md) 🌟
+
+Optimization?
