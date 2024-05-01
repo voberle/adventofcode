@@ -30,6 +30,6 @@ Line intersections.
 
 Optimization of exponentially growing problem.
 
-### Day 7: [The Treachery of Whales](day07/README.md) 🌟
+### Day 7: [The Treachery of Whales](day07/README.md) 🌟🌟
 
-Optimization?
+OEIS. Triangular numbers.
