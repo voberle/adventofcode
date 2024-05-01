@@ -21,3 +21,7 @@ Bingo game. Parsing.
 ### Day 5: [Hydrothermal Venture](day05/README.md) 🌟🌟
 
 Line intersections.
+
+### Day 6: [Lanternfish](day06/README.md) 🌟
+
+Optimization of exponentially growing problem.
