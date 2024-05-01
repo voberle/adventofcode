@@ -33,3 +33,7 @@ Optimization of exponentially growing problem.
 ### Day 7: [The Treachery of Whales](day07/README.md) 🌟🌟
 
 OEIS. Triangular numbers.
+
+### Day 8: [Seven Segment Search](day08/README.md) 🌟
+
+Deduction.
