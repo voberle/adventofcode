@@ -1,7 +1,4 @@
-use std::{
-    cmp::Ordering,
-    io::{self, Read},
-};
+use std::io::{self, Read};
 
 use fxhash::FxHashMap;
 use itertools::Itertools;
@@ -18,15 +15,9 @@ struct Line {
 
 impl Line {
     fn build(s: &str) -> Self {
-        let (p1, p2) = s.split(" -> ").collect_tuple().unwrap();
-        let (x1, y1) = p1
-            .split(',')
-            .map(|v| v.parse().unwrap())
-            .collect_tuple()
-            .unwrap();
-        let (x2, y2) = p2
-            .split(',')
-            .map(|v| v.parse().unwrap())
+        let (x1, y1, x2, y2) = s
+            .split(" -> ")
+            .flat_map(|p| p.split(',').map(|v| v.parse().unwrap()))
             .collect_tuple()
             .unwrap();
         Self { x1, y1, x2, y2 }
@@ -36,19 +27,10 @@ impl Line {
         self.x1 == self.x2 || self.y1 == self.y2
     }
 
-    #[allow(clippy::cast_possible_wrap)]
     fn get_points(&self) -> Vec<Point> {
-        let x_inc = match self.x1.cmp(&self.x2) {
-            Ordering::Less => 1,
-            Ordering::Greater => -1,
-            Ordering::Equal => 0,
-        };
-        let y_inc = match self.y1.cmp(&self.y2) {
-            Ordering::Less => 1,
-            Ordering::Greater => -1,
-            Ordering::Equal => 0,
-        };
-        let points_count = self.x1.abs_diff(self.x2).max(self.y1.abs_diff(self.y2)) as i32;
+        let x_inc = i32::signum(self.x2 - self.x1);
+        let y_inc = i32::signum(self.y2 - self.y1);
+        let points_count = i32::abs(self.x1 - self.x2).max(i32::abs(self.y1 - self.y2));
 
         (0..=points_count)
             .map(|n| (self.x1 + n * x_inc, self.y1 + n * y_inc))
