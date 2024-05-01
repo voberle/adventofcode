@@ -4,29 +4,31 @@ fn build(input: &str) -> Vec<usize> {
     input.split(',').map(|line| line.parse().unwrap()).collect()
 }
 
-fn step(fishes: &mut Vec<usize>) {
-    let mut new_fishes: Vec<usize> = Vec::new();
-    for fish in &mut *fishes {
-        if *fish == 0 {
-            *fish = 6;
-            new_fishes.push(8);
-        } else {
-            *fish -= 1;
-        }
+// Converts the list of fishes age into an array counting how many fish of each age there is.
+fn convert(fishes: &[usize]) -> [usize; 9] {
+    let mut ages = [0; 9];
+    for fish in fishes {
+        ages[*fish] += 1;
     }
-    fishes.extend(new_fishes);
+    ages
 }
 
-fn fish_count(fishes: &[usize], days: usize) -> usize {
-    let mut fishes = fishes.to_vec();
+fn step(fish_ages: &[usize]) -> Vec<usize> {
+    let mut new_ages = vec![0; 9];
+    // Slides all the ages left by 1.
+    new_ages[..(fish_ages.len() - 1)].copy_from_slice(&fish_ages[1..]);
+
+    new_ages[6] += fish_ages[0];
+    new_ages[8] += fish_ages[0];
+    new_ages
+}
+
+fn fish_count(fish_ages: &[usize], days: usize) -> usize {
+    let mut fish_ages = fish_ages.to_vec();
     for _ in 0..days {
-        step(&mut fishes);
+        fish_ages = step(&fish_ages);
     }
-    fishes.len()
-}
-
-fn part2(fishes: &[usize]) -> i64 {
-    0
+    fish_ages.iter().sum()
 }
 
 fn main() {
@@ -34,8 +36,10 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let fishes = build(&input);
 
-    println!("Part 1: {}", fish_count(&fishes, 80));
-    println!("Part 2: {}", part2(&fishes));
+    let fish_ages = convert(&fishes);
+
+    println!("Part 1: {}", fish_count(&fish_ages, 80));
+    println!("Part 2: {}", fish_count(&fish_ages, 256));
 }
 
 #[cfg(test)]
@@ -46,12 +50,14 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(fish_count(&build(INPUT_TEST), 18), 26);
-        assert_eq!(fish_count(&build(INPUT_TEST), 80), 5934);
+        let fish_ages = convert(&build(INPUT_TEST));
+        assert_eq!(fish_count(&fish_ages, 18), 26);
+        assert_eq!(fish_count(&fish_ages, 80), 5934);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        let fish_ages = convert(&build(INPUT_TEST));
+        assert_eq!(fish_count(&fish_ages, 256), 26984457539);
     }
 }

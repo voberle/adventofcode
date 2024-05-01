@@ -22,6 +22,6 @@ Bingo game. Parsing.
 
 Line intersections.
 
-### Day 6: [Lanternfish](day06/README.md) 🌟
+### Day 6: [Lanternfish](day06/README.md) 🌟🌟
 
 Optimization of exponentially growing problem.
