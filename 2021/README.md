@@ -3,6 +3,8 @@
 ## Wrapup
 
 - Day 1 to 6 were nice, with experience they were simple enough but still interesting. I enjoyed making the code as short and nice as possible. I'm very happy with the result for days 5 and 6 in particular.
+- OEIS was handy in day 7.
+- Day 8 was the first complex one. It was a fun deduction game.
 
 ## Days
 
@@ -34,6 +36,6 @@ Optimization of exponentially growing problem.
 
 OEIS. Triangular numbers.
 
-### Day 8: [Seven Segment Search](day08/README.md) 🌟
+### Day 8: [Seven Segment Search](day08/README.md) 🌟🌟
 
 Deduction.
