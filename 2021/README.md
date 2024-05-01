@@ -17,3 +17,7 @@ Binary numbers.
 ### Day 4: [Giant Squid](day04/README.md) 🌟🌟
 
 Bingo game. Parsing.
+
+### Day 5: [Hydrothermal Venture](day05/README.md) 🌟
+
+Line intersections.
