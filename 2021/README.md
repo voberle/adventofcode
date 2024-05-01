@@ -1,5 +1,9 @@
 # Advent of Code 2021
 
+## Wrapup
+
+- Day 1 to 6 were nice, with experience they were simple enough but still interesting. I enjoyed making the code as short and nice as possible. I'm very happy with the result for days 5 and 6 in particular.
+
 ## Days
 
 ### Day 1: [Sonar Sweep](day01/README.md) 🌟🌟

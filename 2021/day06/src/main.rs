@@ -13,22 +13,18 @@ fn convert(fishes: &[usize]) -> [usize; 9] {
     ages
 }
 
-fn step(fish_ages: &[usize]) -> Vec<usize> {
-    let mut new_ages = vec![0; 9];
-    // Slides all the ages left by 1.
-    new_ages[..(fish_ages.len() - 1)].copy_from_slice(&fish_ages[1..]);
-
-    new_ages[6] += fish_ages[0];
-    new_ages[8] += fish_ages[0];
-    new_ages
-}
-
 fn fish_count(fish_ages: &[usize], days: usize) -> usize {
-    let mut fish_ages = fish_ages.to_vec();
+    let mut ages = [0; 9];
+    ages.clone_from_slice(fish_ages);
+
     for _ in 0..days {
-        fish_ages = step(&fish_ages);
+        // Slides all the ages left by 1.
+        ages.rotate_left(1);
+        // The ones with timer 0 reproduced: New ones got age 8 (so at index 8),
+        // and existing ones get age 6 (so to be added to index 6)/
+        ages[6] += ages[8];
     }
-    fish_ages.iter().sum()
+    ages.iter().sum()
 }
 
 fn main() {
