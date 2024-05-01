@@ -1,14 +1,19 @@
-use std::io::{self, Read};
+use std::{
+    cmp::Ordering,
+    io::{self, Read},
+};
 
 use fxhash::FxHashMap;
 use itertools::Itertools;
 
+type Point = (i32, i32);
+
 #[derive(Debug, Clone)]
 struct Line {
-    x1: u32,
-    y1: u32,
-    x2: u32,
-    y2: u32,
+    x1: i32,
+    y1: i32,
+    x2: i32,
+    y2: i32,
 }
 
 impl Line {
@@ -27,32 +32,27 @@ impl Line {
         Self { x1, y1, x2, y2 }
     }
 
-    fn is_horizontal(&self) -> bool {
-        self.x1 == self.x2
+    fn is_horizontal_or_vertical(&self) -> bool {
+        self.x1 == self.x2 || self.y1 == self.y2
     }
 
-    fn is_vertical(&self) -> bool {
-        self.y1 == self.y2
-    }
+    #[allow(clippy::cast_possible_wrap)]
+    fn get_points(&self) -> Vec<Point> {
+        let x_inc = match self.x1.cmp(&self.x2) {
+            Ordering::Less => 1,
+            Ordering::Greater => -1,
+            Ordering::Equal => 0,
+        };
+        let y_inc = match self.y1.cmp(&self.y2) {
+            Ordering::Less => 1,
+            Ordering::Greater => -1,
+            Ordering::Equal => 0,
+        };
+        let points_count = self.x1.abs_diff(self.x2).max(self.y1.abs_diff(self.y2)) as i32;
 
-    fn get_points(&self) -> Vec<(u32, u32)> {
-        if self.is_horizontal() {
-            let (y1, y2) = if self.y1 < self.y2 {
-                (self.y1, self.y2)
-            } else {
-                (self.y2, self.y1)
-            };
-            (y1..=y2).map(|y| (self.x1, y)).collect()
-        } else if self.is_vertical() {
-            let (x1, x2) = if self.x1 < self.x2 {
-                (self.x1, self.x2)
-            } else {
-                (self.x2, self.x1)
-            };
-            (x1..=x2).map(|x| (x, self.y1)).collect()
-        } else {
-            panic!("Only horizontal or vertical lines supported")
-        }
+        (0..=points_count)
+            .map(|n| (self.x1 + n * x_inc, self.y1 + n * y_inc))
+            .collect()
     }
 }
 
@@ -60,23 +60,17 @@ fn build(input: &str) -> Vec<Line> {
     input.lines().map(Line::build).collect()
 }
 
-fn points_with_two_more_overlapping(lines: &[Line]) -> usize {
+fn overlapping_points(lines: &[Line], filter_fn: fn(&Line) -> bool) -> usize {
     // Brute-forcing it.
-    let mut points: FxHashMap<(u32, u32), usize> = FxHashMap::default();
-    for line in lines
+    let mut points: FxHashMap<Point, usize> = FxHashMap::default();
+    lines
         .iter()
-        .filter(|line| line.is_horizontal() || line.is_vertical())
-    {
-        let line_points = line.get_points();
-        for p in line_points {
+        .filter(|line| filter_fn(line))
+        .flat_map(Line::get_points)
+        .for_each(|p| {
             points.entry(p).and_modify(|e| *e += 1).or_insert(1);
-        }
-    }
+        });
     points.values().filter(|c| **c >= 2).count()
-}
-
-fn part2(lines: &[Line]) -> usize {
-    0
 }
 
 fn main() {
@@ -84,8 +78,11 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let lines = build(&input);
 
-    println!("Part 1: {}", points_with_two_more_overlapping(&lines));
-    println!("Part 2: {}", part2(&lines));
+    println!(
+        "Part 1: {}",
+        overlapping_points(&lines, Line::is_horizontal_or_vertical)
+    );
+    println!("Part 2: {}", overlapping_points(&lines, |_| true));
 }
 
 #[cfg(test)]
@@ -95,12 +92,35 @@ mod tests {
     const INPUT_TEST: &str = include_str!("../resources/input_test_1");
 
     #[test]
+    fn test_get_points() {
+        assert_eq!(
+            Line::build("1,1 -> 1,3").get_points(),
+            &[(1, 1), (1, 2), (1, 3)]
+        );
+        assert_eq!(
+            Line::build("9,7 -> 7,7").get_points(),
+            &[(9, 7), (8, 7), (7, 7)]
+        );
+        assert_eq!(
+            Line::build("1,1 -> 3,3").get_points(),
+            &[(1, 1), (2, 2), (3, 3)]
+        );
+        assert_eq!(
+            Line::build("9,7 -> 7,9").get_points(),
+            &[(9, 7), (8, 8), (7, 9)]
+        );
+    }
+
+    #[test]
     fn test_part1() {
-        assert_eq!(points_with_two_more_overlapping(&build(INPUT_TEST)), 5);
+        assert_eq!(
+            overlapping_points(&build(INPUT_TEST), Line::is_horizontal_or_vertical),
+            5
+        );
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(overlapping_points(&build(INPUT_TEST), |_| true), 12);
     }
 }

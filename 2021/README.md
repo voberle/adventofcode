@@ -18,6 +18,6 @@ Binary numbers.
 
 Bingo game. Parsing.
 
-### Day 5: [Hydrothermal Venture](day05/README.md) 🌟
+### Day 5: [Hydrothermal Venture](day05/README.md) 🌟🌟
 
 Line intersections.
