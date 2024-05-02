@@ -111,7 +111,7 @@ impl Grid {
     }
 }
 
-fn step(octopuses: &mut Grid) -> usize {
+fn run_step(octopuses: &mut Grid) -> usize {
     // println!("---------");
     // octopuses.print();
 
@@ -156,11 +156,18 @@ fn step(octopuses: &mut Grid) -> usize {
 
 fn total_flashes(octopuses: &Grid, steps: usize) -> usize {
     let mut octopuses = octopuses.clone();
-    (0..steps).map(|_| step(&mut octopuses)).sum()
+    (0..steps).map(|_| run_step(&mut octopuses)).sum()
 }
 
-fn part2(octopuses: &Grid) -> i64 {
-    0
+fn step_when_all_flash(octopuses: &Grid) -> usize {
+    let mut octopuses = octopuses.clone();
+    for step in 1.. {
+        let flash_count = run_step(&mut octopuses);
+        if flash_count == octopuses.values.len() {
+            return step;
+        }
+    }
+    panic!("Didn't find when all octopuses flash")
 }
 
 fn main() {
@@ -169,7 +176,7 @@ fn main() {
     let octopuses = Grid::build(&input);
 
     println!("Part 1: {}", total_flashes(&octopuses, 100));
-    println!("Part 2: {}", part2(&octopuses));
+    println!("Part 2: {}", step_when_all_flash(&octopuses));
 }
 
 #[cfg(test)]
@@ -185,6 +192,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        assert_eq!(step_when_all_flash(&Grid::build(INPUT_TEST)), 195);
     }
 }

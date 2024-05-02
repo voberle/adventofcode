@@ -48,6 +48,6 @@ Grid.
 
 Syntax checking.
 
-### Day 11: [Dumbo Octopus](day11/README.md) 🌟
+### Day 11: [Dumbo Octopus](day11/README.md) 🌟🌟
 
 Grid.
