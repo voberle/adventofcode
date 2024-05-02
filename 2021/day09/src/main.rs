@@ -71,38 +71,32 @@ impl Grid {
         }
     }
 
-    // Returns the up to 4 adjacent positions.
-    fn adjacent_pos(&self, pos: usize) -> Vec<usize> {
-        ALL_DIRECTIONS
-            .iter()
-            .filter_map(|d| {
-                if self.allowed(pos, *d) {
-                    Some(self.next_pos(pos, *d))
-                } else {
-                    None
-                }
-            })
-            .collect()
+    fn adjacent_pos_iter(&self, pos: usize) -> impl Iterator<Item = usize> + '_ {
+        ALL_DIRECTIONS.iter().filter_map(move |d| {
+            if self.allowed(pos, *d) {
+                Some(self.next_pos(pos, *d))
+            } else {
+                None
+            }
+        })
     }
 
-    fn get_low_points(&self) -> Vec<usize> {
+    fn low_points_iter(&self) -> impl Iterator<Item = usize> + '_ {
         self.values
             .iter()
             .enumerate()
             .filter(|(pos, value)| {
-                let adjacent_pos = self.adjacent_pos(*pos);
-                adjacent_pos.iter().all(|p| **value < self.values[*p])
+                self.adjacent_pos_iter(*pos)
+                    .all(|p| **value < self.values[p])
             })
             .map(|(pos, _)| pos)
-            .collect()
     }
 }
 
 fn sum_risk_levels(heightmap: &Grid) -> u32 {
     heightmap
-        .get_low_points()
-        .iter()
-        .map(|pos| 1 + heightmap.values[*pos])
+        .low_points_iter()
+        .map(|pos| 1 + heightmap.values[pos])
         .sum()
 }
 
@@ -112,9 +106,8 @@ fn three_largest_basins_product(heightmap: &Grid) -> u64 {
     // Being part of a basins means your adjacents are either parts of a basin too or 9s.
 
     // Go through each low point. Find their basin.
-    let low_points = heightmap.get_low_points();
     let mut basins_sizes = Vec::new();
-    for low_point in low_points {
+    for low_point in heightmap.low_points_iter() {
         // Inspired from Dijkstra shortest path algorithm.
         let mut visited: FxHashSet<usize> = FxHashSet::default();
 
