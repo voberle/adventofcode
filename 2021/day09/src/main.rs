@@ -7,6 +7,7 @@ enum Direction {
     South,
     West,
 }
+use fxhash::FxHashSet;
 use Direction::{East, North, South, West};
 
 const ALL_DIRECTIONS: [Direction; 4] = [North, East, South, West];
@@ -35,7 +36,8 @@ impl Grid {
         Self { values, rows, cols }
     }
 
-    fn print_with_pos(&self, positions: &[usize]) {
+    #[allow(dead_code)]
+    fn print(&self, positions: &[usize]) {
         const RED: &str = "\x1b[31m";
         const RESET: &str = "\x1b[0m";
         for row in 0..self.rows {
@@ -51,33 +53,6 @@ impl Grid {
         }
     }
 
-    fn print(&self) {
-        self.print_with_pos(&[]);
-    }
-
-    // To explore the grid column by column:
-    // for col in 0..grid.cols {
-    //     for p in (col..(col + grid.cols * grid.rows)).step_by(grid.cols) {
-    // To get the next row element in a column:
-    //         let p1 = p + grid.cols;
-
-    fn pos(&self, row: usize, col: usize) -> usize {
-        row * self.cols + col
-    }
-
-    fn col(&self, index: usize) -> usize {
-        index % self.cols
-    }
-
-    fn row(&self, index: usize) -> usize {
-        index / self.cols
-    }
-
-    fn pos_as_str(&self, index: usize) -> String {
-        format!("({},{})", self.row(index), self.col(index))
-    }
-
-    // Check we don't go outside grid.
     fn allowed(&self, pos: usize, direction: Direction) -> bool {
         !match direction {
             North => pos < self.cols,
@@ -87,8 +62,6 @@ impl Grid {
         }
     }
 
-    // Returns the index of the next position in that direction.
-    // Assumes validity of the move has been checked before with `allowed`.
     fn next_pos(&self, pos: usize, direction: Direction) -> usize {
         match direction {
             North => pos - self.cols,
@@ -111,23 +84,67 @@ impl Grid {
             })
             .collect()
     }
+
+    fn get_low_points(&self) -> Vec<usize> {
+        self.values
+            .iter()
+            .enumerate()
+            .filter(|(pos, value)| {
+                let adjacent_pos = self.adjacent_pos(*pos);
+                adjacent_pos.iter().all(|p| **value < self.values[*p])
+            })
+            .map(|(pos, _)| pos)
+            .collect()
+    }
 }
 
 fn sum_risk_levels(heightmap: &Grid) -> u32 {
     heightmap
-        .values
+        .get_low_points()
         .iter()
-        .enumerate()
-        .filter(|(pos, value)| {
-            let adjacent_pos = heightmap.adjacent_pos(*pos);
-            adjacent_pos.iter().all(|p| **value < heightmap.values[*p])
-        })
-        .map(|(_, value)| 1 + value)
+        .map(|pos| 1 + heightmap.values[*pos])
         .sum()
 }
 
-fn part2(heightmap: &Grid) -> u32 {
-    0
+fn three_largest_basins_product(heightmap: &Grid) -> u64 {
+    // Each low point is in one basin.
+    // Basins are area with only 9 or border around.
+    // Being part of a basins means your adjacents are either parts of a basin too or 9s.
+
+    // Go through each low point. Find their basin.
+    let low_points = heightmap.get_low_points();
+    let mut basins_sizes = Vec::new();
+    for low_point in low_points {
+        // Inspired from Dijkstra shortest path algorithm.
+        let mut visited: FxHashSet<usize> = FxHashSet::default();
+
+        let mut queue: Vec<usize> = vec![low_point];
+        while let Some(pos) = queue.pop() {
+            visited.insert(pos);
+
+            // println!("----------");
+            // heightmap.print(&visited.iter().cloned().collect::<Vec<_>>());
+
+            queue.extend(ALL_DIRECTIONS.iter().filter_map(|d| {
+                if !heightmap.allowed(pos, *d) {
+                    return None;
+                }
+                let next_pos = heightmap.next_pos(pos, *d);
+
+                if heightmap.values[next_pos] == 9 {
+                    return None;
+                }
+
+                if visited.contains(&next_pos) {
+                    return None;
+                }
+                Some(next_pos)
+            }));
+        }
+        basins_sizes.push(visited.len());
+    }
+    basins_sizes.sort_unstable();
+    basins_sizes.iter().rev().take(3).product::<usize>() as u64
 }
 
 fn main() {
@@ -136,7 +153,7 @@ fn main() {
     let heightmap = Grid::build(&input);
 
     println!("Part 1: {}", sum_risk_levels(&heightmap));
-    println!("Part 2: {}", part2(&heightmap));
+    println!("Part 2: {}", three_largest_basins_product(&heightmap));
 }
 
 #[cfg(test)]
@@ -152,6 +169,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        assert_eq!(three_largest_basins_product(&Grid::build(INPUT_TEST)), 1134);
     }
 }

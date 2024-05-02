@@ -40,6 +40,6 @@ OEIS. Triangular numbers.
 
 Deduction.
 
-### Day 9: [Smoke Basin](day09/README.md) 🌟
+### Day 9: [Smoke Basin](day09/README.md) 🌟🌟
 
 Grid.
