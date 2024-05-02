@@ -1,22 +1,5 @@
 use std::io::{self, Read};
 
-#[derive(Clone, Copy)]
-enum Direction {
-    North,
-    East,
-    South,
-    West,
-    NorthEast,
-    NorthWest,
-    SouthEast,
-    SouthWest,
-}
-use Direction::{East, North, NorthEast, NorthWest, South, SouthEast, SouthWest, West};
-
-const ALL_DIRECTIONS: [Direction; 8] = [
-    North, East, South, West, NorthEast, NorthWest, SouthEast, SouthWest,
-];
-
 #[derive(Clone)]
 struct Grid {
     values: Vec<u32>,
@@ -58,56 +41,29 @@ impl Grid {
         }
     }
 
-    fn north_forbidden(&self, pos: usize) -> bool {
-        pos < self.cols
-    }
-
-    fn east_forbidden(&self, pos: usize) -> bool {
-        pos % self.cols == self.cols - 1
-    }
-
-    fn south_forbidden(&self, pos: usize) -> bool {
-        pos / self.cols == self.rows - 1
-    }
-
-    fn west_forbidden(&self, pos: usize) -> bool {
-        pos % self.cols == 0
-    }
-
-    pub fn direction_forbidden(&self, pos: usize, direction: Direction) -> bool {
-        match direction {
-            North => self.north_forbidden(pos),
-            East => self.east_forbidden(pos),
-            South => self.south_forbidden(pos),
-            West => self.west_forbidden(pos),
-            NorthEast => self.north_forbidden(pos) || self.east_forbidden(pos),
-            NorthWest => self.north_forbidden(pos) || self.west_forbidden(pos),
-            SouthEast => self.south_forbidden(pos) || self.east_forbidden(pos),
-            SouthWest => self.south_forbidden(pos) || self.west_forbidden(pos),
-        }
-    }
-
-    // Assumes validity of the move has been checked before with `can_go`.
-    pub fn position_in(&self, pos: usize, direction: Direction) -> usize {
-        match direction {
-            North => pos - self.cols,
-            East => pos + 1,
-            South => pos + self.cols,
-            West => pos - 1,
-            NorthEast => pos - self.cols + 1,
-            NorthWest => pos - self.cols - 1,
-            SouthEast => pos + self.cols + 1,
-            SouthWest => pos + self.cols - 1,
-        }
-    }
-
-    // Get the up to 8 positions around
-    pub fn neighbors(&self, pos: usize) -> Vec<usize> {
-        ALL_DIRECTIONS
-            .iter()
-            .filter(|&&d| !self.direction_forbidden(pos, d))
-            .map(|&d| self.position_in(pos, d))
-            .collect()
+    // This version gives the adjacent positions without all the direction enum code that I used to have.
+    #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+    fn neighbors(&self, pos: usize) -> Vec<usize> {
+        [
+            (-1, -1),
+            (-1, 0),
+            (-1, 1),
+            (0, -1),
+            (0, 1),
+            (1, -1),
+            (1, 0),
+            (1, 1),
+        ]
+        .into_iter()
+        .map(move |(d_row, d_col)| {
+            (
+                ((pos / self.cols) as isize + d_row) as usize,
+                ((pos % self.cols) as isize + d_col) as usize,
+            )
+        })
+        .filter(|&(row, col)| (row < self.cols && col < self.rows))
+        .map(|(row, col)| row * self.cols + col)
+        .collect()
     }
 }
 
@@ -121,12 +77,16 @@ fn run_step(octopuses: &mut Grid) -> usize {
     let mut flashed: Vec<usize> = Vec::new();
 
     // Increase energy level of all octopuses by 1.
-    for (pos, energy_level) in &mut octopuses.values.iter_mut().enumerate() {
-        *energy_level += 1;
-        if *energy_level > 9 {
-            flashing.push(pos);
-        }
-    }
+    octopuses
+        .values
+        .iter_mut()
+        .enumerate()
+        .for_each(|(pos, energy_level)| {
+            *energy_level += 1;
+            if *energy_level > 9 {
+                flashing.push(pos);
+            }
+        });
 
     // Flash octopuses.
     while let Some(to_flash_pos) = flashing.pop() {
@@ -159,15 +119,12 @@ fn total_flashes(octopuses: &Grid, steps: usize) -> usize {
     (0..steps).map(|_| run_step(&mut octopuses)).sum()
 }
 
+#[allow(clippy::maybe_infinite_iter)]
 fn step_when_all_flash(octopuses: &Grid) -> usize {
     let mut octopuses = octopuses.clone();
-    for step in 1.. {
-        let flash_count = run_step(&mut octopuses);
-        if flash_count == octopuses.values.len() {
-            return step;
-        }
-    }
-    panic!("Didn't find when all octopuses flash")
+    (1..)
+        .find(|_| run_step(&mut octopuses) == octopuses.values.len())
+        .unwrap()
 }
 
 fn main() {
