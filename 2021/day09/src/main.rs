@@ -1,18 +1,17 @@
 use std::io::{self, Read};
+use fxhash::FxHashSet;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy)]
 enum Direction {
     North,
     East,
     South,
     West,
 }
-use fxhash::FxHashSet;
 use Direction::{East, North, South, West};
 
 const ALL_DIRECTIONS: [Direction; 4] = [North, East, South, West];
 
-#[derive(Debug, Clone, PartialEq)]
 struct Grid {
     values: Vec<u32>,
     rows: usize,
@@ -71,23 +70,18 @@ impl Grid {
         }
     }
 
-    fn adjacent_pos_iter(&self, pos: usize) -> impl Iterator<Item = usize> + '_ {
-        ALL_DIRECTIONS.iter().filter_map(move |d| {
-            if self.allowed(pos, *d) {
-                Some(self.next_pos(pos, *d))
-            } else {
-                None
-            }
-        })
-    }
-
     fn low_points_iter(&self) -> impl Iterator<Item = usize> + '_ {
         self.values
             .iter()
             .enumerate()
-            .filter(|(pos, value)| {
-                self.adjacent_pos_iter(*pos)
-                    .all(|p| **value < self.values[p])
+            .filter(move |(pos, value)| {
+                ALL_DIRECTIONS
+                    .iter()
+                    .filter(|d| self.allowed(*pos, **d))
+                    .all(|d| {
+                        let p = self.next_pos(*pos, *d);
+                        **value < self.values[p]
+                    })
             })
             .map(|(pos, _)| pos)
     }
@@ -114,20 +108,17 @@ fn three_largest_basins_product(heightmap: &Grid) -> u64 {
         let mut queue: Vec<usize> = vec![low_point];
         while let Some(pos) = queue.pop() {
             visited.insert(pos);
-
-            // println!("----------");
-            // heightmap.print(&visited.iter().cloned().collect::<Vec<_>>());
-
+            
             queue.extend(ALL_DIRECTIONS.iter().filter_map(|d| {
                 if !heightmap.allowed(pos, *d) {
                     return None;
                 }
                 let next_pos = heightmap.next_pos(pos, *d);
-
+                
                 if heightmap.values[next_pos] == 9 {
                     return None;
                 }
-
+                
                 if visited.contains(&next_pos) {
                     return None;
                 }
@@ -135,7 +126,11 @@ fn three_largest_basins_product(heightmap: &Grid) -> u64 {
             }));
         }
         basins_sizes.push(visited.len());
+
+        // println!("----------");
+        // heightmap.print(&visited.iter().cloned().collect::<Vec<_>>());
     }
+
     basins_sizes.sort_unstable();
     basins_sizes.iter().rev().take(3).product::<usize>() as u64
 }
