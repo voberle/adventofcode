@@ -39,3 +39,7 @@ OEIS. Triangular numbers.
 ### Day 8: [Seven Segment Search](day08/README.md) 🌟🌟
 
 Deduction.
+
+### Day 9: [Smoke Basin](day09/README.md) 🌟
+
+Grid.
