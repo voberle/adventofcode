@@ -6,3 +6,4 @@ Part 1 ended up being easier than I thought.
 
 ## Part 2
 
+Same as with part 1, that went easily, with quite clean code at the end.

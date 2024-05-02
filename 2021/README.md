@@ -44,6 +44,6 @@ Deduction.
 
 Grid.
 
-### Day 10: [Syntax Scoring](day10/README.md) 🌟
+### Day 10: [Syntax Scoring](day10/README.md) 🌟🌟
 
 Syntax checking.
