@@ -98,6 +98,31 @@ impl Grid {
             None
         }
     }
+
+    // Gives the 8 adjacent positions without all the direction enum stuff.
+    #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+    pub fn neighbors(&self, pos: usize) -> Vec<usize> {
+        [
+            (-1, -1),
+            (-1, 0),
+            (-1, 1),
+            (0, -1),
+            (0, 1),
+            (1, -1),
+            (1, 0),
+            (1, 1),
+        ]
+        .into_iter()
+        .map(move |(d_row, d_col)| {
+            (
+                ((pos / self.cols) as isize + d_row) as usize,
+                ((pos % self.cols) as isize + d_col) as usize,
+            )
+        })
+        .filter(|&(row, col)| (row < self.cols && col < self.rows))
+        .map(|(row, col)| row * self.cols + col)
+        .collect()
+    }
 }
 
 #[cfg(test)]
