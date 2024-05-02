@@ -43,3 +43,7 @@ Deduction.
 ### Day 9: [Smoke Basin](day09/README.md) 🌟🌟
 
 Grid.
+
+### Day 10: [Syntax Scoring](day10/README.md) 🌟
+
+Syntax checking.
