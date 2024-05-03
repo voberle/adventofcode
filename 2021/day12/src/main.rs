@@ -2,35 +2,38 @@ use std::io::{self, Read};
 
 use fxhash::FxHashSet;
 
-fn is_uppercase(s: &str) -> bool {
-    s.chars().all(|c| c.is_ascii_uppercase())
+#[derive(Debug, Clone, Copy)]
+enum CaveType {
+    Start,
+    End,
+    Small,
+    Big,
 }
 
 #[derive(Debug)]
 struct Cave {
     name: String,
-    is_big: bool,
-    is_start: bool,
-    is_end: bool,
+    ctype: CaveType,
     connections: Vec<usize>,
 }
 
 impl Cave {
     fn new(name: &str) -> Self {
-        let is_start = name == "start";
-        let is_end = name == "end";
-        let is_big = !is_start && !is_end && is_uppercase(name);
+        let cave_type = if name == "start" {
+            CaveType::Start
+        } else if name == "end" {
+            CaveType::End
+        } else if name.chars().all(|c| c.is_ascii_uppercase()) {
+            CaveType::Big
+        } else {
+            CaveType::Small
+        };
+
         Self {
             name: name.to_string(),
-            is_big,
-            is_start,
-            is_end,
+            ctype: cave_type,
             connections: Vec::new(),
         }
-    }
-
-    fn is_small_cave(&self) -> bool {
-        !self.is_start && !self.is_end && !self.is_big
     }
 }
 
@@ -59,6 +62,10 @@ fn build(input: &str) -> Vec<Cave> {
     graph
 }
 
+fn get_cave_types(graph: &[Cave]) -> Vec<CaveType> {
+    graph.iter().map(|cave| cave.ctype).collect()
+}
+
 // dot -Tpdf -Ksfdp resources/input_test_1.gv > resources/input.pdf
 #[allow(dead_code)]
 fn print_graphviz(graph: &[Cave]) {
@@ -77,31 +84,6 @@ trait VisitTracker {
     fn visit(&mut self, i: usize);
     fn unvisit(&mut self, i: usize);
     fn can_visit(&self, i: usize) -> bool;
-}
-
-enum CaveType {
-    Start,
-    End,
-    Small,
-    Big,
-}
-
-impl CaveType {
-    fn new(cave: &Cave) -> Self {
-        if cave.is_start {
-            CaveType::Start
-        } else if cave.is_end {
-            CaveType::End
-        } else if cave.is_small_cave() {
-            CaveType::Small
-        } else {
-            CaveType::Big
-        }
-    }
-}
-
-fn get_cave_types(graph: &[Cave]) -> Vec<CaveType> {
-    graph.iter().map(CaveType::new).collect()
 }
 
 // Implementation allowing only 1 visit per small cave.
