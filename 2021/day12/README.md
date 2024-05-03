@@ -23,3 +23,5 @@ After having a look at other solutions, I realized there was no need to save all
 This divided the runtime by 3, to 10ms for both parts.
 
 I also realized that it would be possible to get read of the visited structure fully, and just check the path under construction to see if a cave was already visited. This would result in shorter code, but might not be more readable. It might also be slower, as I would replace some direct memory access with a search in a vector.
+
+However, the path itself doesn't need to be saved, since we only need to detect when we reach the end. So removed this as well.

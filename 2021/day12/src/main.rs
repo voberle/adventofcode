@@ -182,21 +182,14 @@ impl VisitTracker for TrackerVisitOneExtra {
 }
 
 // Finds all paths between `from` and `to`.
-//
-// `visited` is a vector of boolean indicating if the cave with that index has been visited so far.
-// visited should be set only for small caves, as big ones are allowed to be visited multuple times.
-// `path` is the path currently being built.
-// Returns the number of paths found.
 fn find_all_paths(
     graph: &[Cave],
     from: usize,
     to: usize,
     visited: &mut Box<dyn VisitTracker>,
-    path: &mut Vec<usize>,
 ) -> usize {
-    // Visit the current cave and add it to the path.
+    // Visit the current cave.
     visited.visit(from);
-    path.push(from);
 
     let path_count = if from == to {
         // If source and destination are the same, we found a path.
@@ -208,7 +201,7 @@ fn find_all_paths(
             .iter()
             .map(|next| {
                 if visited.can_visit(*next) {
-                    find_all_paths(graph, *next, to, visited, path)
+                    find_all_paths(graph, *next, to, visited)
                 } else {
                     0
                 }
@@ -216,9 +209,8 @@ fn find_all_paths(
             .sum()
     };
 
-    // Remove current cave from path, mark as unvisited.
+    // Mark current cave as unvisited.
     visited.unvisit(from);
-    path.pop();
 
     path_count
 }
@@ -241,9 +233,8 @@ fn path_count(graph: &[Cave], allow_one_small_cave_twice: bool) -> usize {
     } else {
         Box::new(TrackerSingleVisit::new(graph))
     };
-    let mut path: Vec<usize> = Vec::new();
 
-    find_all_paths(graph, start_idx, end_idx, &mut visited, &mut path)
+    find_all_paths(graph, start_idx, end_idx, &mut visited)
 }
 
 fn main() {
