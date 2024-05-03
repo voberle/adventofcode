@@ -55,3 +55,5 @@ Grid.
 ### Day 12: [Passage Pathing](day12/README.md) 🌟🌟
 
 Find all paths. DFS.
+
+### Day 13: [Transparent Origami](day13/README.md)
