@@ -125,7 +125,7 @@ impl VisitTracker for TrackerSingleVisit {
 struct TrackerVisitOneExtra {
     cave_types: Vec<CaveType>,
     visited: Vec<bool>,
-    small_cave_visited_twice: usize,
+    small_cave_visited_twice: Option<usize>,
 }
 
 impl TrackerVisitOneExtra {
@@ -134,7 +134,7 @@ impl TrackerVisitOneExtra {
         Self {
             cave_types,
             visited: vec![false; graph.len()],
-            small_cave_visited_twice: usize::MAX,
+            small_cave_visited_twice: None,
         }
     }
 }
@@ -148,8 +148,8 @@ impl VisitTracker for TrackerVisitOneExtra {
             CaveType::Small => {
                 // If that small cave is already visited once, but we haven't visited any small cave twice,
                 // then mark this one as visited twice.
-                if self.visited[i] && self.small_cave_visited_twice == usize::MAX {
-                    self.small_cave_visited_twice = i;
+                if self.visited[i] && self.small_cave_visited_twice.is_none() {
+                    self.small_cave_visited_twice = Some(i);
                 } else {
                     self.visited[i] = true;
                 }
@@ -163,8 +163,8 @@ impl VisitTracker for TrackerVisitOneExtra {
         match self.cave_types.get(i).unwrap() {
             CaveType::Start | CaveType::End => self.visited[i] = false,
             CaveType::Small => {
-                if self.small_cave_visited_twice == i {
-                    self.small_cave_visited_twice = usize::MAX;
+                if self.small_cave_visited_twice.is_some_and(|v| v == i) {
+                    self.small_cave_visited_twice = None;
                     assert!(self.visited[i]);
                 } else {
                     self.visited[i] = false;
@@ -176,7 +176,7 @@ impl VisitTracker for TrackerVisitOneExtra {
 
     fn can_visit(&self, i: usize) -> bool {
         if matches!(self.cave_types.get(i), Some(CaveType::Small)) {
-            self.small_cave_visited_twice == usize::MAX || !self.visited[i]
+            self.small_cave_visited_twice.is_none() || !self.visited[i]
         } else {
             !self.visited[i]
         }
