@@ -12,3 +12,4 @@ My solution runs in 2 ms.
 
 ## Part 2
 
+Surprisingly, it was almost harder to implement part 2 than 1, as I struggled to find the right abstractions for the visit tracking.

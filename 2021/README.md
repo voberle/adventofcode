@@ -52,6 +52,6 @@ Syntax checking.
 
 Grid.
 
-### Day 12: [Passage Pathing](day12/README.md) 🌟
+### Day 12: [Passage Pathing](day12/README.md) 🌟🌟
 
 Find all paths. DFS.

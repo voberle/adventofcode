@@ -72,6 +72,135 @@ fn print_graphviz(graph: &[Cave]) {
     println!("}}");
 }
 
+// Helps tracking if a cave is allowed to be visited.
+trait VisitTracker {
+    fn visit(&mut self, i: usize);
+    fn unvisit(&mut self, i: usize);
+    fn can_visit(&self, i: usize) -> bool;
+}
+
+enum CaveType {
+    Start,
+    End,
+    Small,
+    Big,
+}
+
+impl CaveType {
+    fn new(cave: &Cave) -> Self {
+        if cave.is_start {
+            CaveType::Start
+        } else if cave.is_end {
+            CaveType::End
+        } else if cave.is_small_cave() {
+            CaveType::Small
+        } else {
+            CaveType::Big
+        }
+    }
+}
+
+fn get_cave_types(graph: &[Cave]) -> Vec<CaveType> {
+    graph.iter().map(CaveType::new).collect()
+}
+
+// Implementation allowing only 1 visit per small cave.
+struct TrackerSingleVisit {
+    cave_types: Vec<CaveType>,
+    visited: Vec<bool>,
+}
+
+impl TrackerSingleVisit {
+    fn new(graph: &[Cave]) -> Self {
+        Self {
+            cave_types: get_cave_types(graph),
+            visited: vec![false; graph.len()],
+        }
+    }
+}
+
+impl VisitTracker for TrackerSingleVisit {
+    fn visit(&mut self, i: usize) {
+        match self.cave_types.get(i).unwrap() {
+            CaveType::Start | CaveType::End | CaveType::Small => {
+                self.visited[i] = true;
+            }
+            // Big caves are never marked visited.
+            CaveType::Big => {}
+        }
+    }
+
+    fn unvisit(&mut self, i: usize) {
+        self.visited[i] = false;
+    }
+
+    fn can_visit(&self, i: usize) -> bool {
+        !self.visited[i]
+    }
+}
+
+// Implementation allowing two visits to one small cave and one to the others.
+struct TrackerVisitOneExtra {
+    cave_types: Vec<CaveType>,
+    visited: Vec<bool>,
+    small_cave_visited_twice: usize,
+}
+
+impl TrackerVisitOneExtra {
+    fn new(graph: &[Cave]) -> Self {
+        let cave_types = get_cave_types(graph);
+        Self {
+            cave_types,
+            visited: vec![false; graph.len()],
+            small_cave_visited_twice: usize::MAX,
+        }
+    }
+}
+
+impl VisitTracker for TrackerVisitOneExtra {
+    fn visit(&mut self, i: usize) {
+        match self.cave_types.get(i).unwrap() {
+            CaveType::Start | CaveType::End => {
+                self.visited[i] = true;
+            }
+            CaveType::Small => {
+                // If that small cave is already visited once, but we haven't visited any small cave twice,
+                // then mark this one as visited twice.
+                if self.visited[i] && self.small_cave_visited_twice == usize::MAX {
+                    self.small_cave_visited_twice = i;
+                } else {
+                    self.visited[i] = true;
+                }
+            }
+            // Big caves are never marked visited.
+            CaveType::Big => {}
+        }
+    }
+
+    fn unvisit(&mut self, i: usize) {
+        match self.cave_types.get(i).unwrap() {
+            CaveType::Start | CaveType::End => self.visited[i] = false,
+            CaveType::Small => {
+                if self.small_cave_visited_twice == i {
+                    self.small_cave_visited_twice = usize::MAX;
+                    assert!(self.visited[i]);
+                } else {
+                    self.visited[i] = false;
+                }
+            }
+            CaveType::Big => {}
+        }
+    }
+
+    fn can_visit(&self, i: usize) -> bool {
+        if matches!(self.cave_types.get(i), Some(CaveType::Small)) {
+            self.small_cave_visited_twice == usize::MAX || !self.visited[i]
+        } else {
+            !self.visited[i]
+        }
+    }
+}
+
 // Finds all paths between `from` and `to`.
 //
 // `visited` is a vector of boolean indicating if the cave with that index has been visited so far.
@@ -82,14 +211,12 @@ fn find_all_paths(
     graph: &[Cave],
     from: usize,
     to: usize,
-    visited: &mut Vec<bool>,
+    visited: &mut Box<dyn VisitTracker>,
     path: &mut Vec<usize>,
     all_paths: &mut FxHashSet<Vec<usize>>,
 ) {
-    // Mark the current cave as visited (if it's a small one) and add it to the path.
-    if graph[from].is_small_cave() || graph[from].is_start {
-        visited[from] = true;
-    }
+    // Visit the current cave and add it to the path.
+    visited.visit(from);
     path.push(from);
 
     if from == to {
@@ -98,19 +225,20 @@ fn find_all_paths(
     } else {
         // Otherwise recursively explore all connected nodes.
         for next in &graph[from].connections {
-            if !visited[*next] {
+            if visited.can_visit(*next) {
                 find_all_paths(graph, *next, to, visited, path, all_paths);
             }
         }
     }
 
     // Remove current cave from path, mark as unvisited.
-    visited[from] = false;
+    visited.unvisit(from);
     path.pop();
 }
 
 // Paths count that visit small caves at most once.
-fn unique_path_count(graph: &[Cave]) -> usize {
+// ONE_SMALL_CAVE_TWICE indicates that one small cave can be visited twice.
+fn path_count(graph: &[Cave], allow_one_small_cave_twice: bool) -> usize {
     // We are doing a Depth First Traversal (DFS) of the graph.
     // Each cave we visit is added to the path.
     // Each cave visited that we are not allowed to go back to (small ones and start) is marked as visited.
@@ -123,7 +251,11 @@ fn unique_path_count(graph: &[Cave]) -> usize {
     let start_idx = find_cave(graph, "start").unwrap();
     let end_idx = find_cave(graph, "end").unwrap();
 
-    let mut visited = vec![false; graph.len()];
+    let mut visited: Box<dyn VisitTracker> = if allow_one_small_cave_twice {
+        Box::new(TrackerVisitOneExtra::new(graph))
+    } else {
+        Box::new(TrackerSingleVisit::new(graph))
+    };
     let mut path: Vec<usize> = Vec::new();
 
     find_all_paths(
@@ -138,10 +270,6 @@ fn unique_path_count(graph: &[Cave]) -> usize {
     all_paths.len()
 }
 
-fn part2(graph: &[Cave]) -> i64 {
-    0
-}
-
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
@@ -149,8 +277,8 @@ fn main() {
 
     // print_graphviz(&graph);
 
-    println!("Part 1: {}", unique_path_count(&graph));
-    println!("Part 2: {}", part2(&graph));
+    println!("Part 1: {}", path_count(&graph, false));
+    println!("Part 2: {}", path_count(&graph, true));
 }
 
 #[cfg(test)]
@@ -163,13 +291,15 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(unique_path_count(&build(INPUT_TEST_1)), 10);
-        assert_eq!(unique_path_count(&build(INPUT_TEST_2)), 19);
-        assert_eq!(unique_path_count(&build(INPUT_TEST_3)), 226);
+        assert_eq!(path_count(&build(INPUT_TEST_1), false), 10);
+        assert_eq!(path_count(&build(INPUT_TEST_2), false), 19);
+        assert_eq!(path_count(&build(INPUT_TEST_3), false), 226);
     }
 
     #[test]
     fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(path_count(&build(INPUT_TEST_1), true), 36);
+        assert_eq!(path_count(&build(INPUT_TEST_2), true), 103);
+        assert_eq!(path_count(&build(INPUT_TEST_3), true), 3509);
     }
 }
