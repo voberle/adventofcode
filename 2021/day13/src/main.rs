@@ -1,4 +1,7 @@
-use std::io::{self, Read};
+use std::{
+    fmt,
+    io::{self, Read},
+};
 
 use fxhash::FxHashSet;
 use itertools::Itertools;
@@ -87,6 +90,27 @@ impl Paper {
     }
 }
 
+impl fmt::Display for Paper {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (top_left, bottom_right) = self.borders();
+        for y in top_left.y..=bottom_right.y {
+            for x in top_left.x..=bottom_right.x {
+                write!(
+                    f,
+                    "{}",
+                    if self.0.contains(&Coord::new(x, y)) {
+                        '#'
+                    } else {
+                        '.'
+                    }
+                )?;
+            }
+            writeln!(f)?;
+        }
+        Ok(())
+    }
+}
+
 fn build(input: &str) -> (Paper, Vec<FoldInstruction>) {
     let mut it = input.lines();
     let mut coords: FxHashSet<Coord> = FxHashSet::default();
@@ -122,12 +146,13 @@ fn dots_after_folding_first_instruction(paper: &Paper, instructions: &[FoldInstr
     folded_paper.count_dots()
 }
 
-fn code_after_folding(paper: &Paper, instructions: &[FoldInstruction]) {
+fn code_after_folding(paper: &Paper, instructions: &[FoldInstruction]) -> String {
     let mut paper = paper.clone();
     for ins in instructions {
         paper = paper.fold(ins);
     }
-    paper.print();
+    // paper.print();
+    advent_of_code_ocr::parse_string_to_letters(&paper.to_string())
 }
 
 fn main() {
@@ -139,8 +164,7 @@ fn main() {
         "Part 1: {}",
         dots_after_folding_first_instruction(&paper, &instructions)
     );
-    println!("Part 2:");
-    code_after_folding(&paper, &instructions);
+    println!("Part 2: {}", code_after_folding(&paper, &instructions));
 }
 
 #[cfg(test)]
