@@ -51,3 +51,5 @@ Syntax checking.
 ### Day 11: [Dumbo Octopus](day11/README.md) 🌟🌟
 
 Grid.
+
+### Day 12: [Passage Pathing](day12/README.md)
