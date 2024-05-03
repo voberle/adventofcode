@@ -22,7 +22,7 @@ Current solution uses a trait for visit tracking, and two different implementati
 
 After having a look at other solutions, I realized there was no need to save all paths found, but I just needed to counted the number of paths.
 
-This divided the runtime by 3, to 10ms for both parts.
+This divided the runtime by 3, to 10 ms for both parts.
 
 ### Don't save current path
 
@@ -32,4 +32,8 @@ However, the path itself doesn't need to be saved, since we only need to detect 
 
 ### Merge visit tracking implementation
 
-I found a trivial way to use the part 2 visit tracking for part 1 as well. Runs in 7ms now.
+I found a trivial way to use the part 2 visit tracking for part 1 as well. Runs in 7 ms now.
+
+### Caching
+
+Adding a cache still speeds things up, down to 1.5 ms.

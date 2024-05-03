@@ -1,4 +1,9 @@
-use std::io::{self, Read};
+use std::{
+    hash::{Hash, Hasher},
+    io::{self, Read},
+};
+
+use fxhash::{FxHashMap, FxHasher};
 
 #[derive(Debug, Clone, Copy)]
 enum CaveType {
@@ -142,8 +147,23 @@ impl VisitTracker {
     }
 }
 
+fn hash(from: usize, visited: &VisitTracker) -> u64 {
+    let mut hasher = FxHasher::default();
+    from.hash(&mut hasher);
+    // Not including to, it never changes (always end).
+    visited.visited.hash(&mut hasher);
+    visited.small_cave_visited_twice.hash(&mut hasher);
+    hasher.finish()
+}
+
 // Finds all paths between `from` and `to`.
-fn find_all_paths(graph: &[Cave], from: usize, to: usize, visited: &mut VisitTracker) -> usize {
+fn find_all_paths(
+    graph: &[Cave],
+    from: usize,
+    to: usize,
+    visited: &mut VisitTracker,
+    cache: &mut FxHashMap<u64, usize>,
+) -> usize {
     // Visit the current cave.
     visited.visit(from);
 
@@ -156,8 +176,12 @@ fn find_all_paths(graph: &[Cave], from: usize, to: usize, visited: &mut VisitTra
             .connections
             .iter()
             .map(|next| {
+                if let Some(v) = cache.get(&hash(*next, visited)) {
+                    return *v;
+                }
+
                 if visited.can_visit(*next) {
-                    find_all_paths(graph, *next, to, visited)
+                    find_all_paths(graph, *next, to, visited, cache)
                 } else {
                     0
                 }
@@ -167,6 +191,8 @@ fn find_all_paths(graph: &[Cave], from: usize, to: usize, visited: &mut VisitTra
 
     // Mark current cave as unvisited.
     visited.unvisit(from);
+
+    cache.insert(hash(from, visited), path_count);
 
     path_count
 }
@@ -186,7 +212,9 @@ fn path_count(graph: &[Cave], allow_one_small_cave_twice: bool) -> usize {
 
     let mut visited = VisitTracker::new(graph, allow_one_small_cave_twice);
 
-    find_all_paths(graph, start_idx, end_idx, &mut visited)
+    let mut cache: FxHashMap<u64, usize> = FxHashMap::default();
+
+    find_all_paths(graph, start_idx, end_idx, &mut visited, &mut cache)
 }
 
 fn main() {
