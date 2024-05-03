@@ -56,6 +56,6 @@ Grid.
 
 Find all paths. DFS.
 
-### Day 13: [Transparent Origami](day13/README.md) 🌟
+### Day 13: [Transparent Origami](day13/README.md) 🌟🌟
 
 Paper folding.

@@ -52,9 +52,9 @@ impl Paper {
                 print!(
                     "{}",
                     if self.0.contains(&Coord::new(x, y)) {
-                        '#'
+                        '\u{2B1B}'
                     } else {
-                        '.'
+                        '\u{2B1C}'
                     }
                 );
             }
@@ -119,12 +119,15 @@ fn build(input: &str) -> (Paper, Vec<FoldInstruction>) {
 
 fn dots_after_folding_first_instruction(paper: &Paper, instructions: &[FoldInstruction]) -> usize {
     let folded_paper = paper.fold(instructions.first().unwrap());
-    // folded_paper.print();
     folded_paper.count_dots()
 }
 
-fn part2(paper: &Paper, instructions: &[FoldInstruction]) -> usize {
-    0
+fn code_after_folding(paper: &Paper, instructions: &[FoldInstruction]) {
+    let mut paper = paper.clone();
+    for ins in instructions {
+        paper = paper.fold(ins);
+    }
+    paper.print();
 }
 
 fn main() {
@@ -136,7 +139,8 @@ fn main() {
         "Part 1: {}",
         dots_after_folding_first_instruction(&paper, &instructions)
     );
-    println!("Part 2: {}", part2(&paper, &instructions));
+    println!("Part 2:");
+    code_after_folding(&paper, &instructions);
 }
 
 #[cfg(test)]
@@ -152,11 +156,5 @@ mod tests {
             dots_after_folding_first_instruction(&paper, &instructions),
             17
         );
-    }
-
-    #[test]
-    fn test_part2() {
-        let (paper, instructions) = build(INPUT_TEST);
-        assert_eq!(part2(&paper, &instructions), 0);
     }
 }
