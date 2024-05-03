@@ -1,7 +1,5 @@
 use std::io::{self, Read};
 
-use fxhash::FxHashSet;
-
 #[derive(Debug, Clone, Copy)]
 enum CaveType {
     Start,
@@ -188,48 +186,53 @@ impl VisitTracker for TrackerVisitOneExtra {
 // `visited` is a vector of boolean indicating if the cave with that index has been visited so far.
 // visited should be set only for small caves, as big ones are allowed to be visited multuple times.
 // `path` is the path currently being built.
-// `all_paths` contains all unique paths found so far.
+// Returns the number of paths found.
 fn find_all_paths(
     graph: &[Cave],
     from: usize,
     to: usize,
     visited: &mut Box<dyn VisitTracker>,
     path: &mut Vec<usize>,
-    all_paths: &mut FxHashSet<Vec<usize>>,
-) {
+) -> usize {
     // Visit the current cave and add it to the path.
     visited.visit(from);
     path.push(from);
 
-    if from == to {
+    let path_count = if from == to {
         // If source and destination are the same, we found a path.
-        all_paths.insert(path.clone());
+        1
     } else {
         // Otherwise recursively explore all connected nodes.
-        for next in &graph[from].connections {
-            if visited.can_visit(*next) {
-                find_all_paths(graph, *next, to, visited, path, all_paths);
-            }
-        }
-    }
+        graph[from]
+            .connections
+            .iter()
+            .map(|next| {
+                if visited.can_visit(*next) {
+                    find_all_paths(graph, *next, to, visited, path)
+                } else {
+                    0
+                }
+            })
+            .sum()
+    };
 
     // Remove current cave from path, mark as unvisited.
     visited.unvisit(from);
     path.pop();
+
+    path_count
 }
 
 // Paths count that visit small caves at most once.
-// ONE_SMALL_CAVE_TWICE indicates that one small cave can be visited twice.
 fn path_count(graph: &[Cave], allow_one_small_cave_twice: bool) -> usize {
     // We are doing a Depth First Traversal (DFS) of the graph.
     // Each cave we visit is added to the path.
     // Each cave visited that we are not allowed to go back to (small ones and start) is marked as visited.
     // Then for each cave, we explore recursively all connections.
-    // When we reach the end, we add the path to the set of path found.
+    // When we reach the end, we increase the count of paths found.
     //
     // Idea from https://www.geeksforgeeks.org/find-paths-given-source-destination/
 
-    let mut all_paths: FxHashSet<Vec<usize>> = FxHashSet::default();
     let start_idx = find_cave(graph, "start").unwrap();
     let end_idx = find_cave(graph, "end").unwrap();
 
@@ -240,16 +243,7 @@ fn path_count(graph: &[Cave], allow_one_small_cave_twice: bool) -> usize {
     };
     let mut path: Vec<usize> = Vec::new();
 
-    find_all_paths(
-        graph,
-        start_idx,
-        end_idx,
-        &mut visited,
-        &mut path,
-        &mut all_paths,
-    );
-
-    all_paths.len()
+    find_all_paths(graph, start_idx, end_idx, &mut visited, &mut path)
 }
 
 fn main() {

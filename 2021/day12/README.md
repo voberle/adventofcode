@@ -13,3 +13,13 @@ My solution runs in 2 ms.
 ## Part 2
 
 Surprisingly, it was almost harder to implement part 2 than 1, as I struggled to find the right abstractions for the visit tracking.
+
+Current solution uses a trait for visit tracking, and two different implementations. They could easily be merged into one.
+
+## Update
+
+After having a look at other solutions, I realized there was no need to save all paths found, but I just needed to counted the number of paths.
+
+This divided the runtime by 3, to 10ms for both parts.
+
+I also realized that it would be possible to get read of the visited structure fully, and just check the path under construction to see if a cave was already visited. This would result in shorter code, but might not be more readable. It might also be slower, as I would replace some direct memory access with a search in a vector.
