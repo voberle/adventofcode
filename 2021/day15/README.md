@@ -2,7 +2,7 @@
 
 ## Part 1
 
-Part 1 was basically using my Grid and Dijkstra code almost unmodified, and it just works.
+Part 1 was basically using my Grid and Dijkstra code almost unmodified, and it just works. Runs in 2.5 ms.
 
 ## Part 2
 
