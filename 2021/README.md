@@ -67,6 +67,6 @@ Paper folding. ASCII code reading, OCR.
 
 Sequence generation. Optimization.
 
-### Day 15: [Chiton](day15/README.md) 🌟
+### Day 15: [Chiton](day15/README.md) 🌟🌟
 
-Shortest path in Grid. Dijkstra.
+Shortest path in Grid. Dijkstra. Virtual grid.
