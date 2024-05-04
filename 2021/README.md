@@ -63,6 +63,6 @@ Find all paths. DFS.
 
 Paper folding. ASCII code reading, OCR.
 
-### Day 14: [Extended Polymerization](day14/README.md) 🌟
+### Day 14: [Extended Polymerization](day14/README.md) 🌟🌟
 
 Sequence generation. Optimization.
