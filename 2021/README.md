@@ -5,6 +5,9 @@
 - Day 1 to 6 were nice, with experience they were simple enough but still interesting. I enjoyed making the code as short and nice as possible. I'm very happy with the result for days 5 and 6 in particular.
 - OEIS was handy in day 7.
 - Day 8 was the first complex one. It was a fun deduction game.
+- Day 9 and 11 had similarities as grids where elements change based on their neighbors.
+- Day 12 was finding all paths problem. I enjoyed applying correctly DFS there, and then optimizing it.
+- Day 13 was one of those where a pucture forms a code of ASCII letter. I used an external crate for doing OCR on those letters.
 
 ## Days
 
@@ -58,4 +61,8 @@ Find all paths. DFS.
 
 ### Day 13: [Transparent Origami](day13/README.md) 🌟🌟
 
-Paper folding.
+Paper folding. ASCII code reading, OCR.
+
+### Day 14: [Extended Polymerization](day14/README.md) 🌟
+
+Sequence generation. Optimization.
