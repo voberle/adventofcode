@@ -70,3 +70,7 @@ Sequence generation. Optimization.
 ### Day 15: [Chiton](day15/README.md) 🌟🌟
 
 Shortest path in Grid. Dijkstra. Virtual grid.
+
+### Day 16: [Packet Decoder](day16/README.md) 🌟
+
+Packet decoding, binary.
