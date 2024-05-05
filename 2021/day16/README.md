@@ -8,5 +8,7 @@ I did part 1 initially in a hacky way, just parsing all the packets and printing
 
 I did this as I wasn't sure how to organize my code before knowing what part 2 was.
 
+Then I did a cleaned up version.
+
 ## Part 2
 

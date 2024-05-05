@@ -110,9 +110,6 @@ dependencies = [
 [[package]]
 name = "day16"
 version = "0.1.0"
-dependencies = [
- "itertools 0.12.1",
-]
 
 [[package]]
 name = "either"
