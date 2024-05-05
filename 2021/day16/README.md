@@ -12,3 +12,4 @@ Then I did a cleaned up version.
 
 ## Part 2
 
+Part 2 turned out fairly easy.

@@ -71,6 +71,6 @@ Sequence generation. Optimization.
 
 Shortest path in Grid. Dijkstra. Virtual grid.
 
-### Day 16: [Packet Decoder](day16/README.md) 🌟
+### Day 16: [Packet Decoder](day16/README.md) 🌟🌟
 
 Packet decoding, binary.

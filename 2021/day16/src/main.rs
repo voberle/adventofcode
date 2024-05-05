@@ -70,6 +70,8 @@ fn parse_packet(bits: &[u8]) -> Result {
         let length_type_id = bits[r.i];
         r.i += 1;
 
+        let mut sub_packet_values: Vec<u64> = Vec::new();
+
         if length_type_id == 0 {
             let total_length_in_bits = get_number(&bits[r.i..r.i + 15]) as usize;
             r.i += 15;
@@ -77,8 +79,10 @@ fn parse_packet(bits: &[u8]) -> Result {
             let mut si = 0;
             loop {
                 let sub_result = parse_packet(&bits[r.i + si..r.i + total_length_in_bits]);
+
                 si += sub_result.i;
                 r.version_sum += sub_result.version_sum;
+                sub_packet_values.push(sub_result.value);
 
                 if si == total_length_in_bits {
                     break;
@@ -92,10 +96,23 @@ fn parse_packet(bits: &[u8]) -> Result {
 
             for _ in 0..number_sub_packets {
                 let sub_result = parse_packet(&bits[r.i..]);
+
                 r.i += sub_result.i;
                 r.version_sum += sub_result.version_sum;
+                sub_packet_values.push(sub_result.value);
             }
         }
+
+        r.value = match type_id {
+            0 => sub_packet_values.iter().sum(),
+            1 => sub_packet_values.iter().product(),
+            2 => *sub_packet_values.iter().min().unwrap(),
+            3 => *sub_packet_values.iter().max().unwrap(),
+            5 => bool::into(sub_packet_values[0] > sub_packet_values[1]),
+            6 => bool::into(sub_packet_values[0] < sub_packet_values[1]),
+            7 => bool::into(sub_packet_values[0] == sub_packet_values[1]),
+            _ => panic!("Unknown type ID"),
+        };
     }
     r
 }
@@ -105,8 +122,8 @@ fn version_sum(bits: &[u8]) -> u64 {
     parse_packet(bits).version_sum
 }
 
-fn part2(bits: &[u8]) -> i64 {
-    0
+fn eval(bits: &[u8]) -> u64 {
+    parse_packet(bits).value
 }
 
 fn main() {
@@ -115,7 +132,7 @@ fn main() {
     let bits = build(input.trim());
 
     println!("Part 1: {}", version_sum(&bits));
-    println!("Part 2: {}", part2(&bits));
+    println!("Part 2: {}", eval(&bits));
 }
 
 #[cfg(test)]
@@ -132,6 +149,13 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(eval(&build("C200B40A82")), 3);
+        assert_eq!(eval(&build("04005AC33890")), 54);
+        assert_eq!(eval(&build("880086C3E88112")), 7);
+        assert_eq!(eval(&build("CE00C43D881120")), 9);
+        assert_eq!(eval(&build("D8005AC2A8F0")), 1);
+        assert_eq!(eval(&build("F600BC2D8F")), 0);
+        assert_eq!(eval(&build("9C005AC2F8F0")), 0);
+        assert_eq!(eval(&build("9C0141080250320F1802104A08")), 1);
     }
 }
