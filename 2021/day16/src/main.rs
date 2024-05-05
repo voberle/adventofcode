@@ -32,72 +32,72 @@ fn get_number(bits: &[u8]) -> u64 {
 
 // Result of the parsing of a packet.
 struct Result {
-    index: usize,
+    i: usize,
     version_sum: u64,
     value: u64,
 }
 
 #[allow(clippy::cast_possible_truncation)]
 fn parse_packet(bits: &[u8]) -> Result {
-    // println!("{}", bits.iter().join(""));
-    let mut i = 0;
-    let version = get_number(&bits[i..i + 3]);
-    // println!("{}", version);
-    i += 3;
-    let mut version_sum = version;
+    let mut r = Result {
+        i: 0,
+        version_sum: 0,
+        value: 0,
+    };
 
-    let type_id = get_number(&bits[i..i + 3]);
-    i += 3;
-    // println!("version={}, type_id={}", version, type_id);
+    let version = get_number(&bits[r.i..r.i + 3]);
+    r.i += 3;
+    r.version_sum = version;
+
+    let type_id = get_number(&bits[r.i..r.i + 3]);
+    r.i += 3;
+
     if type_id == 4 {
         // Literal value
         let mut val_bits: Vec<u8> = Vec::new();
         loop {
-            let five_bits = &bits[i..i + 5];
-            i += 5;
+            let five_bits = &bits[r.i..r.i + 5];
+            r.i += 5;
+
             val_bits.extend(&five_bits[1..]);
             if five_bits[0] == 0 {
                 break;
             }
         }
-        let literal_value = get_number(&val_bits);
-        // println!("Literal value={}", literal_value);
+        r.value = get_number(&val_bits);
     } else {
         // Operator
-        let length_type_id = bits[i];
-        i += 1;
+        let length_type_id = bits[r.i];
+        r.i += 1;
+
         if length_type_id == 0 {
-            let total_length_in_bits = get_number(&bits[i..i + 15]) as usize;
-            // println!("total_length_in_bits={}", total_length_in_bits);
-            i += 15;
+            let total_length_in_bits = get_number(&bits[r.i..r.i + 15]) as usize;
+            r.i += 15;
+
             let mut si = 0;
             loop {
-                let r = parse_packet(&bits[i + si..i + total_length_in_bits]);
-                si += r.index;
-                version_sum += r.version_sum;
+                let sub_result = parse_packet(&bits[r.i + si..r.i + total_length_in_bits]);
+                si += sub_result.i;
+                r.version_sum += sub_result.version_sum;
 
                 if si == total_length_in_bits {
                     break;
                 }
             }
-            i += si;
+            r.i += si;
         } else {
             assert_eq!(length_type_id, 1);
-            let number_sub_packets = get_number(&bits[i..i + 11]);
-            // println!("number_sub_packets={}", number_sub_packets);
-            i += 11;
+            let number_sub_packets = get_number(&bits[r.i..r.i + 11]);
+            r.i += 11;
+
             for _ in 0..number_sub_packets {
-                let r = parse_packet(&bits[i..]);
-                i += r.index;
-                version_sum += r.version_sum;
+                let sub_result = parse_packet(&bits[r.i..]);
+                r.i += sub_result.i;
+                r.version_sum += sub_result.version_sum;
             }
         }
     }
-    Result {
-        index: i,
-        version_sum,
-        value: 0,
-    }
+    r
 }
 
 fn version_sum(bits: &[u8]) -> u64 {
