@@ -37,6 +37,14 @@ struct Result {
     value: u64,
 }
 
+macro_rules! next_bits {
+    ($bits:expr, $i:expr, $len:literal) => {{
+        let slice = &$bits[$i..$i + $len];
+        $i += $len;
+        slice
+    }};
+}
+
 #[allow(clippy::cast_possible_truncation)]
 fn parse_packet(bits: &[u8]) -> Result {
     let mut r = Result {
@@ -45,19 +53,16 @@ fn parse_packet(bits: &[u8]) -> Result {
         value: 0,
     };
 
-    let version = get_number(&bits[r.i..r.i + 3]);
-    r.i += 3;
+    let version = get_number(next_bits!(bits, r.i, 3));
     r.version_sum = version;
 
-    let type_id = get_number(&bits[r.i..r.i + 3]);
-    r.i += 3;
+    let type_id = get_number(next_bits!(bits, r.i, 3));
 
     if type_id == 4 {
         // Literal value
         let mut val_bits: Vec<u8> = Vec::new();
         loop {
-            let five_bits = &bits[r.i..r.i + 5];
-            r.i += 5;
+            let five_bits = next_bits!(bits, r.i, 5);
 
             val_bits.extend(&five_bits[1..]);
             if five_bits[0] == 0 {
@@ -67,18 +72,16 @@ fn parse_packet(bits: &[u8]) -> Result {
         r.value = get_number(&val_bits);
     } else {
         // Operator
-        let length_type_id = bits[r.i];
-        r.i += 1;
+        let length_type_id = next_bits!(bits, r.i, 1)[0];
 
         let mut sub_packet_values: Vec<u64> = Vec::new();
 
         if length_type_id == 0 {
-            let total_length_in_bits = get_number(&bits[r.i..r.i + 15]) as usize;
-            r.i += 15;
+            let total_length_in_bits = get_number(next_bits!(bits, r.i, 15)) as usize;
 
             let mut si = 0;
             loop {
-                let sub_result = parse_packet(&bits[r.i + si..r.i + total_length_in_bits]);
+                let sub_result = parse_packet(&bits[r.i + si..]);
 
                 si += sub_result.i;
                 r.version_sum += sub_result.version_sum;
@@ -91,8 +94,7 @@ fn parse_packet(bits: &[u8]) -> Result {
             r.i += si;
         } else {
             assert_eq!(length_type_id, 1);
-            let number_sub_packets = get_number(&bits[r.i..r.i + 11]);
-            r.i += 11;
+            let number_sub_packets = get_number(next_bits!(bits, r.i, 11));
 
             for _ in 0..number_sub_packets {
                 let sub_result = parse_packet(&bits[r.i..]);
