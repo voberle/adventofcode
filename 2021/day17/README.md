@@ -2,8 +2,12 @@
 
 ## Part 1
 
-I have a version that explores all the option and find the highest y, but the ending condition is missing for now.
+My initial version explored all the options and found the highest y, but the ending condition was missing.
+
+With some experimentation, I found the ending conditions needed.
 
 ## Part 2
 
-Same comment as for part 1.
+Part 2 could required only a minor change to part 1.
+
+It's brute-forced, but the whole thing runs in 3 ms, so not too bad.

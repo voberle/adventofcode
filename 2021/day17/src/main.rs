@@ -85,74 +85,50 @@ fn shoot(probe: &Probe, target_area: &TargetArea) -> Option<i32> {
         highest_y = highest_y.max(probe.y);
 
         if probe.is_past_target(target_area) {
-            // println!(
-            //     ".. [{},{}] {},{}: Missed",
-            //     probe.vel_x, probe.vel_y, probe.x, probe.y
-            // );
             return None;
         } else if probe.is_in_target(target_area) {
-            // println!(
-            //     ".. [{},{}] {},{}: Hit",
-            //     probe.vel_x, probe.vel_y, probe.x, probe.y
-            // );
             return Some(highest_y);
         }
-        // println!(
-        //     ".. [{},{}] {},{}: ..",
-        //     probe.vel_x, probe.vel_y, probe.x, probe.y
-        // );
     }
 }
 
-fn highest_possible_y(target_area: &TargetArea) -> i32 {
-    let mut hits = 0;
+struct Result {
+    max_y: i32,
+    hits: usize,
+}
 
-    let mut max_y = i32::MIN;
-    // for vel_y in 1.. {
-    for vel_y in target_area.y_min.. {
-        if vel_y < target_area.y_min {
-            break;
-        }
+fn try_shooting(target_area: &TargetArea) -> Result {
+    let mut result = Result {
+        max_y: i32::MIN,
+        hits: 0,
+    };
 
+    // Start value: y velocity can start at target area lowest y, as anything lower
+    // get us to shoot lower on first try already.
+    // End value: Experiment showed that abs of target area lowest y works, not sure why.
+    for vel_y in target_area.y_min..target_area.y_min.abs() {
         // Highest y found for this specific y velocity.
         let mut highest_y_for_vel = i32::MIN;
-        for vel_x in 1.. {
-            // If velocity x is so big that we would miss on first try, then stop
-            if vel_x > target_area.x_max {
-                break;
-            }
 
+        // We don't need to try a x velocity bigger than max x, as we overshoot on first try.
+        for vel_x in 1..=target_area.x_max {
             let probe = Probe::new(vel_x, vel_y);
+
             if let Some(highest_y) = shoot(&probe, target_area) {
-                hits += 1;
                 // If shot hit, save highest y.
                 if highest_y > highest_y_for_vel {
                     highest_y_for_vel = highest_y;
-                } else {
-                    // we found highest for this y velocity, try next.
-                    // println!("{vel_x},{vel_y}: {}, {}, {}", highest_y, highest_y_for_vel, max_y);
-                    // break;
                 }
+                // For finding highest only, we could break here on else, but not for getting all hits.
+
+                result.hits += 1;
             }
             // If shot missed, try next x.
         }
-        println!("{}, {}", max_y, hits);
 
-        if highest_y_for_vel > max_y {
-            max_y = highest_y_for_vel;
-            println!("{}, {}", max_y, hits);
-        } else {
-            // break;
-        }
+        result.max_y = highest_y_for_vel.max(result.max_y);
     }
-
-    // println!(" {},{}: {}", probe.x, probe.y, res);
-
-    max_y
-}
-
-fn part2(target_area: &TargetArea) -> i32 {
-    0
+    result
 }
 
 fn main() {
@@ -160,8 +136,10 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let target_area = TargetArea::build(&input);
 
-    println!("Part 1: {}", highest_possible_y(&target_area));
-    println!("Part 2: {}", part2(&target_area));
+    let result = try_shooting(&target_area);
+
+    println!("Part 1: {}", result.max_y);
+    println!("Part 2: {}", result.hits);
 }
 
 #[cfg(test)]
@@ -172,11 +150,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(highest_possible_y(&TargetArea::build(INPUT_TEST)), 45);
+        assert_eq!(try_shooting(&TargetArea::build(INPUT_TEST)).max_y, 45);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&TargetArea::build(INPUT_TEST)), 0);
+        assert_eq!(try_shooting(&TargetArea::build(INPUT_TEST)).hits, 112);
     }
 }
