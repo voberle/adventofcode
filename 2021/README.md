@@ -75,4 +75,6 @@ Shortest path in Grid. Dijkstra. Virtual grid.
 
 Packet decoding, binary.
 
-### Day 17: [Trick Shot](day17/README.md)
+### Day 17: [Trick Shot](day17/README.md) 🌟🌟
+
+Shooting a probe, trajectory tracking.

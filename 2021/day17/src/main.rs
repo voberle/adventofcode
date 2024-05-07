@@ -1,4 +1,7 @@
-use std::io::{self, Read};
+use std::{
+    cmp::Ordering,
+    io::{self, Read},
+};
 
 use regex::Regex;
 
@@ -37,31 +40,25 @@ struct Probe {
 }
 
 impl Probe {
-    fn new(x_vel: i32, y_vel: i32) -> Self {
+    fn new(vel_x: i32, vel_y: i32) -> Self {
         Self {
-            vel_x: x_vel,
-            vel_y: y_vel,
+            vel_x,
+            vel_y,
             x: 0,
             y: 0,
         }
     }
 
     fn step(&self) -> Self {
-        let x = self.x + self.vel_x;
-        let y = self.y + self.vel_y;
-        let x_vel = if self.vel_x > 0 {
-            self.vel_x - 1
-        } else if self.vel_x < 0 {
-            self.vel_x + 1
-        } else { // doesn't change if already 0
-            self.vel_x
-        };
-        let y_vel = self.vel_y - 1;
         Self {
-            vel_x: x_vel,
-            vel_y: y_vel,
-            x,
-            y,
+            vel_x: match self.vel_x.cmp(&0) {
+                Ordering::Greater => self.vel_x - 1,
+                Ordering::Less => self.vel_x + 1,
+                Ordering::Equal => self.vel_x,
+            },
+            vel_y: self.vel_y - 1,
+            x: self.x + self.vel_x,
+            y: self.y + self.vel_y,
         }
     }
 
@@ -69,6 +66,7 @@ impl Probe {
         target_area.contains(self.x, self.y)
     }
 
+    // Has the probe overshoot the target?
     fn is_past_target(&self, target_area: &TargetArea) -> bool {
         self.x > target_area.x_max || self.y < target_area.y_min
     }
@@ -81,7 +79,7 @@ fn shoot(probe: &Probe, target_area: &TargetArea) -> Option<i32> {
     // Highest y in this shot.
     let mut highest_y = i32::MIN;
 
-    let mut probe = probe.clone();
+    let mut probe = *probe;
     loop {
         probe = probe.step();
         highest_y = highest_y.max(probe.y);
@@ -107,8 +105,11 @@ fn shoot(probe: &Probe, target_area: &TargetArea) -> Option<i32> {
 }
 
 fn highest_possible_y(target_area: &TargetArea) -> i32 {
+    let mut hits = 0;
+
     let mut max_y = i32::MIN;
-    for vel_y in 1.. {
+    // for vel_y in 1.. {
+    for vel_y in target_area.y_min.. {
         if vel_y < target_area.y_min {
             break;
         }
@@ -120,29 +121,26 @@ fn highest_possible_y(target_area: &TargetArea) -> i32 {
             if vel_x > target_area.x_max {
                 break;
             }
-            
+
             let probe = Probe::new(vel_x, vel_y);
             if let Some(highest_y) = shoot(&probe, target_area) {
+                hits += 1;
                 // If shot hit, save highest y.
                 if highest_y > highest_y_for_vel {
                     highest_y_for_vel = highest_y;
                 } else {
                     // we found highest for this y velocity, try next.
                     // println!("{vel_x},{vel_y}: {}, {}, {}", highest_y, highest_y_for_vel, max_y);
-                    break;
+                    // break;
                 }
-                // } else {
-                //     // If we missed the target with the smallest x, then this y is bad.
-                //     if highest_y_for_vel == i32::MIN {
-                //         break;
-                //     }
             }
             // If shot missed, try next x.
         }
+        println!("{}, {}", max_y, hits);
 
         if highest_y_for_vel > max_y {
             max_y = highest_y_for_vel;
-            println!("{}", max_y);
+            println!("{}, {}", max_y, hits);
         } else {
             // break;
         }
