@@ -119,27 +119,29 @@ fn parse_packet(bits: &[u8]) -> Result {
     r
 }
 
-fn version_sum(bits: &[u8]) -> u64 {
-    // The outermost layer contains a single packet.
-    parse_packet(bits).version_sum
-}
-
-fn eval(bits: &[u8]) -> u64 {
-    parse_packet(bits).value
-}
-
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let bits = build(input.trim());
 
-    println!("Part 1: {}", version_sum(&bits));
-    println!("Part 2: {}", eval(&bits));
+    // The outermost layer contains a single packet.
+    let res = parse_packet(&bits);
+
+    println!("Part 1: {}", res.version_sum);
+    println!("Part 2: {}", res.value);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn version_sum(bits: &[u8]) -> u64 {
+        parse_packet(bits).version_sum
+    }
+
+    fn eval(bits: &[u8]) -> u64 {
+        parse_packet(bits).value
+    }
 
     #[test]
     fn test_part1() {
