@@ -1,8 +1,6 @@
 use core::num;
 use std::{
-    fmt,
-    io::{self, Read},
-    ops::Add,
+    clone, fmt, io::{self, Read}, ops::Add
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -244,18 +242,28 @@ fn reduce(number: &SnailfishNb) -> SnailfishNb {
         }
         break;
     }
-    println!("{}", number);
     number
 }
 
-fn magnitude_final_sum(numbers: &[SnailfishNb]) -> i64 {
-    for n in numbers {
-        // n.explore(0);
+fn final_sum(numbers: &[SnailfishNb]) -> SnailfishNb {
+    numbers.iter().skip(1).fold(numbers[0].clone(), |acc, e| acc + e.clone())
+    // numbers.iter().skip(1).fold(numbers[0].clone(), |acc, e| {
+    //     println!("  {}", acc);
+    //     println!("+ {}", e);
+    //     let s = acc + e.clone();
+    //     println!("= {}", s);
+    //     println!();
+    //     s
+    // })
+}
 
+fn magnitude_final_sum(numbers: &[SnailfishNb]) -> u32 {
+    // for n in numbers {
         // explode(n);
         // split(n);
-        reduce(n);
-    }
+        // reduce(n);
+    // }
+    final_sum(numbers);
     0
 }
 
@@ -269,10 +277,10 @@ fn main() {
     let numbers = build(input.trim());
     // println!("{:#?}", numbers);
 
-    println!("{}", input.trim());
-    for n in &numbers {
-        println!("{}", n);
-    }
+    // println!("{}", input.trim());
+    // for n in &numbers {
+    //     println!("{}", n);
+    // }
 
     println!("Part 1: {}", magnitude_final_sum(&numbers));
     println!("Part 2: {}", part2(&numbers));
@@ -282,11 +290,12 @@ fn main() {
 mod tests {
     use super::*;
 
-    const INPUT_TEST: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_1: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_2: &str = include_str!("../resources/input_test_2");
 
     #[test]
     fn test_build() {
-        for line in INPUT_TEST.lines() {
+        for line in INPUT_TEST_2.lines() {
             assert_eq!(SnailfishNb::new(line).to_string(), line);
         }
     }
@@ -353,6 +362,18 @@ mod tests {
     }
 
     #[test]
+    fn test_final_sum() {
+        assert_eq!(final_sum(&build("[1,1]\n[2,2]\n[3,3]\n[4,4]")), SnailfishNb::new("[[[[1,1],[2,2]],[3,3]],[4,4]]"));
+        assert_eq!(final_sum(&build("[1,1]\n[2,2]\n[3,3]\n[4,4]\n[5,5]")), SnailfishNb::new("[[[[3,0],[5,3]],[4,4]],[5,5]]"));
+        assert_eq!(final_sum(&build("[1,1]\n[2,2]\n[3,3]\n[4,4]\n[5,5]\n[6,6]")), SnailfishNb::new("[[[[5,0],[7,4]],[5,5]],[6,6]]"));
+    }
+
+    #[test]
+    fn test_final_sum_large() {
+        assert_eq!(final_sum(&build(INPUT_TEST_1)), SnailfishNb::new("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]"));
+    }
+
+    #[test]
     fn test_magnitude_final_sum() {
         assert_eq!(magnitude_final_sum(&build("[[1,2],[[3,4],5]]")), 143);
         assert_eq!(
@@ -381,11 +402,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(magnitude_final_sum(&build(INPUT_TEST)), 4140);
+        assert_eq!(magnitude_final_sum(&build(INPUT_TEST_2)), 4140);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        // assert_eq!(part2(&build(INPUT_TEST)), 0);
     }
 }
