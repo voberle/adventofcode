@@ -1,6 +1,7 @@
-use core::num;
 use std::{
-    clone, fmt, io::{self, Read}, ops::Add
+    fmt,
+    io::{self, Read},
+    ops::Add,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -51,6 +52,13 @@ impl SnailfishNb {
         match self {
             SnailfishNb::Number(v) => *v,
             SnailfishNb::Pair(_) => panic!("Requesting regular number of a pair"),
+        }
+    }
+
+    fn magnitude(&self) -> u32 {
+        match self {
+            SnailfishNb::Number(v) => *v,
+            SnailfishNb::Pair(p) => 3 * p.0.magnitude() + 2 * p.1.magnitude(),
         }
     }
 }
@@ -246,7 +254,10 @@ fn reduce(number: &SnailfishNb) -> SnailfishNb {
 }
 
 fn final_sum(numbers: &[SnailfishNb]) -> SnailfishNb {
-    numbers.iter().skip(1).fold(numbers[0].clone(), |acc, e| acc + e.clone())
+    numbers
+        .iter()
+        .skip(1)
+        .fold(numbers[0].clone(), |acc, e| acc + e.clone())
     // numbers.iter().skip(1).fold(numbers[0].clone(), |acc, e| {
     //     println!("  {}", acc);
     //     println!("+ {}", e);
@@ -258,13 +269,8 @@ fn final_sum(numbers: &[SnailfishNb]) -> SnailfishNb {
 }
 
 fn magnitude_final_sum(numbers: &[SnailfishNb]) -> u32 {
-    // for n in numbers {
-        // explode(n);
-        // split(n);
-        // reduce(n);
-    // }
-    final_sum(numbers);
-    0
+    let sum = final_sum(numbers);
+    sum.magnitude()
 }
 
 fn part2(numbers: &[SnailfishNb]) -> i64 {
@@ -351,7 +357,10 @@ mod tests {
 
     #[test]
     fn test_reduce() {
-        assert_eq!(reduce(&SnailfishNb::new("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]")), SnailfishNb::new("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]"));
+        assert_eq!(
+            reduce(&SnailfishNb::new("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]")),
+            SnailfishNb::new("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]")
+        );
     }
 
     #[test]
@@ -363,39 +372,57 @@ mod tests {
 
     #[test]
     fn test_final_sum() {
-        assert_eq!(final_sum(&build("[1,1]\n[2,2]\n[3,3]\n[4,4]")), SnailfishNb::new("[[[[1,1],[2,2]],[3,3]],[4,4]]"));
-        assert_eq!(final_sum(&build("[1,1]\n[2,2]\n[3,3]\n[4,4]\n[5,5]")), SnailfishNb::new("[[[[3,0],[5,3]],[4,4]],[5,5]]"));
-        assert_eq!(final_sum(&build("[1,1]\n[2,2]\n[3,3]\n[4,4]\n[5,5]\n[6,6]")), SnailfishNb::new("[[[[5,0],[7,4]],[5,5]],[6,6]]"));
-    }
-
-    #[test]
-    fn test_final_sum_large() {
-        assert_eq!(final_sum(&build(INPUT_TEST_1)), SnailfishNb::new("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]"));
-    }
-
-    #[test]
-    fn test_magnitude_final_sum() {
-        assert_eq!(magnitude_final_sum(&build("[[1,2],[[3,4],5]]")), 143);
         assert_eq!(
-            magnitude_final_sum(&build("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]")),
+            final_sum(&build("[1,1]\n[2,2]\n[3,3]\n[4,4]")),
+            SnailfishNb::new("[[[[1,1],[2,2]],[3,3]],[4,4]]")
+        );
+        assert_eq!(
+            final_sum(&build("[1,1]\n[2,2]\n[3,3]\n[4,4]\n[5,5]")),
+            SnailfishNb::new("[[[[3,0],[5,3]],[4,4]],[5,5]]")
+        );
+        assert_eq!(
+            final_sum(&build("[1,1]\n[2,2]\n[3,3]\n[4,4]\n[5,5]\n[6,6]")),
+            SnailfishNb::new("[[[[5,0],[7,4]],[5,5]],[6,6]]")
+        );
+    }
+
+    #[test]
+    fn test_final_sum_large_1() {
+        assert_eq!(
+            final_sum(&build(INPUT_TEST_1)),
+            SnailfishNb::new("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]")
+        );
+    }
+
+    #[test]
+    fn test_final_sum_large_2() {
+        assert_eq!(
+            final_sum(&build(INPUT_TEST_2)),
+            SnailfishNb::new("[[[[6,6],[7,6]],[[7,7],[7,0]]],[[[7,7],[7,7]],[[7,8],[9,9]]]]")
+        );
+    }
+
+    #[test]
+    fn test_magnitude() {
+        assert_eq!(SnailfishNb::new("[[1,2],[[3,4],5]]").magnitude(), 143);
+        assert_eq!(
+            SnailfishNb::new("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]").magnitude(),
             1384
         );
         assert_eq!(
-            magnitude_final_sum(&build("[[[[1,1],[2,2]],[3,3]],[4,4]]")),
+            SnailfishNb::new("[[[[1,1],[2,2]],[3,3]],[4,4]]").magnitude(),
             445
         );
         assert_eq!(
-            magnitude_final_sum(&build("[[[[3,0],[5,3]],[4,4]],[5,5]]")),
+            SnailfishNb::new("[[[[3,0],[5,3]],[4,4]],[5,5]]").magnitude(),
             791
         );
         assert_eq!(
-            magnitude_final_sum(&build("[[[[5,0],[7,4]],[5,5]],[6,6]]")),
+            SnailfishNb::new("[[[[5,0],[7,4]],[5,5]],[6,6]]").magnitude(),
             1137
         );
         assert_eq!(
-            magnitude_final_sum(&build(
-                "[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]"
-            )),
+            SnailfishNb::new("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]").magnitude(),
             3488
         );
     }
