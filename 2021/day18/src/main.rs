@@ -1,9 +1,9 @@
 use std::{
     fmt,
-    io::{self, Read},
+    io::{self, Read}, ops::Add,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum SnailfishNb {
     Number(u32),
     Pair(Box<(SnailfishNb, SnailfishNb)>),
@@ -52,8 +52,21 @@ impl fmt::Display for SnailfishNb {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             SnailfishNb::Number(v) => write!(f, "{}", v),
-            SnailfishNb::Pair(sf) => write!(f, "[{},{}]", sf.0, sf.1),
+            SnailfishNb::Pair(p) => write!(f, "[{},{}]", p.0, p.1),
         }
+    }
+}
+
+impl Add for SnailfishNb {
+    type Output = SnailfishNb;
+
+    fn add(self, other: SnailfishNb) -> SnailfishNb {
+        SnailfishNb::Pair(Box::new(
+            (
+                self,
+                other
+            )
+        ))
     }
 }
 
@@ -95,6 +108,13 @@ mod tests {
         for line in INPUT_TEST.lines() {
             assert_eq!(SnailfishNb::new(line).to_string(), line);
         }
+    }
+
+    #[test]
+    fn test_add() {
+        let a = SnailfishNb::new("[1,2]");
+        let b = SnailfishNb::new("[[3,4],5]");
+        assert_eq!(a + b, SnailfishNb::new("[[1,2],[[3,4],5]]"));
     }
 
     #[test]
