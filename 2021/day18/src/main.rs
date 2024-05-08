@@ -1,3 +1,4 @@
+use core::num;
 use std::{
     fmt,
     io::{self, Read},
@@ -69,7 +70,8 @@ impl Add for SnailfishNb {
     type Output = SnailfishNb;
 
     fn add(self, other: SnailfishNb) -> SnailfishNb {
-        SnailfishNb::Pair(Box::new((self, other)))
+        let added = SnailfishNb::Pair(Box::new((self, other)));
+        reduce(&added)
     }
 }
 
@@ -226,12 +228,33 @@ fn split(number: &SnailfishNb) -> Option<SnailfishNb> {
     }
 }
 
+fn reduce(number: &SnailfishNb) -> SnailfishNb {
+    let mut number = number.clone();
+    // println!("after addition: {}", number);
+    loop {
+        if let Some(exploded) = explode(&number) {
+            number = exploded;
+            // println!("after explode:  {}", number);
+            continue;
+        }
+        if let Some(split) = split(&number) {
+            number = split;
+            // println!("after split:    {}", number);
+            continue;
+        }
+        break;
+    }
+    println!("{}", number);
+    number
+}
+
 fn magnitude_final_sum(numbers: &[SnailfishNb]) -> i64 {
     for n in numbers {
         // n.explore(0);
 
-        split(n);
         // explode(n);
+        // split(n);
+        reduce(n);
     }
     0
 }
@@ -269,7 +292,7 @@ mod tests {
     }
 
     #[test]
-    fn test_add() {
+    fn test_add_no_reduction() {
         let a = SnailfishNb::new("[1,2]");
         let b = SnailfishNb::new("[[3,4],5]");
         assert_eq!(a + b, SnailfishNb::new("[[1,2],[[3,4],5]]"));
@@ -315,6 +338,18 @@ mod tests {
             Some(SnailfishNb::new("[6,6]"))
         );
         assert_eq!(split(&SnailfishNb::new("[[3,4],5]")), None);
+    }
+
+    #[test]
+    fn test_reduce() {
+        assert_eq!(reduce(&SnailfishNb::new("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]")), SnailfishNb::new("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]"));
+    }
+
+    #[test]
+    fn test_add_with_reduction() {
+        let a = SnailfishNb::new("[[[[4,3],4],4],[7,[[8,4],9]]]");
+        let b = SnailfishNb::new("[1,1]]");
+        assert_eq!(a + b, SnailfishNb::new("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]"));
     }
 
     #[test]
