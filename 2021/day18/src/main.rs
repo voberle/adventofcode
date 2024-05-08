@@ -1,6 +1,7 @@
 use std::{
     fmt,
-    io::{self, Read}, ops::Add,
+    io::{self, Read},
+    ops::Add,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -46,6 +47,13 @@ impl SnailfishNb {
         assert_eq!(elements.len(), 2);
         SnailfishNb::Pair(Box::new((elements.swap_remove(0), elements.swap_remove(0))))
     }
+
+    fn get_regular_number(&self) -> u32 {
+        match self {
+            SnailfishNb::Number(v) => *v,
+            SnailfishNb::Pair(_) => panic!("Requesting regular number of a pair"),
+        }
+    }
 }
 
 impl fmt::Display for SnailfishNb {
@@ -61,12 +69,7 @@ impl Add for SnailfishNb {
     type Output = SnailfishNb;
 
     fn add(self, other: SnailfishNb) -> SnailfishNb {
-        SnailfishNb::Pair(Box::new(
-            (
-                self,
-                other
-            )
-        ))
+        SnailfishNb::Pair(Box::new((self, other)))
     }
 }
 
@@ -74,7 +77,125 @@ fn build(input: &str) -> Vec<SnailfishNb> {
     input.lines().map(SnailfishNb::new).collect()
 }
 
+#[derive(Debug)]
+struct ExplosionData {
+    pair_index: usize,
+    number_index: usize,
+    left_number_to_add: u32,
+    right_number_to_add: u32,
+}
+
+fn find_explosion_data(
+    current: &SnailfishNb,
+    level: usize,
+    number_index: &mut usize,
+    pair_index: &mut usize,
+) -> Option<ExplosionData> {
+    if level >= 4 {
+        match current.clone() {
+            SnailfishNb::Number(_) => {}
+            SnailfishNb::Pair(p) => {
+                if matches!(p.0, SnailfishNb::Number(_)) && matches!(p.1, SnailfishNb::Number(_)) {
+                    // BOOM!
+                    return Some(ExplosionData {
+                        pair_index: *pair_index,
+                        number_index: *number_index,
+                        left_number_to_add: p.0.get_regular_number(),
+                        right_number_to_add: p.1.get_regular_number(),
+                    });
+                }
+            }
+        }
+    }
+
+    match current {
+        SnailfishNb::Number(_) => {
+            *number_index += 1;
+        }
+        SnailfishNb::Pair(p) => {
+            *pair_index += 1;
+            let explosion_data = find_explosion_data(&p.0, level + 1, number_index, pair_index);
+            if explosion_data.is_some() {
+                return explosion_data;
+            }
+            let explosion_data = find_explosion_data(&p.1, level + 1, number_index, pair_index);
+            if explosion_data.is_some() {
+                return explosion_data;
+            }
+        }
+    }
+    None
+}
+
+fn exec_explosion(
+    current: &SnailfishNb,
+    explosion_data: &ExplosionData,
+    number_index: &mut usize,
+    pair_index: &mut usize,
+) -> SnailfishNb {
+    match current {
+        SnailfishNb::Number(v) => {
+            *number_index += 1;
+            if *number_index == explosion_data.number_index {
+                SnailfishNb::Number(*v + explosion_data.left_number_to_add)
+            } else if *number_index == explosion_data.number_index + 1 {
+                SnailfishNb::Number(*v + explosion_data.right_number_to_add)
+            } else {
+                SnailfishNb::Number(*v)
+            }
+        }
+        SnailfishNb::Pair(p) => {
+            if *pair_index == explosion_data.pair_index {
+                *pair_index += 1;
+                SnailfishNb::Number(0)
+            } else {
+                let mut elements: Vec<SnailfishNb> = Vec::new();
+                *pair_index += 1;
+                elements.push(exec_explosion(
+                    &p.0,
+                    explosion_data,
+                    number_index,
+                    pair_index,
+                ));
+                elements.push(exec_explosion(
+                    &p.1,
+                    explosion_data,
+                    number_index,
+                    pair_index,
+                ));
+                assert_eq!(elements.len(), 2);
+                SnailfishNb::Pair(Box::new((elements.swap_remove(0), elements.swap_remove(0))))
+            }
+        }
+    }
+}
+
+fn explode(number: &SnailfishNb) -> Option<SnailfishNb> {
+    // Rust won't let us explore and modify the structure in place.
+    // So we proceed in two phases: We first find what needs to be exploded, and then we do it by
+    // building a new structure.
+
+    let mut number_index = 0;
+    let mut pair_index = 0;
+    if let Some(explosion_data) = find_explosion_data(number, 0, &mut number_index, &mut pair_index)
+    {
+        number_index = 0;
+        pair_index = 0;
+        let exploded_number =
+            exec_explosion(number, &explosion_data, &mut number_index, &mut pair_index);
+        // println!("{}", exploded_number);
+        Some(exploded_number)
+    } else {
+        None
+    }
+}
+
 fn magnitude_final_sum(numbers: &[SnailfishNb]) -> i64 {
+    for n in numbers {
+        // n.explore(0);
+
+        explode(n);
+    }
     0
 }
 
@@ -115,6 +236,30 @@ mod tests {
         let a = SnailfishNb::new("[1,2]");
         let b = SnailfishNb::new("[[3,4],5]");
         assert_eq!(a + b, SnailfishNb::new("[[1,2],[[3,4],5]]"));
+    }
+
+    #[test]
+    fn test_explode() {
+        assert_eq!(
+            explode(&SnailfishNb::new("[[[[[9,8],1],2],3],4]")),
+            Some(SnailfishNb::new("[[[[0,9],2],3],4]"))
+        );
+        assert_eq!(
+            explode(&SnailfishNb::new("[7,[6,[5,[4,[3,2]]]]]")),
+            Some(SnailfishNb::new("[7,[6,[5,[7,0]]]]"))
+        );
+        assert_eq!(
+            explode(&SnailfishNb::new("[[6,[5,[4,[3,2]]]],1]")),
+            Some(SnailfishNb::new("[[6,[5,[7,0]]],3]"))
+        );
+        assert_eq!(
+            explode(&SnailfishNb::new("[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]")),
+            Some(SnailfishNb::new("[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]"))
+        );
+        assert_eq!(
+            explode(&SnailfishNb::new("[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]")),
+            Some(SnailfishNb::new("[[3,[2,[8,0]]],[9,[5,[7,0]]]]"))
+        );
     }
 
     #[test]
