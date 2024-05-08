@@ -190,11 +190,48 @@ fn explode(number: &SnailfishNb) -> Option<SnailfishNb> {
     }
 }
 
+// split_done indicates if we did already one split, as we must do only the left most one.
+fn exec_split(current: &SnailfishNb, split_done: &mut bool) -> SnailfishNb {
+    match current {
+        SnailfishNb::Number(v) => {
+            if *v >= 10 && !*split_done {
+                // Split
+                *split_done = true;
+                SnailfishNb::Pair(Box::new((
+                    SnailfishNb::Number(v / 2),
+                    SnailfishNb::Number(v / 2 + v % 2),
+                )))
+            } else {
+                SnailfishNb::Number(*v)
+            }
+        }
+        SnailfishNb::Pair(p) => {
+            let mut elements: Vec<SnailfishNb> = Vec::new();
+            elements.push(exec_split(&p.0, split_done));
+            elements.push(exec_split(&p.1, split_done));
+            assert_eq!(elements.len(), 2);
+            SnailfishNb::Pair(Box::new((elements.swap_remove(0), elements.swap_remove(0))))
+        }
+    }
+}
+
+fn split(number: &SnailfishNb) -> Option<SnailfishNb> {
+    let mut split_done = false;
+    let split_number = exec_split(number, &mut split_done);
+    if split_number == *number {
+        None
+    } else {
+        // println!("{}", split_number);
+        Some(split_number)
+    }
+}
+
 fn magnitude_final_sum(numbers: &[SnailfishNb]) -> i64 {
     for n in numbers {
         // n.explore(0);
 
-        explode(n);
+        split(n);
+        // explode(n);
     }
     0
 }
@@ -260,6 +297,24 @@ mod tests {
             explode(&SnailfishNb::new("[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]")),
             Some(SnailfishNb::new("[[3,[2,[8,0]]],[9,[5,[7,0]]]]"))
         );
+    }
+
+    #[test]
+    fn test_split() {
+        assert_eq!(split(&SnailfishNb::Number(1)), None);
+        assert_eq!(
+            split(&SnailfishNb::Number(10)),
+            Some(SnailfishNb::new("[5,5]"))
+        );
+        assert_eq!(
+            split(&SnailfishNb::Number(11)),
+            Some(SnailfishNb::new("[5,6]"))
+        );
+        assert_eq!(
+            split(&SnailfishNb::Number(12)),
+            Some(SnailfishNb::new("[6,6]"))
+        );
+        assert_eq!(split(&SnailfishNb::new("[[3,4],5]")), None);
     }
 
     #[test]
