@@ -78,3 +78,5 @@ Packet decoding, binary.
 ### Day 17: [Trick Shot](day17/README.md) 🌟🌟
 
 Shooting a probe, trajectory tracking.
+
+### Day 18: [Snailfish](day18/README.md)
