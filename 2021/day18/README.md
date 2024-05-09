@@ -15,3 +15,11 @@ All this data copying doesn't make it the fastest probably, runs in 14 ms curren
 ## Part 2
 
 Fortunately part 2 was trivial.
+
+## Update
+
+There were two approaches that seem easier than what I did.
+
+Just manipulating the string could have been one way. While I was fighting with the explode method, I thought at doing that, but didn't proceed with the idea as in general I don't like doing string manipulation.
+
+Flattening the structure into a (value, depth) list. That made everything much easier it seems, but it didn't occur to me.
