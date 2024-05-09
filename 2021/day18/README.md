@@ -14,3 +14,4 @@ All this data copying doesn't make it the fastest probably, runs in 14 ms curren
 
 ## Part 2
 
+Fortunately part 2 was trivial.

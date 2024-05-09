@@ -4,6 +4,8 @@ use std::{
     ops::Add,
 };
 
+use itertools::Itertools;
+
 #[derive(Debug, Clone, PartialEq)]
 enum SnailfishNb {
     Number(u32),
@@ -273,8 +275,13 @@ fn magnitude_final_sum(numbers: &[SnailfishNb]) -> u32 {
     sum.magnitude()
 }
 
-fn part2(numbers: &[SnailfishNb]) -> i64 {
-    0
+fn largest_magnitude_any_sum(numbers: &[SnailfishNb]) -> u32 {
+    numbers
+        .iter()
+        .permutations(2)
+        .map(|p| (p[0].clone() + p[1].clone()).magnitude())
+        .max()
+        .unwrap()
 }
 
 fn main() {
@@ -289,7 +296,7 @@ fn main() {
     // }
 
     println!("Part 1: {}", magnitude_final_sum(&numbers));
-    println!("Part 2: {}", part2(&numbers));
+    println!("Part 2: {}", largest_magnitude_any_sum(&numbers));
 }
 
 #[cfg(test)]
@@ -434,6 +441,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(largest_magnitude_any_sum(&build(INPUT_TEST_2)), 3993);
     }
 }

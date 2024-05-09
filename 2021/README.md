@@ -79,6 +79,6 @@ Packet decoding, binary.
 
 Shooting a probe, trajectory tracking.
 
-### Day 18: [Snailfish](day18/README.md) 🌟
+### Day 18: [Snailfish](day18/README.md) 🌟🌟
 
 Parsing, recursive data struct.
