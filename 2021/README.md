@@ -82,3 +82,5 @@ Shooting a probe, trajectory tracking.
 ### Day 18: [Snailfish](day18/README.md) 🌟🌟
 
 Parsing, recursive data struct.
+
+### Day 19: [Beacon Scanner](day19/README.md)
