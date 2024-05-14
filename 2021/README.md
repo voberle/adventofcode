@@ -83,4 +83,6 @@ Shooting a probe, trajectory tracking.
 
 Parsing, recursive data struct.
 
-### Day 19: [Beacon Scanner](day19/README.md)
+### Day 19: [Beacon Scanner](day19/README.md) 🌟
+
+3D space.
