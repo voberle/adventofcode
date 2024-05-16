@@ -9,3 +9,7 @@ It runs in around 16 seconds.
 ## Part 2
 
 Part 2 was then easy with the same brute-foce approach.
+
+## Update
+
+With some help in Reddit, I found what were the 24 orientations.

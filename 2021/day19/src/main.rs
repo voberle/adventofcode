@@ -30,60 +30,34 @@ impl Pos {
         // Hard-coding all options is simpler.
         match n {
             0 => Self::new(self.x, self.y, self.z),
-            1 => Self::new(self.x, self.z, self.y),
-            2 => Self::new(self.y, self.x, self.z),
-            3 => Self::new(self.y, self.z, self.x),
-            4 => Self::new(self.z, self.x, self.y),
-            5 => Self::new(self.z, self.y, self.x),
+            1 => Self::new(self.x, -self.z, self.y),
+            2 => Self::new(self.x, self.z, -self.y),
+            3 => Self::new(self.x, -self.y, -self.z),
 
+            4 => Self::new(-self.x, self.z, self.y),
+            5 => Self::new(-self.x, self.y, -self.z),
             6 => Self::new(-self.x, -self.y, self.z),
-            7 => Self::new(-self.x, -self.z, self.y),
-            8 => Self::new(-self.y, -self.x, self.z),
-            9 => Self::new(-self.y, -self.z, self.x),
-            10 => Self::new(-self.z, -self.x, self.y),
-            11 => Self::new(-self.z, -self.y, self.x),
+            7 => Self::new(-self.x, -self.z, -self.y),
 
-            12 => Self::new(self.x, -self.y, -self.z),
-            13 => Self::new(self.x, -self.z, -self.y),
-            14 => Self::new(self.y, -self.x, -self.z),
-            15 => Self::new(self.y, -self.z, -self.x),
-            16 => Self::new(self.z, -self.x, -self.y),
-            17 => Self::new(self.z, -self.y, -self.x),
+            8 => Self::new(self.y, self.z, self.x),
+            9 => Self::new(self.y, -self.x, self.z),
+            10 => Self::new(self.y, -self.z, -self.x),
+            11 => Self::new(self.y, self.x, -self.z),
 
-            18 => Self::new(-self.x, self.y, -self.z),
-            19 => Self::new(-self.x, self.z, -self.y),
-            20 => Self::new(-self.y, self.x, -self.z),
-            21 => Self::new(-self.y, self.z, -self.x),
-            22 => Self::new(-self.z, self.x, -self.y),
-            23 => Self::new(-self.z, self.y, -self.x),
+            12 => Self::new(-self.y, self.x, self.z),
+            13 => Self::new(-self.y, -self.x, -self.z),
+            14 => Self::new(-self.y, -self.z, self.x),
+            15 => Self::new(-self.y, self.z, -self.x),
 
-            24 => Self::new(-self.x, self.y, self.z),
-            25 => Self::new(-self.x, self.z, self.y),
-            26 => Self::new(-self.y, self.x, self.z),
-            27 => Self::new(-self.y, self.z, self.x),
-            28 => Self::new(-self.z, self.x, self.y),
-            29 => Self::new(-self.z, self.y, self.x),
+            16 => Self::new(self.z, self.y, -self.x),
+            17 => Self::new(self.z, self.x, self.y),
+            18 => Self::new(self.z, -self.y, self.x),
+            19 => Self::new(self.z, -self.x, -self.y),
 
-            30 => Self::new(self.x, -self.y, self.z),
-            31 => Self::new(self.x, -self.z, self.y),
-            32 => Self::new(self.y, -self.x, self.z),
-            33 => Self::new(self.y, -self.z, self.x),
-            34 => Self::new(self.z, -self.x, self.y),
-            35 => Self::new(self.z, -self.y, self.x),
-
-            36 => Self::new(self.x, self.y, -self.z),
-            37 => Self::new(self.x, self.z, -self.y),
-            38 => Self::new(self.y, self.x, -self.z),
-            39 => Self::new(self.y, self.z, -self.x),
-            40 => Self::new(self.z, self.x, -self.y),
-            41 => Self::new(self.z, self.y, -self.x),
-
-            42 => Self::new(-self.x, -self.y, -self.z),
-            43 => Self::new(-self.x, -self.z, -self.y),
-            44 => Self::new(-self.y, -self.x, -self.z),
-            45 => Self::new(-self.y, -self.z, -self.x),
-            46 => Self::new(-self.z, -self.x, -self.y),
-            47 => Self::new(-self.z, -self.y, -self.x),
+            20 => Self::new(-self.z, self.y, self.x),
+            21 => Self::new(-self.z, self.x, -self.y),
+            22 => Self::new(-self.z, -self.y, -self.x),
+            23 => Self::new(-self.z, -self.x, self.y),
 
             _ => panic!("Invalid n"),
         }
@@ -185,19 +159,6 @@ fn find_overlaping_scanner(
             let offset = beacon - ref_beacon;
             let aligned_scanner = other_scanner.move_positions(&offset);
             if aligned_scanner.count_overlap(ref_scanner) >= 12 {
-                // println!("Overlap:");
-                // for o in aligned_scanner
-                //     .positions
-                //     .intersection(&ref_scanner.positions)
-                //     .collect::<Vec<_>>()
-                // {
-                //     println!("{}", o);
-                // }
-                // println!(
-                //     "Overlap scanner {} found for offset {:?}",
-                //     aligned_scanner.scanner_number, offset
-                // );
-
                 // They overlap
                 return Some((aligned_scanner, offset));
             }
@@ -214,23 +175,12 @@ fn merge_scanners(report: &[Scanner]) -> (Scanner, Vec<Pos>) {
     found_scanners_positions.push(Pos::new(0, 0, 0));
 
     'outer: while let Some(scanner) = scanners_to_check.pop_front() {
-        // println!(
-        //     "Checking {}; Scanners to check: {}; Ref scanner size {}",
-        //     scanner.scanner_number,
-        //     scanners_to_check.len(),
-        //     ref_scanner.positions.len()
-        // );
-
-        for orientation in 0..48 {
+        for orientation in 0..24 {
             let orientated_scanner = scanner.get_orientation(orientation);
 
             if let Some((overlaping_scanner, scanner_pos)) =
                 find_overlaping_scanner(&ref_scanner, &orientated_scanner)
             {
-                // println!(
-                //     "Merging scanner {} into ref",
-                //     overlaping_scanner.scanner_number
-                // );
                 ref_scanner.positions.extend(overlaping_scanner.positions);
 
                 found_scanners_positions.push(scanner_pos);
