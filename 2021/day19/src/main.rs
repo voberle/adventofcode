@@ -6,6 +6,7 @@ use std::{
 };
 
 use fxhash::FxHashSet;
+use itertools::Itertools;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Pos {
@@ -86,6 +87,10 @@ impl Pos {
 
             _ => panic!("Invalid n"),
         }
+    }
+
+    fn distance(&self, other: &Self) -> u32 {
+        self.x.abs_diff(other.x) + self.y.abs_diff(other.y) + self.z.abs_diff(other.z)
     }
 }
 
@@ -171,7 +176,10 @@ fn build(input: &str) -> Vec<Scanner> {
 // If overlap, we should be able to merge scanner 1 into 0, and proceed with next scanner.
 // Once all merged, we have the final list of beacons.
 
-fn find_overlaping_scanner(ref_scanner: &Scanner, other_scanner: &Scanner) -> Option<Scanner> {
+fn find_overlaping_scanner(
+    ref_scanner: &Scanner,
+    other_scanner: &Scanner,
+) -> Option<(Scanner, Pos)> {
     for ref_beacon in &ref_scanner.positions {
         for beacon in &other_scanner.positions {
             let offset = beacon - ref_beacon;
@@ -191,16 +199,19 @@ fn find_overlaping_scanner(ref_scanner: &Scanner, other_scanner: &Scanner) -> Op
                 // );
 
                 // They overlap
-                return Some(aligned_scanner);
+                return Some((aligned_scanner, offset));
             }
         }
     }
     None
 }
 
-fn beacons_count(report: &[Scanner]) -> usize {
+fn merge_scanners(report: &[Scanner]) -> (Scanner, Vec<Pos>) {
     let mut scanners_to_check: VecDeque<Scanner> = report.iter().cloned().collect();
     let mut ref_scanner = scanners_to_check.pop_front().unwrap();
+
+    let mut found_scanners_positions: Vec<Pos> = Vec::new();
+    found_scanners_positions.push(Pos::new(0, 0, 0));
 
     'outer: while let Some(scanner) = scanners_to_check.pop_front() {
         // println!(
@@ -213,7 +224,7 @@ fn beacons_count(report: &[Scanner]) -> usize {
         for orientation in 0..48 {
             let orientated_scanner = scanner.get_orientation(orientation);
 
-            if let Some(overlaping_scanner) =
+            if let Some((overlaping_scanner, scanner_pos)) =
                 find_overlaping_scanner(&ref_scanner, &orientated_scanner)
             {
                 // println!(
@@ -221,6 +232,9 @@ fn beacons_count(report: &[Scanner]) -> usize {
                 //     overlaping_scanner.scanner_number
                 // );
                 ref_scanner.positions.extend(overlaping_scanner.positions);
+
+                found_scanners_positions.push(scanner_pos);
+
                 continue 'outer;
             }
         }
@@ -228,11 +242,20 @@ fn beacons_count(report: &[Scanner]) -> usize {
         scanners_to_check.push_back(scanner);
     }
 
-    ref_scanner.beacons_count()
+    (ref_scanner, found_scanners_positions)
 }
 
-fn part2(scanners: &[Scanner]) -> i64 {
-    0
+fn beacons_count(merged_scanner: &Scanner) -> usize {
+    merged_scanner.beacons_count()
+}
+
+fn largest_dist(scanners_positions: &[Pos]) -> u32 {
+    scanners_positions
+        .iter()
+        .permutations(2)
+        .map(|p| p[0].distance(p[1]))
+        .max()
+        .unwrap()
 }
 
 fn main() {
@@ -240,8 +263,10 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let scanners = build(&input);
 
-    println!("Part 1: {}", beacons_count(&scanners));
-    println!("Part 2: {}", part2(&scanners));
+    let (merged_scanner, scanners_positions) = merge_scanners(&scanners);
+
+    println!("Part 1: {}", beacons_count(&merged_scanner));
+    println!("Part 2: {}", largest_dist(&scanners_positions));
 }
 
 #[cfg(test)]
@@ -251,12 +276,9 @@ mod tests {
     const INPUT_TEST: &str = include_str!("../resources/input_test_1");
 
     #[test]
-    fn test_part1() {
-        assert_eq!(beacons_count(&build(INPUT_TEST)), 79);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+    fn test_part1_2() {
+        let (merged_scanner, scanners_positions) = merge_scanners(&build(INPUT_TEST));
+        assert_eq!(beacons_count(&merged_scanner), 79);
+        assert_eq!(largest_dist(&scanners_positions), 3621);
     }
 }

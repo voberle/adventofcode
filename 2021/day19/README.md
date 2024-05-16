@@ -8,3 +8,4 @@ It runs in around 16 seconds.
 
 ## Part 2
 
+Part 2 was then easy with the same brute-foce approach.
