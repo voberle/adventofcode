@@ -6,5 +6,7 @@ This one had an interesting twist, with the test input working easily as expecte
 
 I got inially the answer by storing the pixels in a map, printing the image after two transformations and removing manually the extra pixels lit.
 
+Using an actual grid may have been an option, but transforming it wasn't that easy. So to fix the solution, I added border support to the image: When calculating the code for a pixel, we check if the pixel is within the current borders of the image. If it isn't, we use a default value for it. For the real picture, the default value is flipped on each transformation.
+
 ## Part 2
 
