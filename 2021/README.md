@@ -90,3 +90,7 @@ Parsing, recursive data struct.
 ### Day 20: [Trench Map](day20/README.md) 🌟🌟
 
 Image transformation.
+
+### Day 21: [Dirac Dice](day21/README.md) 🌟
+
+Dice game. Modulos.
