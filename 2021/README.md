@@ -86,3 +86,5 @@ Parsing, recursive data struct.
 ### Day 19: [Beacon Scanner](day19/README.md) 🌟🌟
 
 3D space.
+
+### Day 20: [Trench Map](day20/README.md)
