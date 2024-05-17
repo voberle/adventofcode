@@ -14,9 +14,25 @@ impl Pos {
     }
 }
 
+// Gets the corners of the image
+fn borders(pixels: &FxHashSet<Pos>) -> (Pos, Pos) {
+    let mut min_pos = Pos::new(i32::MAX, i32::MAX);
+    let mut max_pos = Pos::new(i32::MIN, i32::MIN);
+    for pos in pixels {
+        min_pos.x = min_pos.x.min(pos.x);
+        max_pos.x = max_pos.x.max(pos.x);
+        min_pos.y = min_pos.y.min(pos.y);
+        max_pos.y = max_pos.y.max(pos.y);
+    }
+    (min_pos, max_pos)
+}
+
 #[derive(Clone)]
 struct Image {
     pixels: FxHashSet<Pos>,
+    // Borders of the picture.
+    borders_min: Pos,
+    borders_max: Pos,
     // Indicates if a pixel outside the borders is lit or not.
     default_state: bool,
 }
@@ -25,6 +41,8 @@ impl Image {
     fn empty(default_state: bool) -> Self {
         Self {
             pixels: FxHashSet::default(),
+            borders_min: Pos::new(0, 0),
+            borders_max: Pos::new(0, 0),
             default_state,
         }
     }
@@ -45,17 +63,25 @@ impl Image {
                 })
             })
             .collect();
+        let (borders_min, borders_max) = borders(&pixels);
         Self {
             pixels,
+            borders_min,
+            borders_max,
             default_state: false,
         }
     }
 
+    fn update_borders(&mut self) {
+        let (borders_min, borders_max) = borders(&self.pixels);
+        self.borders_min = borders_min;
+        self.borders_max = borders_max;
+    }
+
     #[allow(dead_code)]
     fn print(&self) {
-        let (min_pos, max_pos) = self.borders();
-        for y in min_pos.y..=max_pos.y {
-            for x in min_pos.x..=max_pos.x {
+        for y in self.borders_min.y..=self.borders_max.y {
+            for x in self.borders_min.x..=self.borders_max.x {
                 let pos = Pos::new(x, y);
                 if self.pixels.contains(&pos) {
                     print!("#");
@@ -67,26 +93,14 @@ impl Image {
         }
     }
 
-    // Gets the corners of the image
-    fn borders(&self) -> (Pos, Pos) {
-        let mut min_pos = Pos::new(i32::MAX, i32::MAX);
-        let mut max_pos = Pos::new(i32::MIN, i32::MIN);
-        for pos in &self.pixels {
-            min_pos.x = min_pos.x.min(pos.x);
-            max_pos.x = max_pos.x.max(pos.x);
-            min_pos.y = min_pos.y.min(pos.y);
-            max_pos.y = max_pos.y.max(pos.y);
-        }
-        (min_pos, max_pos)
+    fn is_within_borders(&self, pos: Pos) -> bool {
+        (self.borders_min.x..=self.borders_max.x).contains(&pos.x)
+            && (self.borders_min.y..=self.borders_max.y).contains(&pos.y)
     }
 
-    fn is_within_borders(pos: Pos, min_pos: Pos, max_pos: Pos) -> bool {
-        (min_pos.x..=max_pos.x).contains(&pos.x) && (min_pos.y..=max_pos.y).contains(&pos.y)
-    }
-
-    fn is_pixel_lit(&self, x: i32, y: i32, min_pos: Pos, max_pos: Pos) -> bool {
+    fn is_pixel_lit(&self, x: i32, y: i32) -> bool {
         let pos = Pos::new(x, y);
-        if Self::is_within_borders(pos, min_pos, max_pos) {
+        if self.is_within_borders(pos) {
             self.pixels.contains(&pos)
         } else {
             self.default_state
@@ -94,17 +108,15 @@ impl Image {
     }
 
     fn get_code(&self, p: Pos) -> usize {
-        let (min_p, max_p) = self.borders();
-
-        (usize::from(self.is_pixel_lit(p.x - 1, p.y - 1, min_p, max_p)) << 8)
-            + (usize::from(self.is_pixel_lit(p.x, p.y - 1, min_p, max_p)) << 7)
-            + (usize::from(self.is_pixel_lit(p.x + 1, p.y - 1, min_p, max_p)) << 6)
-            + (usize::from(self.is_pixel_lit(p.x - 1, p.y, min_p, max_p)) << 5)
-            + (usize::from(self.is_pixel_lit(p.x, p.y, min_p, max_p)) << 4)
-            + (usize::from(self.is_pixel_lit(p.x + 1, p.y, min_p, max_p)) << 3)
-            + (usize::from(self.is_pixel_lit(p.x - 1, p.y + 1, min_p, max_p)) << 2)
-            + (usize::from(self.is_pixel_lit(p.x, p.y + 1, min_p, max_p)) << 1)
-            + (usize::from(self.is_pixel_lit(p.x + 1, p.y + 1, min_p, max_p)))
+        (usize::from(self.is_pixel_lit(p.x - 1, p.y - 1)) << 8)
+            + (usize::from(self.is_pixel_lit(p.x, p.y - 1)) << 7)
+            + (usize::from(self.is_pixel_lit(p.x + 1, p.y - 1)) << 6)
+            + (usize::from(self.is_pixel_lit(p.x - 1, p.y)) << 5)
+            + (usize::from(self.is_pixel_lit(p.x, p.y)) << 4)
+            + (usize::from(self.is_pixel_lit(p.x + 1, p.y)) << 3)
+            + (usize::from(self.is_pixel_lit(p.x - 1, p.y + 1)) << 2)
+            + (usize::from(self.is_pixel_lit(p.x, p.y + 1)) << 1)
+            + (usize::from(self.is_pixel_lit(p.x + 1, p.y + 1)))
     }
 
     fn lit_pixels_count(&self) -> usize {
@@ -139,10 +151,8 @@ fn convert_image<const INVERT_DEFAULT: bool>(algo: &[bool], image: &Image) -> Im
     });
 
     // The pixels to consider are all within the borders + one extra line.
-    let (min_pos, max_pos) = image.borders();
-
-    for y in min_pos.y - 1..=max_pos.y + 1 {
-        for x in min_pos.x - 1..=max_pos.x + 1 {
+    for y in image.borders_min.y - 1..=image.borders_max.y + 1 {
+        for x in image.borders_min.x - 1..=image.borders_max.x + 1 {
             let pos = Pos::new(x, y);
             let code = image.get_code(pos);
             if algo[code] {
@@ -150,6 +160,8 @@ fn convert_image<const INVERT_DEFAULT: bool>(algo: &[bool], image: &Image) -> Im
             }
         }
     }
+    // Once the new image is fully set, make sure it has borders properly calculated.
+    new_image.update_borders();
     new_image
 }
 
@@ -173,17 +185,13 @@ fn lit_pixels_after<const INVERT_DEFAULT: bool>(
     image.lit_pixels_count()
 }
 
-fn part2(algo: &[bool], image: &Image) -> i64 {
-    0
-}
-
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let (algo, image) = build(&input);
 
     println!("Part 1: {}", lit_pixels_after::<true>(&algo, &image, 2));
-    println!("Part 2: {}", part2(&algo, &image));
+    println!("Part 2: {}", lit_pixels_after::<true>(&algo, &image, 50));
 }
 
 #[cfg(test)]
@@ -201,6 +209,6 @@ mod tests {
     #[test]
     fn test_part2() {
         let (algo, image) = build(INPUT_TEST);
-        assert_eq!(part2(&algo, &image), 0);
+        assert_eq!(lit_pixels_after::<false>(&algo, &image, 50), 3351);
     }
 }

@@ -87,6 +87,6 @@ Parsing, recursive data struct.
 
 3D space.
 
-### Day 20: [Trench Map](day20/README.md) 🌟
+### Day 20: [Trench Map](day20/README.md) 🌟🌟
 
 Image transformation.
