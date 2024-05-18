@@ -100,3 +100,7 @@ Image transformation.
 ### Day 21: [Dirac Dice](day21/README.md) 🌟
 
 Dice game. Modulos.
+
+### Day 22: [Reactor Reboot](day22/README.md) 🌟
+
+Cuboids, 3D.
