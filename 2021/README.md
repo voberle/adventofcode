@@ -7,7 +7,13 @@
 - Day 8 was the first complex one. It was a fun deduction game.
 - Day 9 and 11 had similarities as grids where elements change based on their neighbors.
 - Day 12 was finding all paths problem. I enjoyed applying correctly DFS there, and then optimizing it.
-- Day 13 was one of those where a pucture forms a code of ASCII letter. I used an external crate for doing OCR on those letters.
+- Day 13 was one of those where a picture forms a code of ASCII letter. I used an external crate for doing OCR on those letters.
+- Day 14 was the problem of optimizing operations on a sequence, and in this case I got it fairly fast.
+- Then came a finding the shortest path problem in day 15, with neat abstraction of the cave using a trait.
+- Parsing some packet in day 16 and finding a trajectory in day 17 were not too hard.
+- Day 18 was complicated, and it's a typical day that was made harder both by using Rust, and by my habit of always converting the input into some data structure instead of just manipulating a string.
+- In Day 19 I struggled to understand the description for the orientations. Fortunately trying out all options ended up working.
+- Day 20 was original in that the real input had something extra versus the test. Luckily for me, I noticed it quickly.
 
 ## Days
 

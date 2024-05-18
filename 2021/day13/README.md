@@ -7,3 +7,5 @@ It turned out easier than initially thought. I just had to read carefully the in
 ## Part 2
 
 Part 2 was what I did by accident in part 1.
+
+I added usage of the crate `advent-of-code-ocr` to recognize the letters in picture.
