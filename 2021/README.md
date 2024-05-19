@@ -104,3 +104,7 @@ Dice game. Modulos.
 ### Day 22: [Reactor Reboot](day22/README.md) 🌟
 
 Cuboids, 3D.
+
+### Day 23: [Amphipod](day23/README.md) 🌟
+
+Dijkstra applied to states.
