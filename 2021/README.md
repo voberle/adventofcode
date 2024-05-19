@@ -101,7 +101,7 @@ Image transformation.
 
 Dice game. Modulos.
 
-### Day 22: [Reactor Reboot](day22/README.md) 🌟
+### Day 22: [Reactor Reboot](day22/README.md) 🌟🌟
 
 Cuboids, 3D.
 
