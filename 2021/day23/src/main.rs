@@ -28,24 +28,21 @@ fn get_base_cost(amphipod: char) -> u32 {
 //   #11#12#13#14#
 //   #############
 
-type Burrow = [Option<char>; 15];
+type Burrow = Vec<Option<char>>;
 
 fn build(input: &str) -> Burrow {
-    let mut burrow = [None; 15];
-    for (i, c) in input.chars().filter(char::is_ascii_alphabetic).enumerate() {
-        burrow[i + 7] = Some(c);
+    let mut burrow = vec![None, None, None, None, None, None, None];
+    for c in input.chars().filter(char::is_ascii_alphabetic) {
+        burrow.push(Some(c));
     }
     burrow
 }
 
 #[allow(dead_code)]
 fn print_burrow(burrow: &Burrow) {
+    println!("#############");
     println!(
-        r"#############
-#{}{}.{}.{}.{}.{}{}#
-###{}#{}#{}#{}###
-#{}#{}#{}#{}#
-#########",
+        "#{}{}.{}.{}.{}.{}{}#",
         burrow[0].unwrap_or('.'),
         burrow[1].unwrap_or('.'),
         burrow[2].unwrap_or('.'),
@@ -53,15 +50,27 @@ fn print_burrow(burrow: &Burrow) {
         burrow[4].unwrap_or('.'),
         burrow[5].unwrap_or('.'),
         burrow[6].unwrap_or('.'),
+    );
+    println!(
+        "###{}#{}#{}#{}###",
         burrow[7].unwrap_or('.'),
         burrow[8].unwrap_or('.'),
         burrow[9].unwrap_or('.'),
         burrow[10].unwrap_or('.'),
-        burrow[11].unwrap_or('.'),
-        burrow[12].unwrap_or('.'),
-        burrow[13].unwrap_or('.'),
-        burrow[14].unwrap_or('.'),
     );
+
+    let end = if burrow.len() == 15 { 1 } else { 3 };
+    for i in 0..end {
+        println!(
+            "  #{}#{}#{}#{}#",
+            burrow[11 + 4 * i].unwrap_or('.'),
+            burrow[11 + 4 * i + 1].unwrap_or('.'),
+            burrow[11 + 4 * i + 2].unwrap_or('.'),
+            burrow[11 + 4 * i + 3].unwrap_or('.'),
+        );
+    }
+
+    println!("  #########");
 }
 
 fn get_next_states(burrow: &Burrow) -> Vec<(Burrow, u32)> {
@@ -71,7 +80,7 @@ fn get_next_states(burrow: &Burrow) -> Vec<(Burrow, u32)> {
         // get all possible next positions and their cost
         for (next_pos, cost) in next_positions::get_next_possible_positions(burrow, pos) {
             // and create a burrow for it.
-            let mut new_burrow = *burrow;
+            let mut new_burrow = burrow.clone();
             new_burrow[next_pos] = new_burrow[pos];
             new_burrow[pos] = None;
             next_states.push((new_burrow, cost * get_base_cost(amphipod.unwrap())));
@@ -115,7 +124,7 @@ fn find_shortest_path(start: &Burrow, end: &Burrow) -> u32 {
 
     let mut queue: BinaryHeap<Node> = BinaryHeap::new();
     queue.push(Node {
-        burrow: *start,
+        burrow: start.clone(),
         cost: 0,
     });
 
@@ -149,7 +158,7 @@ fn find_shortest_path(start: &Burrow, end: &Burrow) -> u32 {
 
                     distance.insert(next_burrow_hash, next_cost);
                     Some(Node {
-                        burrow: *next_burrow,
+                        burrow: next_burrow.clone(),
                         cost: next_cost,
                     })
                 }),
@@ -158,23 +167,58 @@ fn find_shortest_path(start: &Burrow, end: &Burrow) -> u32 {
     shortest_distance
 }
 
+const A: char = 'A';
+const B: char = 'B';
+const C: char = 'C';
+const D: char = 'D';
+
 #[rustfmt::skip]
-fn least_energy_to_organize(burrow: &Burrow) -> u32 {
-    const A: char = 'A';
-    const B: char = 'B';
-    const C: char = 'C';
-    const D: char = 'D';
-    let end = [
+fn least_energy_small_burrow(burrow: &Burrow) -> u32 {
+    const END: [Option<char>; 15] = [
         None, None, None, None, None, None, None,
         Some(A), Some(B), Some(C), Some(D),
         Some(A), Some(B), Some(C), Some(D),
     ];
 
-    find_shortest_path(burrow, &end)
+    find_shortest_path(burrow, &END.to_vec())
 }
 
-fn part2(burrow: &Burrow) -> u32 {
-    0
+fn unfold_burrow(burrow: &Burrow) -> Burrow {
+    // #D#C#B#A#
+    // #D#B#A#C#
+    const INSERT: [Option<char>; 8] = [
+        Some(D),
+        Some(C),
+        Some(B),
+        Some(A),
+        Some(D),
+        Some(B),
+        Some(A),
+        Some(C),
+    ];
+
+    let mut unfolded = burrow.clone();
+    unfolded.resize(unfolded.len() + 8, None);
+    unfolded.copy_within(11..11 + 4, 11 + 8);
+    unfolded.splice(11..11 + 8, INSERT);
+
+    unfolded
+}
+
+#[rustfmt::skip]
+fn least_energy_big_burrow(burrow: &Burrow) -> u32 {
+    const END: [Option<char>; 23] = [
+        None, None, None, None, None, None, None,
+        Some(A), Some(B), Some(C), Some(D),
+        Some(A), Some(B), Some(C), Some(D),
+        Some(A), Some(B), Some(C), Some(D),
+        Some(A), Some(B), Some(C), Some(D),
+    ];
+
+    let unfolded = unfold_burrow(burrow);
+    // print_burrow(&unfolded);
+
+    find_shortest_path(&unfolded, &END.to_vec())
 }
 
 fn main() {
@@ -183,8 +227,8 @@ fn main() {
     let burrow = build(&input);
     // print_burrow(&burrow);
 
-    println!("Part 1: {}", least_energy_to_organize(&burrow));
-    println!("Part 2: {}", part2(&burrow));
+    println!("Part 1: {}", least_energy_small_burrow(&burrow));
+    println!("Part 2: {}", least_energy_big_burrow(&burrow));
 }
 
 #[cfg(test)]
@@ -195,11 +239,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(least_energy_to_organize(&build(INPUT_TEST)), 12521);
+        assert_eq!(least_energy_small_burrow(&build(INPUT_TEST)), 12521);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(least_energy_big_burrow(&build(INPUT_TEST)), 44169);
     }
 }

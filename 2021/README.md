@@ -105,6 +105,6 @@ Dice game. Modulos.
 
 Cuboids, 3D.
 
-### Day 23: [Amphipod](day23/README.md) 🌟
+### Day 23: [Amphipod](day23/README.md) 🌟🌟
 
 Dijkstra applied to states.

@@ -5,6 +5,14 @@
 // ###7 #8 #9 #10###
 //   #11#12#13#14#
 //   #############
+//
+// #################
+// #01. 2. 3. 4. 56#
+// ###7 #8 #9 #10###
+//   #11#12#13#14#
+//   #15#16#17#18#
+//   #19#20#21#22#
+//   #############
 pub fn get_next_possible_positions(burrow: &[Option<char>], pos: usize) -> Vec<(usize, u32)> {
     let amphipod = burrow[pos].expect("Position must be occupied");
     next_positions(burrow, pos, amphipod)
@@ -21,63 +29,63 @@ fn next_positions(burrow: &[Option<char>], pos: usize, amphipod: char) -> Vec<(u
         }
         1 => {
             // Right of 1
-            add_down(burrow, amphipod, &mut next_pos, 7, 11, 2);
+            add_down(burrow, amphipod, &mut next_pos, 7, 2);
             if is_free(burrow, 2) {
                 // Right of 2
-                add_down(burrow, amphipod, &mut next_pos, 8, 12, 4);
+                add_down(burrow, amphipod, &mut next_pos, 8, 4);
                 if is_free(burrow, 3) {
-                    add_down(burrow, amphipod, &mut next_pos, 9, 13, 6);
+                    add_down(burrow, amphipod, &mut next_pos, 9, 6);
                     if is_free(burrow, 4) {
-                        add_down(burrow, amphipod, &mut next_pos, 10, 14, 8);
+                        add_down(burrow, amphipod, &mut next_pos, 10, 8);
                     }
                 }
             }
         }
         2 => {
             // Left of 2
-            add_down(burrow, amphipod, &mut next_pos, 7, 11, 2);
+            add_down(burrow, amphipod, &mut next_pos, 7, 2);
             // Right of 2
-            add_down(burrow, amphipod, &mut next_pos, 8, 12, 2);
+            add_down(burrow, amphipod, &mut next_pos, 8, 2);
             if is_free(burrow, 3) {
-                add_down(burrow, amphipod, &mut next_pos, 9, 13, 4);
+                add_down(burrow, amphipod, &mut next_pos, 9, 4);
                 if is_free(burrow, 4) {
-                    add_down(burrow, amphipod, &mut next_pos, 10, 14, 6);
+                    add_down(burrow, amphipod, &mut next_pos, 10, 6);
                 }
             }
         }
         3 => {
             // Left of 3
-            add_down(burrow, amphipod, &mut next_pos, 8, 12, 2);
+            add_down(burrow, amphipod, &mut next_pos, 8, 2);
             if is_free(burrow, 2) {
-                add_down(burrow, amphipod, &mut next_pos, 7, 11, 4);
+                add_down(burrow, amphipod, &mut next_pos, 7, 4);
             }
             // Right of 3
-            add_down(burrow, amphipod, &mut next_pos, 9, 13, 2);
+            add_down(burrow, amphipod, &mut next_pos, 9, 2);
             if is_free(burrow, 4) {
-                add_down(burrow, amphipod, &mut next_pos, 10, 14, 4);
+                add_down(burrow, amphipod, &mut next_pos, 10, 4);
             }
         }
         4 => {
             // Left of 4
-            add_down(burrow, amphipod, &mut next_pos, 9, 13, 2);
+            add_down(burrow, amphipod, &mut next_pos, 9, 2);
             if is_free(burrow, 3) {
-                add_down(burrow, amphipod, &mut next_pos, 8, 12, 4);
+                add_down(burrow, amphipod, &mut next_pos, 8, 4);
                 if is_free(burrow, 2) {
-                    add_down(burrow, amphipod, &mut next_pos, 7, 11, 6);
+                    add_down(burrow, amphipod, &mut next_pos, 7, 6);
                 }
             }
             // Right of 4
-            add_down(burrow, amphipod, &mut next_pos, 10, 14, 2);
+            add_down(burrow, amphipod, &mut next_pos, 10, 2);
         }
         5 => {
             // Left of 5
-            add_down(burrow, amphipod, &mut next_pos, 10, 14, 2);
+            add_down(burrow, amphipod, &mut next_pos, 10, 2);
             if is_free(burrow, 4) {
-                add_down(burrow, amphipod, &mut next_pos, 9, 13, 4);
+                add_down(burrow, amphipod, &mut next_pos, 9, 4);
                 if is_free(burrow, 3) {
-                    add_down(burrow, amphipod, &mut next_pos, 8, 12, 6);
+                    add_down(burrow, amphipod, &mut next_pos, 8, 6);
                     if is_free(burrow, 2) {
-                        add_down(burrow, amphipod, &mut next_pos, 7, 11, 8);
+                        add_down(burrow, amphipod, &mut next_pos, 7, 8);
                     }
                 }
             }
@@ -187,25 +195,52 @@ fn next_positions(burrow: &[Option<char>], pos: usize, amphipod: char) -> Vec<(u
                 }
             }
         }
+        // Level 2
         11 => {
-            // If bottom is already correct, don't move it.
-            if amphipod != 'A' {
-                pass_by(burrow, amphipod, &mut next_pos, 7);
-            }
+            pass_by(burrow, amphipod, &mut next_pos, 7);
         }
         12 => {
-            if amphipod != 'B' {
-                pass_by(burrow, amphipod, &mut next_pos, 8);
-            }
+            pass_by(burrow, amphipod, &mut next_pos, 8);
         }
         13 => {
-            if amphipod != 'C' {
-                pass_by(burrow, amphipod, &mut next_pos, 9);
-            }
+            pass_by(burrow, amphipod, &mut next_pos, 9);
         }
         14 => {
+            pass_by(burrow, amphipod, &mut next_pos, 10);
+        }
+        // Level 3
+        15 => {
+            pass_by(burrow, amphipod, &mut next_pos, 11);
+        }
+        16 => {
+            pass_by(burrow, amphipod, &mut next_pos, 12);
+        }
+        17 => {
+            pass_by(burrow, amphipod, &mut next_pos, 13);
+        }
+        18 => {
+            pass_by(burrow, amphipod, &mut next_pos, 14);
+        }
+        // Level 4
+        19 => {
+            // If bottom is already correct, don't move it.
+            if amphipod != 'A' {
+                pass_by(burrow, amphipod, &mut next_pos, 15);
+            }
+        }
+        20 => {
+            if amphipod != 'B' {
+                pass_by(burrow, amphipod, &mut next_pos, 16);
+            }
+        }
+        21 => {
+            if amphipod != 'C' {
+                pass_by(burrow, amphipod, &mut next_pos, 17);
+            }
+        }
+        22 => {
             if amphipod != 'D' {
-                pass_by(burrow, amphipod, &mut next_pos, 10);
+                pass_by(burrow, amphipod, &mut next_pos, 18);
             }
         }
         _ => panic!("Invalid position"),
@@ -222,31 +257,26 @@ fn add_down(
     amphipod: char,
     next_pos: &mut Vec<(usize, u32)>,
     level1: usize,
-    level2: usize,
     dist_to_level1: u32,
 ) {
     // We can only go to our final room.
     match level1 {
         7 => {
-            assert_eq!(level2, 11);
             if amphipod != 'A' {
                 return;
             }
         }
         8 => {
-            assert_eq!(level2, 12);
             if amphipod != 'B' {
                 return;
             }
         }
         9 => {
-            assert_eq!(level2, 13);
             if amphipod != 'C' {
                 return;
             }
         }
         10 => {
-            assert_eq!(level2, 14);
             if amphipod != 'D' {
                 return;
             }
@@ -254,10 +284,36 @@ fn add_down(
         _ => panic!("Unsupported level 1"),
     }
 
+    let level2 = level1 + 4;
+    let level3 = level2 + 4;
+    let level4 = level3 + 4;
+
+    // We only move in a room if it contains only our own amphipods.
+    if burrow[level1].is_some_and(|a| a != amphipod)
+        || burrow[level2].is_some_and(|a| a != amphipod)
+    {
+        return;
+    }
+    if burrow.len() > 15
+        && (burrow[level3].is_some_and(|a| a != amphipod)
+            || burrow[level4].is_some_and(|a| a != amphipod))
+    {
+        return;
+    }
+
     if is_free(burrow, level1) {
         next_pos.push((level1, dist_to_level1));
         if is_free(burrow, level2) {
             next_pos.push((level2, dist_to_level1 + 1));
+            if burrow.len() == 15 {
+                return;
+            }
+            if is_free(burrow, level3) {
+                next_pos.push((level3, dist_to_level1 + 2));
+                if is_free(burrow, level4) {
+                    next_pos.push((level4, dist_to_level1 + 3));
+                }
+            }
         }
     }
 }
