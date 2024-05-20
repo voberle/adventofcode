@@ -1,9 +1,10 @@
 use std::{
     collections::BinaryHeap,
+    hash::{Hash, Hasher},
     io::{self, Read},
 };
 
-use fxhash::{FxHashMap, FxHashSet};
+use fxhash::{FxHashMap, FxHashSet, FxHasher};
 
 mod next_positions;
 
@@ -79,6 +80,14 @@ fn get_next_states(burrow: &Burrow) -> Vec<(Burrow, u32)> {
     next_states
 }
 
+type BurrowHash = u64;
+
+fn burrow_hash(burrow: &[Option<char>]) -> BurrowHash {
+    let mut hasher = FxHasher::default();
+    burrow.hash(&mut hasher);
+    hasher.finish()
+}
+
 // Node we are exploring with Dijkstra.
 #[derive(Debug, PartialEq, Eq)]
 struct Node {
@@ -100,8 +109,8 @@ impl PartialOrd for Node {
 
 // Dijkstra shortest path.
 fn find_shortest_path(start: &Burrow, end: &Burrow) -> u32 {
-    let mut visited: FxHashSet<Burrow> = FxHashSet::default();
-    let mut distance: FxHashMap<Burrow, u32> = FxHashMap::default();
+    let mut visited: FxHashSet<BurrowHash> = FxHashSet::default();
+    let mut distance: FxHashMap<BurrowHash, u32> = FxHashMap::default();
     let mut shortest_distance = u32::MAX;
 
     let mut queue: BinaryHeap<Node> = BinaryHeap::new();
@@ -111,7 +120,7 @@ fn find_shortest_path(start: &Burrow, end: &Burrow) -> u32 {
     });
 
     while let Some(Node { burrow, cost }) = queue.pop() {
-        visited.insert(burrow);
+        visited.insert(burrow_hash(&burrow));
 
         if burrow == *end {
             shortest_distance = shortest_distance.min(cost);
@@ -122,12 +131,13 @@ fn find_shortest_path(start: &Burrow, end: &Burrow) -> u32 {
             get_next_states(&burrow)
                 .iter()
                 .filter_map(|(next_burrow, state_cost)| {
-                    if visited.contains(next_burrow) {
+                    let next_burrow_hash = burrow_hash(next_burrow);
+                    if visited.contains(&next_burrow_hash) {
                         return None;
                     }
 
                     let next_cost = cost + state_cost;
-                    if let Some(prevcost) = distance.get(next_burrow) {
+                    if let Some(prevcost) = distance.get(&next_burrow_hash) {
                         if *prevcost <= next_cost {
                             return None;
                         }
@@ -137,7 +147,7 @@ fn find_shortest_path(start: &Burrow, end: &Burrow) -> u32 {
                         return None;
                     }
 
-                    distance.insert(*next_burrow, next_cost);
+                    distance.insert(next_burrow_hash, next_cost);
                     Some(Node {
                         burrow: *next_burrow,
                         cost: next_cost,

@@ -14,8 +14,8 @@ pub fn get_next_possible_positions(burrow: &[Option<char>], pos: usize) -> Vec<(
 fn next_positions(burrow: &[Option<char>], pos: usize, amphipod: char) -> Vec<(usize, u32)> {
     let mut next_pos: Vec<(usize, u32)> = Vec::new();
     match pos {
-        // 0-6: All the hallway positions. We can only go down into rooms from there.
-        // And we can only go to our final destination.
+        // 0-6: All the hallway positions.
+        // We can only go down into rooms from there, and we can only to our final destination.
         0 => {
             pass_by(burrow, amphipod, &mut next_pos, 1);
         }
@@ -86,6 +86,7 @@ fn next_positions(burrow: &[Option<char>], pos: usize, amphipod: char) -> Vec<(u
             pass_by(burrow, amphipod, &mut next_pos, 5);
         }
         // 7-14: All the rooms, we can only go to the hallway.
+        // TODO: Another possible optimization is to not allow to move again from a room, once we already moved into one.
         7 => {
             // Left
             if is_free(burrow, 1) {
@@ -187,16 +188,25 @@ fn next_positions(burrow: &[Option<char>], pos: usize, amphipod: char) -> Vec<(u
             }
         }
         11 => {
-            pass_by(burrow, amphipod, &mut next_pos, 7);
+            // If bottom is already correct, don't move it.
+            if amphipod != 'A' {
+                pass_by(burrow, amphipod, &mut next_pos, 7);
+            }
         }
         12 => {
-            pass_by(burrow, amphipod, &mut next_pos, 8);
+            if amphipod != 'B' {
+                pass_by(burrow, amphipod, &mut next_pos, 8);
+            }
         }
         13 => {
-            pass_by(burrow, amphipod, &mut next_pos, 9);
+            if amphipod != 'C' {
+                pass_by(burrow, amphipod, &mut next_pos, 9);
+            }
         }
         14 => {
-            pass_by(burrow, amphipod, &mut next_pos, 10);
+            if amphipod != 'D' {
+                pass_by(burrow, amphipod, &mut next_pos, 10);
+            }
         }
         _ => panic!("Invalid position"),
     }
