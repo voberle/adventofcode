@@ -109,9 +109,9 @@ Cuboids, 3D.
 
 Dijkstra applied to states.
 
-### Day 24: [Arithmetic Logic Unit](day24/README.md)
+### Day 24: [Arithmetic Logic Unit](day24/README.md) 🌟🌟
 
-
+Instructions analysis and optimization.
 
 ### Day 25: [Sea Cucumber](day25/README.md) 🌟
 
