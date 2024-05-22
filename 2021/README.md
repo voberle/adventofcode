@@ -108,3 +108,7 @@ Cuboids, 3D.
 ### Day 23: [Amphipod](day23/README.md) 🌟🌟
 
 Dijkstra applied to states.
+
+### Day 25: [Sea Cucumber](day25/README.md) 🌟
+
+Game of like like.
