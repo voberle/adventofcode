@@ -24,31 +24,34 @@ struct Cuboid {
     z2: i32,
 }
 
-impl Cuboid {
-    fn from_coords(a: (i32, i32, i32), b: (i32, i32, i32)) -> Self {
+impl From<((i32, i32, i32), (i32, i32, i32))> for Cuboid {
+    fn from(c: ((i32, i32, i32), (i32, i32, i32))) -> Self {
         Self {
-            x1: a.0,
-            y1: a.1,
-            z1: a.2,
-            x2: b.0,
-            y2: b.1,
-            z2: b.2,
+            x1: c.0 .0,
+            y1: c.0 .1,
+            z1: c.0 .2,
+            x2: c.1 .0,
+            y2: c.1 .1,
+            z2: c.1 .2,
         }
     }
+}
 
-    #[allow(dead_code)]
-    fn from_range(x: (i32, i32), y: (i32, i32), z: (i32, i32)) -> Self {
+impl From<((i32, i32), (i32, i32), (i32, i32))> for Cuboid {
+    fn from(c: ((i32, i32), (i32, i32), (i32, i32))) -> Self {
         Self {
-            x1: x.0,
-            x2: x.1,
-            y1: y.0,
-            y2: y.1,
-            z1: z.0,
-            z2: z.1,
+            x1: c.0 .0,
+            x2: c.0 .1,
+            y1: c.1 .0,
+            y2: c.1 .1,
+            z1: c.2 .0,
+            z2: c.2 .1,
         }
     }
+}
 
-    fn build(line: &str) -> Self {
+impl From<&str> for Cuboid {
+    fn from(line: &str) -> Self {
         let p: Vec<_> = line
             .split(',')
             .flat_map(|axe| axe[2..].split("..").map(|c| c.parse().unwrap()))
@@ -62,7 +65,9 @@ impl Cuboid {
             z2: p[5],
         }
     }
+}
 
+impl Cuboid {
     fn is_initialization(&self) -> bool {
         self.x1.abs() <= 50
             && self.x2.abs() <= 50
@@ -146,45 +151,27 @@ impl Cuboid {
         let mut smaller = Vec::new();
         // Left
         if self.x1 < x_min {
-            smaller.push(Cuboid::from_coords(
-                (self.x1, self.y1, self.z1),
-                (x_min - 1, self.y2, self.z2),
-            ));
+            smaller.push(((self.x1, self.y1, self.z1), (x_min - 1, self.y2, self.z2)).into());
         }
         // Right
         if x_max < self.x2 {
-            smaller.push(Cuboid::from_coords(
-                (x_max + 1, self.y1, self.z1),
-                (self.x2, self.y2, self.z2),
-            ));
+            smaller.push(((x_max + 1, self.y1, self.z1), (self.x2, self.y2, self.z2)).into());
         }
         // Below
         if self.y1 < y_min {
-            smaller.push(Cuboid::from_coords(
-                (x_min, self.y1, self.z1),
-                (x_max, y_min - 1, self.z2),
-            ));
+            smaller.push(((x_min, self.y1, self.z1), (x_max, y_min - 1, self.z2)).into());
         }
         // Above
         if y_max < self.y2 {
-            smaller.push(Cuboid::from_coords(
-                (x_min, y_max + 1, self.z1),
-                (x_max, self.y2, self.z2),
-            ));
+            smaller.push(((x_min, y_max + 1, self.z1), (x_max, self.y2, self.z2)).into());
         }
         // In front
         if self.z1 < z_min {
-            smaller.push(Cuboid::from_coords(
-                (x_min, y_min, self.z1),
-                (x_max, y_max, z_min - 1),
-            ));
+            smaller.push(((x_min, y_min, self.z1), (x_max, y_max, z_min - 1)).into());
         }
         // Behind
         if z_max < self.z2 {
-            smaller.push(Cuboid::from_coords(
-                (x_min, y_min, z_max + 1),
-                (x_max, y_max, self.z2),
-            ));
+            smaller.push(((x_min, y_min, z_max + 1), (x_max, y_max, self.z2)).into());
         }
 
         smaller
@@ -206,9 +193,9 @@ fn build(input: &str) -> Vec<(bool, Cuboid)> {
         .lines()
         .map(|line| {
             if let Some(coords) = line.strip_prefix("on ") {
-                (true, Cuboid::build(coords))
+                (true, coords.into())
             } else if let Some(coords) = line.strip_prefix("off ") {
-                (false, Cuboid::build(coords))
+                (false, coords.into())
             } else {
                 panic!("Invalid input")
             }
@@ -378,7 +365,7 @@ mod tests {
 
     #[test]
     fn test_volume() {
-        let a = Cuboid::from_coords((2, 2, 2), (10, 5, 3));
+        let a = ((2, 2, 2), (10, 5, 3)).into();
         let vol_bf = cubes_on_brute_force(&[(true, a)]);
         assert_eq!(a.volume(), vol_bf);
     }
@@ -386,24 +373,24 @@ mod tests {
     #[test]
     fn test_cuboid_contains() {
         // Checking in 2D for simplicity.
-        let a = Cuboid::from_range((5, 20), (2, 30), (1, 1));
-        let b = Cuboid::from_range((7, 19), (10, 12), (1, 1));
+        let a: Cuboid = ((5, 20), (2, 30), (1, 1)).into();
+        let b: Cuboid = ((7, 19), (10, 12), (1, 1)).into();
         assert!(a.contains(&b));
         assert!(!b.contains(&a));
     }
 
     #[test]
     fn test_cuboid_compare() {
-        let a = Cuboid::from_range((5, 20), (2, 30), (1, 1));
-        let b = Cuboid::from_range((7, 19), (10, 12), (1, 1));
+        let a: Cuboid = ((5, 20), (2, 30), (1, 1)).into();
+        let b: Cuboid = ((7, 19), (10, 12), (1, 1)).into();
         assert_eq!(a.cmp(&b), CuboidPosition::Wraps);
         assert_eq!(b.cmp(&a), CuboidPosition::IsInside);
 
-        let c = Cuboid::from_range((5, 20), (42, 100), (1, 1));
+        let c = ((5, 20), (42, 100), (1, 1)).into();
         assert_eq!(a.cmp(&c), CuboidPosition::NoOverlap);
         assert_eq!(c.cmp(&a), CuboidPosition::NoOverlap);
 
-        let d = Cuboid::from_range((7, 19), (10, 42), (1, 1));
+        let d = ((7, 19), (10, 42), (1, 1)).into();
         assert_eq!(a.cmp(&d), CuboidPosition::Overlap);
         assert_eq!(d.cmp(&a), CuboidPosition::Overlap);
     }
@@ -413,49 +400,49 @@ mod tests {
         // Test cases generated with the help of ChatGPT.
 
         // b1 fully inside a1
-        let a1 = Cuboid::from_coords((0, 0, 0), (10, 10, 10));
-        let b1 = Cuboid::from_coords((5, 5, 5), (8, 8, 8));
+        let a1: Cuboid = ((0, 0, 0), (10, 10, 10)).into();
+        let b1: Cuboid = ((5, 5, 5), (8, 8, 8)).into();
         assert_eq!(
             a1.split(&b1),
             &[
-                Cuboid::from_coords((0, 0, 0), (4, 10, 10)),
-                Cuboid::from_coords((9, 0, 0), (10, 10, 10)),
-                Cuboid::from_coords((5, 0, 0), (8, 4, 10)),
-                Cuboid::from_coords((5, 9, 0), (8, 10, 10)),
-                Cuboid::from_coords((5, 5, 0), (8, 8, 4)),
-                Cuboid::from_coords((5, 5, 9), (8, 8, 10)),
+                ((0, 0, 0), (4, 10, 10)).into(),
+                ((9, 0, 0), (10, 10, 10)).into(),
+                ((5, 0, 0), (8, 4, 10)).into(),
+                ((5, 9, 0), (8, 10, 10)).into(),
+                ((5, 5, 0), (8, 8, 4)).into(),
+                ((5, 5, 9), (8, 8, 10)).into(),
             ]
         );
 
         // Partial overlap
-        let a3 = Cuboid::from_coords((0, 0, 0), (10, 10, 10));
-        let b3 = Cuboid::from_coords((8, 8, 8), (12, 12, 12));
+        let a3: Cuboid = ((0, 0, 0), (10, 10, 10)).into();
+        let b3: Cuboid = ((8, 8, 8), (12, 12, 12)).into();
         assert_eq!(
             a3.split(&b3),
             &[
-                Cuboid::from_coords((0, 0, 0), (7, 10, 10)),
-                Cuboid::from_coords((8, 0, 0), (10, 7, 10)),
-                Cuboid::from_coords((8, 8, 0), (10, 10, 7)),
+                ((0, 0, 0), (7, 10, 10)).into(),
+                ((8, 0, 0), (10, 7, 10)).into(),
+                ((8, 8, 0), (10, 10, 7)).into(),
             ]
         );
 
         // Edge Touching
-        let a4 = Cuboid::from_coords((0, 0, 0), (10, 10, 10));
-        let b4 = Cuboid::from_coords((10, 0, 0), (15, 5, 5));
+        let a4: Cuboid = ((0, 0, 0), (10, 10, 10)).into();
+        let b4: Cuboid = ((10, 0, 0), (15, 5, 5)).into();
         assert_eq!(
             a4.split(&b4),
             &[
-                Cuboid::from_coords((0, 0, 0), (9, 10, 10)),
-                Cuboid::from_coords((10, 6, 0), (10, 10, 10)),
-                Cuboid::from_coords((10, 0, 6), (10, 5, 10))
+                ((0, 0, 0), (9, 10, 10)).into(),
+                ((10, 6, 0), (10, 10, 10)).into(),
+                ((10, 0, 6), (10, 5, 10)).into(),
             ]
         );
     }
 
     #[test]
     fn test_edge_touching() {
-        let a = Cuboid::from_coords((0, 0, 0), (10, 10, 10));
-        let b = Cuboid::from_coords((10, 0, 0), (15, 5, 5));
+        let a: Cuboid = ((0, 0, 0), (10, 10, 10)).into();
+        let b: Cuboid = ((10, 0, 0), (15, 5, 5)).into();
         let vol_bf = cubes_on_brute_force(&[(true, a), (true, b)]);
         assert_eq!(vol_bf, 1511);
         assert_eq!(a.volume(), 1331);
