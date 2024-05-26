@@ -97,9 +97,9 @@ Parsing, recursive data struct.
 
 Image transformation.
 
-### Day 21: [Dirac Dice](day21/README.md) 🌟
+### Day 21: [Dirac Dice](day21/README.md) 🌟🌟
 
-Dice game. Modulos.
+Dice game. Modulos. Many universes.
 
 ### Day 22: [Reactor Reboot](day22/README.md) 🌟🌟
 
@@ -113,6 +113,6 @@ Dijkstra applied to states.
 
 Instructions analysis and optimization.
 
-### Day 25: [Sea Cucumber](day25/README.md) 🌟
+### Day 25: [Sea Cucumber](day25/README.md) 🌟🌟
 
 Game of like like.
