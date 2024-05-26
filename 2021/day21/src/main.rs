@@ -1,21 +1,6 @@
 use std::io::{self, Read};
 
-fn build(input: &str) -> (u32, u32) {
-    let lines: Vec<_> = input.lines().collect();
-    (
-        lines[0]
-            .strip_prefix("Player 1 starting position: ")
-            .unwrap()
-            .parse()
-            .unwrap(),
-        lines[1]
-            .strip_prefix("Player 2 starting position: ")
-            .unwrap()
-            .parse()
-            .unwrap(),
-    )
-}
-
+#[derive(Clone, Copy)]
 struct PlayerState {
     pos: u32,
     score: u32,
@@ -33,6 +18,46 @@ impl PlayerState {
 
         self.score += self.pos;
         // println!("Player pos {}, score {}", self.pos, self.score);
+    }
+}
+
+#[derive(Clone, Copy)]
+enum Turn {
+    One,
+    Two,
+}
+
+#[derive(Clone, Copy)]
+struct Game {
+    player1: PlayerState,
+    player2: PlayerState,
+    turn: Turn,
+}
+
+impl Game {
+    fn losing_score(&self) -> u32 {
+        self.player1.score.min(self.player2.score)
+    }
+}
+
+impl From<&str> for Game {
+    fn from(input: &str) -> Self {
+        let lines: Vec<_> = input.lines().collect();
+        let player1_pos = lines[0]
+            .strip_prefix("Player 1 starting position: ")
+            .unwrap()
+            .parse()
+            .unwrap();
+        let player2_pos = lines[1]
+            .strip_prefix("Player 2 starting position: ")
+            .unwrap()
+            .parse()
+            .unwrap();
+        Self {
+            player1: PlayerState::new(player1_pos),
+            player2: PlayerState::new(player2_pos),
+            turn: Turn::One,
+        }
     }
 }
 
@@ -64,49 +89,44 @@ fn roll_dice_3_times(dice: &mut DeterministicDice) -> u32 {
     dice.roll() + dice.roll() + dice.roll()
 }
 
-fn play(
-    player1_pos: u32,
-    player2_pos: u32,
-    dice: &mut DeterministicDice,
-    winning_score: u32,
-) -> (PlayerState, PlayerState) {
-    let mut player1 = PlayerState::new(player1_pos);
-    let mut player2 = PlayerState::new(player2_pos);
+fn practice_game_result(game: &Game) -> u32 {
+    const WINNING_SCORE: u32 = 1000;
 
-    loop {
-        player1.update(roll_dice_3_times(dice));
-        if player1.score >= winning_score {
-            break;
-        }
-
-        player2.update(roll_dice_3_times(dice));
-        if player2.score >= winning_score {
-            break;
-        }
-    }
-    (player1, player2)
-}
-
-fn practice_game_result(pos1: u32, pos2: u32) -> u32 {
+    let mut game = *game;
     let mut dice = DeterministicDice::new();
 
-    let (player1, player2) = play(pos1, pos2, &mut dice, 1000);
+    loop {
+        if game.turn == Turn::One {
+            game.player1.update(roll_dice_3_times(&mut dice));
+            if game.player1.score >= WINNING_SCORE {
+                break;
+            }
+            game.turn = Turn::Two;
+        }
 
-    let losing_score = player1.score.min(player2.score);
-    losing_score * dice.roll_count
+        if game.turn == Turn::Two {
+            game.player2.update(roll_dice_3_times(&mut dice));
+            if game.player2.score >= WINNING_SCORE {
+                break;
+            }
+            game.turn = Turn::One;
+        }
+    }
+
+    game.losing_score() * dice.roll_count
 }
 
-fn real_game_result(pos1: u32, pos2: u32) -> u64 {
+fn real_game_result(game: &Game) -> u64 {
     0
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let (pos1, pos2) = build(&input);
+    let game: Game = Game::from(input.as_ref());
 
-    println!("Part 1: {}", practice_game_result(pos1, pos2));
-    println!("Part 2: {}", real_game_result(pos1, pos2));
+    println!("Part 1: {}", practice_game_result(&game));
+    println!("Part 2: {}", real_game_result(&game));
 }
 
 #[cfg(test)]
@@ -117,13 +137,13 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        let (pos1, pos2) = build(INPUT_TEST);
-        assert_eq!(practice_game_result(pos1, pos2), 739785);
+        let game = Game::from(INPUT_TEST);
+        assert_eq!(practice_game_result(&game), 739785);
     }
 
     #[test]
     fn test_part2() {
-        let (pos1, pos2) = build(INPUT_TEST);
-        assert_eq!(real_game_result(pos1, pos2), 444356092776315);
+        let game = Game::from(INPUT_TEST);
+        assert_eq!(real_game_result(&game), 444356092776315);
     }
 }
