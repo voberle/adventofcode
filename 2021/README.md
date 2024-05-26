@@ -2,6 +2,8 @@
 
 ## Wrapup
 
+This year felt a bit more difficult than the previous one. I proudly managed to do it without hints (not counting some StackOverflow searches of course).
+
 - Day 1 to 6 were nice, with experience they were simple enough but still interesting. I enjoyed making the code as short and nice as possible. I'm very happy with the result for days 5 and 6 in particular.
 - OEIS was handy in day 7.
 - Day 8 was the first complex one. It was a fun deduction game.
@@ -14,6 +16,13 @@
 - Day 18 was complicated, and it's a typical day that was made harder both by using Rust, and by my habit of always converting the input into some data structure instead of just manipulating a string.
 - In Day 19 I struggled to understand the description for the orientations. Fortunately trying out all options ended up working.
 - Day 20 was original in that the real input had something extra versus the test. Luckily for me, I noticed it quickly.
+- Day 23 had a nice elegance to it, with Dijkstra used in a bit less classical way.
+
+In the last days, there were 3 problems that I had the most difficulties with and that required several days:
+
+- Day 21, the Dirac dice. I was stuck for a while, because I had misunderstood the part 2 and my part 1 implementation wasn't very clean. Once I understood the problem correctly, I started over and it wasn't that hard.
+- Day 22, the cuboids, where I wanted for a while to avoid doing the cube geometry. It turned out to be what needed to be done, and while not easy, it was doable.
+- Day 24, with instructions analysis. Step after step I got closer there until I managed, but it took a while.
 
 ## Days
 
@@ -115,4 +124,4 @@ Instructions analysis and optimization.
 
 ### Day 25: [Sea Cucumber](day25/README.md) 🌟🌟
 
-Game of like like.
+Game of life like.
