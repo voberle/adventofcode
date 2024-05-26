@@ -37,63 +37,66 @@ impl PlayerState {
 }
 
 struct DeterministicDice {
-    dice: u32,
-    dice_roll_count: u32,
+    value: u32,
+    roll_count: u32,
 }
 
 impl DeterministicDice {
     fn new() -> Self {
         Self {
-            dice: 1,
-            dice_roll_count: 0,
+            // Before first roll, value is 0, we will start with 1 on first roll.
+            value: 0,
+            roll_count: 0,
         }
     }
 
-    fn roll_dice_3_times(&mut self) -> u32 {
-        // Dice is rolled 3 times by each player, and dice wraps around at 100.
-        let mut r = 0;
-        for _ in 0..3 {
-            r += self.dice;
-            self.dice += 1;
-            self.dice %= 100;
-        }
-        self.dice_roll_count += 3;
-        r
+    fn roll(&mut self) -> u32 {
+        self.value += 1;
+        // Dice wraps around at 100.
+        self.value %= 100;
+        self.roll_count += 1;
+        self.value
     }
 }
 
-fn play_once_for(player: &mut PlayerState, dice: &mut DeterministicDice) -> bool {
-    let rolls = dice.roll_dice_3_times();
-
-    player.update(rolls);
-
-    player.score >= 1000
+fn roll_dice_3_times(dice: &mut DeterministicDice) -> u32 {
+    // Dice is rolled 3 times by each player.
+    dice.roll() + dice.roll() + dice.roll()
 }
 
-fn play(player1_pos: u32, player2_pos: u32) -> (PlayerState, PlayerState, DeterministicDice) {
+fn play(
+    player1_pos: u32,
+    player2_pos: u32,
+    dice: &mut DeterministicDice,
+    winning_score: u32,
+) -> (PlayerState, PlayerState) {
     let mut player1 = PlayerState::new(player1_pos);
     let mut player2 = PlayerState::new(player2_pos);
 
-    let mut dice = DeterministicDice::new();
-
     loop {
-        if play_once_for(&mut player1, &mut dice) {
+        player1.update(roll_dice_3_times(dice));
+        if player1.score >= winning_score {
             break;
         }
-        if play_once_for(&mut player2, &mut dice) {
+
+        player2.update(roll_dice_3_times(dice));
+        if player2.score >= winning_score {
             break;
         }
     }
-    (player1, player2, dice)
+    (player1, player2)
 }
 
-fn deterministic_dice_result(pos1: u32, pos2: u32) -> u32 {
-    let (player1, player2, dice) = play(pos1, pos2);
+fn practice_game_result(pos1: u32, pos2: u32) -> u32 {
+    let mut dice = DeterministicDice::new();
+
+    let (player1, player2) = play(pos1, pos2, &mut dice, 1000);
+
     let losing_score = player1.score.min(player2.score);
-    losing_score * dice.dice_roll_count
+    losing_score * dice.roll_count
 }
 
-fn quantum_play_winning_universe_cnt(pos1: u32, pos2: u32) -> u64 {
+fn real_game_result(pos1: u32, pos2: u32) -> u64 {
     0
 }
 
@@ -102,8 +105,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let (pos1, pos2) = build(&input);
 
-    println!("Part 1: {}", deterministic_dice_result(pos1, pos2));
-    println!("Part 2: {}", quantum_play_winning_universe_cnt(pos1, pos2));
+    println!("Part 1: {}", practice_game_result(pos1, pos2));
+    println!("Part 2: {}", real_game_result(pos1, pos2));
 }
 
 #[cfg(test)]
@@ -115,15 +118,12 @@ mod tests {
     #[test]
     fn test_part1() {
         let (pos1, pos2) = build(INPUT_TEST);
-        assert_eq!(deterministic_dice_result(pos1, pos2), 739785);
+        assert_eq!(practice_game_result(pos1, pos2), 739785);
     }
 
     #[test]
     fn test_part2() {
         let (pos1, pos2) = build(INPUT_TEST);
-        assert_eq!(
-            quantum_play_winning_universe_cnt(pos1, pos2),
-            444356092776315
-        );
+        assert_eq!(real_game_result(pos1, pos2), 444356092776315);
     }
 }
