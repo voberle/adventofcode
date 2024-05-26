@@ -1,7 +1,6 @@
-use std::{
-    collections::BTreeMap,
-    io::{self, Read},
-};
+use std::io::{self, Read};
+
+use fxhash::FxHashMap;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct PlayerState {
@@ -120,10 +119,10 @@ fn practice_game_result(game: &Game) -> u32 {
 }
 
 // We track all universes in a map of Game => Number of copies.
-// Only active games are kept there. Once a game finishes, it's removed and winning counters are updated.
-// The implementation uses a BTreeMap as we need a way to pop from the map.
+// Only active games are kept there.
+// Once a game finishes, it's removed and winning counters are updated.
 struct Universes {
-    active: BTreeMap<Game, u64>,
+    active: FxHashMap<Game, u64>,
     won_by_1: u64,
     won_by_2: u64,
 }
@@ -131,7 +130,7 @@ struct Universes {
 impl Universes {
     fn new() -> Self {
         Self {
-            active: BTreeMap::default(),
+            active: FxHashMap::default(),
             won_by_1: 0,
             won_by_2: 0,
         }
@@ -143,6 +142,10 @@ impl Universes {
             .entry(game)
             .and_modify(|e| *e += count)
             .or_insert(count);
+    }
+
+    fn has_active_games(&self) -> bool {
+        !self.active.is_empty()
     }
 
     fn most_universes_won(&self) -> u64 {
@@ -162,26 +165,33 @@ fn real_game_result(game: &Game) -> u64 {
     let mut universes = Universes::new();
     universes.add(*game, 1);
 
-    while let Some((game, count)) = universes.active.pop_last() {
-        // Player 1
-        for inc in DICE_INC {
-            let mut copy = game;
+    while universes.has_active_games() {
+        // We need to *replace* each game with 3 new ones, so we need to remove universes from the map.
+        // This looks clumsy, but there is no good way to just "pop" (remove one) element
+        // from a hash map. So we copy all the keys and then remove by key.
+        let keys = universes.active.keys().copied().collect::<Vec<_>>();
+        for k in keys {
+            let (game, count) = universes.active.remove_entry(&k).unwrap();
+            // Player 1
+            for inc in DICE_INC {
+                let mut copy = game;
 
-            if game.turn == Turn::One {
-                copy.player1.update(inc);
-                copy.turn = Turn::Two;
-                if copy.player1.score >= WINNING_SCORE {
-                    universes.won_by_1 += count;
+                if game.turn == Turn::One {
+                    copy.player1.update(inc);
+                    copy.turn = Turn::Two;
+                    if copy.player1.score >= WINNING_SCORE {
+                        universes.won_by_1 += count;
+                    } else {
+                        universes.add(copy, count);
+                    }
                 } else {
-                    universes.add(copy, count);
-                }
-            } else {
-                copy.player2.update(inc);
-                copy.turn = Turn::One;
-                if copy.player2.score >= WINNING_SCORE {
-                    universes.won_by_2 += count;
-                } else {
-                    universes.add(copy, count);
+                    copy.player2.update(inc);
+                    copy.turn = Turn::One;
+                    if copy.player2.score >= WINNING_SCORE {
+                        universes.won_by_2 += count;
+                    } else {
+                        universes.add(copy, count);
+                    }
                 }
             }
         }

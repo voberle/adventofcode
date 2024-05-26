@@ -15,3 +15,7 @@ Since the copies of the universe *replace* the universe, I used a pop / add appr
 The last hurdle was implementing correct turn support.
 
 Second part runs in 640 ms. There is no "Fx" version of BTreeMap unfortunately.
+
+## Update
+
+Turns out that using a FxHashMap, copying the keys and removing values by keys is much faster than using a BTreeMap: It now runs in 9 ms.
