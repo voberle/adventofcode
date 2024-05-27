@@ -32,6 +32,15 @@ impl Shape {
             Scissors => 3,
         }
     }
+
+    // When the second column indicates how the round needs to end.
+    fn round_end(self) -> Ordering {
+        match self {
+            Rock => Ordering::Less,        // X means you need to lose
+            Paper => Ordering::Equal,      // Y means you need to end the round in a draw
+            Scissors => Ordering::Greater, // Z means you need to win
+        }
+    }
 }
 
 // Using the Ord trait to indicate which shape wins.
@@ -73,6 +82,10 @@ impl Round {
             Ordering::Less => 0,    // I lost
         }
     }
+
+    fn score(&self) -> u32 {
+        self.me.score() + self.outcome()
+    }
 }
 
 fn build(input: &str) -> Vec<Round> {
@@ -86,14 +99,32 @@ fn build(input: &str) -> Vec<Round> {
 }
 
 fn total_score(strategy: &[Round]) -> u32 {
-    strategy
-        .iter()
-        .map(|round| round.me.score() + round.outcome())
-        .sum()
+    strategy.iter().map(Round::score).sum()
 }
 
-fn part2(strategy: &[Round]) -> u32 {
-    0
+fn total_score_second_meaning(strategy: &[Round]) -> u32 {
+    // Convert the strategy into a new one with new meaning.
+    strategy
+        .iter()
+        .map(|round| {
+            let me = match round.me.round_end() {
+                Ordering::Less => match round.opponent {
+                    // I need to lose.
+                    Rock => Scissors,
+                    Paper => Rock,
+                    Scissors => Paper,
+                },
+                Ordering::Equal => round.opponent,
+                Ordering::Greater => match round.opponent {
+                    // I need to win.
+                    Rock => Paper,
+                    Paper => Scissors,
+                    Scissors => Rock,
+                },
+            };
+            Round::new(round.opponent, me).score()
+        })
+        .sum()
 }
 
 fn main() {
@@ -102,7 +133,7 @@ fn main() {
     let strategy = build(&input);
 
     println!("Part 1: {}", total_score(&strategy));
-    println!("Part 2: {}", part2(&strategy));
+    println!("Part 2: {}", total_score_second_meaning(&strategy));
 }
 
 #[cfg(test)]
@@ -118,6 +149,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(total_score_second_meaning(&build(INPUT_TEST)), 12);
     }
 }

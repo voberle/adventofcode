@@ -6,3 +6,4 @@ Maybe I over-engineered a bit the solution, with a Shape enum and Round struct, 
 
 ## Part 2
 
+My use of enums for the shapes made awkward to change the meaning of the second column.

@@ -8,6 +8,6 @@
 
 Sums and max.
 
-### Day 2: [Rock Paper Scissors](day02/README.md) 🌟
+### Day 2: [Rock Paper Scissors](day02/README.md) 🌟🌟
 
 Ord trait.
