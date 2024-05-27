@@ -7,3 +7,7 @@
 ### Day 1: [Calorie Counting](day01/README.md) 🌟🌟
 
 Sums and max.
+
+### Day 2: [Rock Paper Scissors](day02/README.md) 🌟
+
+Ord trait.
