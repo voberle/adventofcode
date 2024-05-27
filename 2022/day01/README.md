@@ -6,3 +6,4 @@ What is the most efficient and most elegant to parse such an input of blocks of 
 
 ## Part 2
 
+Simple stuff.

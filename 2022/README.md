@@ -4,6 +4,6 @@
 
 ## Days
 
-### Day 1: [Calorie Counting](day01/README.md) 🌟
+### Day 1: [Calorie Counting](day01/README.md) 🌟🌟
 
 Sums and max.

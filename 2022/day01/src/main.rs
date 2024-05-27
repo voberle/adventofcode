@@ -1,6 +1,9 @@
 use std::io::{self, Read};
 
+use itertools::Itertools;
+
 fn build(input: &str) -> Vec<Vec<u32>> {
+    // Is there a better way to parse the input?
     let mut all_calories = Vec::new();
     let mut elf_calories = Vec::new();
     for line in input.lines() {
@@ -19,8 +22,14 @@ fn most_calories(calories: &[Vec<u32>]) -> u32 {
     calories.iter().map(|e| e.iter().sum()).max().unwrap()
 }
 
-fn part2(calories: &[Vec<u32>]) -> i64 {
-    0
+fn top_3_calories_sum(calories: &[Vec<u32>]) -> u32 {
+    calories
+        .iter()
+        .map(|e| e.iter().sum::<u32>())
+        .sorted_unstable()
+        .rev()
+        .take(3)
+        .sum()
 }
 
 fn main() {
@@ -29,7 +38,7 @@ fn main() {
     let calories = build(&input);
 
     println!("Part 1: {}", most_calories(&calories));
-    println!("Part 2: {}", part2(&calories));
+    println!("Part 2: {}", top_3_calories_sum(&calories));
 }
 
 #[cfg(test)]
@@ -45,6 +54,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(top_3_calories_sum(&build(INPUT_TEST)), 45000);
     }
 }
