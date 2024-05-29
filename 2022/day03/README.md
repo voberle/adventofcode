@@ -10,8 +10,14 @@ The part 2 code doesn't look nice, because I had split the rucksacks into two wh
 
 Execution time: 390 µs
 
-## Update
+## Update 1
 
 I completely refactored the solution to remove the HashSet and use a custom solution to find the intersections. This speeds things up, but not that significantly as I had hoped.
 
 Execution time: 260 µs
+
+## Update 2
+
+Replacing the vector with arrays helped as well.
+
+Execution time: 190 µs

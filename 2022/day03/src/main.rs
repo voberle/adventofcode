@@ -7,22 +7,21 @@ fn build(input: &str) -> Vec<Vec<char>> {
 // Returns the index of the element, that can be used to index a vector.
 // It turns out that the element priority is to index + 1.
 fn elt_index(e: char) -> usize {
-    let p = match e {
-        'a'..='z' => e as u8 - b'a',
-        'A'..='Z' => e as u8 - b'A' + 26,
+    match e {
+        'a'..='z' => e as usize - 'a' as usize,
+        'A'..='Z' => e as usize - 'A' as usize + 26,
         _ => panic!("Invalid element"),
-    };
-    usize::from(p)
+    }
 }
 
 fn index_to_priority(i: usize) -> usize {
     i + 1
 }
 
-fn presence_vec(v: &[char]) -> Vec<bool> {
-    let mut presence = vec![false; 52];
-    for e in v {
-        presence[elt_index(*e)] = true;
+fn presence_vec(v: &[char]) -> [bool; 52] {
+    let mut presence = [false; 52];
+    for &e in v {
+        presence[elt_index(e)] = true;
     }
     presence
 }
@@ -30,17 +29,17 @@ fn presence_vec(v: &[char]) -> Vec<bool> {
 // Finds the intersection between two slices,
 // using the fact that we have a maximum of 52 different elements.
 // Returns the index of the element.
-fn intersection_2(v1: &[char], v2: &[char]) -> Vec<usize> {
+fn intersection_2(v1: &[char], v2: &[char]) -> Option<usize> {
     let p1 = presence_vec(v1);
     let p2 = presence_vec(v2);
-    (0..52).filter(|&i| p1[i] && p2[i]).collect()
+    (0..52).find(|&i| p1[i] && p2[i])
 }
 
-fn intersection_3(v1: &[char], v2: &[char], v3: &[char]) -> Vec<usize> {
+fn intersection_3(v1: &[char], v2: &[char], v3: &[char]) -> Option<usize> {
     let p1 = presence_vec(v1);
     let p2 = presence_vec(v2);
     let p3 = presence_vec(v3);
-    (0..52).filter(|&i| p1[i] && p2[i] && p3[i]).collect()
+    (0..52).find(|&i| p1[i] && p2[i] && p3[i])
 }
 
 fn common_elt_priorities_sum(rucksacks: &[Vec<char>]) -> usize {
@@ -48,7 +47,7 @@ fn common_elt_priorities_sum(rucksacks: &[Vec<char>]) -> usize {
         .iter()
         .map(|r| {
             let mid = r.len() / 2;
-            index_to_priority(intersection_2(&r[0..mid], &r[mid..])[0])
+            intersection_2(&r[0..mid], &r[mid..]).map_or(0, index_to_priority)
         })
         .sum()
 }
@@ -56,7 +55,7 @@ fn common_elt_priorities_sum(rucksacks: &[Vec<char>]) -> usize {
 fn badges_priorities_sum(rucksacks: &[Vec<char>]) -> usize {
     rucksacks
         .chunks(3)
-        .map(|g| index_to_priority(intersection_3(&g[0], &g[1], &g[2])[0]))
+        .map(|g| intersection_3(&g[0], &g[1], &g[2]).map_or(0, index_to_priority))
         .sum()
 }
 
