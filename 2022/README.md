@@ -12,6 +12,6 @@ Sums and max.
 
 Ord trait.
 
-### Day 3: [Rucksack Reorganization](day03/README.md) 🌟
+### Day 3: [Rucksack Reorganization](day03/README.md) 🌟🌟
 
 Hashset

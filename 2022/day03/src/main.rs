@@ -29,21 +29,44 @@ fn build(input: &str) -> Vec<Rucksack> {
     input.lines().map(Into::into).collect()
 }
 
-fn priority(shared_item: char) -> u32 {
-    let p = match shared_item {
-        'a'..='z' => shared_item as u8 - b'a' + 1,
-        'A'..='Z' => shared_item as u8 - b'A' + 27,
+fn priority(e: char) -> u32 {
+    let p = match e {
+        'a'..='z' => e as u8 - b'a' + 1,
+        'A'..='Z' => e as u8 - b'A' + 27,
         _ => panic!("Invalid element"),
     };
     u32::from(p)
 }
 
-fn priorities_sum(rucksacks: &[Rucksack]) -> u32 {
+fn common_elt_priorities_sum(rucksacks: &[Rucksack]) -> u32 {
     rucksacks.iter().map(|r| priority(r.shared_item())).sum()
 }
 
-fn part2(rucksacks: &[Rucksack]) -> i64 {
-    0
+fn badges_priorities_sum(rucksacks: &[Rucksack]) -> u32 {
+    rucksacks
+        .chunks(3)
+        .map(|group| {
+            let b = group[0]
+                .comp1
+                .union(&group[0].comp2)
+                .filter(|k| {
+                    group[1]
+                        .comp1
+                        .union(&group[1].comp2)
+                        .collect::<Vec<_>>()
+                        .contains(k)
+                })
+                .find(|k| {
+                    group[2]
+                        .comp1
+                        .union(&group[2].comp2)
+                        .collect::<Vec<_>>()
+                        .contains(k)
+                })
+                .unwrap();
+            priority(*b)
+        })
+        .sum()
 }
 
 fn main() {
@@ -51,8 +74,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let rucksacks = build(&input);
 
-    println!("Part 1: {}", priorities_sum(&rucksacks));
-    println!("Part 2: {}", part2(&rucksacks));
+    println!("Part 1: {}", common_elt_priorities_sum(&rucksacks));
+    println!("Part 2: {}", badges_priorities_sum(&rucksacks));
 }
 
 #[cfg(test)]
@@ -63,11 +86,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(priorities_sum(&build(INPUT_TEST)), 157);
+        assert_eq!(common_elt_priorities_sum(&build(INPUT_TEST)), 157);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(badges_priorities_sum(&build(INPUT_TEST)), 70);
     }
 }

@@ -6,3 +6,4 @@ It was easy with HashSet. Maybe worth optimizing.
 
 ## Part 2
 
+The part 2 code doesn't look nice, because I had split the rucksacks into two when building them.
