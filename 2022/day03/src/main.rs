@@ -1,81 +1,76 @@
 use std::io::{self, Read};
 
-use fxhash::FxHashSet;
-
-struct Rucksack {
-    comp1: FxHashSet<char>,
-    comp2: FxHashSet<char>,
+fn build(input: &str) -> Vec<Vec<char>> {
+    input.lines().map(|line| line.chars().collect()).collect()
 }
 
-impl From<&str> for Rucksack {
-    fn from(line: &str) -> Self {
-        let elts: Vec<char> = line.chars().collect();
-        let mid = elts.len() / 2;
-        let mut comp1 = FxHashSet::default();
-        comp1.extend(&elts[0..mid]);
-        let mut comp2 = FxHashSet::default();
-        comp2.extend(&elts[mid..]);
-        Self { comp1, comp2 }
-    }
-}
-
-impl Rucksack {
-    fn shared_item(&self) -> char {
-        *self.comp1.intersection(&self.comp2).next().unwrap()
-    }
-}
-
-fn build(input: &str) -> Vec<Rucksack> {
-    input.lines().map(Into::into).collect()
-}
-
-fn priority(e: char) -> u32 {
+// Returns the index of the element, that can be used to index a vector.
+// It turns out that the element priority is to index + 1.
+fn elt_index(e: char) -> usize {
     let p = match e {
-        'a'..='z' => e as u8 - b'a' + 1,
-        'A'..='Z' => e as u8 - b'A' + 27,
+        'a'..='z' => e as u8 - b'a',
+        'A'..='Z' => e as u8 - b'A' + 26,
         _ => panic!("Invalid element"),
     };
-    u32::from(p)
+    usize::from(p)
 }
 
-fn common_elt_priorities_sum(rucksacks: &[Rucksack]) -> u32 {
-    rucksacks.iter().map(|r| priority(r.shared_item())).sum()
+fn index_to_priority(i: usize) -> usize {
+    i + 1
 }
 
-fn badges_priorities_sum(rucksacks: &[Rucksack]) -> u32 {
+fn presence_vec(v: &[char]) -> Vec<bool> {
+    let mut presence = vec![false; 52];
+    for e in v {
+        presence[elt_index(*e)] = true;
+    }
+    presence
+}
+
+// Finds the intersection between two slices,
+// using the fact that we have a maximum of 52 different elements.
+// Returns the index of the element.
+fn intersection_2(v1: &[char], v2: &[char]) -> Vec<usize> {
+    let p1 = presence_vec(v1);
+    let p2 = presence_vec(v2);
+    (0..52).filter(|&i| p1[i] && p2[i]).collect()
+}
+
+fn intersection_3(v1: &[char], v2: &[char], v3: &[char]) -> Vec<usize> {
+    let p1 = presence_vec(v1);
+    let p2 = presence_vec(v2);
+    let p3 = presence_vec(v3);
+    (0..52).filter(|&i| p1[i] && p2[i] && p3[i]).collect()
+}
+
+fn common_elt_priorities_sum(rucksacks: &[Vec<char>]) -> usize {
+    rucksacks
+        .iter()
+        .map(|r| {
+            let mid = r.len() / 2;
+            index_to_priority(intersection_2(&r[0..mid], &r[mid..])[0])
+        })
+        .sum()
+}
+
+fn badges_priorities_sum(rucksacks: &[Vec<char>]) -> usize {
     rucksacks
         .chunks(3)
-        .map(|group| {
-            let b = group[0]
-                .comp1
-                .union(&group[0].comp2)
-                .filter(|k| {
-                    group[1]
-                        .comp1
-                        .union(&group[1].comp2)
-                        .collect::<Vec<_>>()
-                        .contains(k)
-                })
-                .find(|k| {
-                    group[2]
-                        .comp1
-                        .union(&group[2].comp2)
-                        .collect::<Vec<_>>()
-                        .contains(k)
-                })
-                .unwrap();
-            priority(*b)
-        })
+        .map(|g| index_to_priority(intersection_3(&g[0], &g[1], &g[2])[0]))
         .sum()
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
+
+    let now = std::time::Instant::now();
     let rucksacks = build(&input);
 
     println!("Part 1: {}", common_elt_priorities_sum(&rucksacks));
     println!("Part 2: {}", badges_priorities_sum(&rucksacks));
+
+    println!("Execution time: {:.2?}", now.elapsed());
 }
 
 #[cfg(test)]

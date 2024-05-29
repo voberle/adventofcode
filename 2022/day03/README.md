@@ -7,3 +7,11 @@ It was easy with HashSet. Maybe worth optimizing.
 ## Part 2
 
 The part 2 code doesn't look nice, because I had split the rucksacks into two when building them.
+
+Execution time: 390 µs
+
+## Update
+
+I completely refactored the solution to remove the HashSet and use a custom solution to find the intersections. This speeds things up, but not that significantly as I had hoped.
+
+Execution time: 260 µs
