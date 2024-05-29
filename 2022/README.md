@@ -11,3 +11,7 @@ Sums and max.
 ### Day 2: [Rock Paper Scissors](day02/README.md) 🌟🌟
 
 Ord trait.
+
+### Day 3: [Rucksack Reorganization](day03/README.md) 🌟
+
+Hashset
