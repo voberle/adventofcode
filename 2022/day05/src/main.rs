@@ -34,12 +34,9 @@ impl Rearrangement {
     }
 
     fn execute_model_9001(&self, crates: &mut [Vec<char>]) {
-        // Any better way to do this?
-        let mut elts = Vec::new();
-        for _ in 0..self.count {
-            elts.push(crates[self.from].pop().expect("Stack is empty"));
-        }
-        crates[self.to].extend(elts.iter().rev());
+        let len = crates[self.from].len();
+        let elts: Vec<char> = crates[self.from].drain(len - self.count..).collect();
+        crates[self.to].extend(elts);
     }
 }
 
