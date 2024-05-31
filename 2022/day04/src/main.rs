@@ -6,34 +6,30 @@ use std::{
 use itertools::Itertools;
 
 struct Pair {
-    a: u32,
-    b: u32,
+    start: u32,
+    end: u32,
 }
 
 impl From<&str> for Pair {
     fn from(value: &str) -> Self {
-        let (a, b) = value
+        let (start, end) = value
             .split('-')
-            .map(|v| v.parse().unwrap())
+            .map(|v| v.parse().expect("Invalid number"))
             .collect_tuple()
-            .unwrap();
-        Self { a, b }
+            .expect("Expected a pair");
+        Self { start, end }
     }
 }
 
 impl Display for Pair {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}-{}", self.a, self.b)
+        write!(f, "{}-{}", self.start, self.end)
     }
 }
 
 impl Pair {
-    fn contains(&self, val: u32) -> bool {
-        self.a <= val && val <= self.b
-    }
-
     fn contains_pair(&self, other: &Pair) -> bool {
-        self.a <= other.a && other.b <= self.b
+        self.start <= other.start && other.end <= self.end
     }
 }
 
@@ -44,7 +40,11 @@ struct SectionAssignment {
 
 impl From<&str> for SectionAssignment {
     fn from(value: &str) -> Self {
-        let (p1, p2) = value.split(',').map(Into::into).collect_tuple().unwrap();
+        let (p1, p2) = value
+            .split(',')
+            .map(Into::into)
+            .collect_tuple()
+            .expect("Expected a pair of sections");
         Self { p1, p2 }
     }
 }
@@ -61,9 +61,7 @@ impl SectionAssignment {
     }
 
     fn overlap(&self) -> bool {
-        self.p1.contains(self.p2.a)
-            || self.p1.contains(self.p2.b)
-            || self.p2.contains_pair(&self.p1)
+        self.p1.start <= self.p2.end && self.p2.start <= self.p1.end
     }
 }
 
