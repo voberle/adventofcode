@@ -19,3 +19,7 @@ Hashset
 ### Day 4: [Camp Cleanup](day04/README.md) 🌟🌟
 
 Pairs of ranges.
+
+### Day 5: [Supply Stacks](day05/README.md) 🌟
+
+Stacks and instructions.
