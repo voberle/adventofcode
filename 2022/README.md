@@ -15,3 +15,7 @@ Ord trait.
 ### Day 3: [Rucksack Reorganization](day03/README.md) 🌟🌟
 
 Hashset
+
+### Day 4: [Camp Cleanup](day04/README.md) 🌟
+
+Pairs of ranges.
