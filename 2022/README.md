@@ -16,6 +16,6 @@ Ord trait.
 
 Hashset
 
-### Day 4: [Camp Cleanup](day04/README.md) 🌟
+### Day 4: [Camp Cleanup](day04/README.md) 🌟🌟
 
 Pairs of ranges.

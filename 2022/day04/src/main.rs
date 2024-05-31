@@ -1,4 +1,7 @@
-use std::io::{self, Read};
+use std::{
+    fmt::Display,
+    io::{self, Read},
+};
 
 use itertools::Itertools;
 
@@ -18,8 +21,18 @@ impl From<&str> for Pair {
     }
 }
 
+impl Display for Pair {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}-{}", self.a, self.b)
+    }
+}
+
 impl Pair {
-    fn contains(&self, other: &Pair) -> bool {
+    fn contains(&self, val: u32) -> bool {
+        self.a <= val && val <= self.b
+    }
+
+    fn contains_pair(&self, other: &Pair) -> bool {
         self.a <= other.a && other.b <= self.b
     }
 }
@@ -36,9 +49,21 @@ impl From<&str> for SectionAssignment {
     }
 }
 
+impl Display for SectionAssignment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{},{}", self.p1, self.p2)
+    }
+}
+
 impl SectionAssignment {
     fn fully_contained(&self) -> bool {
-        self.p1.contains(&self.p2) || self.p2.contains(&self.p1)
+        self.p1.contains_pair(&self.p2) || self.p2.contains_pair(&self.p1)
+    }
+
+    fn overlap(&self) -> bool {
+        self.p1.contains(self.p2.a)
+            || self.p1.contains(self.p2.b)
+            || self.p2.contains_pair(&self.p1)
     }
 }
 
@@ -50,8 +75,8 @@ fn fully_contained_count(sections: &[SectionAssignment]) -> usize {
     sections.iter().filter(|sa| sa.fully_contained()).count()
 }
 
-fn part2(sections: &[SectionAssignment]) -> i64 {
-    0
+fn overlap_count(sections: &[SectionAssignment]) -> usize {
+    sections.iter().filter(|sa| sa.overlap()).count()
 }
 
 fn main() {
@@ -60,7 +85,7 @@ fn main() {
     let sections = build(&input);
 
     println!("Part 1: {}", fully_contained_count(&sections));
-    println!("Part 2: {}", part2(&sections));
+    println!("Part 2: {}", overlap_count(&sections));
 }
 
 #[cfg(test)]
@@ -76,6 +101,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(overlap_count(&build(INPUT_TEST)), 4);
     }
 }

@@ -6,3 +6,4 @@ That was a very easy first part.
 
 ## Part 2
 
+Easy as well, even if I didn't get on the first try. Wondering what's the most optimal way to do it?
