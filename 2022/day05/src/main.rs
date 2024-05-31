@@ -25,6 +25,24 @@ impl From<&str> for Rearrangement {
     }
 }
 
+impl Rearrangement {
+    fn execute_model_9000(&self, crates: &mut [Vec<char>]) {
+        for _ in 0..self.count {
+            let elt = crates[self.from].pop().expect("Stack is empty");
+            crates[self.to].push(elt);
+        }
+    }
+
+    fn execute_model_9001(&self, crates: &mut [Vec<char>]) {
+        // Any better way to do this?
+        let mut elts = Vec::new();
+        for _ in 0..self.count {
+            elts.push(crates[self.from].pop().expect("Stack is empty"));
+        }
+        crates[self.to].extend(elts.iter().rev());
+    }
+}
+
 fn build(input: &str) -> (Vec<Vec<char>>, Vec<Rearrangement>) {
     let mut it = input.lines();
 
@@ -58,25 +76,24 @@ fn build(input: &str) -> (Vec<Vec<char>>, Vec<Rearrangement>) {
     (crates, rearrangements)
 }
 
-fn execute(crates: &mut [Vec<char>], rearrangements: &[Rearrangement]) {
-    for ra in rearrangements {
-        for _ in 0..ra.count {
-            let elt = crates[ra.from].pop().expect("Stack is empty");
-            crates[ra.to].push(elt);
-        }
-    }
-}
-
-fn top_crates_at_end(crates: &[Vec<char>], rearrangements: &[Rearrangement]) -> String {
+fn top_crates(crates: &[Vec<char>], rearrangements: &[Rearrangement], model: u32) -> String {
     let mut crates = crates.to_vec();
-    execute(&mut crates, rearrangements);
+    match model {
+        9000 => {
+            for ra in rearrangements {
+                ra.execute_model_9000(&mut crates);
+            }
+        }
+        9001 => {
+            for ra in rearrangements {
+                ra.execute_model_9001(&mut crates);
+            }
+        }
+        _ => panic!("Unknown CrateMover"),
+    }
     // println!("{:?}", crates);
 
     crates.iter().map(|stack| stack.last().unwrap()).collect()
-}
-
-fn part2(crates: &[Vec<char>], rearrangements: &[Rearrangement]) -> i64 {
-    0
 }
 
 fn main() {
@@ -86,8 +103,8 @@ fn main() {
     // println!("{:?}", crates);
     // println!("{:?}", rearrangements);
 
-    println!("Part 1: {}", top_crates_at_end(&crates, &rearrangements));
-    println!("Part 2: {}", part2(&crates, &rearrangements));
+    println!("Part 1: {}", top_crates(&crates, &rearrangements, 9000));
+    println!("Part 2: {}", top_crates(&crates, &rearrangements, 9001));
 }
 
 #[cfg(test)]
@@ -99,12 +116,12 @@ mod tests {
     #[test]
     fn test_part1() {
         let (crates, rearrangements) = build(&INPUT_TEST);
-        assert_eq!(top_crates_at_end(&crates, &rearrangements), "CMZ");
+        assert_eq!(top_crates(&crates, &rearrangements, 9000), "CMZ");
     }
 
     #[test]
     fn test_part2() {
         let (crates, rearrangements) = build(&INPUT_TEST);
-        assert_eq!(part2(&crates, &rearrangements), 0);
+        assert_eq!(top_crates(&crates, &rearrangements, 9001), "MCD");
     }
 }

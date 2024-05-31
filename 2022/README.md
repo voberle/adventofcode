@@ -20,6 +20,6 @@ Hashset
 
 Pairs of ranges.
 
-### Day 5: [Supply Stacks](day05/README.md) 🌟
+### Day 5: [Supply Stacks](day05/README.md) 🌟🌟
 
 Stacks and instructions.
