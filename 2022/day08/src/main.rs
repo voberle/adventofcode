@@ -30,72 +30,80 @@ impl Grid {
     fn tree_height(&self, row: usize, col: usize) -> u32 {
         self.values[self.pos(row, col)]
     }
+
+    fn is_inside_tree_visible(&self, r: usize, c: usize) -> bool {
+        let tree_height = self.tree_height(r, c);
+
+        (0..c).all(|cl| self.tree_height(r, cl) < tree_height)
+            || (c + 1..self.cols).all(|cr| self.tree_height(r, cr) < tree_height)
+            || (0..r).all(|ru| self.tree_height(ru, c) < tree_height)
+            || (r + 1..self.rows).all(|rd| self.tree_height(rd, c) < tree_height)
+    }
+
+    fn scenic_score(&self, r: usize, c: usize) -> u32 {
+        let tree_height = self.tree_height(r, c);
+
+        let mut left_cnt = 0;
+        for cl in (0..c).rev() {
+            left_cnt += 1;
+            if self.tree_height(r, cl) >= tree_height {
+                break;
+            }
+        }
+
+        let mut right_cnt = 0;
+        for cr in c + 1..self.cols {
+            right_cnt += 1;
+            if self.tree_height(r, cr) >= tree_height {
+                break;
+            }
+        }
+
+        let mut up_cnt = 0;
+        for ru in (0..r).rev() {
+            up_cnt += 1;
+            if self.tree_height(ru, c) >= tree_height {
+                break;
+            }
+        }
+
+        let mut down_cnt = 0;
+        for rd in r + 1..self.rows {
+            down_cnt += 1;
+            if self.tree_height(rd, c) >= tree_height {
+                break;
+            }
+        }
+
+        left_cnt * right_cnt * up_cnt * down_cnt
+    }
 }
 
 fn visible_trees_count(map: &Grid) -> usize {
-    let mut inside_cnt = 0;
-    for r in 1..map.rows - 1 {
-        for c in 1..map.cols - 1 {
-            let tree_height = map.tree_height(r, c);
+    let inside_cnt: usize = (1..map.rows - 1)
+        .map(|r| {
+            (1..map.cols - 1)
+                .filter(|&c| map.is_inside_tree_visible(r, c))
+                .count()
+        })
+        .sum();
 
-            if (0..c).all(|cl| map.tree_height(r, cl) < tree_height)
-                || (c + 1..map.cols).all(|cr| map.tree_height(r, cr) < tree_height)
-                || (0..r).all(|ru| map.tree_height(ru, c) < tree_height)
-                || (r + 1..map.rows).all(|rd| map.tree_height(rd, c) < tree_height)
-            {
-                inside_cnt += 1;
-            }
-        }
-    }
     let edge_cnt = map.rows * 2 + map.cols * 2 - 4;
 
     edge_cnt + inside_cnt
 }
 
-fn highest_scenic_score(map: &Grid) -> usize {
-    let mut best_scenic_score = 0;
+fn highest_scenic_score(map: &Grid) -> u32 {
     // No need to consider edge trees, as one viewing distance is 0, so score is 0.
-    for r in 1..map.rows - 1 {
-        for c in 1..map.cols - 1 {
-            let tree_height = map.tree_height(r, c);
-
-            let mut left_cnt = 0;
-            for cl in (0..c).rev() {
-                left_cnt += 1;
-                if map.tree_height(r, cl) >= tree_height {
-                    break;
-                }
-            }
-
-            let mut right_cnt = 0;
-            for cr in c + 1..map.cols {
-                right_cnt += 1;
-                if map.tree_height(r, cr) >= tree_height {
-                    break;
-                }
-            }
-
-            let mut up_cnt = 0;
-            for ru in (0..r).rev() {
-                up_cnt += 1;
-                if map.tree_height(ru, c) >= tree_height {
-                    break;
-                }
-            }
-
-            let mut down_cnt = 0;
-            for rd in r + 1..map.rows {
-                down_cnt += 1;
-                if map.tree_height(rd, c) >= tree_height {
-                    break;
-                }
-            }
-
-            let score = left_cnt * right_cnt * up_cnt * down_cnt;
-            best_scenic_score = best_scenic_score.max(score);
-        }
-    }
-    best_scenic_score
+    (1..map.rows - 1)
+        .map(|r| {
+            (1..map.cols - 1)
+                .map(|c| map.scenic_score(r, c))
+                .max()
+                .unwrap()
+        })
+        .max()
+        .unwrap()
 }
 
 fn main() {
