@@ -27,3 +27,7 @@ Stacks and instructions.
 ### Day 6: [Tuning Trouble](day06/README.md) 🌟🌟
 
 Paquet analysis.
+
+### Day 7: [No Space Left On Device](day07/README.md) 🌟
+
+File system.
