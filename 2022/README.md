@@ -23,3 +23,7 @@ Pairs of ranges.
 ### Day 5: [Supply Stacks](day05/README.md) 🌟🌟
 
 Stacks and instructions.
+
+### Day 6: [Tuning Trouble](day06/README.md) 🌟
+
+Paquet analysis.
