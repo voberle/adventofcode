@@ -6,3 +6,4 @@ Simple enough with the windows() iterator.
 
 ## Part 2
 
+I had to make a smarter all_different method, but nothing complicated.

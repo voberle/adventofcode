@@ -24,6 +24,6 @@ Pairs of ranges.
 
 Stacks and instructions.
 
-### Day 6: [Tuning Trouble](day06/README.md) 🌟
+### Day 6: [Tuning Trouble](day06/README.md) 🌟🌟
 
 Paquet analysis.
