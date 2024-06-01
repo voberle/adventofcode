@@ -26,18 +26,22 @@ impl Grid {
     fn pos(&self, row: usize, col: usize) -> usize {
         row * self.cols + col
     }
+
+    fn tree_height(&self, row: usize, col: usize) -> u32 {
+        self.values[self.pos(row, col)]
+    }
 }
 
 fn visible_trees_count(map: &Grid) -> usize {
     let mut inside_cnt = 0;
     for r in 1..map.rows - 1 {
         for c in 1..map.cols - 1 {
-            let tree_height = map.values[map.pos(r, c)];
+            let tree_height = map.tree_height(r, c);
 
-            if (0..c).all(|cl| map.values[map.pos(r, cl)] < tree_height)
-                || (c + 1..map.cols).all(|cr| map.values[map.pos(r, cr)] < tree_height)
-                || (0..r).all(|ru| map.values[map.pos(ru, c)] < tree_height)
-                || (r + 1..map.rows).all(|rd| map.values[map.pos(rd, c)] < tree_height)
+            if (0..c).all(|cl| map.tree_height(r, cl) < tree_height)
+                || (c + 1..map.cols).all(|cr| map.tree_height(r, cr) < tree_height)
+                || (0..r).all(|ru| map.tree_height(ru, c) < tree_height)
+                || (r + 1..map.rows).all(|rd| map.tree_height(rd, c) < tree_height)
             {
                 inside_cnt += 1;
             }
@@ -53,40 +57,36 @@ fn highest_scenic_score(map: &Grid) -> usize {
     // No need to consider edge trees, as one viewing distance is 0, so score is 0.
     for r in 1..map.rows - 1 {
         for c in 1..map.cols - 1 {
-            let tree_height = map.values[map.pos(r, c)];
+            let tree_height = map.tree_height(r, c);
 
             let mut left_cnt = 0;
             for cl in (0..c).rev() {
-                let th = map.values[map.pos(r, cl)];
                 left_cnt += 1;
-                if th >= tree_height {
+                if map.tree_height(r, cl) >= tree_height {
                     break;
                 }
             }
 
             let mut right_cnt = 0;
             for cr in c + 1..map.cols {
-                let th = map.values[map.pos(r, cr)];
                 right_cnt += 1;
-                if th >= tree_height {
+                if map.tree_height(r, cr) >= tree_height {
                     break;
                 }
             }
 
             let mut up_cnt = 0;
             for ru in (0..r).rev() {
-                let th = map.values[map.pos(ru, c)];
                 up_cnt += 1;
-                if th >= tree_height {
+                if map.tree_height(ru, c) >= tree_height {
                     break;
                 }
             }
 
             let mut down_cnt = 0;
             for rd in r + 1..map.rows {
-                let th = map.values[map.pos(rd, c)];
                 down_cnt += 1;
-                if th >= tree_height {
+                if map.tree_height(rd, c) >= tree_height {
                     break;
                 }
             }
