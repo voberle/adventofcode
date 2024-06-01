@@ -4,13 +4,28 @@ fn build(input: &str) -> Vec<char> {
     input.chars().collect()
 }
 
-fn all_different(w: &[char]) -> bool {
+fn _all_different(w: &[char]) -> bool {
     for i in 0..w.len() {
         if w[i + 1..].contains(&w[i]) {
             return false;
         }
     }
     true
+}
+
+// Input is limited to the 26 lowercase alphabet chars,
+// so we can have such an optimized version.
+fn all_different(w: &[char]) -> bool {
+    let mut seen = [false; 26];
+    w.iter().all(|&ch| {
+        let p = (ch as u8 - b'a') as usize;
+        if seen[p] {
+            false
+        } else {
+            seen[p] = true;
+            true
+        }
+    })
 }
 
 fn start_marker(ds: &[char], distinct_cnt: usize) -> usize {
@@ -31,7 +46,10 @@ fn main() {
     let ds = build(&input);
 
     println!("Part 1: {}", start_packet_marker(&ds));
+
+    // let now = std::time::Instant::now();
     println!("Part 2: {}", start_message_marker(&ds));
+    // println!("Execution time: {:.2?}", now.elapsed());
 }
 
 #[cfg(test)]
