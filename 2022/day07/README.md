@@ -6,3 +6,6 @@ The main difficulty here was parsing the input into a proper data structure. It 
 
 ## Part 2
 
+Part 2 was fairly easy.
+
+My solution is finally short and simple.
