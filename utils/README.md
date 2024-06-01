@@ -50,3 +50,9 @@ Easy benchmarking with [hyperfine](https://github.com/sharkdp/hyperfine):
 
     cargo b --release
     hyperfine --warmup 5 'cat resources/input | ../target/release/day01'
+
+More fine benchmarking can be done by wrapping the code with:
+
+    let now = std::time::Instant::now();
+
+    println!("Execution time: {:.2?}", now.elapsed());
