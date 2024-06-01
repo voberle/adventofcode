@@ -39,19 +39,63 @@ fn visible_trees_count(map: &Grid) -> usize {
                 || (0..r).all(|ru| map.values[map.pos(ru, c)] < tree_height)
                 || (r + 1..map.rows).all(|rd| map.values[map.pos(rd, c)] < tree_height)
             {
-                // println!("{} {} is visible", map.pos_as_str(map.pos(r, c)), tree_height);
                 inside_cnt += 1;
             }
         }
     }
     let edge_cnt = map.rows * 2 + map.cols * 2 - 4;
-    // println!("Edge: {}; Inside: {}", edge_cnt, inside_cnt);
 
     edge_cnt + inside_cnt
 }
 
-fn part2(map: &Grid) -> i64 {
-    0
+fn highest_scenic_score(map: &Grid) -> usize {
+    let mut best_scenic_score = 0;
+    // No need to consider edge trees, as one viewing distance is 0, so score is 0.
+    for r in 1..map.rows - 1 {
+        for c in 1..map.cols - 1 {
+            let tree_height = map.values[map.pos(r, c)];
+
+            let mut left_cnt = 0;
+            for cl in (0..c).rev() {
+                let th = map.values[map.pos(r, cl)];
+                left_cnt += 1;
+                if th >= tree_height {
+                    break;
+                }
+            }
+
+            let mut right_cnt = 0;
+            for cr in c + 1..map.cols {
+                let th = map.values[map.pos(r, cr)];
+                right_cnt += 1;
+                if th >= tree_height {
+                    break;
+                }
+            }
+
+            let mut up_cnt = 0;
+            for ru in (0..r).rev() {
+                let th = map.values[map.pos(ru, c)];
+                up_cnt += 1;
+                if th >= tree_height {
+                    break;
+                }
+            }
+
+            let mut down_cnt = 0;
+            for rd in r + 1..map.rows {
+                let th = map.values[map.pos(rd, c)];
+                down_cnt += 1;
+                if th >= tree_height {
+                    break;
+                }
+            }
+
+            let score = left_cnt * right_cnt * up_cnt * down_cnt;
+            best_scenic_score = best_scenic_score.max(score);
+        }
+    }
+    best_scenic_score
 }
 
 fn main() {
@@ -60,7 +104,7 @@ fn main() {
     let map = Grid::build(&input);
 
     println!("Part 1: {}", visible_trees_count(&map));
-    println!("Part 2: {}", part2(&map));
+    println!("Part 2: {}", highest_scenic_score(&map));
 }
 
 #[cfg(test)]
@@ -76,6 +120,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        assert_eq!(highest_scenic_score(&Grid::build(INPUT_TEST)), 8);
     }
 }
