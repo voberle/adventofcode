@@ -4,6 +4,7 @@ fn build(input: &str) -> Vec<char> {
     input.chars().collect()
 }
 
+// O(n^2) version.
 fn _all_different(w: &[char]) -> bool {
     for i in 0..w.len() {
         if w[i + 1..].contains(&w[i]) {
@@ -14,15 +15,15 @@ fn _all_different(w: &[char]) -> bool {
 }
 
 // Input is limited to the 26 lowercase alphabet chars,
-// so we can have such an optimized version.
+// so we can have such an optimized version in O(n).
 fn all_different(w: &[char]) -> bool {
-    let mut seen = [false; 26];
+    let mut seen = 0u32; // 32-bit integer to represent 26 letters
     w.iter().all(|&ch| {
-        let p = (ch as u8 - b'a') as usize;
-        if seen[p] {
+        let bit = 1 << (ch as u8 - b'a');
+        if seen & bit != 0 {
             false
         } else {
-            seen[p] = true;
+            seen |= bit;
             true
         }
     })

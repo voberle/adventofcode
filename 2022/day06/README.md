@@ -15,3 +15,5 @@ Part 2 runs in about 25 µs.
 ChatGPT suggests that using a HashSet for the all_different method would be faster, O(n) instead of O(n^2), but in practice it's 10 times slower.
 
 However doing the same idea with an array is at least as fast or a tad better: 22 µs.
+
+Replacing the boolean array with an integer is better: 17 µs.
