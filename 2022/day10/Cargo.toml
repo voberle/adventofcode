@@ -9,3 +9,4 @@ description.workspace = true
 workspace = true
 
 [dependencies]
+advent-of-code-ocr = "0.1.1"

@@ -40,6 +40,6 @@ Grid.
 
 Motions.
 
-### Day 10: [Cathode-Ray Tube](day10/README.md) 🌟
+### Day 10: [Cathode-Ray Tube](day10/README.md) 🌟🌟
 
-Instructions and cycles.
+Instructions and cycles. ASCII code reading, OCR.

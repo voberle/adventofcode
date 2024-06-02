@@ -60,8 +60,59 @@ fn signal_strengths_sum(instructions: &[Instruction]) -> i32 {
     sum
 }
 
-fn part2(instructions: &[Instruction]) -> i64 {
-    0
+fn crt_to_string(crt: &[bool]) -> String {
+    const ROWS: usize = 6;
+    const COLS: usize = 40;
+    let mut s = String::with_capacity(ROWS * COLS);
+    for row in 0..ROWS {
+        for p in row * COLS..(row + 1) * COLS {
+            // s.push(if crt[p] { '\u{2B1B}' } else { '\u{2B1C}' });
+            s.push(if crt[p] { '#' } else { '.' });
+        }
+        if row < ROWS - 1 {
+            s.push('\n');
+        }
+    }
+    s
+}
+
+fn crt_picture(instructions: &[Instruction]) -> String {
+    let mut crt = [false; 40 * 6];
+
+    let mut sprite_center: i32 = 1;
+    let mut crt_pixel_pos: usize = 0;
+
+    for ins in instructions {
+        match ins {
+            Instruction::Noop => {
+                let horiz_pos: i32 = (crt_pixel_pos % 40) as i32;
+                if (sprite_center - 1..=sprite_center + 1).contains(&horiz_pos) {
+                    crt[crt_pixel_pos] = true;
+                }
+                crt_pixel_pos += 1;
+            }
+            Instruction::AddX(v) => {
+                let horiz_pos: i32 = (crt_pixel_pos % 40) as i32;
+                if (sprite_center - 1..=sprite_center + 1).contains(&horiz_pos) {
+                    crt[crt_pixel_pos] = true;
+                }
+                crt_pixel_pos += 1;
+
+                let horiz_pos: i32 = (crt_pixel_pos % 40) as i32;
+                if (sprite_center - 1..=sprite_center + 1).contains(&horiz_pos) {
+                    crt[crt_pixel_pos] = true;
+                }
+                crt_pixel_pos += 1;
+
+                sprite_center += v;
+            }
+        }
+    }
+
+    let s = crt_to_string(&crt);
+    // println!("{}", s);
+
+    advent_of_code_ocr::parse_string_to_letters(&s)
 }
 
 fn main() {
@@ -70,7 +121,7 @@ fn main() {
     let instructions = build(&input);
 
     println!("Part 1: {}", signal_strengths_sum(&instructions));
-    println!("Part 2: {}", part2(&instructions));
+    println!("Part 2: {}", crt_picture(&instructions));
 }
 
 #[cfg(test)]
@@ -82,10 +133,5 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(signal_strengths_sum(&build(INPUT_TEST)), 13140);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
     }
 }
