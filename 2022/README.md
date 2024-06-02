@@ -36,6 +36,6 @@ File system.
 
 Grid.
 
-### Day 9: [Rope Bridge](day09/README.md) 🌟
+### Day 9: [Rope Bridge](day09/README.md) 🌟🌟
 
 Motions.

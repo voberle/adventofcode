@@ -130,6 +130,42 @@ fn print(map: &FxHashSet<Pos>, head: Pos, tail: Pos) {
 }
 
 #[allow(clippy::comparison_chain)]
+fn follow(head: Pos, tail: &mut Pos) {
+    if head.x == tail.x {
+        // On same column.
+        if head.y > tail.y + 1 {
+            tail.move_down();
+        } else if head.y < tail.y - 1 {
+            tail.move_up();
+        }
+    } else if head.y == tail.y {
+        // On same row.
+        if head.x > tail.x + 1 {
+            tail.move_right();
+        } else if head.x < tail.x - 1 {
+            tail.move_left();
+        }
+    } else if head.y > tail.y + 1
+        || head.y < tail.y - 1
+        || head.x > tail.x + 1
+        || head.x < tail.x - 1
+    {
+        // Diagonal.
+
+        if head.y > tail.y {
+            tail.move_down();
+        } else if head.y < tail.y {
+            tail.move_up();
+        }
+
+        if head.x > tail.x {
+            tail.move_right();
+        } else if head.x < tail.x {
+            tail.move_left();
+        }
+    }
+}
+
 fn tail_positions_visited(motions: &[Motion]) -> usize {
     let mut tail_positions: FxHashSet<Pos> = FxHashSet::default();
 
@@ -139,60 +175,43 @@ fn tail_positions_visited(motions: &[Motion]) -> usize {
 
     for motion in motions {
         for _ in 0..motion.count {
-            // println!("head={:?}, tail={:?}", head, tail);
             // print(&tail_positions, head, tail);
-
             head.move_into(motion.dir);
+
             if head == tail {
                 // Head covers tail.
                 continue;
             }
-
-            if head.x == tail.x {
-                // On same column.
-                if head.y > tail.y + 1 {
-                    tail.move_down();
-                } else if head.y < tail.y - 1 {
-                    tail.move_up();
-                }
-            } else if head.y == tail.y {
-                // On same row.
-                if head.x > tail.x + 1 {
-                    tail.move_right();
-                } else if head.x < tail.x - 1 {
-                    tail.move_left();
-                }
-            } else if head.y > tail.y + 1
-                || head.y < tail.y - 1
-                || head.x > tail.x + 1
-                || head.x < tail.x - 1
-            {
-                // Diagonal.
-
-                if head.y > tail.y {
-                    tail.move_down();
-                } else if head.y < tail.y {
-                    tail.move_up();
-                }
-
-                if head.x > tail.x {
-                    tail.move_right();
-                } else if head.x < tail.x {
-                    tail.move_left();
-                }
-            }
+            follow(head, &mut tail);
 
             tail_positions.insert(tail);
         }
     }
-
-    // print(&tail_positions, &head, &tail);
-
     tail_positions.len()
 }
 
-fn part2(motions: &[Motion]) -> i64 {
-    0
+fn tail9_positions_visited(motions: &[Motion]) -> usize {
+    let mut tail9_positions: FxHashSet<Pos> = FxHashSet::default();
+
+    // 0 is head
+    let mut tails = [Pos::zero(); 10];
+    tail9_positions.insert(*tails.last().unwrap());
+
+    for motion in motions {
+        for _ in 0..motion.count {
+            tails[0].move_into(motion.dir);
+
+            for i in 1..tails.len() {
+                if tails[i - 1] == tails[i] {
+                    continue;
+                }
+                follow(tails[i - 1], &mut tails[i]);
+            }
+
+            tail9_positions.insert(*tails.last().unwrap());
+        }
+    }
+    tail9_positions.len()
 }
 
 fn main() {
@@ -201,22 +220,24 @@ fn main() {
     let motions = build(&input);
 
     println!("Part 1: {}", tail_positions_visited(&motions));
-    println!("Part 2: {}", part2(&motions));
+    println!("Part 2: {}", tail9_positions_visited(&motions));
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const INPUT_TEST: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_1: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_2: &str = include_str!("../resources/input_test_2");
 
     #[test]
     fn test_part1() {
-        assert_eq!(tail_positions_visited(&build(INPUT_TEST)), 13);
+        assert_eq!(tail_positions_visited(&build(INPUT_TEST_1)), 13);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(tail9_positions_visited(&build(INPUT_TEST_1)), 1);
+        assert_eq!(tail9_positions_visited(&build(INPUT_TEST_2)), 36);
     }
 }
