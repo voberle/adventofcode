@@ -1,4 +1,7 @@
-use std::io::{self, Read};
+use std::{
+    io::{self, Read},
+    usize,
+};
 
 use fxhash::FxHashSet;
 use itertools::Itertools;
@@ -151,13 +154,11 @@ fn follow(head: Pos, tail: &mut Pos) {
         || head.x < tail.x - 1
     {
         // Diagonal.
-
         if head.y > tail.y {
             tail.move_down();
         } else if head.y < tail.y {
             tail.move_up();
         }
-
         if head.x > tail.x {
             tail.move_right();
         } else if head.x < tail.x {
@@ -166,52 +167,31 @@ fn follow(head: Pos, tail: &mut Pos) {
     }
 }
 
-fn tail_positions_visited(motions: &[Motion]) -> usize {
-    let mut tail_positions: FxHashSet<Pos> = FxHashSet::default();
-
-    let mut head = Pos::zero();
-    let mut tail = Pos::zero();
-    tail_positions.insert(tail);
-
-    for motion in motions {
-        for _ in 0..motion.count {
-            // print(&tail_positions, head, tail);
-            head.move_into(motion.dir);
-
-            if head == tail {
-                // Head covers tail.
-                continue;
-            }
-            follow(head, &mut tail);
-
-            tail_positions.insert(tail);
-        }
-    }
-    tail_positions.len()
-}
-
-fn tail9_positions_visited(motions: &[Motion]) -> usize {
-    let mut tail9_positions: FxHashSet<Pos> = FxHashSet::default();
+fn positions_visited<const NODES_COUNT: usize>(motions: &[Motion]) -> usize {
+    let mut last_tail_positions: FxHashSet<Pos> = FxHashSet::default();
 
     // 0 is head
-    let mut tails = [Pos::zero(); 10];
-    tail9_positions.insert(*tails.last().unwrap());
+    let mut tails = [Pos::zero(); NODES_COUNT];
+    last_tail_positions.insert(*tails.last().unwrap());
 
     for motion in motions {
         for _ in 0..motion.count {
             tails[0].move_into(motion.dir);
 
             for i in 1..tails.len() {
+                // print(&last_tail_positions, tails[i - 1], tails[i]);
+
                 if tails[i - 1] == tails[i] {
+                    // Both nodes cover themselves, follower doesn't move.
                     continue;
                 }
                 follow(tails[i - 1], &mut tails[i]);
             }
 
-            tail9_positions.insert(*tails.last().unwrap());
+            last_tail_positions.insert(*tails.last().unwrap());
         }
     }
-    tail9_positions.len()
+    last_tail_positions.len()
 }
 
 fn main() {
@@ -219,8 +199,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let motions = build(&input);
 
-    println!("Part 1: {}", tail_positions_visited(&motions));
-    println!("Part 2: {}", tail9_positions_visited(&motions));
+    println!("Part 1: {}", positions_visited::<2>(&motions));
+    println!("Part 2: {}", positions_visited::<10>(&motions));
 }
 
 #[cfg(test)]
@@ -232,12 +212,12 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(tail_positions_visited(&build(INPUT_TEST_1)), 13);
+        assert_eq!(positions_visited::<2>(&build(INPUT_TEST_1)), 13);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(tail9_positions_visited(&build(INPUT_TEST_1)), 1);
-        assert_eq!(tail9_positions_visited(&build(INPUT_TEST_2)), 36);
+        assert_eq!(positions_visited::<10>(&build(INPUT_TEST_1)), 1);
+        assert_eq!(positions_visited::<10>(&build(INPUT_TEST_2)), 36);
     }
 }
