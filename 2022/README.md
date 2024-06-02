@@ -35,3 +35,7 @@ File system.
 ### Day 8: [Treetop Tree House](day08/README.md) 🌟🌟
 
 Grid.
+
+### Day 9: [Rope Bridge](day09/README.md) 🌟
+
+Motions.
