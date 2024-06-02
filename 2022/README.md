@@ -39,3 +39,7 @@ Grid.
 ### Day 9: [Rope Bridge](day09/README.md) 🌟🌟
 
 Motions.
+
+### Day 10: [Cathode-Ray Tube](day10/README.md) 🌟
+
+Instructions and cycles.
