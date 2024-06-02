@@ -1,4 +1,7 @@
-use std::io::{self, Read};
+use std::{
+    fmt,
+    io::{self, Read},
+};
 
 enum Instruction {
     Noop,
@@ -26,30 +29,28 @@ fn build(input: &str) -> Vec<Instruction> {
 }
 
 fn signal_strengths_sum(instructions: &[Instruction]) -> i32 {
-    let checkpoints = [20, 60, 100, 140, 180, 220];
+    const CHECKPOINTS: [i32; 6] = [20, 60, 100, 140, 180, 220];
+
     let mut sum = 0;
+    let mut cycle = 0;
 
     let mut x = 1;
-    let mut cycle = 0;
 
     for ins in instructions {
         match ins {
             Instruction::Noop => {
                 cycle += 1;
-                if checkpoints.contains(&cycle) {
-                    // println!("{} * {} = {}", cycle, x, cycle * x);
+                if CHECKPOINTS.contains(&cycle) {
                     sum += cycle * x;
                 }
             }
             Instruction::AddX(v) => {
                 cycle += 1;
-                if checkpoints.contains(&cycle) {
-                    // println!("{} * {} = {}", cycle, x, cycle * x);
+                if CHECKPOINTS.contains(&cycle) {
                     sum += cycle * x;
                 }
                 cycle += 1;
-                if checkpoints.contains(&cycle) {
-                    // println!("{} * {} = {}", cycle, x, cycle * x);
+                if CHECKPOINTS.contains(&cycle) {
                     sum += cycle * x;
                 }
 
@@ -60,56 +61,72 @@ fn signal_strengths_sum(instructions: &[Instruction]) -> i32 {
     sum
 }
 
-fn crt_to_string(crt: &[bool]) -> String {
-    const ROWS: usize = 6;
-    const COLS: usize = 40;
-    let mut s = String::with_capacity(ROWS * COLS);
-    for row in 0..ROWS {
-        for p in row * COLS..(row + 1) * COLS {
-            // s.push(if crt[p] { '\u{2B1B}' } else { '\u{2B1C}' });
-            s.push(if crt[p] { '#' } else { '.' });
-        }
-        if row < ROWS - 1 {
-            s.push('\n');
+struct Crt {
+    screen: [bool; 40 * 6],
+    pos: usize,
+}
+
+impl Crt {
+    fn new() -> Self {
+        Self {
+            screen: [false; 40 * 6],
+            pos: 0,
         }
     }
-    s
+
+    // Draws the pixel if the sprite is currently on the CRT pixel position.
+    fn draw_pixel(&mut self, sprite_center: i32) {
+        let horiz_pos = i32::try_from(self.pos % 40).unwrap();
+
+        if (sprite_center - 1..=sprite_center + 1).contains(&horiz_pos) {
+            self.screen[self.pos] = true;
+        }
+
+        self.pos += 1;
+    }
+}
+
+impl fmt::Display for Crt {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        const ROWS: usize = 6;
+        const COLS: usize = 40;
+        let mut s = String::with_capacity(ROWS * COLS);
+        for row in 0..ROWS {
+            for e in self.screen.iter().take((row + 1) * COLS).skip(row * COLS) {
+                // These unicode chars are easier to read.
+                // let c = if *e { '\u{2B1B}' } else { '\u{2B1C}' };
+                // but we use #. as our OCR crate is using them.
+                let c = if *e { '#' } else { '.' };
+                s.push(c);
+            }
+            if row < ROWS - 1 {
+                s.push('\n');
+            }
+        }
+        write!(f, "{}", s)
+    }
 }
 
 fn crt_picture(instructions: &[Instruction]) -> String {
-    let mut crt = [false; 40 * 6];
+    let mut crt = Crt::new();
 
     let mut sprite_center: i32 = 1;
-    let mut crt_pixel_pos: usize = 0;
 
     for ins in instructions {
         match ins {
             Instruction::Noop => {
-                let horiz_pos: i32 = (crt_pixel_pos % 40) as i32;
-                if (sprite_center - 1..=sprite_center + 1).contains(&horiz_pos) {
-                    crt[crt_pixel_pos] = true;
-                }
-                crt_pixel_pos += 1;
+                crt.draw_pixel(sprite_center);
             }
             Instruction::AddX(v) => {
-                let horiz_pos: i32 = (crt_pixel_pos % 40) as i32;
-                if (sprite_center - 1..=sprite_center + 1).contains(&horiz_pos) {
-                    crt[crt_pixel_pos] = true;
-                }
-                crt_pixel_pos += 1;
-
-                let horiz_pos: i32 = (crt_pixel_pos % 40) as i32;
-                if (sprite_center - 1..=sprite_center + 1).contains(&horiz_pos) {
-                    crt[crt_pixel_pos] = true;
-                }
-                crt_pixel_pos += 1;
+                crt.draw_pixel(sprite_center);
+                crt.draw_pixel(sprite_center);
 
                 sprite_center += v;
             }
         }
     }
 
-    let s = crt_to_string(&crt);
+    let s = crt.to_string();
     // println!("{}", s);
 
     advent_of_code_ocr::parse_string_to_letters(&s)
