@@ -2,6 +2,11 @@
 
 ## Wrapup
 
+- Days 1 to 10 were all not very hard, as expected. Some required quite some work for parsing the input however.
+- Day 11 was the first one that caused me real problems, due to my incomplete understanding of modular arithmetic.
+- Day 12 allowed me to improve my Dijkstra implementation.
+- Day 13 ended up with a very satisfying result I found, with very clean code.
+
 ## Days
 
 ### Day 1: [Calorie Counting](day01/README.md) 🌟🌟
@@ -44,8 +49,9 @@ Motions.
 
 Instructions and cycles. ASCII code reading, OCR.
 
-### Day 11: [Monkey in the Middle](day11/README.md) 🌟
+### Day 11: [Monkey in the Middle](day11/README.md) 🌟🌟
 
+Modular arithmetic.
 
 ### Day 12: [Hill Climbing Algorithm](day12/README.md) 🌟🌟
 

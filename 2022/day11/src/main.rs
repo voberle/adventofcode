@@ -7,27 +7,27 @@ use itertools::Itertools;
 
 #[derive(Debug, Clone, Copy)]
 enum Operation {
-    Add(u32),
-    Mult(u32),
+    Add(u64),
+    Mult(u64),
     Squared,
 }
 
 #[derive(Debug, Clone)]
 struct Monkey {
-    starting_items: VecDeque<u32>,
+    items: VecDeque<u64>,
     operation: Operation,
-    test: u32,
+    test: u64,
     on_true: usize,
     on_false: usize,
     // Number of times a monkey inspects items.
-    inspect_count: u32,
+    inspect_count: u64,
 }
 
 impl From<&str> for Monkey {
     fn from(monkey: &str) -> Self {
         let mut it = monkey.lines();
         assert!(it.next().unwrap().starts_with("Monkey"));
-        let starting_items: VecDeque<u32> = it
+        let starting_items = it
             .next()
             .unwrap()
             .strip_prefix("  Starting items: ")
@@ -76,7 +76,7 @@ impl From<&str> for Monkey {
             .unwrap();
 
         Monkey {
-            starting_items,
+            items: starting_items,
             operation,
             test,
             on_true,
@@ -90,40 +90,71 @@ fn build(input: &str) -> Vec<Monkey> {
     input.split("\n\n").map(Into::into).collect()
 }
 
-fn exec_round(monkeys: &mut [Monkey]) {
+fn exec_round<const DROP_WORRY_LEVEL: bool>(monkeys: &mut [Monkey], modular: u64) {
     for i in 0..monkeys.len() {
-        while let Some(worry_level) = monkeys[i].starting_items.pop_front() {
-            let worry_level = match monkeys[i].operation {
-                Operation::Add(v) => worry_level + v,
-                Operation::Mult(v) => worry_level * v,
-                Operation::Squared => worry_level * worry_level,
-            } / 3;
+        while let Some(worry_level) = monkeys[i].items.pop_front() {
+            let worry_level = if DROP_WORRY_LEVEL {
+                (match monkeys[i].operation {
+                    Operation::Add(v) => worry_level + v,
+                    Operation::Mult(v) => worry_level * v,
+                    Operation::Squared => worry_level * worry_level,
+                }) / 3
+            } else {
+                match monkeys[i].operation {
+                    Operation::Add(v) => worry_level % modular + v % modular,
+                    Operation::Mult(v) => worry_level % modular * v % modular,
+                    Operation::Squared => worry_level % modular * worry_level % modular,
+                }
+            };
+
             let next_monkey_id = if worry_level % monkeys[i].test == 0 {
                 monkeys[i].on_true
             } else {
                 monkeys[i].on_false
             };
-            monkeys[next_monkey_id]
-                .starting_items
-                .push_back(worry_level);
+            monkeys[next_monkey_id].items.push_back(worry_level);
 
             monkeys[i].inspect_count += 1;
         }
     }
 }
 
-fn monkey_business_after_20(monkeys: &[Monkey]) -> u32 {
-    let mut monkeys = monkeys.to_vec();
-    for _ in 0..20 {
-        exec_round(&mut monkeys);
+#[allow(dead_code)]
+fn print_inspect_counts(monkeys: &[Monkey], rounds: usize) {
+    println!("== After round {} ==", rounds);
+    for (i, m) in monkeys.iter().enumerate() {
+        println!("Monkey {} inspected items {} times.", i, m.inspect_count);
     }
+}
 
+fn get_monkey_business(monkeys: &mut [Monkey]) -> u64 {
     monkeys.sort_by_key(|m| m.inspect_count);
     monkeys[monkeys.len() - 1].inspect_count * monkeys[monkeys.len() - 2].inspect_count
 }
 
-fn part2(monkeys: &[Monkey]) -> i64 {
-    0
+fn monkey_business_low_worry(monkeys: &[Monkey]) -> u64 {
+    const ROUNDS: usize = 20;
+
+    let mut monkeys = monkeys.to_vec();
+    for _ in 0..ROUNDS {
+        exec_round::<true>(&mut monkeys, 0);
+    }
+
+    get_monkey_business(&mut monkeys)
+}
+
+fn monkey_business_high_worry(monkeys: &[Monkey]) -> u64 {
+    const ROUNDS: usize = 10000;
+
+    let modular = monkeys.iter().map(|m| m.test).product();
+
+    let mut monkeys = monkeys.to_vec();
+    for _ in 0..ROUNDS {
+        exec_round::<false>(&mut monkeys, modular);
+    }
+    // print_inspect_counts(&monkeys, ROUNDS);
+
+    get_monkey_business(&mut monkeys)
 }
 
 fn main() {
@@ -132,8 +163,8 @@ fn main() {
     let monkeys = build(&input);
     // println!("{:?}", monkeys);
 
-    println!("Part 1: {}", monkey_business_after_20(&monkeys));
-    println!("Part 2: {}", part2(&monkeys));
+    println!("Part 1: {}", monkey_business_low_worry(&monkeys));
+    println!("Part 2: {}", monkey_business_high_worry(&monkeys));
 }
 
 #[cfg(test)]
@@ -144,11 +175,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(monkey_business_after_20(&build(INPUT_TEST)), 10605);
+        assert_eq!(monkey_business_low_worry(&build(INPUT_TEST)), 10605);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(monkey_business_high_worry(&build(INPUT_TEST)), 2713310158);
     }
 }
