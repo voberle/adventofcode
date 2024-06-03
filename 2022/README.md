@@ -43,3 +43,5 @@ Motions.
 ### Day 10: [Cathode-Ray Tube](day10/README.md) 🌟🌟
 
 Instructions and cycles. ASCII code reading, OCR.
+
+### Day 11: [Monkey in the Middle](day11/README.md) 🌟
