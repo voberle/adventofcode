@@ -47,6 +47,6 @@ Instructions and cycles. ASCII code reading, OCR.
 ### Day 11: [Monkey in the Middle](day11/README.md) 🌟
 
 
-### Day 12: [Hill Climbing Algorithm](day12/README.md) 🌟
+### Day 12: [Hill Climbing Algorithm](day12/README.md) 🌟🌟
 
-Dijkstra.
+Dijkstra. Improved implementation.

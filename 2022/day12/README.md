@@ -6,3 +6,4 @@ That was a simple case of applying Dijkstra shortest path algorithm.
 
 ## Part 2
 
+Fortunately part 2 brute-forces itself very well.

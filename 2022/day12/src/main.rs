@@ -70,13 +70,7 @@ impl PartialOrd for Node {
 }
 
 // Dijkstra shortest path.
-fn fewest_steps_to_best_signal(area: &Grid) -> usize {
-    let start = area
-        .values
-        .iter()
-        .position(|v| *v == 'S')
-        .expect("Didn't find start");
-
+fn fewest_steps_from(area: &Grid, start: usize) -> usize {
     let mut visited: FxHashSet<usize> = FxHashSet::default();
     let mut distance: FxHashMap<usize, usize> = FxHashMap::default();
     let mut shortest_distance = usize::MAX;
@@ -125,8 +119,24 @@ fn fewest_steps_to_best_signal(area: &Grid) -> usize {
     shortest_distance
 }
 
-fn part2(area: &Grid) -> i64 {
-    0
+fn fewest_steps_to_best_signal(area: &Grid) -> usize {
+    let start = area
+        .values
+        .iter()
+        .position(|v| *v == 'S')
+        .expect("Didn't find start");
+
+    fewest_steps_from(area, start)
+}
+
+fn fewest_steps_from_best_spot(area: &Grid) -> usize {
+    area.values
+        .iter()
+        .enumerate()
+        .filter_map(|(pos, v)| if *v == 'a' { Some(pos) } else { None })
+        .map(|start| fewest_steps_from(area, start))
+        .min()
+        .unwrap()
 }
 
 fn main() {
@@ -135,7 +145,7 @@ fn main() {
     let area = Grid::build(&input);
 
     println!("Part 1: {}", fewest_steps_to_best_signal(&area));
-    println!("Part 2: {}", part2(&area));
+    println!("Part 2: {}", fewest_steps_from_best_spot(&area));
 }
 
 #[cfg(test)]
@@ -151,6 +161,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        assert_eq!(fewest_steps_from_best_spot(&Grid::build(INPUT_TEST)), 29);
     }
 }
