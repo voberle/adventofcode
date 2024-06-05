@@ -27,6 +27,20 @@ impl Grid {
         Self { values, rows, cols }
     }
 
+    #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+    fn next_positions_iter(&self, pos: usize) -> impl Iterator<Item = usize> + '_ {
+        [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            .into_iter()
+            .map(move |(d_row, d_col)| {
+                (
+                    ((pos / self.cols) as isize + d_row) as usize,
+                    ((pos % self.cols) as isize + d_col) as usize,
+                )
+            })
+            .filter(|&(row, col)| (row < self.rows && col < self.cols))
+            .map(|(row, col)| row * self.cols + col)
+    }
+
     fn get_elevation(&self, pos: usize) -> u8 {
         let c = self.values[pos];
         match c {
@@ -83,42 +97,30 @@ fn fewest_steps_to_best_signal(area: &Grid) -> usize {
 
         let elevation = area.get_elevation(pos);
 
-        queue.extend(
-            [(-1, 0), (1, 0), (0, -1), (0, 1)]
-                .into_iter()
-                .map(move |(d_row, d_col)| {
-                    (
-                        ((pos / area.cols) as isize + d_row) as usize,
-                        ((pos % area.cols) as isize + d_col) as usize,
-                    )
-                })
-                .filter(|&(row, col)| (row < area.rows && col < area.cols))
-                .map(|(row, col)| row * area.cols + col)
-                .filter_map(|next_pos| {
-                    let next_elevation = area.get_elevation(next_pos);
-                    if next_elevation > elevation + 1 {
-                        // Too high.
-                        return None;
-                    }
+        queue.extend(area.next_positions_iter(pos).filter_map(|next_pos| {
+            let next_elevation = area.get_elevation(next_pos);
+            if next_elevation > elevation + 1 {
+                // Too high.
+                return None;
+            }
 
-                    if visited.contains(&next_pos) {
-                        return None;
-                    }
+            if visited.contains(&next_pos) {
+                return None;
+            }
 
-                    let next_cost = cost + 1;
-                    if let Some(prevcost) = distance.get(&next_pos) {
-                        if *prevcost <= next_cost {
-                            return None;
-                        }
-                    }
+            let next_cost = cost + 1;
+            if let Some(prevcost) = distance.get(&next_pos) {
+                if *prevcost <= next_cost {
+                    return None;
+                }
+            }
 
-                    distance.insert(next_pos, next_cost);
-                    Some(Node {
-                        pos: next_pos,
-                        cost: next_cost,
-                    })
-                }),
-        );
+            distance.insert(next_pos, next_cost);
+            Some(Node {
+                pos: next_pos,
+                cost: next_cost,
+            })
+        }));
     }
     shortest_distance
 }
