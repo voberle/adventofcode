@@ -123,6 +123,21 @@ impl Grid {
         .map(|(row, col)| row * self.cols + col)
         .collect()
     }
+
+    // Same as above, but as an iterator.
+    #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+    pub fn next_positions_iter(&self, pos: usize) -> impl Iterator<Item = usize> + '_ {
+        [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            .into_iter()
+            .map(move |(d_row, d_col)| {
+                (
+                    ((pos / self.cols) as isize + d_row) as usize,
+                    ((pos % self.cols) as isize + d_col) as usize,
+                )
+            })
+            .filter(|&(row, col)| (row < self.rows && col < self.cols))
+            .map(|(row, col)| row * self.cols + col)
+    }
 }
 
 #[cfg(test)]

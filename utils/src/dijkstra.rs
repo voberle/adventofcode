@@ -36,6 +36,10 @@ fn find_shortest_path() -> usize {
     let mut distance: FxHashMap<usize, usize> = FxHashMap::default();
     let mut shortest_distance = usize::MAX;
 
+    // If positions is just a usize, we can replace the Set and Map with simple vectors:
+    // let mut visited: Vec<bool> = vec![false; area.values.len()];
+    // let mut distance: Vec<usize> = vec![usize::MAX; area.values.len()];
+
     let mut queue: BinaryHeap<Node> = BinaryHeap::new();
     queue.push(Node {
         pos: start,
@@ -44,11 +48,15 @@ fn find_shortest_path() -> usize {
 
     while let Some(Node { pos, cost }) = queue.pop() {
         visited.insert(pos);
+        // visited[pos] = true;
 
         if pos == end {
             shortest_distance = shortest_distance.min(cost);
             continue;
         }
+
+        // For simpler directions, we can skip the Direction enum and just do:
+        // queue.extend(area.next_positions_iter(pos).filter_map(|next_pos| {
 
         queue.extend(ALL_DIRECTIONS.iter().filter_map(|_d| {
             // Check if direction is valid, and any other check.
@@ -59,11 +67,13 @@ fn find_shortest_path() -> usize {
             // Check if next pos is valid.
 
             if visited.contains(&next_pos) {
+                // if visited[next_pos] {
                 return None;
             }
 
             // Adjust here if cost logic is more complicated.
             let next_cost = cost + 1;
+            // if distance[next_pos] <= next_cost {
             if let Some(prevcost) = distance.get(&next_pos) {
                 if *prevcost <= next_cost {
                     return None;
@@ -73,6 +83,7 @@ fn find_shortest_path() -> usize {
             // Possibly avoid going too far with checks like if next_cost >= shortest_distance { return None; }
 
             distance.insert(next_pos, next_cost);
+            // distance[next_pos] = next_cost;
             Some(Node {
                 pos: next_pos,
                 cost: next_cost,
