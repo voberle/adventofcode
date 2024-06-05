@@ -1,4 +1,5 @@
 use std::{
+    cmp::Ordering,
     collections::VecDeque,
     io::{self, Read},
 };
@@ -40,7 +41,7 @@ fn parse_to_tokens(input: &str) -> VecDeque<Token> {
     tokens
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum Signal {
     Integer(u32),
     List(Vec<Signal>),
@@ -70,43 +71,37 @@ impl From<&str> for Signal {
     }
 }
 
-fn compare_signals(left: &Signal, right: &Signal) -> Option<bool> {
-    match left {
-        Signal::Integer(left_val) => {
-            match right {
-                Signal::Integer(right_val) => {
-                    // Both values are integers.
-                    match left_val.cmp(right_val) {
-                        std::cmp::Ordering::Less => Some(true),
-                        std::cmp::Ordering::Greater => Some(false),
-                        std::cmp::Ordering::Equal => None,
+impl Ord for Signal {
+    fn cmp(&self, right: &Self) -> Ordering {
+        match self {
+            Signal::Integer(left_val) => {
+                match right {
+                    Signal::Integer(right_val) => {
+                        // Both values are integers.
+                        left_val.cmp(right_val)
+                    }
+                    Signal::List(_) => {
+                        // Left is integer, right is list.
+                        // Convert left to list and retry.
+                        Signal::List(vec![self.clone()]).cmp(right)
                     }
                 }
-                Signal::List(_) => {
-                    // Left is integer, right is list.
-                    // Convert left to list and retry.
-                    compare_signals(&Signal::List(vec![left.clone()]), right)
-                }
             }
-        }
-        Signal::List(left_list) => {
-            match right {
-                Signal::Integer(_) => {
-                    // Left is list, right is integer.
-                    compare_signals(left, &Signal::List(vec![right.clone()]))
-                }
-                Signal::List(right_list) => {
-                    // Both values are lists.
-                    for (l, r) in left_list.iter().zip(right_list.iter()) {
-                        let r = compare_signals(l, r);
-                        if r.is_some() {
-                            return r;
+            Signal::List(left_list) => {
+                match right {
+                    Signal::Integer(_) => {
+                        // Left is list, right is integer.
+                        self.cmp(&Signal::List(vec![right.clone()]))
+                    }
+                    Signal::List(right_list) => {
+                        // Both values are lists.
+                        for (l, r) in left_list.iter().zip(right_list.iter()) {
+                            let r = l.cmp(r);
+                            if r.is_ne() {
+                                return r;
+                            }
                         }
-                    }
-                    match left_list.len().cmp(&right_list.len()) {
-                        std::cmp::Ordering::Less => Some(true),
-                        std::cmp::Ordering::Greater => Some(false),
-                        std::cmp::Ordering::Equal => None,
+                        left_list.len().cmp(&right_list.len())
                     }
                 }
             }
@@ -114,39 +109,61 @@ fn compare_signals(left: &Signal, right: &Signal) -> Option<bool> {
     }
 }
 
-#[derive(Debug)]
-struct Pair {
-    left: Signal,
-    right: Signal,
-}
-
-impl From<&str> for Pair {
-    fn from(s: &str) -> Self {
-        let (left, right) = s.lines().map(Into::into).collect_tuple().unwrap();
-        Self { left, right }
+impl PartialOrd for Signal {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
-impl Pair {
-    fn compare(&self) -> bool {
-        compare_signals(&self.left, &self.right).unwrap()
-    }
+fn build(input: &str) -> Vec<(Signal, Signal)> {
+    input
+        .split("\n\n")
+        .map(|pair| pair.lines().map(Into::into).collect_tuple().unwrap())
+        .collect()
 }
 
-fn build(input: &str) -> Vec<Pair> {
-    input.split("\n\n").map(Into::into).collect()
-}
-
-fn right_order_sum(pairs: &[Pair]) -> usize {
+fn right_order_sum(pairs: &[(Signal, Signal)]) -> usize {
     pairs
         .iter()
         .enumerate()
-        .filter_map(|(i, pair)| if pair.compare() { Some(i + 1) } else { None })
+        .filter_map(
+            |(i, (left, right))| {
+                if left < right {
+                    Some(i + 1)
+                } else {
+                    None
+                }
+            },
+        )
         .sum()
 }
 
-fn part2(pairs: &[Pair]) -> i64 {
-    0
+fn distress_signal_decoder_key(pairs: &[(Signal, Signal)]) -> usize {
+    let divider_packets = [
+        Signal::List(vec![Signal::List(vec![Signal::Integer(2)])]),
+        Signal::List(vec![Signal::List(vec![Signal::Integer(6)])]),
+    ];
+
+    // TODO can we use refs?
+    let mut packets: Vec<Signal> = pairs
+        .iter()
+        .flat_map(|pair| [pair.0.clone(), pair.1.clone()])
+        .collect();
+    packets.extend(divider_packets.clone());
+
+    packets.sort_unstable();
+
+    packets
+        .iter()
+        .enumerate()
+        .filter_map(|(i, packet)| {
+            if divider_packets.contains(packet) {
+                Some(i + 1)
+            } else {
+                None
+            }
+        })
+        .product()
 }
 
 fn main() {
@@ -155,7 +172,7 @@ fn main() {
     let pairs = build(&input);
 
     println!("Part 1: {}", right_order_sum(&pairs));
-    println!("Part 2: {}", part2(&pairs));
+    println!("Part 2: {}", distress_signal_decoder_key(&pairs));
 }
 
 #[cfg(test)]
@@ -171,6 +188,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(distress_signal_decoder_key(&build(INPUT_TEST)), 140);
     }
 }

@@ -51,6 +51,6 @@ Instructions and cycles. ASCII code reading, OCR.
 
 Dijkstra. Improved implementation.
 
-### Day 13: [Distress Signal](day13/README.md) 🌟
+### Day 13: [Distress Signal](day13/README.md) 🌟🌟
 
 Enum, recursive data struture. Parsing of paquets.
