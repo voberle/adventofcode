@@ -3,9 +3,6 @@ use std::{
     io::{self, Read},
 };
 
-use fxhash::{FxHashMap, FxHashSet};
-
-#[derive(Debug, Clone, PartialEq)]
 struct Grid {
     values: Vec<char>,
     rows: usize,
@@ -71,8 +68,9 @@ impl PartialOrd for Node {
 
 // Dijkstra shortest path.
 fn fewest_steps_from(area: &Grid, start: usize) -> usize {
-    let mut visited: FxHashSet<usize> = FxHashSet::default();
-    let mut distance: FxHashMap<usize, usize> = FxHashMap::default();
+    // When position is just a usize, we can use a vector for visited and distance structures.
+    let mut visited: Vec<bool> = vec![false; area.values.len()];
+    let mut distance: Vec<usize> = vec![usize::MAX; area.values.len()];
     let mut shortest_distance = usize::MAX;
 
     let mut queue: BinaryHeap<Node> = BinaryHeap::new();
@@ -82,7 +80,7 @@ fn fewest_steps_from(area: &Grid, start: usize) -> usize {
     });
 
     while let Some(Node { pos, cost }) = queue.pop() {
-        visited.insert(pos);
+        visited[pos] = true;
 
         if area.values[pos] == 'E' {
             shortest_distance = shortest_distance.min(cost);
@@ -98,18 +96,16 @@ fn fewest_steps_from(area: &Grid, start: usize) -> usize {
                 return None;
             }
 
-            if visited.contains(&next_pos) {
+            if visited[next_pos] {
                 return None;
             }
 
             let next_cost = cost + 1;
-            if let Some(prevcost) = distance.get(&next_pos) {
-                if *prevcost <= next_cost {
-                    return None;
-                }
+            if distance[next_pos] <= next_cost {
+                return None;
             }
 
-            distance.insert(next_pos, next_cost);
+            distance[next_pos] = next_cost;
             Some(Node {
                 pos: next_pos,
                 cost: next_cost,
