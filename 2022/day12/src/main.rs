@@ -24,6 +24,13 @@ impl Grid {
         Self { values, rows, cols }
     }
 
+    fn get_position_of(&self, c: char) -> usize {
+        self.values
+            .iter()
+            .position(|v| *v == c)
+            .expect("Didn't find char")
+    }
+
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
     fn next_positions_iter(&self, pos: usize) -> impl Iterator<Item = usize> + '_ {
         [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -67,22 +74,26 @@ impl PartialOrd for Node {
 }
 
 // Dijkstra shortest path.
-fn fewest_steps_from(area: &Grid, start: usize) -> usize {
+fn fewest_steps_from(
+    area: &Grid,
+    from: usize,
+    next_elevation_check_fn: fn(u8, u8) -> bool,
+    end_check_fn: fn(&Grid, usize) -> bool,
+) -> usize {
     // When position is just a usize, we can use a vector for visited and distance structures.
     let mut visited: Vec<bool> = vec![false; area.values.len()];
     let mut distance: Vec<usize> = vec![usize::MAX; area.values.len()];
     let mut shortest_distance = usize::MAX;
 
     let mut queue: BinaryHeap<Node> = BinaryHeap::new();
-    queue.push(Node {
-        pos: start,
-        cost: 0,
-    });
+    queue.push(Node { pos: from, cost: 0 });
 
     while let Some(Node { pos, cost }) = queue.pop() {
         visited[pos] = true;
 
-        if area.values[pos] == 'E' {
+        // if area.values[pos] == 'E' {
+        // if area.get_elevation(pos) == 0 {
+        if end_check_fn(area, pos) {
             shortest_distance = shortest_distance.min(cost);
             continue;
         }
@@ -91,8 +102,7 @@ fn fewest_steps_from(area: &Grid, start: usize) -> usize {
 
         queue.extend(area.next_positions_iter(pos).filter_map(|next_pos| {
             let next_elevation = area.get_elevation(next_pos);
-            if next_elevation > elevation + 1 {
-                // Too high.
+            if next_elevation_check_fn(next_elevation, elevation) {
                 return None;
             }
 
@@ -115,24 +125,40 @@ fn fewest_steps_from(area: &Grid, start: usize) -> usize {
     shortest_distance
 }
 
-fn fewest_steps_to_best_signal(area: &Grid) -> usize {
-    let start = area
-        .values
-        .iter()
-        .position(|v| *v == 'S')
-        .expect("Didn't find start");
-
-    fewest_steps_from(area, start)
+fn fewest_steps_up_from(area: &Grid, start: usize) -> usize {
+    fewest_steps_from(
+        area,
+        start,
+        |next_e: u8, e: u8| next_e > e + 1,
+        |area, pos| area.values[pos] == 'E',
+    )
 }
 
-fn fewest_steps_from_best_spot(area: &Grid) -> usize {
+fn fewest_steps_to_best_signal(area: &Grid) -> usize {
+    let start = area.get_position_of('S');
+    fewest_steps_up_from(area, start)
+}
+
+// Part 2 brute-forced by trying all starting points.
+fn _fewest_steps_from_best_spot(area: &Grid) -> usize {
     area.values
         .iter()
         .enumerate()
         .filter_map(|(pos, v)| if *v == 'a' { Some(pos) } else { None })
-        .map(|start| fewest_steps_from(area, start))
+        .map(|start| fewest_steps_up_from(area, start))
         .min()
         .unwrap()
+}
+
+// Part 2 but starting from the end.
+fn fewest_steps_from_best_spot(area: &Grid) -> usize {
+    let end = area.get_position_of('E');
+    fewest_steps_from(
+        area,
+        end,
+        |next_e: u8, e: u8| next_e < e - 1,
+        |area, pos| area.get_elevation(pos) == 0,
+    )
 }
 
 fn main() {
