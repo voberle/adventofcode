@@ -144,12 +144,11 @@ fn distress_signal_decoder_key(pairs: &[(Signal, Signal)]) -> usize {
         Signal::List(vec![Signal::List(vec![Signal::Integer(6)])]),
     ];
 
-    // TODO can we use refs?
-    let mut packets: Vec<Signal> = pairs
-        .iter()
-        .flat_map(|pair| [pair.0.clone(), pair.1.clone()])
-        .collect();
-    packets.extend(divider_packets.clone());
+    // Convert the list of pairs to a flat list.
+    let mut packets: Vec<&Signal> = pairs.iter().flat_map(|pair| [&pair.0, &pair.1]).collect();
+    // Add the divider packets.
+    packets.push(&divider_packets[0]);
+    packets.push(&divider_packets[1]);
 
     packets.sort_unstable();
 

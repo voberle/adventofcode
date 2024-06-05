@@ -10,4 +10,4 @@ The code is clean and readable.
 
 ## Part 2
 
-For part 2, we need to sort the signals, so I convered the compare method to the `Ord` trait, to be able to use the sort method. This actually made the comparaison code even shorter.
+For part 2, we need to sort the signals, so I convered the compare method to the `Ord` trait, to be able to use the sort method. This actually made the comparaison code even shorter. The whole thing is quite elegant now.
