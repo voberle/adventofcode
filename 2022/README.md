@@ -60,3 +60,5 @@ Dijkstra. Improved implementation.
 ### Day 13: [Distress Signal](day13/README.md) 🌟🌟
 
 Enum, recursive data struture. Parsing of paquets.
+
+### Day 14: [Regolith Reservoir](day14/README.md)
