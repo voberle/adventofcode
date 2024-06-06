@@ -93,25 +93,26 @@ fn build(input: &str) -> Vec<Monkey> {
 fn exec_round<const DROP_WORRY_LEVEL: bool>(monkeys: &mut [Monkey], modular: u64) {
     for i in 0..monkeys.len() {
         while let Some(worry_level) = monkeys[i].items.pop_front() {
-            let worry_level = if DROP_WORRY_LEVEL {
-                (match monkeys[i].operation {
-                    Operation::Add(v) => worry_level + v,
-                    Operation::Mult(v) => worry_level * v,
-                    Operation::Squared => worry_level * worry_level,
-                }) / 3
-            } else {
-                match monkeys[i].operation {
-                    Operation::Add(v) => worry_level % modular + v % modular,
-                    Operation::Mult(v) => worry_level % modular * v % modular,
-                    Operation::Squared => worry_level % modular * worry_level % modular,
-                }
+            let mut worry_level = match monkeys[i].operation {
+                Operation::Add(v) => worry_level + v,
+                Operation::Mult(v) => worry_level * v,
+                Operation::Squared => worry_level * worry_level,
             };
+
+            if DROP_WORRY_LEVEL {
+                worry_level /= 3;
+            }
 
             let next_monkey_id = if worry_level % monkeys[i].test == 0 {
                 monkeys[i].on_true
             } else {
                 monkeys[i].on_false
             };
+
+            if !DROP_WORRY_LEVEL {
+                worry_level %= modular;
+            }
+
             monkeys[next_monkey_id].items.push_back(worry_level);
 
             monkeys[i].inspect_count += 1;
