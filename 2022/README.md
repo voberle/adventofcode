@@ -61,4 +61,6 @@ Dijkstra. Improved implementation.
 
 Enum, recursive data struture. Parsing of paquets.
 
-### Day 14: [Regolith Reservoir](day14/README.md)
+### Day 14: [Regolith Reservoir](day14/README.md) 🌟
+
+Falling sand.

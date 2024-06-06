@@ -33,8 +33,17 @@ fn borders(coords: &[Vec<(usize, usize)>]) -> (usize, usize, usize, usize) {
     (min_x, max_x, min_y, max_y)
 }
 
+#[derive(Debug, Clone, Copy)]
+enum Element {
+    Empty,
+    Rock,
+    Sand,
+}
+use Element::{Empty, Rock, Sand};
+
+#[derive(Clone)]
 struct Cave {
-    rocks: Vec<bool>,
+    elements: Vec<Element>,
     rows: usize,
     cols: usize,
     min_x: usize,
@@ -47,7 +56,7 @@ impl Cave {
         // Top starts at 0.
         let rows = max_y + 1;
         let cols = max_x - min_x + 1;
-        let mut rocks = vec![false; rows * cols];
+        let mut elements = vec![Empty; rows * cols];
 
         for line in coords {
             for start_end in line.windows(2) {
@@ -60,7 +69,7 @@ impl Cave {
                         (start_end[1].1, start_end[0].1)
                     };
                     for y in y1..=y2 {
-                        rocks[y * cols + x] = true;
+                        elements[y * cols + x] = Rock;
                     }
                 } else if start_end[0].1 == start_end[1].1 {
                     // y is same, so horizontal line.
@@ -72,7 +81,7 @@ impl Cave {
                     };
                     for x in x1..=x2 {
                         let x = x - min_x;
-                        rocks[y * cols + x] = true;
+                        elements[y * cols + x] = Rock;
                     }
                 } else {
                     panic!("Diagonal lines not supported")
@@ -80,7 +89,7 @@ impl Cave {
             }
         }
         Self {
-            rocks,
+            elements,
             rows,
             cols,
             min_x,
@@ -96,7 +105,8 @@ impl Cave {
         500 - self.min_x
     }
 
-    fn print_with_pos(&self, positions: &[usize]) {
+    #[allow(dead_code, clippy::match_on_vec_items)]
+    fn print(&self) {
         const RED: &str = "\x1b[31m";
         const BLUE: &str = "\x1b[94m";
         const RESET: &str = "\x1b[0m";
@@ -105,24 +115,88 @@ impl Cave {
             for p in row * self.cols..(row + 1) * self.cols {
                 if p == entry {
                     print!("{BLUE}+{RESET}");
-                } else if positions.contains(&p) {
-                    print!("{RED}O{RESET}");
                 } else {
-                    let c = self.rocks[p];
-                    print!("{}", if c { '#' } else { '.' });
+                    match self.elements[p] {
+                        Empty => print!("."),
+                        Rock => print!("#"),
+                        Sand => print!("{RED}o{RESET}"),
+                    }
                 }
             }
             println!();
         }
     }
 
-    fn print(&self) {
-        self.print_with_pos(&[]);
+    fn down(&self, pos: usize) -> Option<usize> {
+        if pos / self.cols == self.rows - 1 {
+            None
+        } else {
+            Some(pos + self.cols)
+        }
+    }
+
+    fn down_left(&self, pos: usize) -> Option<usize> {
+        if pos / self.cols == self.rows - 1 || pos % self.cols == 0 {
+            None
+        } else {
+            Some(pos + self.cols - 1)
+        }
+    }
+
+    fn down_right(&self, pos: usize) -> Option<usize> {
+        if pos / self.cols == self.rows - 1 || pos % self.cols == self.cols - 1 {
+            None
+        } else {
+            Some(pos + self.cols + 1)
+        }
+    }
+
+    // Try to drop a unit of sand.
+    // Returns true if sand came to rest, false if it fell into the abyss.
+    fn drop_sand(&mut self) -> bool {
+        let mut pos = self.get_entry();
+        loop {
+            if let Some(down) = self.down(pos) {
+                if matches!(self.elements[down], Empty) {
+                    pos = down;
+                    continue;
+                }
+            } else {
+                return false;
+            }
+            if let Some(down_left) = self.down_left(pos) {
+                if matches!(self.elements[down_left], Empty) {
+                    pos = down_left;
+                    continue;
+                }
+            } else {
+                return false;
+            }
+            if let Some(down_right) = self.down_right(pos) {
+                if matches!(self.elements[down_right], Empty) {
+                    pos = down_right;
+                    continue;
+                }
+            } else {
+                return false;
+            }
+            // Sand came to rest, stopping the loop.
+            break;
+        }
+
+        self.elements[pos] = Sand;
+        true
     }
 }
 
 fn sand_count_before_abyss(cave: &Cave) -> usize {
-    0
+    let mut cave = cave.clone();
+    let mut count = 0;
+    while cave.drop_sand() {
+        count += 1;
+    }
+    // cave.print();
+    count
 }
 
 fn part2(cave: &Cave) -> i64 {
@@ -133,7 +207,7 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let cave = Cave::build(&input);
-    cave.print();
+    // cave.print();
 
     println!("Part 1: {}", sand_count_before_abyss(&cave));
     println!("Part 2: {}", part2(&cave));
