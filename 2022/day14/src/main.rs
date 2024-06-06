@@ -50,9 +50,8 @@ struct Cave {
 }
 
 impl Cave {
-    fn build(input: &str) -> Self {
-        let coords = parse_input(input);
-        let (min_x, max_x, _, max_y) = borders(&coords);
+    fn build(coords: &[Vec<(usize, usize)>]) -> Self {
+        let (min_x, max_x, _, max_y) = borders(coords);
         // Top starts at 0.
         let rows = max_y + 1;
         let cols = max_x - min_x + 1;
@@ -96,8 +95,18 @@ impl Cave {
         }
     }
 
-    fn pos(&self, row: usize, col: usize) -> usize {
-        row * self.cols + col
+    fn build_with_floor(coords: &[Vec<(usize, usize)>]) -> Self {
+        let mut ext_coords = coords.to_vec();
+
+        let y = coords.iter().flatten().map(|c| c.1).max().unwrap() + 2;
+        // Since entry is at x=500, the base of the sand pyramid can only go as far as
+        // pyramid height on each side.
+        let min_x = 500 - y;
+        let max_x = 500 + y;
+        // println!("y={} min_x={} max_x={}", y, min_x, max_x);
+        ext_coords.push(vec![(min_x, y), (max_x, y)]);
+
+        Cave::build(&ext_coords)
     }
 
     fn get_entry(&self) -> usize {
@@ -152,8 +161,10 @@ impl Cave {
     }
 
     // Try to drop a unit of sand.
-    // Returns true if sand came to rest, false if it fell into the abyss.
-    fn drop_sand(&mut self) -> bool {
+    // Returns true if sand came to rest.
+    // With HAS_FLOOR == false, returns false if it fell into the abyss.
+    // With HAS_FLOOR == true, returns false if sand reached the entry.
+    fn drop_sand<const HAS_FLOOR: bool>(&mut self) -> bool {
         let mut pos = self.get_entry();
         loop {
             if let Some(down) = self.down(pos) {
@@ -161,7 +172,7 @@ impl Cave {
                     pos = down;
                     continue;
                 }
-            } else {
+            } else if !HAS_FLOOR {
                 return false;
             }
             if let Some(down_left) = self.down_left(pos) {
@@ -169,7 +180,7 @@ impl Cave {
                     pos = down_left;
                     continue;
                 }
-            } else {
+            } else if !HAS_FLOOR {
                 return false;
             }
             if let Some(down_right) = self.down_right(pos) {
@@ -177,40 +188,55 @@ impl Cave {
                     pos = down_right;
                     continue;
                 }
-            } else {
+            } else if !HAS_FLOOR {
                 return false;
             }
             // Sand came to rest, stopping the loop.
             break;
         }
 
+        if HAS_FLOOR && pos == self.get_entry() {
+            return false;
+        }
+
         self.elements[pos] = Sand;
         true
     }
-}
 
-fn sand_count_before_abyss(cave: &Cave) -> usize {
-    let mut cave = cave.clone();
-    let mut count = 0;
-    while cave.drop_sand() {
-        count += 1;
+    // Fill the cave with sand and return the number of units of sand.
+    // With HAS_FLOOR == false, fill until it starts falling into the abyss.
+    // With HAS_FLOOR == true, fill until sand reaches the entry.
+    fn fill_sand<const HAS_FLOOR: bool>(&mut self) -> usize {
+        let mut count = 0;
+        while self.drop_sand::<HAS_FLOOR>() {
+            count += 1;
+        }
+        if HAS_FLOOR {
+            // Add the sand on the entry spot.
+            count += 1;
+        }
+        count
     }
-    // cave.print();
-    count
 }
 
-fn part2(cave: &Cave) -> i64 {
-    0
+fn sand_count_before_abyss(coords: &[Vec<(usize, usize)>]) -> usize {
+    let mut cave = Cave::build(coords);
+    // cave.print();
+    cave.fill_sand::<false>()
+}
+
+fn sand_count_with_floor(coords: &[Vec<(usize, usize)>]) -> usize {
+    let mut cave = Cave::build_with_floor(coords);
+    cave.fill_sand::<true>()
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let cave = Cave::build(&input);
-    // cave.print();
+    let coords = parse_input(&input);
 
-    println!("Part 1: {}", sand_count_before_abyss(&cave));
-    println!("Part 2: {}", part2(&cave));
+    println!("Part 1: {}", sand_count_before_abyss(&coords));
+    println!("Part 2: {}", sand_count_with_floor(&coords));
 }
 
 #[cfg(test)]
@@ -221,11 +247,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(sand_count_before_abyss(&Cave::build(INPUT_TEST)), 24);
+        assert_eq!(sand_count_before_abyss(&parse_input(INPUT_TEST)), 24);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Cave::build(INPUT_TEST)), 0);
+        assert_eq!(sand_count_with_floor(&parse_input(INPUT_TEST)), 93);
     }
 }
