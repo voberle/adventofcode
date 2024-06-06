@@ -161,46 +161,51 @@ impl Cave {
     }
 
     // Try to drop a unit of sand.
-    // Returns true if sand came to rest.
-    // With HAS_FLOOR == false, returns false if it fell into the abyss.
-    // With HAS_FLOOR == true, returns false if sand reached the entry.
-    fn drop_sand<const HAS_FLOOR: bool>(&mut self) -> bool {
-        let mut pos = self.get_entry();
+    // Returns Some(previous_pos) if sand came to rest, with previous_pos being the position
+    // just before the sand rested. We can use this as start position on next iteration.
+    // Returns None when:
+    // - with HAS_FLOOR == false, the sand fell into the abyss.
+    // - with HAS_FLOOR == true, the sand reached the entry.
+    fn drop_sand<const HAS_FLOOR: bool>(&mut self, mut pos: usize) -> Option<usize> {
+        let mut previous_pos = self.get_entry();
         loop {
             if let Some(down) = self.down(pos) {
                 if matches!(self.elements[down], Empty) {
+                    previous_pos = pos;
                     pos = down;
                     continue;
                 }
             } else if !HAS_FLOOR {
-                return false;
+                return None;
             }
             if let Some(down_left) = self.down_left(pos) {
                 if matches!(self.elements[down_left], Empty) {
+                    previous_pos = pos;
                     pos = down_left;
                     continue;
                 }
             } else if !HAS_FLOOR {
-                return false;
+                return None;
             }
             if let Some(down_right) = self.down_right(pos) {
                 if matches!(self.elements[down_right], Empty) {
+                    previous_pos = pos;
                     pos = down_right;
                     continue;
                 }
             } else if !HAS_FLOOR {
-                return false;
+                return None;
             }
             // Sand came to rest, stopping the loop.
             break;
         }
 
         if HAS_FLOOR && pos == self.get_entry() {
-            return false;
+            return None;
         }
 
         self.elements[pos] = Sand;
-        true
+        Some(previous_pos)
     }
 
     // Fill the cave with sand and return the number of units of sand.
@@ -208,9 +213,14 @@ impl Cave {
     // With HAS_FLOOR == true, fill until sand reaches the entry.
     fn fill_sand<const HAS_FLOOR: bool>(&mut self) -> usize {
         let mut count = 0;
-        while self.drop_sand::<HAS_FLOOR>() {
+
+        let mut pos_to_start_from = self.get_entry();
+        while let Some(previous_pos) = self.drop_sand::<HAS_FLOOR>(pos_to_start_from) {
+            pos_to_start_from = previous_pos;
             count += 1;
         }
+        // self.print();
+
         if HAS_FLOOR {
             // Add the sand on the entry spot.
             count += 1;
@@ -221,7 +231,6 @@ impl Cave {
 
 fn sand_count_before_abyss(coords: &[Vec<(usize, usize)>]) -> usize {
     let mut cave = Cave::build(coords);
-    // cave.print();
     cave.fill_sand::<false>()
 }
 

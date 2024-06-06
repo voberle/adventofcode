@@ -15,3 +15,7 @@ Then the sand filling just has to stop when we reach the entry.
 Both parts run in 5 ms, which seems to be quite good.
 
 It would be a good one to add visualization.
+
+## Update
+
+By not starting each sand drop from the entry, but from the previous position we found, we can shave of almost 2 ms of execution time.
