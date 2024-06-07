@@ -65,6 +65,6 @@ Enum, recursive data struture. Parsing of paquets.
 
 Falling sand.
 
-### Day 15: [Beacon Exclusion Zone](day15/README.md) 🌟
+### Day 15: [Beacon Exclusion Zone](day15/README.md) 🌟🌟
 
 Circles, overlaping points.
