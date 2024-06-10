@@ -79,6 +79,10 @@ Falling sand.
 
 Circles, overlaping points.
 
+### Day 16: [Proboscidea Volcanium](day16/README.md) 🌟
+
+Maximizing a value in specific time.
+
 ### Day 17: [Pyroclastic Flow](day17/README.md) 🌟🌟
 
 Tetris. Pattern detection.
