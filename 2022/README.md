@@ -68,3 +68,7 @@ Falling sand.
 ### Day 15: [Beacon Exclusion Zone](day15/README.md) 🌟🌟
 
 Circles, overlaping points.
+
+### Day 17: [Pyroclastic Flow](day17/README.md) 🌟
+
+Tetris.
