@@ -17,3 +17,7 @@ Part 2 is a classical pattern detection problem, to "jump ahead", but not such a
 I went for detecting when the top of the chamber (like top 20 lines) repeat for a specific rock type.
 
 Performance: While I didn't try to optimize for speed, it runs quite fast, 3.2 ms for both parts.
+
+## Update
+
+I realized later that I could have simplified things by listing the coordinates of each rock, trying to move the rocks and check if it works.

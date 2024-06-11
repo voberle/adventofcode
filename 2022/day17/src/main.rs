@@ -17,22 +17,22 @@ macro_rules! debug_print {
     ($( $args:expr ),*) => {};
 }
 
-enum Direction {
+enum Jet {
     Left,
     Right,
 }
 
-impl From<char> for Direction {
+impl From<char> for Jet {
     fn from(value: char) -> Self {
         match value {
-            '<' => Direction::Left,
-            '>' => Direction::Right,
+            '<' => Jet::Left,
+            '>' => Jet::Right,
             _ => panic!("Invalid direction character"),
         }
     }
 }
 
-fn build(input: &str) -> Vec<Direction> {
+fn build(input: &str) -> Vec<Jet> {
     input.chars().map(Into::into).collect()
 }
 
@@ -60,8 +60,10 @@ impl Pos {
     }
 }
 
+const CHAMBER_WIDTH: usize = 7;
+
 struct Chamber {
-    units: Vec<Vec<bool>>,
+    units: Vec<[bool; CHAMBER_WIDTH]>,
     height: usize,
 }
 
@@ -92,7 +94,7 @@ impl Chamber {
         const MIN_SIZE: usize = 7;
         if self.units.len() < self.height + MIN_SIZE {
             self.units
-                .resize_with(self.height + MIN_SIZE, || vec![false; 7]);
+                .resize_with(self.height + MIN_SIZE, || [false; 7]);
         }
     }
 
@@ -181,7 +183,7 @@ impl Rock for HorizontalBar {
     }
 
     fn move_right(&self, chamber: &Chamber, pos: &Pos) -> Option<Pos> {
-        if pos.x + 4 < 7 && chamber.is_free(Pos::new(pos.x + 4, pos.height)) {
+        if pos.x + 4 < CHAMBER_WIDTH && chamber.is_free(Pos::new(pos.x + 4, pos.height)) {
             Some(pos.right())
         } else {
             None
@@ -232,7 +234,7 @@ impl Rock for Cross {
     }
 
     fn move_right(&self, chamber: &Chamber, pos: &Pos) -> Option<Pos> {
-        if pos.x + 2 < 7
+        if pos.x + 2 < CHAMBER_WIDTH
             && chamber.is_free(Pos::new(pos.x + 1, pos.height))
             && chamber.is_free(Pos::new(pos.x + 2, pos.height - 1))
             && chamber.is_free(Pos::new(pos.x + 1, pos.height - 2))
@@ -289,7 +291,7 @@ impl Rock for RightUp {
     }
 
     fn move_right(&self, chamber: &Chamber, pos: &Pos) -> Option<Pos> {
-        if pos.x + 1 < 7
+        if pos.x + 1 < CHAMBER_WIDTH
             && chamber.is_free(Pos::new(pos.x + 1, pos.height))
             && chamber.is_free(Pos::new(pos.x + 1, pos.height - 1))
             && chamber.is_free(Pos::new(pos.x + 1, pos.height - 2))
@@ -347,7 +349,7 @@ impl Rock for VerticalBar {
     }
 
     fn move_right(&self, chamber: &Chamber, pos: &Pos) -> Option<Pos> {
-        if pos.x + 1 < 7
+        if pos.x + 1 < CHAMBER_WIDTH
             && chamber.is_free(Pos::new(pos.x + 1, pos.height))
             && chamber.is_free(Pos::new(pos.x + 1, pos.height - 1))
             && chamber.is_free(Pos::new(pos.x + 1, pos.height - 2))
@@ -398,7 +400,7 @@ impl Rock for Square {
     }
 
     fn move_right(&self, chamber: &Chamber, pos: &Pos) -> Option<Pos> {
-        if pos.x + 2 < 7
+        if pos.x + 2 < CHAMBER_WIDTH
             && chamber.is_free(Pos::new(pos.x + 2, pos.height))
             && chamber.is_free(Pos::new(pos.x + 2, pos.height - 1))
         {
@@ -432,14 +434,14 @@ fn next_rock(i: usize) -> Box<dyn Rock> {
 }
 
 // Calculates a hash for the set of lines.
-fn hash_lines(lines: &[Vec<bool>]) -> u64 {
+fn hash_lines(lines: &[[bool; CHAMBER_WIDTH]]) -> u64 {
     let mut hasher = FxHasher::default();
     lines.hash(&mut hasher);
     hasher.finish()
 }
 
 fn fall_rocks<const USE_PATTERN_DETECTION: bool>(
-    movements: &[Direction],
+    movements: &[Jet],
     total_rocks: usize,
 ) -> usize {
     let mut chamber = Chamber::new();
@@ -460,7 +462,7 @@ fn fall_rocks<const USE_PATTERN_DETECTION: bool>(
     for m in movements.iter().cycle() {
         // Pushing rock to the side.
         match m {
-            Direction::Left => {
+            Jet::Left => {
                 if let Some(next) = rock.move_left(&chamber, &pos) {
                     debug_print!("Pushing left.");
                     pos = next;
@@ -468,7 +470,7 @@ fn fall_rocks<const USE_PATTERN_DETECTION: bool>(
                     debug_print!("Pushing left but nothing happens.");
                 }
             }
-            Direction::Right => {
+            Jet::Right => {
                 if let Some(next) = rock.move_right(&chamber, &pos) {
                     debug_print!("Pushing right.");
                     pos = next;
@@ -539,12 +541,12 @@ fn fall_rocks<const USE_PATTERN_DETECTION: bool>(
     chamber.height() + height_to_add.unwrap_or_default()
 }
 
-fn column_height_after_2022(movements: &[Direction]) -> usize {
+fn column_height_after_2022(movements: &[Jet]) -> usize {
     const TOTAL_ROCKS: usize = 2022;
     fall_rocks::<false>(movements, TOTAL_ROCKS)
 }
 
-fn column_height_after_trillion(movements: &[Direction]) -> usize {
+fn column_height_after_trillion(movements: &[Jet]) -> usize {
     const TOTAL_ROCKS: usize = 1_000_000_000_000;
     fall_rocks::<true>(movements, TOTAL_ROCKS)
 }
