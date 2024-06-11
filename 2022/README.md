@@ -69,6 +69,6 @@ Falling sand.
 
 Circles, overlaping points.
 
-### Day 17: [Pyroclastic Flow](day17/README.md) 🌟
+### Day 17: [Pyroclastic Flow](day17/README.md) 🌟🌟
 
-Tetris.
+Tetris. Pattern detection.

@@ -1,4 +1,9 @@
-use std::io::{self, Read};
+use std::{
+    hash::{Hash, Hasher},
+    io::{self, Read},
+};
+
+use fxhash::{FxHashMap, FxHasher};
 
 // The debug version
 #[cfg(feature = "my_debug")]
@@ -101,7 +106,7 @@ impl Chamber {
         self.ensure_size();
     }
 
-    #[cfg(feature = "my_debug")]
+    #[allow(dead_code)]
     fn print_falling(&self, falling_rock: &[Pos]) {
         let mut something_printed = false;
         for (height, line) in self.units.iter().enumerate().rev() {
@@ -121,18 +126,23 @@ impl Chamber {
             if !something_printed && s == "......." {
                 continue;
             }
-            debug_print!("|{}|", s);
+            println!("|{}|", s);
             something_printed = true;
         }
-        debug_print!("+-------+");
+        println!("+-------+");
+    }
+
+    #[cfg(feature = "my_debug")]
+    fn debug_print_falling(&self, falling_rock: &[Pos]) {
+        self.print_falling(falling_rock);
     }
 
     #[cfg(not(feature = "my_debug"))]
     #[allow(clippy::unused_self)]
-    fn print_falling(&self, _: &[Pos]) {}
+    fn debug_print_falling(&self, _: &[Pos]) {}
 
-    fn print(&self) {
-        self.print_falling(&[]);
+    fn debug_print(&self) {
+        self.debug_print_falling(&[]);
     }
 }
 
@@ -421,17 +431,31 @@ fn next_rock(i: usize) -> Box<dyn Rock> {
     }
 }
 
-fn column_height_after_2022(movements: &[Direction]) -> usize {
-    const ROCK_COUNT: usize = 2022;
+// Calculates a hash for the set of lines.
+fn hash_lines(lines: &[Vec<bool>]) -> u64 {
+    let mut hasher = FxHasher::default();
+    lines.hash(&mut hasher);
+    hasher.finish()
+}
 
+fn fall_rocks<const USE_PATTERN_DETECTION: bool>(
+    movements: &[Direction],
+    total_rocks: usize,
+) -> usize {
     let mut chamber = Chamber::new();
 
     let mut rock_number = 0;
     let mut rock: Box<dyn Rock> = next_rock(rock_number);
     let mut pos = rock.get_initial_position(&chamber);
 
+    // Pattern detection: We try to find a top of the chamber that repeats at the same rock type.
+    // - Key: Hash of the top of the chamber.
+    // - Value: Rock number and chamber height.
+    let mut patterns: FxHashMap<u64, (usize, usize)> = FxHashMap::default();
+    let mut height_to_add: Option<usize> = None;
+
     debug_print!("First rock begins falling");
-    chamber.print_falling(&rock.units(&pos));
+    chamber.debug_print_falling(&rock.units(&pos));
 
     for m in movements.iter().cycle() {
         // Pushing rock to the side.
@@ -453,44 +477,76 @@ fn column_height_after_2022(movements: &[Direction]) -> usize {
                 }
             }
         }
-        chamber.print_falling(&rock.units(&pos));
+        chamber.debug_print_falling(&rock.units(&pos));
 
         // Rock falling down.
         if let Some(next) = rock.move_down(&chamber, &pos) {
             debug_print!("Falling one unit");
             pos = next;
-            chamber.print_falling(&rock.units(&pos));
+            chamber.debug_print_falling(&rock.units(&pos));
         } else {
             chamber.set(&rock.units(&pos));
             debug_print!("Resting (height {})", chamber.height());
-            chamber.print();
+            chamber.debug_print();
+
+            // Pattern detection
+            if USE_PATTERN_DETECTION
+                && height_to_add.is_none()
+                && chamber.height() > 20
+                && rock_number % 5 == 0
+            {
+                let hash = hash_lines(&chamber.units[chamber.height() - 20..=chamber.height()]);
+                if let Some((prevous_rock_number, previous_height)) =
+                    patterns.insert(hash, (rock_number, chamber.height()))
+                {
+                    // Found pattern
+                    let rock_diff = rock_number - prevous_rock_number;
+                    let height_diff = chamber.height() - previous_height;
+                    // println!("Found pattern, rock diff={}, height diff={}", rock_diff, height_diff);
+
+                    let period_count = (total_rocks - rock_number) / rock_diff;
+                    let rocks_to_jump_ahead = period_count * rock_diff;
+                    height_to_add = Some(period_count * height_diff);
+
+                    rock_number += rocks_to_jump_ahead;
+                }
+            }
 
             rock_number += 1;
-            if rock_number >= ROCK_COUNT {
+            if rock_number >= total_rocks {
                 break;
             }
 
             debug_print!("Getting new rock (number {})", rock_number);
             rock = next_rock(rock_number);
             pos = rock.get_initial_position(&chamber);
-            chamber.print_falling(&rock.units(&pos));
-            // println!("{}", chamber.height());
+            chamber.debug_print_falling(&rock.units(&pos));
         }
     }
 
-    assert_eq!(
-        chamber.height(),
-        chamber
-            .units
-            .iter()
-            .filter(|line| line.contains(&true))
-            .count()
-    );
-    chamber.height()
+    if !USE_PATTERN_DETECTION {
+        // chamber.print_falling(&[]);
+        assert_eq!(
+            chamber.height(),
+            chamber
+                .units
+                .iter()
+                .filter(|line| line.contains(&true))
+                .count()
+        );
+    }
+
+    chamber.height() + height_to_add.unwrap_or_default()
 }
 
-fn part2(movements: &[Direction]) -> usize {
-    0
+fn column_height_after_2022(movements: &[Direction]) -> usize {
+    const TOTAL_ROCKS: usize = 2022;
+    fall_rocks::<false>(movements, TOTAL_ROCKS)
+}
+
+fn column_height_after_trillion(movements: &[Direction]) -> usize {
+    const TOTAL_ROCKS: usize = 1_000_000_000_000;
+    fall_rocks::<true>(movements, TOTAL_ROCKS)
 }
 
 fn main() {
@@ -499,7 +555,7 @@ fn main() {
     let movements = build(&input);
 
     println!("Part 1: {}", column_height_after_2022(&movements));
-    println!("Part 2: {}", part2(&movements));
+    println!("Part 2: {}", column_height_after_trillion(&movements));
 }
 
 #[cfg(test)]
@@ -515,6 +571,9 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(
+            column_height_after_trillion(&build(INPUT_TEST)),
+            1514285714288
+        );
     }
 }
