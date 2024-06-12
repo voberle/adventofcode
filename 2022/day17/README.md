@@ -21,3 +21,5 @@ Performance: While I didn't try to optimize for speed, it runs quite fast, 3.2 m
 ## Update
 
 I realized later that I could have simplified things by listing the coordinates of each rock, trying to move the rocks and check if it works.
+
+I also replaced the boolean array for lines with a simple integer. It's a simple change that wins 2-3 ms.

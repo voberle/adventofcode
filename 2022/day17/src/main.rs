@@ -63,7 +63,7 @@ impl Pos {
 const CHAMBER_WIDTH: usize = 7;
 
 struct Chamber {
-    units: Vec<[bool; CHAMBER_WIDTH]>,
+    units: Vec<u8>,
     height: usize,
 }
 
@@ -83,7 +83,7 @@ impl Chamber {
 
     fn is_free(&self, pos: Pos) -> bool {
         if self.units.len() > pos.height {
-            !self.units[pos.height][pos.x]
+            self.units[pos.height] & (1 << pos.x) == 0
         } else {
             true
         }
@@ -93,16 +93,15 @@ impl Chamber {
     fn ensure_size(&mut self) {
         const MIN_SIZE: usize = 7;
         if self.units.len() < self.height + MIN_SIZE {
-            self.units
-                .resize_with(self.height + MIN_SIZE, || [false; 7]);
+            self.units.resize(self.height + MIN_SIZE, 0);
         }
     }
 
     fn set(&mut self, positions: &[Pos]) {
         self.ensure_size();
         for p in positions {
-            assert!(!self.units[p.height][p.x]);
-            self.units[p.height][p.x] = true;
+            assert!(self.is_free(*p));
+            self.units[p.height] |= 1 << p.x;
             self.height = self.height.max(p.height + 1);
         }
         self.ensure_size();
@@ -112,13 +111,13 @@ impl Chamber {
     fn print_falling(&self, falling_rock: &[Pos]) {
         let mut something_printed = false;
         for (height, line) in self.units.iter().enumerate().rev() {
-            let s: String = line
-                .iter()
+            let s: String = (0..7)
                 .enumerate()
-                .map(|(x, v)| {
+                .map(|(x, shift)| {
+                    let v = line & (1 << shift) != 0;
                     if falling_rock.contains(&Pos::new(x, height)) {
                         '@'
-                    } else if *v {
+                    } else if v {
                         '#'
                     } else {
                         '.'
@@ -434,16 +433,13 @@ fn next_rock(i: usize) -> Box<dyn Rock> {
 }
 
 // Calculates a hash for the set of lines.
-fn hash_lines(lines: &[[bool; CHAMBER_WIDTH]]) -> u64 {
+fn hash_lines(lines: &[u8]) -> u64 {
     let mut hasher = FxHasher::default();
     lines.hash(&mut hasher);
     hasher.finish()
 }
 
-fn fall_rocks<const USE_PATTERN_DETECTION: bool>(
-    movements: &[Jet],
-    total_rocks: usize,
-) -> usize {
+fn fall_rocks<const USE_PATTERN_DETECTION: bool>(movements: &[Jet], total_rocks: usize) -> usize {
     let mut chamber = Chamber::new();
 
     let mut rock_number = 0;
@@ -530,11 +526,7 @@ fn fall_rocks<const USE_PATTERN_DETECTION: bool>(
         // chamber.print_falling(&[]);
         assert_eq!(
             chamber.height(),
-            chamber
-                .units
-                .iter()
-                .filter(|line| line.contains(&true))
-                .count()
+            chamber.units.iter().filter(|line| **line != 0).count()
         );
     }
 
