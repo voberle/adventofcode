@@ -72,3 +72,7 @@ Circles, overlaping points.
 ### Day 17: [Pyroclastic Flow](day17/README.md) 🌟🌟
 
 Tetris. Pattern detection.
+
+### Day 18: [Boiling Boulders](day18/README.md) 🌟
+
+Cubes, side of cubes.
