@@ -95,6 +95,10 @@ Tetris. Pattern detection.
 
 Cubes, side of cubes.
 
+### Day 19: [Not Enough Minerals](day19/README.md) 🌟
+
+Maximizing a value in specific time.
+
 ### Day 20: [Grove Positioning System](day20/README.md) 🌟🌟
 
 Moving numbers in a list.
