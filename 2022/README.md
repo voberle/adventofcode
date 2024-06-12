@@ -73,6 +73,6 @@ Circles, overlaping points.
 
 Tetris. Pattern detection.
 
-### Day 18: [Boiling Boulders](day18/README.md) 🌟
+### Day 18: [Boiling Boulders](day18/README.md) 🌟🌟
 
 Cubes, side of cubes.
