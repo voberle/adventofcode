@@ -81,6 +81,6 @@ Cubes, side of cubes.
 
 Moving numbers in a list.
 
-### Day 21: [Monkey Math](day21/README.md) 🌟
+### Day 21: [Monkey Math](day21/README.md) 🌟🌟
 
-Operations until none left.
+Operations until none left. Equation solving.
