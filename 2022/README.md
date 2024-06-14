@@ -80,3 +80,7 @@ Cubes, side of cubes.
 ### Day 20: [Grove Positioning System](day20/README.md) 🌟🌟
 
 Moving numbers in a list.
+
+### Day 21: [Monkey Math](day21/README.md) 🌟
+
+Operations until none left.
