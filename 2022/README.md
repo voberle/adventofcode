@@ -76,3 +76,7 @@ Tetris. Pattern detection.
 ### Day 18: [Boiling Boulders](day18/README.md) 🌟🌟
 
 Cubes, side of cubes.
+
+### Day 20: [Grove Positioning System](day20/README.md) 🌟
+
+Moving numbers in a list.
