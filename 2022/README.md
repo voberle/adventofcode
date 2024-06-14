@@ -77,6 +77,6 @@ Tetris. Pattern detection.
 
 Cubes, side of cubes.
 
-### Day 20: [Grove Positioning System](day20/README.md) 🌟
+### Day 20: [Grove Positioning System](day20/README.md) 🌟🌟
 
 Moving numbers in a list.

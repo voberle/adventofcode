@@ -10,3 +10,13 @@ Then it was hard to get the move method that uses remove and insert working. In 
 
 ## Part 2
 
+So my move method was still buggy, as it didn't work on the real data of part 2.
+
+At the end, it was simply that my move method was way too complicated. The final solution was actually simple:
+
+- Get the position of the item to move.
+- Remove the item to move.
+- Add the value to the position, modulo the length of the list (so 1 item less than the full list).
+- Insert the element at the found position.
+
+What got me into the rabbit hole is that initially, I didn't remove the item *before* doing the position calculations, which complicated everything.

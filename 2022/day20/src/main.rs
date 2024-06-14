@@ -12,12 +12,12 @@ struct Coord {
     position: usize,
 }
 
-fn create_position_tracking_list(coordinates: &[i64]) -> Vec<Coord> {
+fn create_ext_list<const DECRYPTION_KEY: i64>(coordinates: &[i64]) -> Vec<Coord> {
     coordinates
         .iter()
         .enumerate()
         .map(|(position, v)| Coord {
-            value: *v,
+            value: v * DECRYPTION_KEY,
             position,
         })
         .collect()
@@ -25,7 +25,13 @@ fn create_position_tracking_list(coordinates: &[i64]) -> Vec<Coord> {
 
 // Version of move method that uses Vector::swap.
 // Works for part 1, but doesn't scale for part 2.
-#[allow(dead_code, clippy::comparison_chain, clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+#[allow(
+    dead_code,
+    clippy::comparison_chain,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_wrap
+)]
 fn move_item_swap(decrypted: &mut [Coord], index: usize) {
     let pos = decrypted.iter().position(|c| c.position == index).unwrap();
     let item = decrypted[pos].value;
@@ -45,24 +51,22 @@ fn move_item_swap(decrypted: &mut [Coord], index: usize) {
 }
 
 // Version of move with remove/insert.
-#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+#[allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_wrap
+)]
 fn move_item_insert(decrypted: &mut Vec<Coord>, index: usize) {
     let pos = decrypted.iter().position(|c| c.position == index).unwrap();
-    let item = decrypted[pos];
-    if item.value == 0 {
+
+    let item_value = decrypted[pos].value;
+    if item_value == 0 {
         return;
     }
 
-    decrypted.remove(pos);
+    let item = decrypted.remove(pos);
 
-    // Calculate the new position taking into account wrapping around.
-    let mut new_pos = (pos as i64 + item.value).rem_euclid(decrypted.len() as i64);
-
-    // If moving backwards, adjust the new position.
-    if item.value < 0 && new_pos == pos as i64 {
-        new_pos -= 1;
-        new_pos = new_pos.rem_euclid(decrypted.len() as i64);
-    }
+    let new_pos = (pos as i64 + item_value).rem_euclid(decrypted.len() as i64);
 
     decrypted.insert(new_pos as usize, item);
 }
@@ -79,7 +83,7 @@ fn sum_of_groove_coordinates(coords: &[Coord]) -> i64 {
 }
 
 fn groove_coordinates_sum(coordinates: &[i64]) -> i64 {
-    let mut decrypted = create_position_tracking_list(coordinates);
+    let mut decrypted = create_ext_list::<1>(coordinates);
 
     for index in 0..coordinates.len() {
         // move_item_swap(&mut decrypted, index);
@@ -89,8 +93,18 @@ fn groove_coordinates_sum(coordinates: &[i64]) -> i64 {
     sum_of_groove_coordinates(&decrypted)
 }
 
-fn part2(coordinates: &[i64]) -> i64 {
-    0
+#[allow(clippy::unreadable_literal)]
+fn groove_coordinates_sum_full(coordinates: &[i64]) -> i64 {
+    const DECRYPTION_KEY: i64 = 811589153;
+
+    let mut decrypted = create_ext_list::<DECRYPTION_KEY>(coordinates);
+
+    for _ in 0..10 {
+        for index in 0..coordinates.len() {
+            move_item_insert(&mut decrypted, index);
+        }
+    }
+    sum_of_groove_coordinates(&decrypted)
 }
 
 fn main() {
@@ -99,7 +113,7 @@ fn main() {
     let coordinates = build(&input);
 
     println!("Part 1: {}", groove_coordinates_sum(&coordinates));
-    println!("Part 2: {}", part2(&coordinates));
+    println!("Part 2: {}", groove_coordinates_sum_full(&coordinates));
 }
 
 #[cfg(test)]
@@ -114,7 +128,7 @@ mod tests {
 
     #[test]
     fn test_move_item_insert() {
-        let mut v = create_position_tracking_list(&[1, 2, -3, 3, -2, 0, 4]);
+        let mut v = create_ext_list::<1>(&[1, 2, -3, 3, -2, 0, 4]);
         // 1 moves between 2 and -3:
         move_item_insert(&mut v, 0);
         assert_eq!(as_vec(&v), vec![2, 1, -3, 3, -2, 0, 4]);
@@ -141,7 +155,7 @@ mod tests {
 
     #[test]
     fn test_calc_groove_coordinates_sum() {
-        let coords = create_position_tracking_list(&[1, 2, -3, 4, 0, 3, -2]);
+        let coords = create_ext_list::<1>(&[1, 2, -3, 4, 0, 3, -2]);
         assert_eq!(sum_of_groove_coordinates(&coords), 3);
     }
 
@@ -160,12 +174,18 @@ mod tests {
     }
 
     #[test]
+    fn test_other_case_part2() {
+        let coords = vec![0, 4, 5, 1, 2, 3];
+        assert_eq!(groove_coordinates_sum_full(&coords), 6492713224);
+    }
+
+    #[test]
     fn test_part1() {
         assert_eq!(groove_coordinates_sum(&build(INPUT_TEST)), 3);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(groove_coordinates_sum_full(&build(INPUT_TEST)), 1623178306);
     }
 }
