@@ -84,3 +84,5 @@ Moving numbers in a list.
 ### Day 21: [Monkey Math](day21/README.md) 🌟🌟
 
 Operations until none left. Equation solving.
+
+### Day 22: [Monkey Map](day22/README.md)
