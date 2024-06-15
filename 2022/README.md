@@ -85,4 +85,6 @@ Moving numbers in a list.
 
 Operations until none left. Equation solving.
 
-### Day 22: [Monkey Map](day22/README.md)
+### Day 22: [Monkey Map](day22/README.md) 🌟
+
+Following a path in a non-rectangular map.
