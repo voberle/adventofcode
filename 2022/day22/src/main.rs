@@ -179,93 +179,84 @@ impl Map {
     }
 
     fn line_last_pos(&self, y: usize) -> usize {
-        let mut x = self.line_first_pos(y);
-        while self.tiles[y][x] != Tile::Void {
-            x += 1;
-        }
-        x - 1
+        self.tiles[y]
+            .iter()
+            .enumerate()
+            .skip(self.line_first_pos(y))
+            .take_while(|&(_, tile)| tile != &Tile::Void)
+            .map(|(x, _)| x)
+            .last()
+            .unwrap()
     }
 
     fn column_first_pos(&self, x: usize) -> usize {
-        let mut y = 0;
-        while self.tiles[y][x] == Tile::Void {
-            y += 1;
-        }
-        y
+        self.tiles
+            .iter()
+            .position(|row| row[x] != Tile::Void)
+            .unwrap()
     }
 
     fn column_last_pos(&self, x: usize) -> usize {
-        let mut y = self.column_first_pos(x);
-        while self.tiles[y][x] != Tile::Void {
-            y += 1;
-        }
-        y - 1
+        self.tiles
+            .iter()
+            .enumerate()
+            .skip(self.column_first_pos(x))
+            .take_while(|&(_, row)| row[x] != Tile::Void)
+            .map(|(y, _)| y)
+            .last()
+            .unwrap()
     }
 
     #[allow(clippy::match_on_vec_items)]
     fn move_to(&self, pos: &Pos, facing: &Facing, steps: usize) -> Pos {
         let mut x = pos.x;
         let mut y = pos.y;
-        match facing {
-            Facing::Left => {
-                for _ in 0..steps {
-                    match self.tiles[y][x - 1] {
-                        Tile::Open => x -= 1,
-                        Tile::Wall => break, // stop moving, continue with next instruction
-                        Tile::Void => {
-                            let n_x = self.line_last_pos(y);
-                            if self.tiles[y][n_x] == Tile::Wall {
-                                break;
-                            }
-                            x = n_x;
+        for _ in 0..steps {
+            match facing {
+                Facing::Left => match self.tiles[y][x - 1] {
+                    Tile::Open => x -= 1,
+                    Tile::Wall => break, // stop moving, continue with next instruction
+                    Tile::Void => {
+                        let new_x = self.line_last_pos(y);
+                        if self.tiles[y][new_x] == Tile::Wall {
+                            break;
                         }
+                        x = new_x;
                     }
-                }
-            }
-            Facing::Right => {
-                for _ in 0..steps {
-                    match self.tiles[y][x + 1] {
-                        Tile::Open => x += 1,
-                        Tile::Wall => break,
-                        Tile::Void => {
-                            let n_x = self.line_first_pos(y);
-                            if self.tiles[y][n_x] == Tile::Wall {
-                                break;
-                            }
-                            x = n_x;
+                },
+                Facing::Right => match self.tiles[y][x + 1] {
+                    Tile::Open => x += 1,
+                    Tile::Wall => break,
+                    Tile::Void => {
+                        let new_x = self.line_first_pos(y);
+                        if self.tiles[y][new_x] == Tile::Wall {
+                            break;
                         }
+                        x = new_x;
                     }
-                }
-            }
-            Facing::Up => {
-                for _ in 0..steps {
-                    match self.tiles[y - 1][x] {
-                        Tile::Open => y -= 1,
-                        Tile::Wall => break,
-                        Tile::Void => {
-                            let n_y = self.column_last_pos(x);
-                            if self.tiles[n_y][x] == Tile::Wall {
-                                break;
-                            }
-                            y = n_y;
+                },
+                Facing::Up => match self.tiles[y - 1][x] {
+                    Tile::Open => y -= 1,
+                    Tile::Wall => break,
+                    Tile::Void => {
+                        let new_y = self.column_last_pos(x);
+                        if self.tiles[new_y][x] == Tile::Wall {
+                            break;
                         }
+                        y = new_y;
                     }
-                }
-            }
-            Facing::Down => {
-                for _ in 0..steps {
-                    match self.tiles[y + 1][x] {
-                        Tile::Open => y += 1,
-                        Tile::Wall => break,
-                        Tile::Void => {
-                            let n_y = self.column_first_pos(x);
-                            if self.tiles[n_y][x] == Tile::Wall {
-                                break;
-                            }
-                            y = n_y;
+                },
+                Facing::Down => match self.tiles[y + 1][x] {
+                    Tile::Open => y += 1,
+                    Tile::Wall => break,
+                    Tile::Void => {
+                        let new_y = self.column_first_pos(x);
+                        if self.tiles[new_y][x] == Tile::Wall {
+                            break;
                         }
+                        y = new_y;
                     }
-                }
+                },
             }
         }
         Pos { x, y }
