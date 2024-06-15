@@ -21,6 +21,37 @@ impl From<char> for PathTurn {
     }
 }
 
+#[derive(Debug)]
+enum PathItem {
+    Number(usize),
+    Turn(PathTurn),
+}
+
+fn build_path(input: &str) -> Vec<PathItem> {
+    let mut result = Vec::new();
+    let mut current_number = String::new();
+
+    for c in input.chars() {
+        if c.is_ascii_digit() {
+            current_number.push(c);
+        } else {
+            if !current_number.is_empty() {
+                result.push(PathItem::Number(current_number.parse().unwrap()));
+                current_number.clear();
+            }
+
+            result.push(PathItem::Turn(c.into()));
+        }
+    }
+
+    if !current_number.is_empty() {
+        result.push(PathItem::Number(current_number.parse().unwrap()));
+    }
+
+    result
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Facing {
     Right,
     Down,
@@ -29,7 +60,7 @@ enum Facing {
 }
 
 impl Facing {
-    fn get_value(&self) -> usize {
+    fn get_value(self) -> usize {
         match self {
             Facing::Right => 0,
             Facing::Down => 1,
@@ -38,7 +69,7 @@ impl Facing {
         }
     }
 
-    fn turn(&self, t: PathTurn) -> Self {
+    fn turn(self, t: PathTurn) -> Self {
         match t {
             PathTurn::Left => match self {
                 Facing::Right => Facing::Up,
@@ -72,14 +103,19 @@ impl Display for Facing {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct Pos {
+struct PosDir {
     x: usize,
     y: usize,
+    facing: Facing,
 }
 
-impl Pos {
-    fn new(x: usize, y: usize) -> Self {
-        Self { x, y }
+impl PosDir {
+    fn new(x: usize, y: usize, facing: Facing) -> Self {
+        Self { x, y, facing }
+    }
+
+    fn calc_password(&self) -> usize {
+        1000 * self.y + 4 * self.x + self.facing.get_value()
     }
 }
 
@@ -147,16 +183,18 @@ impl From<&str> for Map {
 
 impl Map {
     #[allow(dead_code)]
-    fn print_with_pos(&self, positions: &[Pos]) {
+    fn print_with_pos(&self, pos_dir: Option<PosDir>) {
         const RED: &str = "\x1b[31m";
         const RESET: &str = "\x1b[0m";
         for (y, line) in self.tiles.iter().enumerate() {
             for (x, t) in line.iter().enumerate() {
-                if positions.contains(&Pos::new(x, y)) {
-                    print!("{RED}{}{RESET}", t);
-                } else {
-                    print!("{}", t);
+                if let Some(pos) = pos_dir {
+                    if pos.x == x && pos.y == y {
+                        print!("{RED}{}{RESET}", t);
+                        continue;
+                    }
                 }
+                print!("{}", t);
             }
             println!();
         }
@@ -164,13 +202,14 @@ impl Map {
 
     #[allow(dead_code)]
     fn print(&self) {
-        self.print_with_pos(&[]);
+        self.print_with_pos(None);
     }
 
-    fn start_position(&self) -> Pos {
-        Pos::new(
+    fn start_position(&self) -> PosDir {
+        PosDir::new(
             self.tiles[1].iter().position(|t| *t == Tile::Open).unwrap(),
             1,
+            Facing::Right,
         )
     }
 
@@ -208,89 +247,105 @@ impl Map {
     }
 
     #[allow(clippy::match_on_vec_items)]
-    fn move_to(&self, pos: &Pos, facing: &Facing, steps: usize) -> Pos {
-        let mut x = pos.x;
-        let mut y = pos.y;
+    fn move_to(&self, pos_dir: &PosDir, steps: usize, wrapping: &impl Wrapping) -> PosDir {
+        let mut p = *pos_dir;
         for _ in 0..steps {
-            match facing {
-                Facing::Left => match self.tiles[y][x - 1] {
-                    Tile::Open => x -= 1,
+            match p.facing {
+                Facing::Left => match self.tiles[p.y][p.x - 1] {
+                    Tile::Open => p.x -= 1,
                     Tile::Wall => break, // stop moving, continue with next instruction
                     Tile::Void => {
-                        let new_x = self.line_last_pos(y);
-                        if self.tiles[y][new_x] == Tile::Wall {
+                        let new_pd = wrapping.left(self, &p);
+                        if self.tiles[new_pd.y][new_pd.x] == Tile::Wall {
                             break;
                         }
-                        x = new_x;
+                        p = new_pd;
                     }
                 },
-                Facing::Right => match self.tiles[y][x + 1] {
-                    Tile::Open => x += 1,
+                Facing::Right => match self.tiles[p.y][p.x + 1] {
+                    Tile::Open => p.x += 1,
                     Tile::Wall => break,
                     Tile::Void => {
-                        let new_x = self.line_first_pos(y);
-                        if self.tiles[y][new_x] == Tile::Wall {
+                        let new_pd = wrapping.right(self, &p);
+                        if self.tiles[new_pd.y][new_pd.x] == Tile::Wall {
                             break;
                         }
-                        x = new_x;
+                        p = new_pd;
                     }
                 },
-                Facing::Up => match self.tiles[y - 1][x] {
-                    Tile::Open => y -= 1,
+                Facing::Up => match self.tiles[p.y - 1][p.x] {
+                    Tile::Open => p.y -= 1,
                     Tile::Wall => break,
                     Tile::Void => {
-                        let new_y = self.column_last_pos(x);
-                        if self.tiles[new_y][x] == Tile::Wall {
+                        let new_pd = wrapping.up(self, &p);
+                        if self.tiles[new_pd.y][new_pd.x] == Tile::Wall {
                             break;
                         }
-                        y = new_y;
+                        p = new_pd;
                     }
                 },
-                Facing::Down => match self.tiles[y + 1][x] {
-                    Tile::Open => y += 1,
+                Facing::Down => match self.tiles[p.y + 1][p.x] {
+                    Tile::Open => p.y += 1,
                     Tile::Wall => break,
                     Tile::Void => {
-                        let new_y = self.column_first_pos(x);
-                        if self.tiles[new_y][x] == Tile::Wall {
+                        let new_pd = wrapping.down(self, &p);
+                        if self.tiles[new_pd.y][new_pd.x] == Tile::Wall {
                             break;
                         }
-                        y = new_y;
+                        p = new_pd;
                     }
                 },
             }
         }
-        Pos { x, y }
+        p
     }
-}
 
-#[derive(Debug)]
-enum PathItem {
-    Number(usize),
-    Turn(PathTurn),
-}
+    fn follow_path(&self, path: &[PathItem], wrapping: &impl Wrapping) -> PosDir {
+        let mut pos_dir = self.start_position();
 
-fn build_path(input: &str) -> Vec<PathItem> {
-    let mut result = Vec::new();
-    let mut current_number = String::new();
-
-    for c in input.chars() {
-        if c.is_ascii_digit() {
-            current_number.push(c);
-        } else {
-            if !current_number.is_empty() {
-                result.push(PathItem::Number(current_number.parse().unwrap()));
-                current_number.clear();
+        for p in path {
+            match p {
+                PathItem::Number(steps) => {
+                    pos_dir = self.move_to(&pos_dir, *steps, wrapping);
+                }
+                PathItem::Turn(turn) => {
+                    pos_dir.facing = pos_dir.facing.turn(*turn);
+                }
             }
-
-            result.push(PathItem::Turn(c.into()));
         }
+        pos_dir
+    }
+}
+
+trait Wrapping {
+    fn left(&self, map: &Map, pos_dir: &PosDir) -> PosDir;
+    fn right(&self, map: &Map, pos_dir: &PosDir) -> PosDir;
+    fn up(&self, map: &Map, pos_dir: &PosDir) -> PosDir;
+    fn down(&self, map: &Map, pos_dir: &PosDir) -> PosDir;
+}
+
+struct FlatModel;
+
+impl Wrapping for FlatModel {
+    fn left(&self, map: &Map, pos_dir: &PosDir) -> PosDir {
+        let x = map.line_last_pos(pos_dir.y);
+        PosDir::new(x, pos_dir.y, pos_dir.facing)
     }
 
-    if !current_number.is_empty() {
-        result.push(PathItem::Number(current_number.parse().unwrap()));
+    fn right(&self, map: &Map, pos_dir: &PosDir) -> PosDir {
+        let x = map.line_first_pos(pos_dir.y);
+        PosDir::new(x, pos_dir.y, pos_dir.facing)
     }
 
-    result
+    fn up(&self, map: &Map, pos_dir: &PosDir) -> PosDir {
+        let y = map.column_last_pos(pos_dir.x);
+        PosDir::new(pos_dir.x, y, pos_dir.facing)
+    }
+
+    fn down(&self, map: &Map, pos_dir: &PosDir) -> PosDir {
+        let y = map.column_first_pos(pos_dir.x);
+        PosDir::new(pos_dir.x, y, pos_dir.facing)
+    }
 }
 
 fn build(input: &str) -> (Map, Vec<PathItem>) {
@@ -298,30 +353,12 @@ fn build(input: &str) -> (Map, Vec<PathItem>) {
     (m.into(), build_path(p))
 }
 
-fn follow_path(map: &Map, path: &[PathItem]) -> (Pos, Facing) {
-    let mut pos = map.start_position();
-    let mut facing = Facing::Right;
-
-    for p in path {
-        match p {
-            PathItem::Number(steps) => {
-                pos = map.move_to(&pos, &facing, *steps);
-            }
-            PathItem::Turn(turn) => {
-                facing = facing.turn(*turn);
-            }
-        }
-    }
-
-    (pos, facing)
-}
-
 fn final_password(map: &Map, path: &[PathItem]) -> usize {
-    let (pos, facing) = follow_path(map, path);
-    1000 * pos.y + 4 * pos.x + facing.get_value()
+    let pos_dir = map.follow_path(path, &FlatModel);
+    pos_dir.calc_password()
 }
 
-fn part2(map: &Map, path: &[PathItem]) -> usize {
+fn final_password_on_cube(map: &Map, path: &[PathItem]) -> usize {
     0
 }
 
@@ -331,7 +368,7 @@ fn main() {
     let (map, path) = build(&input);
 
     println!("Part 1: {}", final_password(&map, &path));
-    println!("Part 2: {}", part2(&map, &path));
+    println!("Part 2: {}", final_password_on_cube(&map, &path));
 }
 
 #[cfg(test)]
@@ -349,6 +386,6 @@ mod tests {
     #[test]
     fn test_part2() {
         let (map, path) = build(INPUT_TEST);
-        assert_eq!(part2(&map, &path), 0);
+        assert_eq!(final_password_on_cube(&map, &path), 5031);
     }
 }

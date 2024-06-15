@@ -8,3 +8,5 @@ The code is a bit verbose, with lots of enums.
 
 ## Part 2
 
+First I did refactorings to make the Map struct agnostic to the wrapping model.
+
