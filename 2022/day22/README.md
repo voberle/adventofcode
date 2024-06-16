@@ -10,4 +10,6 @@ The code is a bit verbose, with lots of enums.
 
 First I did refactorings to make the Map struct agnostic to the wrapping model.
 
-With the input folding being different for test and real, and rather tricky to generalize, I implemented hard-coded solutions for test and real input.
+With the input folding being different for test and real, and rather tricky to generalize, I implemented hard-coded solutions for test and real input. I used a paper cube to figure out the wrapping.
+
+Maybe some day I will do a generic solution.

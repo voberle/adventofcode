@@ -422,6 +422,7 @@ struct TestCubeModel(Cube);
 impl TestCubeModel {
     const LEN: usize = 4;
 
+    #[allow(dead_code)]
     fn new() -> Self {
         Self(Cube::new(Self::LEN))
     }
@@ -517,6 +518,111 @@ impl Wrapping for TestCubeModel {
     }
 }
 
+// Cube numbers:
+//  12
+//  3
+// 45
+// 6
+struct RealCubeModel(Cube);
+
+impl RealCubeModel {
+    const LEN: usize = 50;
+
+    fn new() -> Self {
+        Self(Cube::new(Self::LEN))
+    }
+}
+
+impl Wrapping for RealCubeModel {
+    fn left(&self, _map: &Map, pos_dir: &PosDir) -> PosDir {
+        assert_eq!(pos_dir.facing, Facing::Left);
+        let offset = self.0.calc_offset(pos_dir.y);
+        match self.0.cube_number(pos_dir.y) {
+            0 => {
+                // Cube 1 => Cube 4 right
+                self.0.vert_rev(offset, 0, 2, Facing::Right)
+            }
+            1 => {
+                // Cube 3 => Cube 4 down
+                self.0.horiz(offset, 0, 2, Facing::Down)
+            }
+            2 => {
+                // Cube 4 => Cube 1 right
+                self.0.vert_rev(offset, 1, 0, Facing::Right)
+            }
+            3 => {
+                // Cube 6 => Cube 1 down
+                self.0.horiz(offset, 1, 0, Facing::Down)
+            }
+            _ => panic!("Wrapping error"),
+        }
+    }
+
+    fn right(&self, _map: &Map, pos_dir: &PosDir) -> PosDir {
+        assert_eq!(pos_dir.facing, Facing::Right);
+        let offset = self.0.calc_offset(pos_dir.y);
+        match self.0.cube_number(pos_dir.y) {
+            0 => {
+                // Cube 2 => Cube 5 left
+                self.0.vert_rev(offset, 2, 2, Facing::Left)
+            }
+            1 => {
+                // Cube 3 => Cube 2 up
+                self.0.horiz(offset, 2, 1, Facing::Up)
+            }
+            2 => {
+                // Cube 5 => Cube 2 left
+                self.0.vert_rev(offset, 3, 0, Facing::Left)
+            }
+            3 => {
+                // Cube 6 => Cube 5 up
+                self.0.horiz(offset, 1, 3, Facing::Up)
+            }
+            _ => panic!("Wrapping error"),
+        }
+    }
+
+    fn up(&self, _map: &Map, pos_dir: &PosDir) -> PosDir {
+        assert_eq!(pos_dir.facing, Facing::Up);
+        let offset = self.0.calc_offset(pos_dir.x);
+        match self.0.cube_number(pos_dir.x) {
+            0 => {
+                // Cube 4 => Cube 3 right
+                self.0.vert(offset, 1, 1, Facing::Right)
+            }
+            1 => {
+                // Cube 1 => Cube 6 right
+                self.0.vert(offset, 0, 3, Facing::Right)
+            }
+            2 => {
+                // Cube 2 => Cube 6 up
+                self.0.horiz(offset, 0, 4, Facing::Up)
+            }
+            _ => panic!("Wrapping error"),
+        }
+    }
+
+    fn down(&self, _map: &Map, pos_dir: &PosDir) -> PosDir {
+        assert_eq!(pos_dir.facing, Facing::Down);
+        let offset = self.0.calc_offset(pos_dir.x);
+        match self.0.cube_number(pos_dir.x) {
+            0 => {
+                // Cube 6 => Cube 2 down
+                self.0.horiz(offset, 2, 0, Facing::Down)
+            }
+            1 => {
+                // Cube 5 => Cube 6 left
+                self.0.vert(offset, 1, 3, Facing::Left)
+            }
+            2 => {
+                // Cube 2 => Cube 3 left
+                self.0.vert(offset, 2, 1, Facing::Left)
+            }
+            _ => panic!("Wrapping error"),
+        }
+    }
+}
+
 fn build(input: &str) -> (Map, Vec<PathItem>) {
     let (m, p) = input.split("\n\n").collect_tuple().unwrap();
     (m.into(), build_path(p))
@@ -528,8 +634,7 @@ fn final_password(map: &Map, path: &[PathItem]) -> usize {
 }
 
 fn final_password_on_cube(map: &Map, path: &[PathItem]) -> usize {
-    // let pos_dir = map.follow_path(path, &RealCubeModel);
-    let pos_dir = map.follow_path(path, &TestCubeModel::new());
+    let pos_dir = map.follow_path(path, &RealCubeModel::new());
     pos_dir.calc_password()
 }
 
