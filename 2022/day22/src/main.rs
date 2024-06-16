@@ -1,6 +1,7 @@
 use std::{
     fmt::Display,
     io::{self, Read},
+    usize,
 };
 
 use itertools::Itertools;
@@ -190,7 +191,7 @@ impl Map {
             for (x, t) in line.iter().enumerate() {
                 if let Some(pos) = pos_dir {
                     if pos.x == x && pos.y == y {
-                        print!("{RED}{}{RESET}", t);
+                        print!("{RED}{}{RESET}", pos.facing);
                         continue;
                     }
                 }
@@ -250,6 +251,8 @@ impl Map {
     fn move_to(&self, pos_dir: &PosDir, steps: usize, wrapping: &impl Wrapping) -> PosDir {
         let mut p = *pos_dir;
         for _ in 0..steps {
+            // println!("{:?}", p);
+            // self.print_with_pos(Some(p));
             match p.facing {
                 Facing::Left => match self.tiles[p.y][p.x - 1] {
                     Tile::Open => p.x -= 1,
@@ -348,6 +351,172 @@ impl Wrapping for FlatModel {
     }
 }
 
+struct Cube {
+    len: usize,
+}
+
+impl Cube {
+    fn new(len: usize) -> Self {
+        Self { len }
+    }
+
+    fn calc_offset(&self, v: usize) -> usize {
+        (v - 1) % self.len
+    }
+
+    fn cube_number(&self, v: usize) -> usize {
+        (v - 1) / self.len
+    }
+
+    fn horiz(&self, offset: usize, x: usize, y: usize, facing: Facing) -> PosDir {
+        assert!([Facing::Up, Facing::Down].contains(&facing));
+        let x = 1 + x * self.len + offset;
+        let y = if facing == Facing::Up {
+            y * self.len
+        } else {
+            1 + y * self.len
+        };
+        PosDir::new(x, y, facing)
+    }
+
+    fn horiz_rev(&self, offset: usize, x: usize, y: usize, facing: Facing) -> PosDir {
+        assert!([Facing::Up, Facing::Down].contains(&facing));
+        let x = 1 + (x + 1) * self.len - 1 - offset;
+        let y = if facing == Facing::Up {
+            y * self.len
+        } else {
+            1 + y * self.len
+        };
+        PosDir::new(x, y, facing)
+    }
+
+    fn vert(&self, offset: usize, x: usize, y: usize, facing: Facing) -> PosDir {
+        assert!([Facing::Left, Facing::Right].contains(&facing));
+        let x = if facing == Facing::Left {
+            x * self.len
+        } else {
+            1 + x * self.len
+        };
+        let y = 1 + y * self.len + offset;
+        PosDir::new(x, y, facing)
+    }
+
+    fn vert_rev(&self, offset: usize, x: usize, y: usize, facing: Facing) -> PosDir {
+        assert!([Facing::Left, Facing::Right].contains(&facing));
+        let x = if facing == Facing::Left {
+            x * self.len
+        } else {
+            1 + x * self.len
+        };
+        let y = 1 + (y + 1) * self.len - 1 - offset;
+        PosDir::new(x, y, facing)
+    }
+}
+
+// Cube numbers:
+//   1
+// 234
+//   56
+struct TestCubeModel(Cube);
+
+impl TestCubeModel {
+    const LEN: usize = 4;
+
+    fn new() -> Self {
+        Self(Cube::new(Self::LEN))
+    }
+}
+
+impl Wrapping for TestCubeModel {
+    fn left(&self, _map: &Map, pos_dir: &PosDir) -> PosDir {
+        assert_eq!(pos_dir.facing, Facing::Left);
+        let offset = self.0.calc_offset(pos_dir.y);
+        match self.0.cube_number(pos_dir.y) {
+            0 => {
+                // Cube 1 => Cube 3 down
+                self.0.horiz(offset, 1, 1, Facing::Down)
+            }
+            1 => {
+                // Cube 2 => Cube 6 up
+                self.0.horiz_rev(offset, 3, 2, Facing::Up)
+            }
+            2 => {
+                // Cube 5 => Cube 3 up
+                self.0.horiz_rev(offset, 1, 2, Facing::Up)
+            }
+            _ => panic!("Wrapping error"),
+        }
+    }
+
+    fn right(&self, _map: &Map, pos_dir: &PosDir) -> PosDir {
+        assert_eq!(pos_dir.facing, Facing::Right);
+        let offset = self.0.calc_offset(pos_dir.y);
+        match self.0.cube_number(pos_dir.y) {
+            0 => {
+                // Cube 1 => Cube 6 left
+                self.0.vert_rev(offset, 4, 2, Facing::Left)
+            }
+            1 => {
+                // Cube 4 => Cube 6 down
+                self.0.horiz_rev(offset, 3, 2, Facing::Down)
+            }
+            2 => {
+                // Cube 6 => Cube 1 left
+                self.0.vert_rev(offset, 3, 0, Facing::Left)
+            }
+            _ => panic!("Wrapping error"),
+        }
+    }
+
+    fn up(&self, _map: &Map, pos_dir: &PosDir) -> PosDir {
+        assert_eq!(pos_dir.facing, Facing::Up);
+        let offset = self.0.calc_offset(pos_dir.x);
+        match self.0.cube_number(pos_dir.x) {
+            0 => {
+                // Cube 2 => Cube 1 down
+                self.0.horiz_rev(offset, 2, 0, Facing::Down)
+            }
+            1 => {
+                // Cube 3 => Cube 1 right
+                self.0.vert(offset, 2, 0, Facing::Right)
+            }
+            2 => {
+                // Cube 1 => Cube 2 down
+                self.0.horiz_rev(offset, 0, 1, Facing::Down)
+            }
+            3 => {
+                // Cube 6 => Cube 4 left
+                self.0.vert_rev(offset, 3, 1, Facing::Left)
+            }
+            _ => panic!("Wrapping error"),
+        }
+    }
+
+    fn down(&self, _map: &Map, pos_dir: &PosDir) -> PosDir {
+        assert_eq!(pos_dir.facing, Facing::Down);
+        let offset = self.0.calc_offset(pos_dir.x);
+        match self.0.cube_number(pos_dir.x) {
+            0 => {
+                // Cube 2 => Cube 5 up
+                self.0.horiz_rev(offset, 2, 3, Facing::Up)
+            }
+            1 => {
+                // Cube 3 => Cube 5 right
+                self.0.vert_rev(offset, 2, 2, Facing::Right)
+            }
+            2 => {
+                // Cube 5 => Cube 2 up
+                self.0.horiz_rev(offset, 0, 2, Facing::Up)
+            }
+            3 => {
+                // Cube 6 => Cube 2 right
+                self.0.vert_rev(offset, 0, 1, Facing::Right)
+            }
+            _ => panic!("Wrapping error"),
+        }
+    }
+}
+
 fn build(input: &str) -> (Map, Vec<PathItem>) {
     let (m, p) = input.split("\n\n").collect_tuple().unwrap();
     (m.into(), build_path(p))
@@ -359,7 +528,9 @@ fn final_password(map: &Map, path: &[PathItem]) -> usize {
 }
 
 fn final_password_on_cube(map: &Map, path: &[PathItem]) -> usize {
-    0
+    // let pos_dir = map.follow_path(path, &RealCubeModel);
+    let pos_dir = map.follow_path(path, &TestCubeModel::new());
+    pos_dir.calc_password()
 }
 
 fn main() {
@@ -383,9 +554,14 @@ mod tests {
         assert_eq!(final_password(&map, &path), 6032);
     }
 
+    fn final_password_on_cube_test(map: &Map, path: &[PathItem]) -> usize {
+        let pos_dir = map.follow_path(path, &TestCubeModel::new());
+        pos_dir.calc_password()
+    }
+
     #[test]
     fn test_part2() {
         let (map, path) = build(INPUT_TEST);
-        assert_eq!(final_password_on_cube(&map, &path), 5031);
+        assert_eq!(final_password_on_cube_test(&map, &path), 5031);
     }
 }
