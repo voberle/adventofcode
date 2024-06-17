@@ -206,7 +206,7 @@ impl PartialOrd for Node {
 }
 
 // Dijkstra shortest path.
-fn find_shortest_path(valley: &Valley, start: Pos, end: Pos) -> usize {
+fn find_shortest_path(valley: &Valley, start: Pos, end: Pos, start_at: usize) -> usize {
     let mut visited: FxHashSet<(Pos, usize)> = FxHashSet::default();
     let mut distance: FxHashMap<(Pos, usize), usize> = FxHashMap::default();
 
@@ -215,7 +215,7 @@ fn find_shortest_path(valley: &Valley, start: Pos, end: Pos) -> usize {
     let mut queue: BinaryHeap<Node> = BinaryHeap::new();
     queue.push(Node {
         pos: start,
-        minute: 0,
+        minute: start_at,
     });
 
     while let Some(Node { pos, minute }) = queue.pop() {
@@ -260,11 +260,13 @@ fn find_shortest_path(valley: &Valley, start: Pos, end: Pos) -> usize {
 }
 
 fn time_to_reach_goal(valley: &Valley) -> usize {
-    find_shortest_path(valley, valley.entrance, valley.exit)
+    find_shortest_path(valley, valley.entrance, valley.exit, 0)
 }
 
 fn time_back_and_goal(valley: &Valley) -> usize {
-    0
+    let initial = find_shortest_path(valley, valley.entrance, valley.exit, 0);
+    let back_to_start = find_shortest_path(valley, valley.exit, valley.entrance, initial);
+    find_shortest_path(valley, valley.entrance, valley.exit, back_to_start)
 }
 
 fn main() {

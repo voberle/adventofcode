@@ -14,3 +14,4 @@ With that in hand, it was just a matter of applying Dijkstra algorithm, with the
 
 ## Part 2
 
+Part 2 had a beautiful simplicity in it.

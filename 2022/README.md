@@ -93,6 +93,6 @@ Following a path in a non-rectangular map. Non-generic.
 
 Movements based on rules.
 
-### Day 24: [Blizzard Basin](day24/README.md) 🌟
+### Day 24: [Blizzard Basin](day24/README.md) 🌟🌟
 
 Shortest path with Dijkstra. Dynamic map.
