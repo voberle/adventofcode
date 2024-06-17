@@ -191,12 +191,11 @@ impl Valley {
 struct Node {
     pos: Pos,
     minute: usize,
-    cost: usize,
 }
 
 impl Ord for Node {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.cost.cmp(&self.cost)
+        other.minute.cmp(&self.minute)
     }
 }
 
@@ -211,62 +210,60 @@ fn find_shortest_path(valley: &Valley, start: Pos, end: Pos) -> usize {
     let mut visited: FxHashSet<(Pos, usize)> = FxHashSet::default();
     let mut distance: FxHashMap<(Pos, usize), usize> = FxHashMap::default();
 
-    let mut shortest_distance = usize::MAX;
+    let mut shortest_time = usize::MAX;
 
     let mut queue: BinaryHeap<Node> = BinaryHeap::new();
     queue.push(Node {
         pos: start,
         minute: 0,
-        cost: 0,
     });
 
-    while let Some(Node { pos, minute, cost }) = queue.pop() {
+    while let Some(Node { pos, minute }) = queue.pop() {
         visited.insert((pos, minute));
 
+        let next_minute = minute + 1;
+
         if pos == end {
-            shortest_distance = shortest_distance.min(cost + 1);
+            shortest_time = shortest_time.min(next_minute);
             continue;
         }
 
         queue.extend(valley.next_positions_iter(pos).filter_map(|next_pos| {
             // Check if next pos is valid.
-            if valley.is_blizzard_at(pos, minute + 1) {
+            if valley.is_blizzard_at(pos, next_minute) {
                 return None;
             }
 
-            if visited.contains(&(next_pos, minute + 1)) {
+            if visited.contains(&(next_pos, next_minute)) {
                 return None;
             }
 
-            let next_cost = cost + 1;
-
-            if let Some(prevcost) = distance.get(&(next_pos, minute + 1)) {
-                if *prevcost <= next_cost {
+            if let Some(prev_time) = distance.get(&(next_pos, next_minute)) {
+                if *prev_time <= next_minute {
                     return None;
                 }
             }
 
             // Avoid going too far.
-            if next_cost >= shortest_distance {
+            if next_minute >= shortest_time {
                 return None;
             }
 
-            distance.insert((next_pos, minute + 1), next_cost);
+            distance.insert((next_pos, next_minute), next_minute);
             Some(Node {
                 pos: next_pos,
-                minute: minute + 1,
-                cost: next_cost,
+                minute: next_minute,
             })
         }));
     }
-    shortest_distance
+    shortest_time
 }
 
 fn time_to_reach_goal(valley: &Valley) -> usize {
     find_shortest_path(valley, valley.entrance, valley.exit)
 }
 
-fn part2(valley: &Valley) -> i64 {
+fn time_back_and_goal(valley: &Valley) -> usize {
     0
 }
 
@@ -277,7 +274,7 @@ fn main() {
     // println!("{:?}", valley);
 
     println!("Part 1: {}", time_to_reach_goal(&valley));
-    println!("Part 2: {}", part2(&valley));
+    println!("Part 2: {}", time_back_and_goal(&valley));
 }
 
 #[cfg(test)]
@@ -305,6 +302,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&INPUT_TEST_1.into()), 0);
+        assert_eq!(time_back_and_goal(&INPUT_TEST_1.into()), 54);
     }
 }
