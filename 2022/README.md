@@ -88,3 +88,7 @@ Operations until none left. Equation solving.
 ### Day 22: [Monkey Map](day22/README.md) 🌟🌟
 
 Following a path in a non-rectangular map. Non-generic.
+
+### Day 23: [Unstable Diffusion](day23/README.md) 🌟
+
+Movements based on rules.
