@@ -89,6 +89,6 @@ Operations until none left. Equation solving.
 
 Following a path in a non-rectangular map. Non-generic.
 
-### Day 23: [Unstable Diffusion](day23/README.md) 🌟
+### Day 23: [Unstable Diffusion](day23/README.md) 🌟🌟
 
 Movements based on rules.

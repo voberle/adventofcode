@@ -45,7 +45,14 @@ impl Pos {
 
 type Directions = VecDeque<([Dir; 3], Dir)>;
 
-#[derive(Debug, Clone)]
+const INITIAL_DIRECTIONS: [([Dir; 3], Dir); 4] = [
+    ([Dir::N, Dir::NE, Dir::NW], Dir::N),
+    ([Dir::S, Dir::SE, Dir::SW], Dir::S),
+    ([Dir::W, Dir::NW, Dir::SW], Dir::W),
+    ([Dir::E, Dir::NE, Dir::SE], Dir::E),
+];
+
+#[derive(Debug, Clone, PartialEq)]
 struct Groove(FxHashSet<Pos>);
 
 impl From<&str> for Groove {
@@ -206,13 +213,7 @@ impl Groove {
 
 fn exec_rounds(groove: &Groove, rounds: usize) -> Groove {
     let mut groove = groove.clone();
-
-    let mut directions: Directions = VecDeque::from([
-        ([Dir::N, Dir::NE, Dir::NW], Dir::N),
-        ([Dir::S, Dir::SE, Dir::SW], Dir::S),
-        ([Dir::W, Dir::NW, Dir::SW], Dir::W),
-        ([Dir::E, Dir::NE, Dir::SE], Dir::E),
-    ]);
+    let mut directions: Directions = VecDeque::from(INITIAL_DIRECTIONS);
 
     // println!("== Initial State ==");
     // println!("{}", groove);
@@ -232,8 +233,20 @@ fn empty_grounds_after_10(groove: &Groove) -> usize {
     groove.count_empty_grounds()
 }
 
-fn part2(groove: &Groove) -> i64 {
-    0
+fn round_when_no_elves_move(groove: &Groove) -> usize {
+    let mut groove = groove.clone();
+    let mut directions: Directions = VecDeque::from(INITIAL_DIRECTIONS);
+
+    let mut round = 1;
+    loop {
+        let new_groove = groove.apply_round(&mut directions);
+        if groove == new_groove {
+            break;
+        }
+        groove = new_groove;
+        round += 1;
+    }
+    round
 }
 
 fn main() {
@@ -242,7 +255,7 @@ fn main() {
     let groove: Groove = input.as_str().into();
 
     println!("Part 1: {}", empty_grounds_after_10(&groove));
-    println!("Part 2: {}", part2(&groove));
+    println!("Part 2: {}", round_when_no_elves_move(&groove));
 }
 
 #[cfg(test)]
@@ -274,6 +287,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&INPUT_TEST_1.into()), 0);
+        assert_eq!(round_when_no_elves_move(&INPUT_TEST_1.into()), 20);
     }
 }

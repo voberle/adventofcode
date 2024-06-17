@@ -6,3 +6,4 @@ I used a HashSet to store the groove. It was mostly a matter of coding it carefu
 
 ## Part 2
 
+Part 2 was surprisingly simple.
