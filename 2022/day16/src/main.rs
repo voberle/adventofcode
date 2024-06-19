@@ -56,31 +56,33 @@ fn start_valve_index(valves: &[Valve]) -> usize {
         .expect("Didn't find start valve")
 }
 
-// Number of valves that have a positive flow rate.
-fn positive_flow_rate_count(valves: &[Valve]) -> usize {
-    valves.iter().filter(|valve| valve.flow_rate > 0).count()
+fn open(opened_valves: u32, i: usize) -> u32 {
+    opened_valves | (1 << i)
+}
+
+fn is_open(opened_valves: u32, i: usize) -> bool {
+    opened_valves & (1 << i) != 0
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct State {
     own_valve: usize,
     helper_valve: usize,
-    // Array indicating if the valve is open or not.
-    opened_valves: Vec<bool>,
+    // Is the valve is open or not. We don't have that many, so using a bitmask.
+    opened_valves: u32,
 }
 
 impl State {
-    fn initial(start_valve: usize, positive_flow_rate_count: usize) -> Self {
+    fn initial(start_valve: usize) -> Self {
         Self {
             own_valve: start_valve,
             helper_valve: start_valve,
-            opened_valves: vec![false; positive_flow_rate_count],
+            opened_valves: 0,
         }
     }
 
     fn open_this(&self) -> Self {
-        let mut opened_valves = self.opened_valves.clone();
-        opened_valves[self.own_valve] = true;
+        let opened_valves = open(self.opened_valves, self.own_valve);
         Self {
             own_valve: self.own_valve,
             helper_valve: self.helper_valve,
@@ -92,7 +94,7 @@ impl State {
         Self {
             own_valve: next_valve,
             helper_valve: self.helper_valve,
-            opened_valves: self.opened_valves.clone(),
+            opened_valves: self.opened_valves,
         }
     }
 }
@@ -114,10 +116,7 @@ fn max_pressure(valves: &[Valve], total_time: u32, next_states_fn: NextStatesFn)
     let mut best_pressures_at: FxHashMap<State, u32> = FxHashMap::default();
 
     // At minute 0, we are at valve AA.
-    best_pressures_at.insert(
-        State::initial(start_valve_index(valves), positive_flow_rate_count(valves)),
-        0,
-    );
+    best_pressures_at.insert(State::initial(start_valve_index(valves)), 0);
 
     for minute in 1..=total_time {
         let mut next_minute_pressures: FxHashMap<State, u32> = FxHashMap::default();
@@ -133,7 +132,12 @@ fn max_pressure(valves: &[Valve], total_time: u32, next_states_fn: NextStatesFn)
         }
 
         std::mem::swap(&mut best_pressures_at, &mut next_minute_pressures);
-        println!("{}: {} options", minute, best_pressures_at.len());
+        println!(
+            "{}: {} options, max {}",
+            minute,
+            best_pressures_at.len(),
+            best_pressures_at.values().max().unwrap()
+        );
     }
 
     *best_pressures_at.values().max().unwrap()
@@ -150,7 +154,7 @@ fn alone_next_states(
     let valve = valves.get(state.own_valve).unwrap();
 
     // If this valve is closed and has some rate, we can choose to open it or not.
-    if valve.flow_rate > 0 && !state.opened_valves[state.own_valve] {
+    if valve.flow_rate > 0 && !is_open(state.opened_valves, state.own_valve) {
         // Opening it.
         let new_pressure = pressure + valve.flow_rate * (total_time - minute);
         next_minute_pressures
@@ -183,14 +187,15 @@ fn max_pressure_alone(valves: &[Valve]) -> u32 {
 fn options_for(
     valves: &[Valve],
     current_valve: usize,
-    opened_valves: &[bool],
+    // prev_valve: usize,
+    opened_valves: u32,
 ) -> Vec<(usize, Option<usize>)> {
     let mut options: Vec<(usize, Option<usize>)> = Vec::new();
 
     let valve = valves.get(current_valve).unwrap();
 
     // If this valve is closed and has some rate, we can choose to open it or not.
-    if valve.flow_rate > 0 && !opened_valves[current_valve] {
+    if valve.flow_rate > 0 && !is_open(opened_valves, current_valve) {
         // Opening it.
         options.push((current_valve, Some(current_valve)));
     }
@@ -212,8 +217,8 @@ fn with_helper_next_states(
     total_time: u32,
 ) {
     // Where we move next (can be the same if no move) and the valve that was opened, if any.
-    let own_options = options_for(valves, state.own_valve, &state.opened_valves);
-    let helper_options = options_for(valves, state.helper_valve, &state.opened_valves);
+    let own_options = options_for(valves, state.own_valve, state.opened_valves);
+    let helper_options = options_for(valves, state.helper_valve, state.opened_valves);
 
     for (own_next, valve_i_open) in own_options {
         for (helper_next, valve_helper_opens) in &helper_options {
@@ -222,29 +227,20 @@ fn with_helper_next_states(
             // }
 
             let mut new_pressure = pressure;
-            let mut opened_valves = state.opened_valves.clone();
+            let mut opened_valves = state.opened_valves;
             if let Some(i) = valve_i_open {
-                // Don't have both open the same valve.
-                // if let Some(h) = valve_helper_opens {
-                //     if i == *h {
-                //         continue;
-                //     }
-                // }
+                assert_eq!(i, own_next);
                 new_pressure += valves.get(own_next).unwrap().flow_rate * (total_time - minute);
-                opened_valves[i] = true;
+                opened_valves = open(opened_valves, i);
             }
             if let Some(h) = valve_helper_opens {
-                if opened_valves[*h] {
+                assert_eq!(h, helper_next);
+                if is_open(opened_valves, *h) {
                     // Don't have both open the same valve.
                     continue;
                 }
-                // if let Some(i) = valve_i_open {
-                //     if i == *h {
-                //         continue;
-                //     }
-                // }
                 new_pressure += valves.get(*helper_next).unwrap().flow_rate * (total_time - minute);
-                opened_valves[*h] = true;
+                opened_valves = open(opened_valves, *h);
             }
 
             next_minute_pressures
