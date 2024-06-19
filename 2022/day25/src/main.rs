@@ -51,6 +51,27 @@ fn decimal_to_snafu(decimal: i64) -> String {
     snafu.iter().rev().collect()
 }
 
+// Variant with iterator.
+// Not that much easier to read, and still needs an intermediary vector.
+fn _decimal_to_snafu(decimal: i64) -> String {
+    let digits =
+        std::iter::successors(
+            Some(decimal),
+            |&d| {
+                if d == 0 {
+                    None
+                } else {
+                    Some((d + 2) / 5)
+                }
+            },
+        )
+        .take_while(|&d| d != 0)
+        .map(|d| digit_decimal_to_snafu((d + 2) % 5 - 2))
+        .collect::<Vec<_>>();
+
+    digits.into_iter().rev().collect()
+}
+
 fn snafu_sum(snafu_list: &[&str]) -> String {
     let sum_decimal = snafu_list.iter().map(|s| snafu_to_decimal(s)).sum();
     decimal_to_snafu(sum_decimal)
