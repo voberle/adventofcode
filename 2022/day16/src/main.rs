@@ -138,12 +138,12 @@ fn max_pressure(valves: &[Valve], total_time: u32, next_states_fn: NextStatesFn)
 
         std::mem::swap(&mut best_pressures_at, &mut next_minute_pressures);
 
-        println!(
-            "{}: {} options, max {}",
-            minute,
-            best_pressures_at.len(),
-            best_pressures_at.values().max().unwrap()
-        );
+        // println!(
+        //     "{}: {} options, max {}",
+        //     minute,
+        //     best_pressures_at.len(),
+        //     best_pressures_at.values().max().unwrap()
+        // );
     }
 
     *best_pressures_at.values().max().unwrap()
@@ -207,6 +207,12 @@ fn options_for(
     if valve.flow_rate > 0 && !is_open(opened_valves, current_valve) {
         // Opening it.
         options.push((current_valve, Some(current_valve)));
+
+        // Possible optimization to limit the states: If the flow rate is
+        // above a certain value, always open it.
+        // if valve.flow_rate >= 10 {
+        //     return options;
+        // }
     }
 
     // Moving without opening it.
