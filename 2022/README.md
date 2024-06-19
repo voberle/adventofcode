@@ -6,6 +6,16 @@
 - Day 11 was the first one that caused me real problems, due to my incomplete understanding of modular arithmetic.
 - Day 12 allowed me to improve my Dijkstra implementation.
 - Day 13 ended up with a very satisfying result I found, with very clean code.
+- Day 14, filling the cave with sand, was fun.
+- Day 15 was an optimization problem, with a very big 2D space, normally I found those tricky in the past but this time I managed nicely.
+- Day 16 I got stuck, left it for the end.
+- Day 17 was Tetris, that was really fun (I did it in a bit complicated way tough).
+- Day 18 with the cubes is one of those I'm also proud of: Not easy, but coded a complex solution that worked on first try.
+- Day 19 I got stuck, left it for the end.
+- Day 20 is one that wasn't that hard in theory, but I made complicated with incorrect assumptions.
+- Day 21 with solving the equations required some code, but was straightforward at the end.
+- Day 22 was interesting in term of design for part 1, and manual (annoying..) in part 2.
+- To finish, there was an easier day 23, a very satisfying path-finding day 24 (happy with the data struct I use) and a simple day 25.
 
 ## Days
 
