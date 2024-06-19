@@ -17,6 +17,10 @@
 - Day 22 was interesting in term of design for part 1, and manual (annoying..) in part 2.
 - To finish, there was an easier day 23, a very satisfying path-finding day 24 (happy with the data struct I use) and a simple day 25.
 
+After day 25:
+
+- I finished day 16, by implementing it in a simpler way (at least for part 1). Part 2 remains a bit hackish.
+
 ## Days
 
 ### Day 1: [Calorie Counting](day01/README.md) 🌟🌟
@@ -79,7 +83,7 @@ Falling sand.
 
 Circles, overlaping points.
 
-### Day 16: [Proboscidea Volcanium](day16/README.md) 🌟
+### Day 16: [Proboscidea Volcanium](day16/README.md) 🌟🌟
 
 Maximizing a value in specific time.
 

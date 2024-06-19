@@ -64,10 +64,15 @@ fn is_open(opened_valves: u32, i: usize) -> bool {
     opened_valves & (1 << i) != 0
 }
 
+fn open_count(opened_valves: u32) -> u32 {
+    opened_valves.count_ones()
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct State {
     own_valve: usize,
-    helper_valve: usize,
+    // Helper valve is only used for part 2.
+    elephant_valve: usize,
     // Is the valve is open or not. We don't have that many, so using a bitmask.
     opened_valves: u32,
 }
@@ -76,7 +81,7 @@ impl State {
     fn initial(start_valve: usize) -> Self {
         Self {
             own_valve: start_valve,
-            helper_valve: start_valve,
+            elephant_valve: start_valve,
             opened_valves: 0,
         }
     }
@@ -85,7 +90,7 @@ impl State {
         let opened_valves = open(self.opened_valves, self.own_valve);
         Self {
             own_valve: self.own_valve,
-            helper_valve: self.helper_valve,
+            elephant_valve: self.elephant_valve,
             opened_valves,
         }
     }
@@ -93,7 +98,7 @@ impl State {
     fn move_to(&self, next_valve: usize) -> Self {
         Self {
             own_valve: next_valve,
-            helper_valve: self.helper_valve,
+            elephant_valve: self.elephant_valve,
             opened_valves: self.opened_valves,
         }
     }
@@ -132,6 +137,7 @@ fn max_pressure(valves: &[Valve], total_time: u32, next_states_fn: NextStatesFn)
         }
 
         std::mem::swap(&mut best_pressures_at, &mut next_minute_pressures);
+
         println!(
             "{}: {} options, max {}",
             minute,
@@ -184,10 +190,13 @@ fn max_pressure_alone(valves: &[Valve]) -> u32 {
     max_pressure(valves, 30, alone_next_states)
 }
 
+// Creates a list of what we can do from this valve.
+// Each item in the list indicates:
+// 1) Where we move next (can be the same if no move)
+// 2) The valve that was opened, if any.
 fn options_for(
     valves: &[Valve],
     current_valve: usize,
-    // prev_valve: usize,
     opened_valves: u32,
 ) -> Vec<(usize, Option<usize>)> {
     let mut options: Vec<(usize, Option<usize>)> = Vec::new();
@@ -208,7 +217,7 @@ fn options_for(
     options
 }
 
-fn with_helper_next_states(
+fn with_elephant_next_states<const PRUNING_LIMIT: u32>(
     next_minute_pressures: &mut FxHashMap<State, u32>,
     valves: &[Valve],
     state: &State,
@@ -216,16 +225,21 @@ fn with_helper_next_states(
     minute: u32,
     total_time: u32,
 ) {
-    // Where we move next (can be the same if no move) and the valve that was opened, if any.
     let own_options = options_for(valves, state.own_valve, state.opened_valves);
-    let helper_options = options_for(valves, state.helper_valve, state.opened_valves);
+    let elephant_options = options_for(valves, state.elephant_valve, state.opened_valves);
 
+    // Tracking in this minute what is the maximum number of opened valves.
+    // This is an important value to allow us to prune the list of states.
+    let mut max_opened_valves_count = u32::MIN;
+
+    // Combines the options found for me and for the elephant.
     for (own_next, valve_i_open) in own_options {
-        for (helper_next, valve_helper_opens) in &helper_options {
+        for (helper_next, valve_helper_opens) in &elephant_options {
             // if own_next == *helper_next {
             //     continue;
             // }
 
+            // If some valves got opened by me or the elephant, update the pressure and the opened valves list.
             let mut new_pressure = pressure;
             let mut opened_valves = state.opened_valves;
             if let Some(i) = valve_i_open {
@@ -236,17 +250,28 @@ fn with_helper_next_states(
             if let Some(h) = valve_helper_opens {
                 assert_eq!(h, helper_next);
                 if is_open(opened_valves, *h) {
-                    // Don't have both open the same valve.
+                    // Both shouldn't open the same valve.
                     continue;
                 }
                 new_pressure += valves.get(*helper_next).unwrap().flow_rate * (total_time - minute);
                 opened_valves = open(opened_valves, *h);
             }
 
+            // To keep the list of opened states to a smaller number, we only keep
+            // those that have a high number of opened valves.
+            // PRUNING_LIMIT is used to set how aggressive pruning is. For test, we set it to 1,
+            // otherwise we remove too many states and don't find the right value.
+            // For real, we need to set it to 0 for it to be fast enough.
+            let oc = open_count(opened_valves);
+            if oc + PRUNING_LIMIT < max_opened_valves_count {
+                continue;
+            }
+            max_opened_valves_count = max_opened_valves_count.max(oc);
+
             next_minute_pressures
                 .entry(State {
                     own_valve: own_next,
-                    helper_valve: *helper_next,
+                    elephant_valve: *helper_next,
                     opened_valves,
                 })
                 .and_modify(|p| {
@@ -259,8 +284,8 @@ fn with_helper_next_states(
     }
 }
 
-fn max_pressure_with_help(valves: &[Valve]) -> u32 {
-    max_pressure(valves, 26, with_helper_next_states)
+fn max_pressure_with_help<const PRUNING_LIMIT: u32>(valves: &[Valve]) -> u32 {
+    max_pressure(valves, 26, with_elephant_next_states::<PRUNING_LIMIT>)
 }
 
 fn main() {
@@ -269,7 +294,7 @@ fn main() {
     let valves = build(&input);
 
     println!("Part 1: {}", max_pressure_alone(&valves));
-    println!("Part 2: {}", max_pressure_with_help(&valves));
+    println!("Part 2: {}", max_pressure_with_help::<0>(&valves));
 }
 
 #[cfg(test)]
@@ -285,6 +310,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(max_pressure_with_help(&build(INPUT_TEST)), 1707);
+        assert_eq!(max_pressure_with_help::<1>(&build(INPUT_TEST)), 1707);
     }
 }

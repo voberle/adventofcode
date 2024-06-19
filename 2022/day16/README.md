@@ -13,3 +13,10 @@ And we keep the maximum pressure we will reach for these states.
 
 ## Part 2
 
+Unfortunately my part 1 approach didn't perform well for part 2. Storing two valves in the state made the number of states grow in the millions quickly.
+
+Replacing the vector of boolean with a bitmask for the opened valves helped a bit, but not enough.
+
+Finally, I found a way to prune a bit the list of states on each iteration, by counting the number of opened valves and only keeping the states with the maximum known opened valves count. This brings the runtime to around 15 seconds, not fast, but acceptable.
+
+That pruning hackish, as it is a bit different for test and real data unfortunately.
