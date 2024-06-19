@@ -96,3 +96,7 @@ Movements based on rules.
 ### Day 24: [Blizzard Basin](day24/README.md) 🌟🌟
 
 Shortest path with Dijkstra. Dynamic map.
+
+### Day 25: [Full of Hot Air](day25/README.md) 🌟🌟
+
+Number conversions.

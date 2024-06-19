@@ -1,0 +1,11 @@
+[package]
+name = "day25"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
