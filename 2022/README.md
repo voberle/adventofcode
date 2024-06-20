@@ -2,6 +2,10 @@
 
 ## Wrapup
 
+This was the last year I had to catchup, I now have completed all 9 first years of Advent of Code!
+
+As with the last few years, some easy days, some tricky ones, some very satisfying to solve. I got really stuck on two "find the max" optimization problems that I had to leave for the end, but then I found a different approach and managed. I only used extra help for one day (day 20), where I searched for extra test cases.
+
 - Days 1 to 10 were all not very hard, as expected. Some required quite some work for parsing the input however.
 - Day 11 was the first one that caused me real problems, due to my incomplete understanding of modular arithmetic.
 - Day 12 allowed me to improve my Dijkstra implementation.

@@ -2,6 +2,8 @@
 
 My *Advent Of Code* code.
 
+It contains the solutions to all years from 2015 to 2023 so far.
+
 ## Template
 
 `template` folder has a template to be used with [Cargo Generate](https://cargo-generate.github.io/cargo-generate):
