@@ -20,6 +20,7 @@
 After day 25:
 
 - I finished day 16, by implementing it in a simpler way (at least for part 1). Part 2 remains a bit hackish.
+- Day 19 was of the same style as day 16, so I applied the same method.
 
 ## Days
 
@@ -95,7 +96,7 @@ Tetris. Pattern detection.
 
 Cubes, side of cubes.
 
-### Day 19: [Not Enough Minerals](day19/README.md) 🌟
+### Day 19: [Not Enough Minerals](day19/README.md) 🌟🌟
 
 Maximizing a value in specific time.
 
