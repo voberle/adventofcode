@@ -108,7 +108,9 @@ impl State {
 // Insert the state to the states map, updating the max if needed.
 fn insert_state(states: &mut FxHashMap<State, u32>, s: State, max_geodes: u32) {
     // Pruning of the list of states, to keep it from growing too big.
-    if s.geodes_count() + 3 < max_geodes {
+    // We started with a safe number of 3, but 0 also works.
+    const PRUNING_LIMIT: u32 = 0;
+    if s.geodes_count() + PRUNING_LIMIT < max_geodes {
         return;
     }
 

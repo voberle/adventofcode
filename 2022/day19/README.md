@@ -11,3 +11,5 @@ Implementing the logic isn't very hard then, and with some simple optimizations 
 ## Part 2
 
 For second part, it was fortunately enough to just prune more aggressively the list of states. Dropping the states if the number of found geodes is less than the max found so far minus 3 was enough to get part 2 to complete in 20 seconds.
+
+More aggressive pruning also works: Changing the value from 3 to 0 allows both parts to run in under 9 seconds.
