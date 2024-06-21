@@ -1,7 +1,6 @@
 use std::{
     io::{self, Read},
     ops::{Index, IndexMut},
-    usize,
 };
 
 use fxhash::FxHashSet;

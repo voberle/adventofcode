@@ -4,7 +4,7 @@
 use fxhash::FxHashMap;
 
 #[allow(dead_code)]
-pub fn trivial_version(regex: &[u8]) {
+pub fn run_both_parts(regex: &[u8]) {
     let mut grid: FxHashMap<(i32, i32), usize> = FxHashMap::default();
     let (mut dist, mut x, mut y) = (0, 0, 0);
     let mut stack: Vec<(usize, i32, i32)> = Vec::new();

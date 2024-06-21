@@ -85,6 +85,7 @@ fn borders(bots: &[Nanobot]) -> (Pos, Pos) {
 
 // Inspired from
 // https://www.reddit.com/r/adventofcode/comments/a8s17l/2018_day_23_solutions/ecddus1/
+#[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
 fn dist_to_closest_to_most(bots: &[Nanobot]) -> u32 {
     // We take a big cube that covers the whole area. We divide that cube in 8 smaller cubes,
     // and find the cube that has the best candidate. We select that cube and do the process again,

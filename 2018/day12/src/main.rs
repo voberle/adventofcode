@@ -1,5 +1,6 @@
 use std::io::{self, Read};
 
+#[allow(clippy::cast_possible_truncation)]
 fn pattern_to_index(s: &str) -> usize {
     s.chars().rev().enumerate().fold(0, |acc, (i, b)| {
         if b == '#' {
@@ -10,6 +11,7 @@ fn pattern_to_index(s: &str) -> usize {
     })
 }
 
+#[allow(clippy::cast_possible_truncation)]
 fn slice_to_index(s: &[bool]) -> usize {
     s.iter().rev().enumerate().fold(
         0,
@@ -53,17 +55,18 @@ fn state_to_string_trimed(state: &[bool]) -> String {
         .to_string()
 }
 
-fn get_sum_of_plant_pots(state: &[bool], index_of_zero: i32) -> i32 {
+#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+fn get_sum_of_plant_pots(state: &[bool], index_of_zero: i64) -> i64 {
     state
         .iter()
         .enumerate()
-        .map(|(i, v)| if *v { i as i32 - index_of_zero } else { 0 })
+        .map(|(i, v)| if *v { i as i64 - index_of_zero } else { 0 })
         .sum()
 }
 
-fn plant_pots_sum(initial_state: &[bool], instructions: &[bool], nb_of_generations: usize) -> i32 {
+fn plant_pots_sum(initial_state: &[bool], instructions: &[bool], nb_of_generations: i64) -> i64 {
     const TEN_FALSE: [bool; 10] = [false; 10];
-    const INDEX_OF_ZERO: i32 = 10;
+    const INDEX_OF_ZERO: i64 = 10;
 
     let mut state = Vec::new();
     // Hard-coded padding, ugly but does the job.
@@ -95,23 +98,23 @@ fn plant_pots_sum(initial_state: &[bool], instructions: &[bool], nb_of_generatio
     get_sum_of_plant_pots(&state, INDEX_OF_ZERO)
 }
 
-fn plant_pots_sum_small(initial_state: &[bool], instructions: &[bool]) -> i32 {
+fn plant_pots_sum_small(initial_state: &[bool], instructions: &[bool]) -> i64 {
     plant_pots_sum(initial_state, instructions, 20)
 }
 
 fn plant_pots_sum_huge(initial_state: &[bool], instructions: &[bool]) -> i64 {
-    const NB_OF_GENERATIONS: usize = 50_000_000_000;
+    const NB_OF_GENERATIONS: i64 = 50_000_000_000;
 
     // By printing the state trimmed, we see it stabilizes from generation 124,
     // meaning it's the same pattern that just shifts.
-    const STABILIZATION_GENERATION: usize = 125;
+    const STABILIZATION_GENERATION: i64 = 125;
 
     // So we find the starting value and the shift.
-    let sum = plant_pots_sum(initial_state, instructions, STABILIZATION_GENERATION) as i64;
-    let sum2 = plant_pots_sum(initial_state, instructions, STABILIZATION_GENERATION + 1) as i64;
+    let sum = plant_pots_sum(initial_state, instructions, STABILIZATION_GENERATION);
+    let sum2 = plant_pots_sum(initial_state, instructions, STABILIZATION_GENERATION + 1);
     let diff = sum2 - sum;
 
-    sum + diff * (NB_OF_GENERATIONS - STABILIZATION_GENERATION) as i64
+    sum + diff * (NB_OF_GENERATIONS - STABILIZATION_GENERATION)
 }
 
 fn main() {

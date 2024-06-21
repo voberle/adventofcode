@@ -101,7 +101,7 @@ fn exec(
     instructions: &[Instruction],
     regs: &mut Registers,
     ip: &mut u32,
-    step: usize,
+    step: u32,
 ) {
     const DEBUG: bool = false;
 
@@ -133,8 +133,8 @@ fn exec_all<const ENABLE_OPTIMIZATIONS: bool, const INST28_REPLACEMENT: bool>(
     ip_binding: u32,
     instructions: &[Instruction],
     regs: &mut Registers,
-    max_instructions: Option<usize>,
-) -> Option<usize> {
+    max_instructions: Option<u32>,
+) -> Option<u32> {
     let mut ip: u32 = 0;
     let mut steps_count = 0;
 
@@ -142,7 +142,7 @@ fn exec_all<const ENABLE_OPTIMIZATIONS: bool, const INST28_REPLACEMENT: bool>(
     let mut set: FxHashSet<u32> = FxHashSet::default();
     let mut last_r1 = 0;
 
-    while ip < instructions.len() as u32 {
+    while ip < u32::try_from(instructions.len()).unwrap() {
         if ENABLE_OPTIMIZATIONS {
             // Optimization of lines 18-25
             if ip == 18 {
@@ -162,7 +162,7 @@ fn exec_all<const ENABLE_OPTIMIZATIONS: bool, const INST28_REPLACEMENT: bool>(
             // get a r1 we have already seen.
             if ip == 28 {
                 if !set.insert(regs[1]) {
-                    return Some(last_r1 as usize);
+                    return Some(last_r1);
                 }
                 last_r1 = regs[1];
 
@@ -188,13 +188,13 @@ fn reg0_halt_least_ins(ip_binding: u32, instructions: &[Instruction]) -> u32 {
     // Number of instructions to execute before giving up.
     // This number was found by looking after how many instructions the program stops normally,
     // and then decreasing it so that it runs quickly.
-    const MAX_STEPS: Option<usize> = Some(40);
+    const MAX_STEPS: Option<u32> = Some(40);
     // Max value of r0 to check.
     const MAX_R0_TO_CHECK: u32 = 10_000_000;
     // To set those two constants, we started with 20_000 ; 100_000, then 2_000 ; 1_000_000
     // then 1_000; 10_000_000 and we could settle with the small 40_000 ; 10_000_000.
 
-    let mut candidate: (u32, usize) = (0, usize::MAX);
+    let mut candidate: (u32, u32) = (0, u32::MAX);
 
     let mut r0 = 1;
     while r0 < MAX_R0_TO_CHECK {
@@ -223,7 +223,7 @@ fn reg0_halt_least_ins(ip_binding: u32, instructions: &[Instruction]) -> u32 {
 // The program reimplemented in Rust.
 // See resources/main.c for the C version, that this is based on.
 // Doesn't include the first part (and check), ie starts at line 6.
-#[allow(dead_code)]
+#[allow(dead_code, clippy::unreadable_literal)]
 fn program_reimplemented(r0: u32) {
     let mut r1 = 0;
     let mut r4 = r1 | 0x10000;
@@ -244,7 +244,7 @@ fn program_reimplemented(r0: u32) {
 
 fn reg0_halt_most_ins(ip_binding: u32, instructions: &[Instruction]) -> u32 {
     let mut regs = Registers::new();
-    exec_all::<true, true>(ip_binding, instructions, &mut regs, None).unwrap() as u32
+    exec_all::<true, true>(ip_binding, instructions, &mut regs, None).unwrap()
 }
 
 fn main() {

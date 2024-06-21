@@ -157,6 +157,7 @@ fn find_flows(grid: &Grid) -> Vec<usize> {
 }
 
 // Moving the flows to left or right, saving the positions of the flows we added,
+#[allow(clippy::match_on_vec_items)]
 fn move_flow_to_side(
     grid: &mut Grid,
     pos: usize,
@@ -227,6 +228,7 @@ fn fill_space_with_water(grid: &mut Grid, flows: &[usize]) -> bool {
     something_happened
 }
 
+#[allow(clippy::match_on_vec_items)]
 fn fill_water(grid: &mut Grid) {
     // Tracks if water moved in an iteration of the big loop.
     let mut something_happened = true;

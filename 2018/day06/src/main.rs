@@ -140,6 +140,7 @@ fn print_grid_for_test(coords: &[Coords], grid: &FxHashMap<Coords, (usize, i32)>
     }
 }
 
+#[allow(clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
 fn region_total_dist_to_all_less(coords: &[Coords], max_dist: u32) -> usize {
     let mut count = 0;
 

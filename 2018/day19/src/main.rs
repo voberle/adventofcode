@@ -115,7 +115,7 @@ fn exec(ip_binding: u32, instructions: &[Instruction], regs: &mut Registers, ip:
 
 fn exec_all(ip_binding: u32, instructions: &[Instruction], regs: &mut Registers) {
     let mut ip: u32 = 0;
-    while ip < instructions.len() as u32 {
+    while ip < u32::try_from(instructions.len()).unwrap() {
         exec(ip_binding, instructions, regs, &mut ip);
     }
 }

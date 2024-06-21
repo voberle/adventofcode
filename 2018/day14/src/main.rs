@@ -1,7 +1,4 @@
-use std::{
-    io::{self, Read},
-    usize,
-};
+use std::io::{self, Read};
 
 fn get_digits(n: usize) -> Vec<usize> {
     fn inner(n: usize, xs: &mut Vec<usize>) {

@@ -190,6 +190,7 @@ fn explore_map_from_regex(regex: &[u8], index: &mut usize, map: &mut Map, mut po
 }
 
 impl fmt::Display for Map {
+    #[allow(clippy::cast_sign_loss)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (min_x, max_x, min_y, max_y) = self.borders();
         let width = (((max_x - min_x) + 1) * 2 + 1) as usize;
@@ -311,7 +312,7 @@ fn main() {
     println!("Part 2: {}", graphnode::rooms_dist_over_1000_doors(&regex));
 
     // Very simple version I re-implemented from a Reddit idea.
-    trivial::trivial_version(&regex);
+    trivial::run_both_parts(&regex);
 
     // My final version, that doesn't attempt to build a graph from the regex, and that works.
     let all_dist = get_all_distances(&regex);

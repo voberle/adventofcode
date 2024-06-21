@@ -31,6 +31,7 @@ fn char2idx(c: char) -> usize {
 }
 
 #[inline]
+#[allow(clippy::cast_possible_truncation)]
 fn idx2char(idx: usize) -> char {
     char::from(b'A' + idx as u8)
 }

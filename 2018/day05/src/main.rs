@@ -74,7 +74,7 @@ fn react<'a>(input: impl Iterator<Item = &'a u8>) -> usize {
 fn fast_version(input: &str) {
     let input: Vec<u8> = input.chars().map(|c| c as u8).collect();
     println!("Part 1: {}", react(input.iter()));
-    let mut min = std::usize::MAX;
+    let mut min = usize::MAX;
     for i in 0u8..=26 {
         let v = input.iter().filter(|&&c| c != b'a' + i && c != b'A' + i);
         min = usize::min(react(v), min);

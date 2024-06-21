@@ -13,6 +13,7 @@ use crate::{Direction, Map, Pos};
 // Intermediary structure representing the reg ex, to make life easier.
 // It won't be the final graph.
 #[derive(Debug)]
+#[allow(dead_code)]
 enum Elt {
     Value(Vec<Direction>, usize), // The second param is just an index counting each value.
     OpenGroup(usize),

@@ -5,8 +5,8 @@ fn get_hundreds_digit(n: i32) -> i32 {
 }
 
 fn power_level(x: usize, y: usize, serial_number: i32) -> i32 {
-    let x = x as i32;
-    let y = y as i32;
+    let x = i32::try_from(x).unwrap();
+    let y = i32::try_from(y).unwrap();
     let rack_id = x + 10;
     let mut power_level = rack_id * y;
     power_level += serial_number;

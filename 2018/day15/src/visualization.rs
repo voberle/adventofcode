@@ -68,7 +68,12 @@ pub fn fancy(map: &Grid) -> Result<()> {
             .wrap(Wrap { trim: true });
 
         terminal.draw(|f| {
-            let size = Rect::new(0, 0, map.cols as u16 + 2, map.rows as u16 + 2);
+            let size = Rect::new(
+                0,
+                0,
+                u16::try_from(map.cols).unwrap() + 2,
+                u16::try_from(map.rows).unwrap() + 2,
+            );
             f.render_widget(p, size);
         })?;
 

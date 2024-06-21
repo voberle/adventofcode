@@ -65,7 +65,12 @@ pub fn fancy(lumber_collection: &Grid) -> Result<()> {
             .wrap(Wrap { trim: true });
 
         terminal.draw(|f| {
-            let size = Rect::new(0, 0, grid.cols as u16 + 2, grid.rows as u16 + 2);
+            let size = Rect::new(
+                0,
+                0,
+                u16::try_from(grid.cols).unwrap() + 2,
+                u16::try_from(grid.rows).unwrap() + 2,
+            );
             f.render_widget(p, size);
         })?;
 

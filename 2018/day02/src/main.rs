@@ -21,10 +21,7 @@ fn count_occurences(id: &[char]) -> (bool, bool) {
 fn checksum(box_ids: &[Vec<char>]) -> usize {
     let res = box_ids.iter().fold((0, 0), |acc: (usize, usize), ids| {
         let (c2, c3) = count_occurences(ids);
-        (
-            acc.0 + usize::from(c2),
-            acc.1 + usize::from(c3),
-        )
+        (acc.0 + usize::from(c2), acc.1 + usize::from(c3))
     });
     res.0 * res.1
 }

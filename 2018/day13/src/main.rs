@@ -57,8 +57,7 @@ impl Grid {
             .lines()
             .flat_map(|l| {
                 rows += 1;
-                l.chars()
-                    .collect::<Vec<_>>()
+                l.chars().collect::<Vec<_>>()
             })
             .collect();
         assert_eq!(values.len() % rows, 0);

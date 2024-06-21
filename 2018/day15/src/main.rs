@@ -45,6 +45,7 @@ impl UnitType {
 }
 
 #[derive(Debug, Clone)]
+#[allow(clippy::struct_field_names)]
 struct Unit {
     unit_type: UnitType,
     position: usize,
@@ -115,7 +116,7 @@ fn in_range_positions(map: &Grid, targets: &[usize]) -> Vec<usize> {
             map.adjacent_pos(*t)
                 .iter()
                 .filter(|p| is_open(map.values[**p]))
-                .cloned()
+                .copied()
                 .collect::<Vec<_>>()
         })
         .collect()
@@ -275,6 +276,7 @@ fn full_battle(map: &mut Grid, units: &mut Vec<Unit>, stop_on_dead_elf: bool) ->
 
     // Remove dead units before counting
     units.retain(|u| !u.is_dead());
+    #[allow(clippy::cast_sign_loss)]
     let remaining_hps: usize = units.iter().map(|u| u.hit_points).sum::<i32>() as usize;
 
     if false {
