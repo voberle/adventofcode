@@ -4,10 +4,21 @@ fn build(input: &str) -> Vec<&str> {
     input.lines().collect()
 }
 
-fn calibration_values_sum_v1(calibration_values: &[&str]) -> u32 {
+fn calibration_values_sum(
+    calibration_values: &[&str],
+    conversion_fn: Option<fn(&str) -> String>,
+) -> u32 {
     calibration_values
         .iter()
         .filter_map(|value| {
+            let value = if let Some(conv_fn) = conversion_fn {
+                conv_fn(value)
+            } else {
+                // This to_string isn't needed if we run only part 1, but required to share the code.
+                // Should hopefully be a fast optimized version.
+                (*value).to_string()
+            };
+
             // An iterator, not collecting.
             let mut d = value.chars().filter_map(|c| c.to_digit(10));
             if let Some(first) = d.next() {
@@ -22,7 +33,11 @@ fn calibration_values_sum_v1(calibration_values: &[&str]) -> u32 {
         .sum()
 }
 
-fn calibration_values_sum_v2(calibration_values: &[&str]) -> u32 {
+fn calibration_values_sum_v1(calibration_values: &[&str]) -> u32 {
+    calibration_values_sum(calibration_values, None)
+}
+
+fn conversion(value: &str) -> String {
     const STRING_TO_DIGIT: [(&str, u32); 9] = [
         ("one", 1),
         ("two", 2),
@@ -34,31 +49,25 @@ fn calibration_values_sum_v2(calibration_values: &[&str]) -> u32 {
         ("eight", 8),
         ("nine", 9),
     ];
-    let mut total: u32 = 0;
-    for value in calibration_values {
-        let mut i = 0;
-        let mut s = (*value).to_string();
-        // We need to make sure we replace the first number we find
-        // The right calibration values for string "eighthree" is 83 and for "sevenine" is 79.
-        while i < value.len() {
-            for pair in STRING_TO_DIGIT {
-                if s[i..].starts_with(pair.0) {
-                    s.replace_range(i..=i, &pair.1.to_string());
-                }
+
+    let mut s = (*value).to_string();
+
+    // We need to make sure we replace the first number we find
+    // The right calibration values for string "eighthree" is 83 and for "sevenine" is 79.
+    let mut i = 0;
+    while i < value.len() {
+        for pair in STRING_TO_DIGIT {
+            if s[i..].starts_with(pair.0) {
+                s.replace_range(i..=i, &pair.1.to_string());
             }
-            i += 1;
         }
-
-        let d: Vec<u32> = s.chars().filter_map(|c| c.to_digit(10)).collect();
-        if !d.is_empty() {
-            let d1 = d.first().unwrap();
-            let d2 = d.last().unwrap();
-            let line_total = d1 * 10 + d2;
-            total += line_total;
-        }
+        i += 1;
     }
+    s
+}
 
-    total
+fn calibration_values_sum_v2(calibration_values: &[&str]) -> u32 {
+    calibration_values_sum(calibration_values, Some(conversion))
 }
 
 fn main() {
