@@ -1,10 +1,24 @@
-// https://adventofcode.com/2023/day/1
-// input_test: 142
-// input_test2: 281
+use std::io::{self, Read};
 
-fn main() {
-    let stdin = std::io::stdin();
-    const PART2: bool = true;
+fn build(input: &str) -> Vec<&str> {
+    input.lines().collect()
+}
+
+fn calibration_values_sum_v1(calibration_values: &[&str]) -> u32 {
+    let mut total: u32 = 0;
+    for value in calibration_values {
+        let d: Vec<u32> = value.chars().filter_map(|c| c.to_digit(10)).collect();
+        if !d.is_empty() {
+            let d1 = d.first().unwrap();
+            let d2 = d.last().unwrap();
+            let line_total = d1 * 10 + d2;
+            total += line_total;
+        }
+    }
+    total
+}
+
+fn calibration_values_sum_v2(calibration_values: &[&str]) -> u32 {
     let strings = [
         ("one", 1),
         ("two", 2),
@@ -17,31 +31,55 @@ fn main() {
         ("nine", 9),
     ];
     let mut total: u32 = 0;
-    for line in stdin.lines() {
-        let mut s = line.unwrap();
-        if PART2 {
-            dbg!(&s);
-            let mut i = 0;
-            // We need to make sure we replace the first number we find
-            // The right calibration values for string "eighthree" is 83 and for "sevenine" is 79.
-            while i < s.len() {
-                for pair in strings {
-                    if s[i..].starts_with(pair.0) {
-                        s.replace_range(i..i + 1, &pair.1.to_string());
-                    }
+    for value in calibration_values {
+        let mut i = 0;
+        let mut s = (*value).to_string();
+        // We need to make sure we replace the first number we find
+        // The right calibration values for string "eighthree" is 83 and for "sevenine" is 79.
+        while i < value.len() {
+            for pair in strings {
+                if s[i..].starts_with(pair.0) {
+                    s.replace_range(i..=i, &pair.1.to_string());
                 }
-                i += 1;
             }
-            dbg!(&s);
+            i += 1;
         }
+
         let d: Vec<u32> = s.chars().filter_map(|c| c.to_digit(10)).collect();
         if !d.is_empty() {
             let d1 = d.first().unwrap();
             let d2 = d.last().unwrap();
             let line_total = d1 * 10 + d2;
-            dbg!(line_total);
             total += line_total;
         }
     }
-    println!("{total}");
+
+    total
+}
+
+fn main() {
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let calibration_values = build(&input);
+
+    println!("Part 1: {}", calibration_values_sum_v1(&calibration_values));
+    println!("Part 2: {}", calibration_values_sum_v2(&calibration_values));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const INPUT_TEST_1: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_2: &str = include_str!("../resources/input_test_2");
+
+    #[test]
+    fn test_part1() {
+        assert_eq!(calibration_values_sum_v1(&build(INPUT_TEST_1)), 142);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(calibration_values_sum_v2(&build(INPUT_TEST_2)), 281);
+    }
 }
