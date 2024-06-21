@@ -9,7 +9,14 @@ year = os.path.basename(os.getcwd())
 
 # Days that are too slow for now.
 skip = {
-    "2021": [19, 24]
+    "2015": [],
+    "2016": [5],
+    "2017": [],
+    "2019": [],
+    "2020": [],
+    "2021": [19, 24],
+    "2022": [],
+    "2023": [],
 }
 
 bench_dir = Path("bench")
@@ -31,12 +38,18 @@ for day in range(1, 26):
         "hyperfine",
         "--warmup", "2",
         f"--export-markdown=bench/{day}.md",
-        f"--command-name=2021 Day {day}",
+        f"--command-name={year} Day {day}",
         "--time-unit", "millisecond",
         "--input", f"{dir_name}/resources/input",
         f"target/release/{dir_name}"
     ]
-    subprocess.run(hyperfine_command, check=True)
+    try:
+        subprocess.run(hyperfine_command, check=True, timeout=10)
+    except subprocess.TimeoutExpired:
+        print(f"Timeouted {year} {day}")
+        f = Path(f"bench/{day}.md")
+        f.write_text(f"| Command | Mean [ms] | Min [ms] | Max [ms] | Relative |\n|:---|---:|---:|---:|---:|\n| `{year} Day {day}` | Skipped | | | |\n")
+        continue
 
 results_file = Path("benchmarks.md")
 results_file.write_text("| Command | Mean [ms] | Min [ms] | Max [ms] | Relative |\n|:---|---:|---:|---:|---:|\n")
