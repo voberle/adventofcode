@@ -121,7 +121,7 @@ fn try_all_combinations(computer: &mut IntcodeComputer) -> String {
             computer.exec();
             let _ = get_output(computer);
         }
-        
+
         last_combi = next_combi;
         // Take all from next combination.
         for i in &last_combi {

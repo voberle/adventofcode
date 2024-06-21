@@ -278,7 +278,8 @@ mod tests {
 
     // Executes the logical expression equivalent to the RUN springscript.
     fn exec_run(r: &[bool]) -> bool {
-        let (a, b, c, d, e, _f, _g, h, _i) = (r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10]);
+        let (a, b, c, d, e, _f, _g, h, _i) =
+            (r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10]);
         (!b && d && !e) || (!a && d) || (!b && c && d) || (!c && d && h)
     }
 
