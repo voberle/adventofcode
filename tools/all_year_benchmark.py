@@ -8,16 +8,6 @@ import json
 # Function to benchmark a single year
 def benchmark_year(year_path):
     year = year_path.name
-    skip = {
-        "2015": [],
-        "2016": [5],
-        "2017": [],
-        "2019": [],
-        "2020": [],
-        "2021": [19, 24],
-        "2022": [],
-        "2023": [16],
-    }
 
     bench_dir = year_path / "bench"
     bench_dir.mkdir(exist_ok=True)
@@ -26,14 +16,9 @@ def benchmark_year(year_path):
 
     subprocess.run(["cargo", "build", "--release"], check=True, cwd=year_path)
 
-    year_results = f"## {year}\n| Command | Mean [ms] |\n|:---|---:|\n"
+    year_results = f"## {year}\n| Day | Mean [ms] |\n|:---|---:|\n"
 
     for day in range(1, 26):
-        if day in skip[year]:
-            print(f"Skipping {year} {day}")
-            year_results += f"| `{year} Day {day}` | Skipped |\n"
-            continue
-
         dir_name = f"day{day:02d}"
         hyperfine_command = [
             "hyperfine",
