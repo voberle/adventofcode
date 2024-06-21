@@ -5,16 +5,26 @@ use std::{
 
 use fxhash::FxHashSet;
 
-fn set_or_inc<T: AddAssign + Default>(v: &mut Vec<T>, i: usize, val: T) {
-    if i >= v.len() {
-        v.resize_with(i + 1, Default::default);
+// A vector that grows if we try to access an out-of-bounds index.
+struct GrowVec<T>(Vec<T>);
+
+impl<T: Default + AddAssign> GrowVec<T> {
+    fn new() -> Self {
+        Self(Vec::new())
     }
-    v[i] += val;
+
+    // Returns a mutable reference.
+    fn get(&mut self, index: usize) -> &mut T {
+        if self.0.len() <= index {
+            self.0.resize_with(index + 1, T::default);
+        }
+        &mut self.0[index]
+    }
 }
 
 fn analyze(input: &str) -> (usize, usize) {
     let mut total = 0;
-    let mut copies_count: Vec<usize> = Vec::new();
+    let mut copies_count: GrowVec<usize> = GrowVec::new();
 
     // Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
     for (i, line) in input.lines().enumerate() {
@@ -28,16 +38,16 @@ fn analyze(input: &str) -> (usize, usize) {
             .collect();
         let winning_number_count = sets[0].intersection(&sets[1]).count();
 
-        set_or_inc(&mut copies_count, i, 1);
+        *copies_count.get(i) += 1;
         for k in 0..winning_number_count {
-            let val = copies_count[i];
-            set_or_inc(&mut copies_count, i + k + 1, val);
+            let val = *copies_count.get(i);
+            *copies_count.get(i + k + 1) += val;
         }
         if winning_number_count > 0 {
             total += 2_usize.pow(u32::try_from(winning_number_count).unwrap() - 1);
         }
     }
-    let total_scratchpads = copies_count.iter().sum();
+    let total_scratchpads = copies_count.0.iter().sum();
     (total, total_scratchpads)
 }
 
