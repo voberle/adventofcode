@@ -45,11 +45,11 @@ fn groups_count(connections: &[Vec<usize>]) -> usize {
 
         let mut iter = conn_to.iter();
         // we don't actually remove from the connections list, as it would change the indexes.
-        for e in connections.iter_mut() {
+        for e in &mut connections {
             if *iter.next().unwrap() {
                 *e = Vec::new();
             }
-        };
+        }
 
         group_total += 1;
     }

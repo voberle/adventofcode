@@ -5,7 +5,7 @@ fn build(input: &str) -> Vec<usize> {
     input.split(',').map(|v| v.parse().unwrap()).collect()
 }
 
-fn reverse(list: &mut Vec<usize>, length: usize, current_pos: usize) {
+fn reverse(list: &mut [usize], length: usize, current_pos: usize) {
     for i in 0..length / 2 {
         let fi = (current_pos + i).rem_euclid(list.len());
         let li = (current_pos + length - 1 - i).rem_euclid(list.len());

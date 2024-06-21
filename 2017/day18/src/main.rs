@@ -121,7 +121,13 @@ fn execute_common(ins: &Instruction, ir: &mut usize, regs: &mut Registers<i64>) 
             regs.set(*x, regs.get(*x) % regs.get_ic(*y));
             *ir += 1;
         }
-        Instruction::JumpGreaterThanZero(x, y) => {
+        Instruction::JumpGreaterThanZero(x, y) =>
+        {
+            #[allow(
+                clippy::cast_possible_truncation,
+                clippy::cast_sign_loss,
+                clippy::cast_possible_wrap
+            )]
             if regs.get_ic(*x) > 0 {
                 *ir = (*ir as i64 + regs.get_ic(*y)) as usize;
             } else {
@@ -186,9 +192,7 @@ fn execute_send_receive(
     match ins {
         Instruction::Snd(x) => {
             let val = regs.get_ic(*x);
-            if sender.send(val).is_err() {
-                panic!("Failed to send {}", val);
-            }
+            assert!(sender.send(val).is_ok(), "Failed to send {}", val);
             *ir += 1;
             return Ok(true);
         }

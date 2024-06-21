@@ -38,6 +38,7 @@ impl NodeState {
 }
 
 // Returns the grid and the starting position
+#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 fn build(input: &str) -> (ComputeGrid, Pos) {
     let mut rows = 0;
     let mut cols = 0;

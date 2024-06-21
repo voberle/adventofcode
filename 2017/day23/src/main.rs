@@ -130,7 +130,13 @@ fn execute_common(ins: &Instruction, ir: &mut usize, regs: &mut Registers<i64>) 
             regs.set(*x, regs.get(*x) - regs.get_ic(*y));
             *ir += 1;
         }
-        Instruction::JumpNotZero(x, y) => {
+        Instruction::JumpNotZero(x, y) =>
+        {
+            #[allow(
+                clippy::cast_possible_truncation,
+                clippy::cast_sign_loss,
+                clippy::cast_possible_wrap
+            )]
             if regs.get_ic(*x) != 0 {
                 *ir = (*ir as i64 + regs.get_ic(*y)) as usize;
             } else {
@@ -195,7 +201,7 @@ fn get_register_names(instructions: &[Instruction]) -> FxHashSet<char> {
 // Helper method to get the next alphabetical letter.
 fn move_shift(data: &str, shift: usize) -> String {
     data.chars()
-        .map(|c| (c as u8 + shift as u8) as char)
+        .map(|c| (c as u8 + u8::try_from(shift).unwrap()) as char)
         .collect::<String>()
 }
 
@@ -232,7 +238,13 @@ int main() {
     for (i, ins) in instructions.iter().enumerate() {
         match ins {
             Instruction::JumpNotZero(_, y) => {
+                #[allow(
+                    clippy::cast_possible_truncation,
+                    clippy::cast_sign_loss,
+                    clippy::cast_possible_wrap
+                )]
                 let index = (i as i64 + y.get_integer()) as usize;
+
                 labels[index] = gen_free_label_name(&mut next_label_name);
             }
             _ => {}
@@ -262,7 +274,13 @@ int main() {
                 Instruction::Sub(x, y) => format!("{} -= {}", x, y),
                 Instruction::Mul(x, y) => format!("{} *= {}", x, y),
                 Instruction::JumpNotZero(x, y) => {
+                    #[allow(
+                        clippy::cast_possible_truncation,
+                        clippy::cast_sign_loss,
+                        clippy::cast_possible_wrap
+                    )]
                     let index = (i as i64 + y.get_integer()) as usize;
+
                     format!("if ({} != 0) goto {}", x, &labels[index])
                 }
                 Instruction::Nop => String::new(),
