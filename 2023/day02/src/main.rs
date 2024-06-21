@@ -1,24 +1,24 @@
 use std::io::{self, Read};
 
+use itertools::Itertools;
+
 fn analyze_games(games: &str) -> (u32, u32) {
     let mut sum_ids = 0;
     let mut power_sum = 0;
     for line in games.lines() {
         // Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
-        let split: Vec<&str> = line.split(':').collect();
-        let game_id: u32 = split[0].strip_prefix("Game ").unwrap().parse().unwrap();
-        let reveals: Vec<&str> = split[1].split(';').collect();
+        let (game_id, reveals) = line.split(':').collect_tuple().unwrap();
+        let game_id: u32 = game_id.strip_prefix("Game ").unwrap().parse().unwrap();
         let mut test = true;
 
         let mut red_count = 0;
         let mut green_count = 0;
         let mut blue_count = 0;
-        for r in reveals {
-            let col: Vec<&str> = r.split(',').collect();
-            for c in col {
-                let x: Vec<&str> = c.trim().split_ascii_whitespace().collect();
-                let cube_count: u32 = x[0].parse().unwrap();
-                let cube_color = x[1];
+        for r in reveals.split(';') {
+            for c in r.split(',') {
+                let (cube_count, cube_color) =
+                    c.trim().split_ascii_whitespace().collect_tuple().unwrap();
+                let cube_count: u32 = cube_count.parse().unwrap();
                 match cube_color {
                     "red" => {
                         if cube_count > 12 {
@@ -38,7 +38,9 @@ fn analyze_games(games: &str) -> (u32, u32) {
                         }
                         blue_count = u32::max(blue_count, cube_count);
                     }
-                    _ => {}
+                    _ => {
+                        panic!("Unknown color")
+                    }
                 }
             }
         }
