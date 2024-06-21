@@ -1,7 +1,6 @@
 use std::{
     collections::BinaryHeap,
     io::{self, Read},
-    usize,
 };
 
 use fxhash::{FxHashMap, FxHashSet};

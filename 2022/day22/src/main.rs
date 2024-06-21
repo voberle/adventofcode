@@ -1,7 +1,6 @@
 use std::{
     fmt::Display,
     io::{self, Read},
-    usize,
 };
 
 use itertools::Itertools;

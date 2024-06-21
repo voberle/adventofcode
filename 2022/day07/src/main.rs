@@ -7,6 +7,7 @@ use itertools::Itertools;
 
 #[derive(Debug)]
 enum Entry {
+    #[allow(dead_code)]
     File(String, u32),
     Dir(String, Vec<Entry>),
 }
