@@ -133,6 +133,9 @@ version = "0.1.0"
 [[package]]
 name = "day3"
 version = "0.1.0"
+dependencies = [
+ "fxhash",
+]
 
 [[package]]
 name = "day4"
