@@ -1,5 +1,5 @@
-use std::io::{self, Read};
 use fxhash::FxHashSet;
+use std::io::{self, Read};
 
 #[derive(Clone, Copy)]
 enum Direction {
@@ -108,17 +108,17 @@ fn three_largest_basins_product(heightmap: &Grid) -> u64 {
         let mut queue: Vec<usize> = vec![low_point];
         while let Some(pos) = queue.pop() {
             visited.insert(pos);
-            
+
             queue.extend(ALL_DIRECTIONS.iter().filter_map(|d| {
                 if !heightmap.allowed(pos, *d) {
                     return None;
                 }
                 let next_pos = heightmap.next_pos(pos, *d);
-                
+
                 if heightmap.values[next_pos] == 9 {
                     return None;
                 }
-                
+
                 if visited.contains(&next_pos) {
                     return None;
                 }

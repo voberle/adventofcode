@@ -40,6 +40,7 @@ trait Cave {
         }
     }
 
+    #[allow(dead_code)]
     fn print(&self) {
         self.print_with_pos(&[]);
     }
