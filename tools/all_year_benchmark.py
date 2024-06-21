@@ -1,65 +1,80 @@
 #!/usr/bin/python3
 
 import os
-import shutil
 import subprocess
 from pathlib import Path
 import json
 
-year = os.path.basename(os.getcwd())
+# Function to benchmark a single year
+def benchmark_year(year_path):
+    year = year_path.name
+    skip = {
+        "2015": [],
+        "2016": [5],
+        "2017": [],
+        "2019": [],
+        "2020": [],
+        "2021": [19, 24],
+        "2022": [],
+        "2023": [16],
+    }
 
-# Days that are too slow for now.
-skip = {
-    "2015": [],
-    "2016": [5],
-    "2017": [],
-    "2019": [],
-    "2020": [],
-    "2021": [19, 24],
-    "2022": [],
-    "2023": [],
-}
+    bench_dir = year_path / "bench"
+    bench_dir.mkdir(exist_ok=True)
+    for file in bench_dir.glob("*"):
+        file.unlink()
 
-bench_dir = Path("bench")
-bench_dir.mkdir(exist_ok=True)
-for file in bench_dir.glob("*"):
-    file.unlink()
+    subprocess.run(["cargo", "build", "--release"], check=True, cwd=year_path)
 
-subprocess.run(["cargo", "build", "--release"], check=True)
+    year_results = f"## {year}\n| Command | Mean [ms] |\n|:---|---:|\n"
 
-# Initialize the results file with the desired header
+    for day in range(1, 26):
+        if day in skip[year]:
+            print(f"Skipping {year} {day}")
+            year_results += f"| `{year} Day {day}` | Skipped |\n"
+            continue
+
+        dir_name = f"day{day:02d}"
+        hyperfine_command = [
+            "hyperfine",
+            "--warmup", "2",
+            f"--export-json={bench_dir}/{day}.json",
+            f"--command-name={year} Day {day}",
+            "--time-unit", "millisecond",
+            "--input", f"{year_path}/{dir_name}/resources/input",
+            f"{year_path}/target/release/{dir_name}"
+        ]
+        try:
+            subprocess.run(hyperfine_command, check=True, timeout=10, cwd=year_path)
+        except subprocess.TimeoutExpired:
+            print(f"Timeout {year} {day}")
+            year_results += f"| `{year} Day {day}` | Timed out |\n"
+            continue
+        except subprocess.CalledProcessError as e:
+            print(f"Error {year} {day}: {e}")
+            year_results += f"| `{year} Day {day}` | Error |\n"
+            continue
+
+        # Read the mean time from the JSON file and convert it to milliseconds
+        with open(bench_dir / f"{day}.json", "r") as json_file:
+            data = json.load(json_file)
+            mean_time = data['results'][0]['mean'] * 1000  # Convert to milliseconds
+            year_results += f"| `{year} Day {day}` | {mean_time:.2f} |\n"
+
+    for file in bench_dir.glob("*"):
+        file.unlink()
+    bench_dir.rmdir()
+
+    return year_results
+
+# Check if the script is run from a year directory or a parent directory
+current_path = Path.cwd()
+years = [current_path] if current_path.name.isdigit() else [d for d in current_path.iterdir() if d.is_dir() and d.name.isdigit()]
+
 results_file = Path("benchmarks.md")
-results_file.write_text("| Command | Mean [ms] |\n|:---|---:|\n")
+results_content = ""
 
-for day in range(1, 26):
-    if day in skip[year]:
-        print(f"Skipping {year} {day}")
-        results_file.write_text(results_file.read_text() + f"| `{year} Day {day}` | Skipped |\n")
-        continue
+for year_path in years:
+    results_content += benchmark_year(year_path)
 
-    dir_name = f"day{day:02d}"
-    hyperfine_command = [
-        "hyperfine",
-        "--warmup", "2",
-        f"--export-json=bench/{day}.json",
-        f"--command-name={year} Day {day}",
-        "--time-unit", "millisecond",
-        "--input", f"{dir_name}/resources/input",
-        f"target/release/{dir_name}"
-    ]
-    try:
-        subprocess.run(hyperfine_command, check=True, timeout=10)
-    except subprocess.TimeoutExpired:
-        print(f"Timeout {year} {day}")
-        results_file.write_text(results_file.read_text() + f"| `{year} Day {day}` | Timed out |\n")
-        continue
-
-    # Read the mean time from the JSON file and convert it to milliseconds
-    with open(f"bench/{day}.json", "r") as json_file:
-        data = json.load(json_file)
-        mean_time = data['results'][0]['mean'] * 1000  # Convert to milliseconds
-        results_file.write_text(results_file.read_text() + f"| `{year} Day {day}` | {mean_time:.2f} ms |\n")
-
-for file in bench_dir.glob("*"):
-    file.unlink()
-bench_dir.rmdir()
+results_file.write_text(results_content)
