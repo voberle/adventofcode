@@ -66,6 +66,7 @@ fn build(input: &str) -> Vec<(u32, u32)> {
         .collect()
 }
 
+#[allow(clippy::cast_lossless)]
 fn simplify(blocked_ips: &[(u32, u32)]) -> Vec<(u64, u64)> {
     // We need exclusive ranges for the simplify method, so we need to use u64 as u32 + 1 may overflow.
     let ranges_excl: Vec<(u64, u64)> = blocked_ips
@@ -76,16 +77,16 @@ fn simplify(blocked_ips: &[(u32, u32)]) -> Vec<(u64, u64)> {
     simplify_ranges(&ranges_excl)
 }
 
-fn lowest_allowed_ip(blocked_ips: &[(u64, u64)]) -> u32 {
+fn lowest_allowed_ip(blocked_ips: &[(u64, u64)]) -> u64 {
     let first_range = blocked_ips.first().expect("No ranges found");
     if first_range.0 > 0 {
         return 0;
     }
-    blocked_ips.first().expect("No ranges found").1 as u32
+    blocked_ips.first().expect("No ranges found").1
 }
 
-fn allowed_ips_count(blocked_ips: &[(u64, u64)]) -> u32 {
-    u32::MAX - blocked_ips.iter().map(|r| r.1 - r.0).sum::<u64>() as u32 + 1
+fn allowed_ips_count(blocked_ips: &[(u64, u64)]) -> u64 {
+    u64::MAX - blocked_ips.iter().map(|r| r.1 - r.0).sum::<u64>() + 1
 }
 
 fn main() {

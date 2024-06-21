@@ -30,9 +30,10 @@ const fn wrapping_index(i: usize, len: usize) -> usize {
 }
 
 // Horrible brute-force implementation, but I couldn't find a smarter way
-fn elf_getting_all_v2(elf_count: usize) -> usize {
+fn elf_getting_all_v2(elf_count: usize) -> i32 {
     // This array has the elf number
     let mut next_with_presents: Vec<i32> = vec![0; elf_count];
+    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     for (i, e) in next_with_presents.iter_mut().enumerate().take(elf_count) {
         *e = i as i32 + 1;
     }
@@ -57,7 +58,7 @@ fn elf_getting_all_v2(elf_count: usize) -> usize {
             next_with_presents.len(),
         );
     }
-    next_with_presents[0] as usize
+    next_with_presents[0]
 }
 
 // Fast implementation inspired by an idea on Reddit.

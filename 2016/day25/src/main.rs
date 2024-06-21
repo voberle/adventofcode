@@ -108,6 +108,11 @@ impl Instruction {
 
 // Executes the instruction specified by ins, modifying the registers if needed.
 // Returns the output of "out" command if it was executed.
+#[allow(
+    clippy::cast_sign_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 fn execute(instructions: &[Instruction], ir: &mut usize, regs: &mut Registers) -> Option<i32> {
     let ins = &instructions[*ir];
     if let Instruction::Out(x) = ins {

@@ -1,7 +1,6 @@
 use std::{
     fmt,
     io::{self, Read},
-    usize,
 };
 
 use fxhash::FxHashMap;
@@ -27,11 +26,6 @@ impl Element {
         ("dilithium", "Dt"),
         ("elerium", "El"),
     ];
-
-    #[cfg(test)]
-    fn new(symbol: &str) -> Self {
-        Self(symbol.to_string())
-    }
 
     fn from_name(name: &str) -> Self {
         let symbol = Self::SYMBOLS

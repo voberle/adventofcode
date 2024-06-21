@@ -114,7 +114,12 @@ impl Instruction {
 }
 
 // Executes the instruction specified by ins, modifying the registers if needed, and returns the next instruction ID.
-fn execute(instructions: &mut Vec<Instruction>, ir: usize, regs: &mut Registers) -> usize {
+#[allow(
+    clippy::cast_sign_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
+fn execute(instructions: &mut [Instruction], ir: usize, regs: &mut Registers) -> usize {
     let ins = &instructions[ir];
     match ins {
         Instruction::Copy(x, r) => {

@@ -93,15 +93,11 @@ fn first_loc_visit_twice(instructions: &[(Turn, i32)]) -> i32 {
             North => (ver_idx - i.1 + 1..=ver_idx)
                 .map(|r| (r, hor_idx))
                 .collect(),
-            South => (ver_idx..ver_idx + i.1)
-                .map(|r| (r, hor_idx))
-                .collect(),
+            South => (ver_idx..ver_idx + i.1).map(|r| (r, hor_idx)).collect(),
             West => (hor_idx - i.1 + 1..=hor_idx)
                 .map(|c| (ver_idx, c))
                 .collect(),
-            East => (hor_idx..hor_idx + i.1)
-                .map(|c| (ver_idx, c))
-                .collect(),
+            East => (hor_idx..hor_idx + i.1).map(|c| (ver_idx, c)).collect(),
         };
         // save path
         for c in line {
