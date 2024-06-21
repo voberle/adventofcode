@@ -284,9 +284,9 @@ fn assemble_image(tiles: &[Tile], graph: &[Vec<usize>]) -> (Vec<Tile>, Vec<Vec<u
                         puzzle[row][col] = *conn;
 
                         if col < picture_size - 1 {
-                            connections_to_explore = graph[*conn].clone();
+                            connections_to_explore.clone_from(&graph[*conn]);
                         } else {
-                            connections_to_explore = graph[puzzle[row][0]].clone();
+                            connections_to_explore.clone_from(&graph[puzzle[row][0]]);
                         }
                         break 'conn_loop;
                     }
