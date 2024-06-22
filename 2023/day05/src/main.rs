@@ -1,9 +1,10 @@
-use regex::Regex;
 use std::{
-    collections::HashMap,
     io::{self, Read},
     ops::Range,
 };
+
+use fxhash::FxHashMap;
+use regex::Regex;
 
 #[derive(Debug)]
 struct RangeMapping {
@@ -31,7 +32,9 @@ impl RangeMapping {
     }
 }
 
-fn convert(maps: &HashMap<(String, String), Vec<RangeMapping>>, seed: u64) -> u64 {
+type SeedMap = FxHashMap<(String, String), Vec<RangeMapping>>;
+
+fn convert(maps: &SeedMap, seed: u64) -> u64 {
     let mut n = seed;
     let mut item = "seed";
     while item != "location" {
@@ -85,10 +88,8 @@ impl SeedRanges {
     }
 }
 
-fn analyze(input: &str) -> (u64, u64) {
-    const STEP: u64 = 100_000;
-    // const STEP: u64 = 1;
-
+// Parses the input, returning the list of seeds and the seed maps.
+fn build(input: &str) -> (Vec<u64>, SeedMap) {
     let mut it = input.lines();
 
     let seeds: Vec<u64> = it
@@ -105,7 +106,7 @@ fn analyze(input: &str) -> (u64, u64) {
     let map_re = Regex::new(r"(\w+)-to-(\w+) map:").unwrap();
     let range_re = Regex::new(r"(\d+) (\d+) (\d+)").unwrap();
 
-    let mut maps: HashMap<(String, String), Vec<RangeMapping>> = HashMap::new();
+    let mut maps: SeedMap = FxHashMap::default();
     // Initialization isn't used but needed to keep compiler happy
     let mut current_range_list: &mut Vec<RangeMapping> = &mut Vec::new();
     for s in it {
@@ -124,24 +125,27 @@ fn analyze(input: &str) -> (u64, u64) {
             ));
         }
     }
-
     // println!("Seeds {:?}", seeds);
     // println!("Maps {:#?}", maps);
 
-    let location_part_1 = seeds
-        .iter()
-        .map(|seed| convert(&maps, *seed))
-        .min()
-        .unwrap();
-    println!("Part 1: {}", location_part_1);
+    (seeds, maps)
+}
+
+fn lowest_location_v1(seeds: &[u64], maps: &SeedMap) -> u64 {
+    seeds.iter().map(|seed| convert(maps, *seed)).min().unwrap()
+}
+
+fn lowest_location_v2(seeds: &[u64], maps: &SeedMap) -> u64 {
+    // Very crude brute force way of doing it.
+    // First with a big STEP, identify which range most likely has the lowest.
+    // Then on this range only decrease the step until 1 to get the lowest.
+    const STEP: u64 = 100_000;
+    // const STEP: u64 = 1;
 
     let mut seed_ranges: Vec<Range<u64>> = seeds.chunks(2).map(|c| (c[0]..c[0] + c[1])).collect();
     seed_ranges.sort_by_key(|r| r.start);
     println!("Seed ranges {:#?}", seed_ranges);
 
-    // Very crude brute force way of doing it.
-    // First with a big STEP, identify which range most likely has the lowest.
-    // Then on this range only decrease the step until 1 to get the lowest.
     let mut location = u64::MAX;
     let mut lowest_seed_idx = 0;
     seed_ranges
@@ -151,7 +155,7 @@ fn analyze(input: &str) -> (u64, u64) {
         .for_each(|(i, range)| {
             let mut seed = range.start;
             while seed < range.end {
-                let r = convert(&maps, seed);
+                let r = convert(maps, seed);
                 if r < location {
                     lowest_seed_idx = i;
                     location = r;
@@ -162,19 +166,17 @@ fn analyze(input: &str) -> (u64, u64) {
         });
     println!("Idx: {}: {}", lowest_seed_idx, location);
 
-    println!("Part 2: {}", location);
-
-    (location_part_1, location)
+    location
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
 
-    let (loc_part1, loc_part2) = analyze(input.as_str());
+    let (seeds, maps) = build(&input);
 
-    println!("Part 1: {}", loc_part1);
-    println!("Part 2: {}", loc_part2);
+    println!("Part 1: {}", lowest_location_v1(&seeds, &maps));
+    // println!("Part 2: {}", lowest_location_v2(&seeds, &maps));
 }
 
 #[cfg(test)]
@@ -218,10 +220,14 @@ mod tests {
     }
 
     #[test]
-    fn test_part1_2() {
-        let (loc_part1, loc_part2) = analyze(INPUT_TEST);
+    fn test_part1() {
+        let (seeds, maps) = build(INPUT_TEST);
+        assert_eq!(lowest_location_v1(&seeds, &maps), 35);
+    }
 
-        assert_eq!(loc_part1, 35);
-        assert_eq!(loc_part2, 46);
+    #[test]
+    fn test_part2() {
+        let (seeds, maps) = build(INPUT_TEST);
+        assert_eq!(lowest_location_v2(&seeds, &maps), 46);
     }
 }
