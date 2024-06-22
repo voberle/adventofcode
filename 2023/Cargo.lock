@@ -41,7 +41,70 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "day1"
+name = "day01"
+version = "0.1.0"
+
+[[package]]
+name = "day02"
+version = "0.1.0"
+dependencies = [
+ "itertools 0.13.0",
+]
+
+[[package]]
+name = "day03"
+version = "0.1.0"
+dependencies = [
+ "fxhash",
+]
+
+[[package]]
+name = "day04"
+version = "0.1.0"
+dependencies = [
+ "fxhash",
+]
+
+[[package]]
+name = "day05"
+version = "0.1.0"
+dependencies = [
+ "regex",
+]
+
+[[package]]
+name = "day06"
+version = "0.1.0"
+
+[[package]]
+name = "day07"
+version = "0.1.0"
+dependencies = [
+ "strum",
+ "strum_macros",
+]
+
+[[package]]
+name = "day07_part1"
+version = "0.1.0"
+
+[[package]]
+name = "day08"
+version = "0.1.0"
+dependencies = [
+ "num-integer",
+ "regex",
+]
+
+[[package]]
+name = "day08_part2"
+version = "0.1.0"
+dependencies = [
+ "regex",
+]
+
+[[package]]
+name = "day09"
 version = "0.1.0"
 
 [[package]]
@@ -101,13 +164,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "day2"
-version = "0.1.0"
-dependencies = [
- "itertools 0.13.0",
-]
-
-[[package]]
 name = "day20"
 version = "0.1.0"
 dependencies = [
@@ -128,62 +184,6 @@ version = "0.1.0"
 
 [[package]]
 name = "day24"
-version = "0.1.0"
-
-[[package]]
-name = "day3"
-version = "0.1.0"
-dependencies = [
- "fxhash",
-]
-
-[[package]]
-name = "day4"
-version = "0.1.0"
-dependencies = [
- "fxhash",
-]
-
-[[package]]
-name = "day5"
-version = "0.1.0"
-dependencies = [
- "regex",
-]
-
-[[package]]
-name = "day6"
-version = "0.1.0"
-
-[[package]]
-name = "day7"
-version = "0.1.0"
-dependencies = [
- "strum",
- "strum_macros",
-]
-
-[[package]]
-name = "day7_part1"
-version = "0.1.0"
-
-[[package]]
-name = "day8"
-version = "0.1.0"
-dependencies = [
- "num-integer",
- "regex",
-]
-
-[[package]]
-name = "day8_part2"
-version = "0.1.0"
-dependencies = [
- "regex",
-]
-
-[[package]]
-name = "day9"
 version = "0.1.0"
 
 [[package]]
