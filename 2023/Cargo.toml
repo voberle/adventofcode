@@ -9,7 +9,6 @@ members = [
     "day05",
     "day06",
     "day07",
-    "day07/day07_part1",
     "day08",
     "day08/day08_part2",
     "day09",
