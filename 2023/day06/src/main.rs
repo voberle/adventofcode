@@ -16,10 +16,23 @@ impl Race {
         time_for_moving * speed
     }
 
-    fn count_ways_to_win(&self) -> usize {
+    // Simple version
+    fn _count_ways_to_win(&self) -> usize {
         (0..self.time)
             .filter(|h| self.traveled(*h) > self.distance)
             .count()
+    }
+
+    // A bit optimized, as we don't need to go through all times.
+    fn count_ways_to_win(&self) -> usize {
+        usize::try_from(self.time).unwrap()
+            - (0..self.time)
+                .take_while(|h| self.traveled(*h) <= self.distance)
+                .count()
+            - (0..self.time)
+                .rev()
+                .take_while(|h| self.traveled(*h) <= self.distance)
+                .count()
     }
 }
 
@@ -48,8 +61,7 @@ fn build_converted(input: &str) -> Race {
         .lines()
         .map(|line| {
             line.split(':')
-                .skip(1)
-                .next()
+                .nth(1)
                 .unwrap()
                 .replace(' ', "")
                 .parse()
