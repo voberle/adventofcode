@@ -1,45 +1,9 @@
 use std::{cmp::Ordering, collections::HashMap};
 
+use crate::CardGeneric;
 use crate::HandType;
 
-// variants are ordered by their top-to-bottom discriminant order
-#[derive(PartialOrd, Ord, PartialEq, Eq, Hash, Debug)]
-enum Card {
-    C2,
-    C3,
-    C4,
-    C5,
-    C6,
-    C7,
-    C8,
-    C9,
-    T,
-    J,
-    Q,
-    K,
-    A,
-}
-
-impl From<char> for Card {
-    fn from(c: char) -> Self {
-        match c {
-            'A' => Self::A,
-            'K' => Self::K,
-            'Q' => Self::Q,
-            'J' => Self::J,
-            'T' => Self::T,
-            '9' => Self::C9,
-            '8' => Self::C8,
-            '7' => Self::C7,
-            '6' => Self::C6,
-            '5' => Self::C5,
-            '4' => Self::C4,
-            '3' => Self::C3,
-            '2' => Self::C2,
-            _ => panic!("Invalid char"),
-        }
-    }
-}
+type Card = CardGeneric<10>;
 
 #[derive(PartialEq, Eq, Debug)]
 struct Hand {
@@ -57,7 +21,6 @@ impl Hand {
     fn recognize(cards: &[Card]) -> HandType {
         let frequencies_map = cards
             .iter()
-            // .copied()
             .fold(HashMap::new(), |mut map, val| {
                 map.entry(val).and_modify(|frq| *frq += 1).or_insert(1);
                 map

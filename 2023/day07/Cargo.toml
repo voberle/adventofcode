@@ -6,5 +6,3 @@ description.workspace = true
 edition.workspace = true
 
 [dependencies]
-strum = "0.25"
-strum_macros = "0.25"
