@@ -32,19 +32,28 @@ impl RangeMapping {
     }
 }
 
-type SeedMap = FxHashMap<(String, String), Vec<RangeMapping>>;
+struct SeedMap(FxHashMap<(String, String), Vec<RangeMapping>>);
 
-fn convert(maps: &SeedMap, seed: u64) -> u64 {
-    let mut n = seed;
-    let mut item = "seed";
-    while item != "location" {
-        let map = maps.iter().find(|(k, _)| k.0 == item).unwrap();
-        if let Some(range) = map.1.iter().find(|r| r.is_in(n)) {
-            n = range.convert(n);
-        }
-        item = &map.0 .1;
+impl SeedMap {
+    fn new() -> Self {
+        Self(FxHashMap::default())
     }
-    n
+
+    fn convert(&self, seed: u64) -> u64 {
+        let mut n = seed;
+        let mut item = "seed";
+        while item != "location" {
+            if let Some((key, mappings)) = self.0.iter().find(|(key, _)| key.0 == item) {
+                if let Some(range) = mappings.iter().find(|r| r.is_in(n)) {
+                    n = range.convert(n);
+                }
+                item = &key.1;
+            } else {
+                panic!("Didn't find key")
+            }
+        }
+        n
+    }
 }
 
 // Parses the input, returning the list of seeds and the seed maps.
@@ -65,7 +74,7 @@ fn build(input: &str) -> (Vec<u64>, SeedMap) {
     let map_re = Regex::new(r"(\w+)-to-(\w+) map:").unwrap();
     let range_re = Regex::new(r"(\d+) (\d+) (\d+)").unwrap();
 
-    let mut maps: SeedMap = FxHashMap::default();
+    let mut maps = SeedMap::new();
     // Initialization isn't used but needed to keep compiler happy
     let mut current_range_list: &mut Vec<RangeMapping> = &mut Vec::new();
     for s in it {
@@ -73,7 +82,7 @@ fn build(input: &str) -> (Vec<u64>, SeedMap) {
             let captures = map_re.captures(s).unwrap();
             let k = (captures[1].to_string(), captures[2].to_string());
 
-            current_range_list = maps.entry(k).or_default();
+            current_range_list = maps.0.entry(k).or_default();
         } else if !s.is_empty() {
             // ranges
             let captures = range_re.captures(s).unwrap();
@@ -88,7 +97,7 @@ fn build(input: &str) -> (Vec<u64>, SeedMap) {
 }
 
 fn lowest_location_v1(seeds: &[u64], maps: &SeedMap) -> u64 {
-    seeds.iter().map(|seed| convert(maps, *seed)).min().unwrap()
+    seeds.iter().map(|seed| maps.convert(*seed)).min().unwrap()
 }
 
 // Get the seed ranges used by part 2.
@@ -104,11 +113,11 @@ fn get_initial_seed_ranges(seeds: &[u64]) -> Vec<Range<u64>> {
 // then the minimum is beginning.
 fn lowest_location_between(maps: &SeedMap, low_seed: u64, high_seed: u64) -> u64 {
     if low_seed == high_seed {
-        return convert(maps, low_seed);
+        return maps.convert(low_seed);
     }
 
-    let low_loc = convert(maps, low_seed);
-    let high_loc = convert(maps, high_seed);
+    let low_loc = maps.convert(low_seed);
+    let high_loc = maps.convert(high_seed);
     if low_seed <= high_seed && low_loc <= high_loc && (high_loc - low_loc == high_seed - low_seed)
     {
         return low_loc;
