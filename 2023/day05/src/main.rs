@@ -1,9 +1,9 @@
-// https://adventofcode.com/2023/day/5
-// Part 1 test: 35
-// Part 2 test: 46
-
 use regex::Regex;
-use std::{collections::HashMap, io, ops::Range};
+use std::{
+    collections::HashMap,
+    io::{self, Read},
+    ops::Range,
+};
 
 #[derive(Debug)]
 struct RangeMapping {
@@ -29,19 +29,6 @@ impl RangeMapping {
         assert!(self.is_in(src));
         self.dest_range_start + (src - self.src_range_start)
     }
-}
-
-#[test]
-fn check_convert() {
-    let r1 = RangeMapping::new(50, 98, 2);
-    assert!(r1.is_in(98));
-    assert_eq!(r1.convert(98), 50);
-    assert!(r1.is_in(99));
-    assert_eq!(r1.convert(99), 51);
-    assert!(!r1.is_in(10));
-    let r2 = RangeMapping::new(52, 50, 48);
-    assert!(r2.is_in(53));
-    assert_eq!(r2.convert(53), 55);
 }
 
 fn convert(maps: &HashMap<(String, String), Vec<RangeMapping>>, seed: u64) -> u64 {
@@ -98,27 +85,22 @@ impl SeedRanges {
     }
 }
 
-#[test]
-fn check_seed_range() {
-    let ranges = vec![79..(79 + 14), 55..(55 + 13)];
-    let s = SeedRanges::new(ranges);
-    assert_eq!(s.first(), 55);
-    assert_eq!(s.add(55, 2), Ok(57));
-    assert_eq!(s.add(57, 13), Ok(81));
-    assert_eq!(s.add(81, 11), Ok(92));
-    assert!(s.add(92, 1).is_err());
-}
+fn analyze(input: &str) -> (u64, u64) {
+    const STEP: u64 = 100_000;
+    // const STEP: u64 = 1;
 
-fn main() {
-    let stdin = io::stdin();
-    let mut n = String::new();
-    stdin.read_line(&mut n).unwrap();
-    let seeds: Vec<u64> = n
+    let mut it = input.lines();
+
+    let seeds: Vec<u64> = it
+        .next()
+        .unwrap()
         .strip_prefix("seeds: ")
         .unwrap()
         .split_whitespace()
         .map(|i| i.parse().unwrap())
         .collect();
+
+    it.next();
 
     let map_re = Regex::new(r"(\w+)-to-(\w+) map:").unwrap();
     let range_re = Regex::new(r"(\d+) (\d+) (\d+)").unwrap();
@@ -126,16 +108,15 @@ fn main() {
     let mut maps: HashMap<(String, String), Vec<RangeMapping>> = HashMap::new();
     // Initialization isn't used but needed to keep compiler happy
     let mut current_range_list: &mut Vec<RangeMapping> = &mut Vec::new();
-    for line in stdin.lines() {
-        let s = line.unwrap();
+    for s in it {
         if s.ends_with(" map:") {
-            let captures = map_re.captures(&s).unwrap();
+            let captures = map_re.captures(s).unwrap();
             let k = (captures[1].to_string(), captures[2].to_string());
 
-            current_range_list = maps.entry(k).or_insert_with(Vec::new);
+            current_range_list = maps.entry(k).or_default();
         } else if !s.is_empty() {
             // ranges
-            let captures = range_re.captures(&s).unwrap();
+            let captures = range_re.captures(s).unwrap();
             current_range_list.push(RangeMapping::new(
                 captures[1].parse().unwrap(),
                 captures[2].parse().unwrap(),
@@ -162,8 +143,6 @@ fn main() {
     // First with a big STEP, identify which range most likely has the lowest.
     // Then on this range only decrease the step until 1 to get the lowest.
     let mut location = u64::MAX;
-    const STEP: u64 = 100000;
-    // const STEP: u64 = 1;
     let mut lowest_seed_idx = 0;
     seed_ranges
         .iter()
@@ -184,14 +163,65 @@ fn main() {
     println!("Idx: {}: {}", lowest_seed_idx, location);
 
     println!("Part 2: {}", location);
+
+    (location_part_1, location)
 }
 
-#[test]
-fn check_re() {
-    let s = "seed-to-soil map:";
-    let map_re = Regex::new(r"(\w+)-to-(\w+) map:").unwrap();
-    assert!(map_re.is_match(s));
-    let captures = map_re.captures(s).unwrap();
-    assert_eq!(&captures[1], "seed");
-    assert_eq!(&captures[2], "soil");
+fn main() {
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+
+    let (loc_part1, loc_part2) = analyze(input.as_str());
+
+    println!("Part 1: {}", loc_part1);
+    println!("Part 2: {}", loc_part2);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const INPUT_TEST: &str = include_str!("../resources/input_test");
+
+    #[test]
+    fn check_convert() {
+        let r1 = RangeMapping::new(50, 98, 2);
+        assert!(r1.is_in(98));
+        assert_eq!(r1.convert(98), 50);
+        assert!(r1.is_in(99));
+        assert_eq!(r1.convert(99), 51);
+        assert!(!r1.is_in(10));
+        let r2 = RangeMapping::new(52, 50, 48);
+        assert!(r2.is_in(53));
+        assert_eq!(r2.convert(53), 55);
+    }
+
+    #[test]
+    fn check_seed_range() {
+        let ranges = vec![79..(79 + 14), 55..(55 + 13)];
+        let s = SeedRanges::new(ranges);
+        assert_eq!(s.first(), 55);
+        assert_eq!(s.add(55, 2), Ok(57));
+        assert_eq!(s.add(57, 13), Ok(81));
+        assert_eq!(s.add(81, 11), Ok(92));
+        assert!(s.add(92, 1).is_err());
+    }
+
+    #[test]
+    fn check_re() {
+        let s = "seed-to-soil map:";
+        let map_re = Regex::new(r"(\w+)-to-(\w+) map:").unwrap();
+        assert!(map_re.is_match(s));
+        let captures = map_re.captures(s).unwrap();
+        assert_eq!(&captures[1], "seed");
+        assert_eq!(&captures[2], "soil");
+    }
+
+    #[test]
+    fn test_part1_2() {
+        let (loc_part1, loc_part2) = analyze(INPUT_TEST);
+
+        assert_eq!(loc_part1, 35);
+        assert_eq!(loc_part2, 46);
+    }
 }
