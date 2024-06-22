@@ -125,11 +125,8 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
 
-    let hands = base::build(&input);
-    println!("Part 1: {}", base::total_winnings(&hands));
-
-    let hands = joker::build(&input);
-    println!("Part 2: {}", joker::total_winnings(&hands));
+    println!("Part 1: {}", base::total_winnings(&input));
+    println!("Part 2: {}", joker::total_winnings(&input));
 }
 
 #[cfg(test)]
@@ -140,11 +137,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(base::total_winnings(&base::build(INPUT_TEST)), 6440);
+        assert_eq!(base::total_winnings(INPUT_TEST), 6440);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(joker::total_winnings(&joker::build(INPUT_TEST)), 5905);
+        assert_eq!(joker::total_winnings(INPUT_TEST), 5905);
     }
 }

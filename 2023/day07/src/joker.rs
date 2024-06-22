@@ -1,4 +1,7 @@
-use std::{cmp::Ordering, collections::HashMap};
+use std::cmp::Ordering;
+
+use fxhash::FxHashMap;
+use itertools::Itertools;
 
 use crate::CardGeneric;
 use crate::HandType;
@@ -20,7 +23,7 @@ impl Hand {
 
     fn recognize(cards: &[Card]) -> HandType {
         let mut highest_hand_type = HandType::HighCard;
-        if Self::contains_joker(cards) {
+        if cards.contains(&Card::J) {
             for replacement_card in Card::all_cards() {
                 let mut cards_copy = cards.to_vec();
                 for c in &mut cards_copy.iter_mut() {
@@ -35,7 +38,7 @@ impl Hand {
     }
 
     fn find_hand_type(cards: &[Card]) -> HandType {
-        let frequencies_map = cards.iter().fold(HashMap::new(), |mut map, val| {
+        let frequencies_map = cards.iter().fold(FxHashMap::default(), |mut map, val| {
             map.entry(val).and_modify(|frq| *frq += 1).or_insert(1);
             map
         });
@@ -43,10 +46,6 @@ impl Hand {
         frequencies.sort_unstable();
         frequencies.reverse();
         HandType::new(&frequencies)
-    }
-
-    fn contains_joker(cards: &[Card]) -> bool {
-        cards.contains(&Card::J)
     }
 }
 
@@ -68,36 +67,22 @@ impl Ord for Hand {
 }
 
 #[derive(PartialOrd, Ord, PartialEq, Eq, Debug)]
-pub struct HandBid {
+struct HandBid {
     hand: Hand,
     bid: u32,
 }
 
-impl HandBid {
-    fn new(hand: &str, bid: u32) -> Self {
-        Self {
-            hand: Hand::new(hand),
-            bid,
-        }
-    }
-}
-
-pub fn build(input: &str) -> Vec<HandBid> {
-    let mut hands: Vec<HandBid> = input
+pub fn total_winnings(input: &str) -> u32 {
+    input
         .lines()
         .map(|line| {
-            let v: Vec<&str> = line.split_whitespace().collect();
-            HandBid::new(v[0], v[1].parse().unwrap())
+            let (hand, bid) = line.split_whitespace().collect_tuple().unwrap();
+            HandBid {
+                hand: Hand::new(hand),
+                bid: bid.parse().unwrap(),
+            }
         })
-        .collect();
-
-    hands.sort();
-    hands
-}
-
-pub fn total_winnings(hands: &[HandBid]) -> u32 {
-    hands
-        .iter()
+        .sorted_unstable()
         .enumerate()
         .map(|(i, hand)| (u32::try_from(i).unwrap() + 1) * hand.bid)
         .sum()

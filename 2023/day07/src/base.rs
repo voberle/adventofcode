@@ -1,4 +1,7 @@
-use std::{cmp::Ordering, collections::HashMap};
+use std::cmp::Ordering;
+
+use fxhash::FxHashMap;
+use itertools::Itertools;
 
 use crate::CardGeneric;
 use crate::HandType;
@@ -19,12 +22,10 @@ impl Hand {
     }
 
     fn recognize(cards: &[Card]) -> HandType {
-        let frequencies_map = cards
-            .iter()
-            .fold(HashMap::new(), |mut map, val| {
-                map.entry(val).and_modify(|frq| *frq += 1).or_insert(1);
-                map
-            });
+        let frequencies_map = cards.iter().fold(FxHashMap::default(), |mut map, val| {
+            map.entry(val).and_modify(|frq| *frq += 1).or_insert(1);
+            map
+        });
         let mut frequencies: Vec<i32> = frequencies_map.values().copied().collect();
         frequencies.sort_unstable();
         frequencies.reverse();
@@ -50,36 +51,22 @@ impl Ord for Hand {
 }
 
 #[derive(PartialOrd, Ord, PartialEq, Eq, Debug)]
-pub struct HandBid {
+struct HandBid {
     hand: Hand,
     bid: u32,
 }
 
-impl HandBid {
-    fn new(hand: &str, bid: u32) -> Self {
-        Self {
-            hand: Hand::new(hand),
-            bid,
-        }
-    }
-}
-
-pub fn build(input: &str) -> Vec<HandBid> {
-    let mut hands: Vec<HandBid> = input
+pub fn total_winnings(input: &str) -> u32 {
+    input
         .lines()
         .map(|line| {
-            let v: Vec<&str> = line.split_whitespace().collect();
-            HandBid::new(v[0], v[1].parse().unwrap())
+            let (hand, bid) = line.split_whitespace().collect_tuple().unwrap();
+            HandBid {
+                hand: Hand::new(hand),
+                bid: bid.parse().unwrap(),
+            }
         })
-        .collect();
-
-    hands.sort();
-    hands
-}
-
-pub fn total_winnings(hands: &[HandBid]) -> u32 {
-    hands
-        .iter()
+        .sorted_unstable()
         .enumerate()
         .map(|(i, hand)| (u32::try_from(i).unwrap() + 1) * hand.bid)
         .sum()
