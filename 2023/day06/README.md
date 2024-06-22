@@ -3,3 +3,7 @@
 After a tough day, it got much easier again. Input was so small that I put directly in the code.
 
 Cool use of iterator `zip` method.
+
+## Update
+
+I removed the hard-coding of the input for part 2.
