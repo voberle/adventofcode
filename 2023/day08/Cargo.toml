@@ -8,3 +8,4 @@ edition.workspace = true
 [dependencies]
 regex = "1.10.2"
 num-integer = "0.1"
+itertools = "0.13.0"

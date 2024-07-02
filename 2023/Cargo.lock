@@ -89,6 +89,7 @@ dependencies = [
 name = "day08"
 version = "0.1.0"
 dependencies = [
+ "itertools 0.13.0",
  "num-integer",
  "regex",
 ]
