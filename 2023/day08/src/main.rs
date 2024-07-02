@@ -3,6 +3,8 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::io::{self, Read};
 
+mod brute_force;
+
 fn build(input: &str) -> (String, HashMap<String, (String, String)>) {
     let (instructions, nodes) = input.split("\n\n").collect_tuple().unwrap();
 
@@ -78,6 +80,8 @@ fn main() {
 
     println!("Part 1: {}", part1(&instructions, &network));
     println!("Part 2: {}", part2(&instructions, &network));
+
+    // println!("Part 2: {}", brute_force::part2(&input));
 }
 
 #[cfg(test)]

@@ -1,15 +1,14 @@
-// https://adventofcode.com/2023/day/8
-// Part 2 test 3: 6
-//
+use itertools::Itertools;
+use regex::Regex;
+use std::cmp::Ordering;
+use std::collections::HashMap;
+
 // Brute force version.
 // The goal of this implementation is not really to find the answer,
 // as it requires 13_000 billions loops to get there, but to play with optimizations.
 // Check with:
 //   cargo b --release
 //   hyperfine --warmup 5 'cat resources/input | ./target/release/day8'
-
-use regex::Regex;
-use std::{cmp::Ordering, collections::HashMap, io};
 
 #[derive(Debug)]
 struct Node {
@@ -24,20 +23,15 @@ struct Node {
 // As the number is small, it allows the compiler to unroll things.
 const KEYS_LEN: usize = 6;
 
-fn main() {
+#[allow(dead_code)]
+pub fn part2(input: &str) -> u64 {
     // -- Input parsing.
-    let stdin = io::stdin();
-    let mut n = String::new();
-    stdin.read_line(&mut n).unwrap();
-    let instructions = n.trim();
+    let (instructions, nodes) = input.split("\n\n").collect_tuple().unwrap();
+
     let node_re = Regex::new(r"(\w{3}) = \((\w{3}), (\w{3})\)").unwrap();
     let mut network: HashMap<String, Node> = HashMap::new();
-    for line in stdin.lines() {
-        let s = line.unwrap();
-        if s.is_empty() {
-            continue;
-        } // skip empty line
-        let captures = node_re.captures(&s).unwrap();
+    for line in nodes.lines() {
+        let captures = node_re.captures(line).unwrap();
         network.insert(
             captures[1].to_owned(),
             Node {
@@ -95,7 +89,7 @@ fn main() {
         .try_into()
         .unwrap();
     assert_eq!(KEYS_LEN, keys.len());
-    let z_index_sum = (0..KEYS_LEN).fold(0, |acc, x| acc + x);
+    let z_index_sum = (0..KEYS_LEN).sum::<usize>();
     // println!("Initial keys: {:?}", keys);
     // println!("z_index_sum: {}", z_index_sum);
 
@@ -121,7 +115,7 @@ fn main() {
         }
     }
 
-    println!("Part 2: {}", total_steps);
+    total_steps
 }
 
 #[inline]
