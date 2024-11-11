@@ -10,3 +10,7 @@ I was stuck until I saw how some people were doing beautiful visualizations of t
 I decided to do it also for fun, but it was key: With a better visual of the graph, I could see where some area was not counted and investigate a specific case, leading me to find the fix. Hurrah!
 
 At the end, the code is even fairly clean considering the complexity of navigating the loop.
+
+## Update
+
+Updated to match other years better.
