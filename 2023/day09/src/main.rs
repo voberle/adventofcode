@@ -1,21 +1,13 @@
-// https://adventofcode.com/2023/day/9
-// Part 1 test: 114
-// Part 2 test: 2
+use std::io::{self, Read};
 
-use std::io;
-
-fn main() {
-    let stdin = io::stdin();
-    let report: Vec<Vec<i32>> = stdin
+fn build(input: &str) -> Vec<Vec<i32>> {
+    input
         .lines()
-        .map(|l| {
-            l.unwrap()
-                .split_whitespace()
-                .map(|i| i.parse().unwrap())
-                .collect()
-        })
-        .collect();
+        .map(|l| l.split_whitespace().map(|i| i.parse().unwrap()).collect())
+        .collect()
+}
 
+fn part1_2(report: Vec<Vec<i32>>) -> (i32, i32) {
     let mut sum_extrapolated_values_begin = 0;
     let mut sum_extrapolated_values_end = 0;
     for history in report {
@@ -38,6 +30,32 @@ fn main() {
         // println!("first_val {}", first_val);
         sum_extrapolated_values_begin += first_val;
     }
+    (sum_extrapolated_values_end, sum_extrapolated_values_begin)
+}
+
+fn main() {
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let report = build(&input);
+
+    let (sum_extrapolated_values_end, sum_extrapolated_values_begin) = part1_2(report);
+
     println!("Part 1: {}", sum_extrapolated_values_end);
     println!("Part 2: {}", sum_extrapolated_values_begin);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const INPUT_TEST: &str = include_str!("../resources/input_test");
+
+    #[test]
+    fn test_part1_2() {
+        let report = build(INPUT_TEST);
+        let (sum_extrapolated_values_end, sum_extrapolated_values_begin) = part1_2(report);
+
+        assert_eq!(sum_extrapolated_values_end, 114);
+        assert_eq!(sum_extrapolated_values_begin, 2);
+    }
 }
