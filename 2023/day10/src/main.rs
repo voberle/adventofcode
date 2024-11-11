@@ -1,11 +1,3 @@
-// https://adventofcode.com/2023/day/10
-// Part 1 test 1: 4
-// Part 1 test 2: 8
-// Part 2 test 3: 4
-// Part 2 test 4: 4
-// Part 2 test 5: 8
-// Part 2 test 6: 10
-
 use std::{
     collections::HashSet,
     fmt,
@@ -46,7 +38,7 @@ impl Pipe {
     }
 
     // Returns the moves that are valid for this tile, as a list of (y, x) offsets.
-    fn directions(&self) -> Vec<(i32, i32)> {
+    fn directions(self) -> Vec<(i32, i32)> {
         match self {
             Self::Vertical => vec![TO_NORTH, TO_SOUTH],
             Self::Horizontal => vec![TO_WEST, TO_EAST],
@@ -125,7 +117,7 @@ impl Position {
 }
 
 // Finds the position of the S pipe
-fn find_start(grid: &Vec<Vec<Pipe>>) -> Option<Position> {
+fn find_start(grid: &[Vec<Pipe>]) -> Option<Position> {
     for (y, row) in grid.iter().enumerate() {
         for (x, el) in row.iter().enumerate() {
             if *el == Pipe::StartingPos {
@@ -137,19 +129,20 @@ fn find_start(grid: &Vec<Vec<Pipe>>) -> Option<Position> {
 }
 
 // Pipes to which we can go from this one
-fn next_pipes(grid: &Vec<Vec<Pipe>>, current: &Position) -> Vec<Position> {
+#[allow(clippy::cast_sign_loss)]
+fn next_pipes(grid: &[Vec<Pipe>], current: &Position) -> Vec<Position> {
     let current_pipe = grid[current.y][current.x];
     let move_offsets = current_pipe.directions();
     assert_eq!(move_offsets.len(), 2);
 
     let mut result: Vec<Position> = Vec::new();
     for move_offset in move_offsets {
-        let y = current.y as i32 + move_offset.0;
-        if y < 0 || y >= grid.len() as i32 {
+        let y = i32::try_from(current.y).unwrap() + move_offset.0;
+        if y < 0 || y >= i32::try_from(grid.len()).unwrap() {
             continue;
         }
-        let x = current.x as i32 + move_offset.1;
-        if x < 0 || x >= grid[0].len() as i32 {
+        let x = i32::try_from(current.x).unwrap() + move_offset.1;
+        if x < 0 || x >= i32::try_from(grid[0].len()).unwrap() {
             continue;
         }
         result.push(Position::new(y as usize, x as usize));
@@ -158,7 +151,7 @@ fn next_pipes(grid: &Vec<Vec<Pipe>>, current: &Position) -> Vec<Position> {
 }
 
 fn intersec_with(set: &mut HashSet<Pipe>, with: [Pipe; 3]) -> HashSet<Pipe> {
-    set.intersection(&with.into()).cloned().collect()
+    set.intersection(&with.into()).copied().collect()
 }
 
 // Find which pipe is on the start position, by looking at the pipes around it.
@@ -169,7 +162,7 @@ fn intersec_with(set: &mut HashSet<Pipe>, with: [Pipe; 3]) -> HashSet<Pipe> {
 // We can find the type of S by looking at the tiles around.
 // In example above: 7
 // Pipes never cross, so it's easy to find main one.
-fn guess_start(grid: &Vec<Vec<Pipe>>, pos: Position) -> Pipe {
+fn guess_start(grid: &[Vec<Pipe>], pos: Position) -> Pipe {
     let mut set: HashSet<Pipe> = [
         Pipe::Vertical,
         Pipe::Horizontal,
@@ -204,13 +197,13 @@ fn guess_start(grid: &Vec<Vec<Pipe>>, pos: Position) -> Pipe {
 
 // Finds the location of the start position, figure out what pipe it is,
 // and change it to the correct pipe in the grid.
-fn find_and_update_start(grid: &mut Vec<Vec<Pipe>>) -> Position {
+fn find_and_update_start(grid: &mut [Vec<Pipe>]) -> Position {
     // Find position of starting pipe
-    let start: Position = find_start(&grid).unwrap();
+    let start: Position = find_start(grid).unwrap();
     // print_grid(&grid, &vec![start]);
 
     // and replace that spot in the grid with the real pipe
-    let guessed_start: Pipe = guess_start(&grid, start);
+    let guessed_start: Pipe = guess_start(grid, start);
     // println!(
     //     "Guessed start for ({},{}) is {}",
     //     start.y, start.x, guessed_start
@@ -222,26 +215,21 @@ fn find_and_update_start(grid: &mut Vec<Vec<Pipe>>) -> Position {
 fn build_grid(input: &str) -> Vec<Vec<Pipe>> {
     input
         .lines()
-        .map(|l| l.chars().map(|c| Pipe::new(c)).collect())
+        .map(|l| l.chars().map(Pipe::new).collect())
         .collect()
 }
 
 #[allow(dead_code)]
-fn print_grid(
-    grid: &Vec<Vec<Pipe>>,
-    loop_pos: &[Position],
-    area_pos: &[Position],
-    start: &Position,
-) {
+fn print_grid(grid: &[Vec<Pipe>], loop_pos: &[Position], area_pos: &[Position], start: &Position) {
     for (y, row) in grid.iter().enumerate() {
         for (x, el) in row.iter().enumerate() {
             let pos = Position::new(y, x);
             // Colors from https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal/287944#287944
             if *start == pos {
                 print!("\x1b[91m{}\x1b[0m", *el);
-            } else if loop_pos.iter().find(|p| **p == pos).is_some() {
+            } else if loop_pos.iter().any(|p| *p == pos) {
                 print!("\x1b[92m{}\x1b[0m", *el);
-            } else if area_pos.iter().find(|p| **p == pos).is_some() {
+            } else if area_pos.iter().any(|p| *p == pos) {
                 print!("\x1b[93m{}\x1b[0m", *el);
             } else {
                 print!("{}", *el);
@@ -252,18 +240,18 @@ fn print_grid(
 }
 
 // Find the loop (part 1)
-fn find_loop(grid: &Vec<Vec<Pipe>>, start: Position) -> Vec<Position> {
+fn find_loop(grid: &[Vec<Pipe>], start: Position) -> Vec<Position> {
     // We could move in both direction to do only half the iterations,
     // but it adds in complexity for minimal gain.
     let mut prev: Position = start;
-    let mut curr: Position = next_pipes(&grid, &prev)[0];
+    let mut curr: Position = next_pipes(grid, &prev)[0];
     // Starting at 1, as curr is already set to next pipe
     // let mut count: usize = 1;
     let mut loop_pipe: Vec<Position> = Vec::new();
     loop_pipe.push(curr); // start will be put at the end
 
     while curr != start {
-        let next_pipes1 = next_pipes(&grid, &curr);
+        let next_pipes1 = next_pipes(grid, &curr);
         // println!("------");
         // print_grid(&grid, curr);
 
@@ -283,10 +271,10 @@ fn find_loop(grid: &Vec<Vec<Pipe>>, start: Position) -> Vec<Position> {
 // The animal can be anywhere that is not under our loop, not only under grounds,
 // but also under pipes that are not part of the loop.
 fn in_loop(loop_pipe: &[Position], pos: Position) -> bool {
-    loop_pipe.iter().find(|p| **p == pos).is_some()
+    loop_pipe.iter().any(|p| *p == pos)
 }
 
-fn count_enclosed_area(grid: &Vec<Vec<Pipe>>, loop_pipe: &[Position], start: &Position) -> usize {
+fn count_enclosed_area(grid: &[Vec<Pipe>], loop_pipe: &[Position], start: &Position) -> usize {
     // We don't which way to take the loop, so try one way and if it fails, try the other way
     if let Ok(enclosed_area_total) = count_enclosed_area_one_way(grid, loop_pipe, start) {
         enclosed_area_total
@@ -302,7 +290,7 @@ fn count_enclosed_area(grid: &Vec<Vec<Pipe>>, loop_pipe: &[Position], start: &Po
 }
 
 fn count_enclosed_area_one_way(
-    grid: &Vec<Vec<Pipe>>,
+    grid: &[Vec<Pipe>],
     loop_pipe: &[Position],
     _start: &Position,
 ) -> Result<usize, &'static str> {
@@ -313,7 +301,7 @@ fn count_enclosed_area_one_way(
 
     let mut prev: Position = *loop_pipe.last().unwrap();
     let mut next: Position;
-    for p in loop_pipe.iter() {
+    for p in loop_pipe {
         let pipe = grid[p.y][p.x];
         // If the pipe cannot go north, look for possible are north.
         // The second line is when we hit a turn and go opposite site of where we are counting.
