@@ -25,3 +25,7 @@ So I decided to modify the main state string, by making the positions where I pl
 There was however still a bug with the full data. Fortunately I had the implementation of part 1, so I could know what were the correct arrangement numbers for each record. It allowed to find the ones that were still failing. And after doing a deep dive into one, I fixed the last bug.
 
 For memoization, there is the [memoize](https://crates.io/crates/memoize) cradle with worked well, just had to remove the references from the function to memoize. And the whole thing ran in under 2 seconds!
+
+## Update
+
+Updated to match other years better.

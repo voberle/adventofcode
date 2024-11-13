@@ -1,9 +1,7 @@
-// https://adventofcode.com/2023/day/12
-
 use memoize::memoize;
 use std::{
     fmt,
-    io::{self, BufRead},
+    io::{self, Read},
 };
 
 const OPERATIONAL: char = '.';
@@ -59,6 +57,7 @@ impl Record {
 }
 
 #[memoize]
+#[allow(clippy::needless_pass_by_value)] // Needed for memoize.
 fn find_arrangements(states: String, damaged_cont_group_sizes: Vec<usize>) -> usize {
     let group_size = damaged_cont_group_sizes[0];
     if damaged_cont_group_sizes.len() == 1 {
@@ -167,7 +166,7 @@ fn test_arrangements_count_3() {
 }
 
 fn sum_of_arrangements(records: &[Record]) -> usize {
-    records.iter().map(|r| r.arrangements_count()).sum()
+    records.iter().map(Record::arrangements_count).sum()
 }
 
 fn sum_of_unfolded_arrangements(records: &[Record]) -> usize {
@@ -177,14 +176,8 @@ fn sum_of_unfolded_arrangements(records: &[Record]) -> usize {
         .sum()
 }
 
-fn build_records<R>(reader: &mut R) -> Vec<Record>
-where
-    R: BufRead,
-{
-    reader
-        .lines()
-        .map(|row| Record::build(&row.unwrap()))
-        .collect::<Vec<Record>>()
+fn build_records(input: &str) -> Vec<Record> {
+    input.lines().map(Record::build).collect::<Vec<Record>>()
 }
 
 impl fmt::Display for Record {
@@ -203,9 +196,9 @@ impl fmt::Display for Record {
 }
 
 fn main() {
-    let stdin = io::stdin();
-
-    let records: Vec<Record> = build_records(&mut stdin.lock());
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let records: Vec<Record> = build_records(&input);
     // records.iter().for_each(|r| println!("{}", r));
 
     println!("Part 1: {}", sum_of_arrangements(&records));
@@ -215,17 +208,15 @@ fn main() {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use std::{fs::File, io::BufReader};
 
-    fn part1(filename: &str) -> usize {
-        let mut reader = BufReader::new(File::open(filename).unwrap());
-        let records: Vec<Record> = build_records(&mut reader);
-        sum_of_arrangements(&records)
-    }
+    const INPUT_TEST_1: &str = include_str!("../resources/input_test1");
+    const INPUT_TEST_2: &str = include_str!("../resources/input_test2");
 
     #[test]
     fn test_part1() {
-        assert_eq!(part1("day12_part1/resources/input_test1"), 6);
-        assert_eq!(part1("day12_part1/resources/input_test2"), 21);
+        let records1: Vec<Record> = build_records(&INPUT_TEST_1);
+        assert_eq!(sum_of_arrangements(&records1), 6);
+        let records2: Vec<Record> = build_records(&INPUT_TEST_2);
+        assert_eq!(sum_of_arrangements(&records2), 21);
     }
 }
