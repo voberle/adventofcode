@@ -1,6 +1,4 @@
-// https://adventofcode.com/2023/day/11
-
-use std::io::{self, BufRead};
+use std::io::{self, Read};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct Position {
@@ -33,15 +31,11 @@ impl Universe {
         }
     }
 
-    fn build<R>(reader: &mut R) -> Self
-    where
-        R: BufRead,
-    {
+    fn build(input: &str) -> Self {
         let mut width = 0;
         let mut height = 0;
         let mut galaxies: Vec<Position> = Vec::new();
-        for (y, row) in reader.lines().enumerate() {
-            let r = row.unwrap();
+        for (y, r) in input.lines().enumerate() {
             width = r.len();
             height += 1;
             for (x, el) in r.chars().enumerate() {
@@ -82,17 +76,18 @@ impl Universe {
         !self.galaxies.iter().any(|p| p.x == x)
     }
 
+    #[allow(dead_code)]
     fn print(&self) {
         println!("---");
         for y in 0..self.height {
             for x in 0..self.width {
-                if let Some(_) = self.find(Position::new(y, x)) {
+                if self.find(Position::new(y, x)).is_some() {
                     print!("#");
                 } else {
                     print!(".");
                 }
             }
-            println!("");
+            println!();
         }
     }
 }
@@ -164,8 +159,9 @@ fn sum_of_shortest_paths(image: &Universe) -> usize {
 }
 
 fn main() {
-    let stdin = io::stdin();
-    let universe: Universe = Universe::build(&mut stdin.lock());
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let universe: Universe = Universe::build(&input);
     // universe.print();
 
     let expanded = expand_universe(&universe, 2);
@@ -178,31 +174,28 @@ fn main() {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use std::{fs::File, io::BufReader};
+
+    const INPUT_TEST: &str = include_str!("../resources/input_test1");
+    const TEST_EXPANDED: &str = include_str!("../resources/test1_expanded");
 
     #[test]
     fn test_expand_universe() {
-        let mut reader = BufReader::new(File::open("resources/input_test1").unwrap());
-        let image: Universe = Universe::build(&mut reader);
-
-        let mut reader_expanded = BufReader::new(File::open("resources/test1_expanded").unwrap());
-        let image_expanded: Universe = Universe::build(&mut reader_expanded);
+        let image: Universe = Universe::build(INPUT_TEST);
+        let image_expanded: Universe = Universe::build(TEST_EXPANDED);
 
         assert_eq!(expand_universe(&image, 2), image_expanded);
     }
 
-    fn part1(filename: &str, expansion_factor: usize) -> usize {
-        let file = File::open(filename).unwrap();
-        let mut reader = BufReader::new(file);
-        let image: Universe = Universe::build(&mut reader);
+    fn part1(expansion_factor: usize) -> usize {
+        let image: Universe = Universe::build(INPUT_TEST);
         let expanded = expand_universe(&image, expansion_factor);
         sum_of_shortest_paths(&expanded)
     }
 
     #[test]
     fn test_part1() {
-        assert_eq!(part1("resources/input_test1", 2), 374);
-        assert_eq!(part1("resources/input_test1", 10), 1030);
-        assert_eq!(part1("resources/input_test1", 100), 8410);
+        assert_eq!(part1(2), 374);
+        assert_eq!(part1(10), 1030);
+        assert_eq!(part1(100), 8410);
     }
 }

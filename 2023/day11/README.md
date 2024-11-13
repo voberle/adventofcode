@@ -10,3 +10,7 @@ I first replaced all iterators in it with index accesses of the 2-dimensions arr
 and that was then easier to convert to list of galaxies model.
 
 Starting to use `BufRead` and traits so that the input parsing code can be used on stdin or on files (for tests).
+
+## Update
+
+Updated to match other years better.
