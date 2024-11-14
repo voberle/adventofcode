@@ -1,18 +1,17 @@
-// https://adventofcode.com/2023/day/13
-
-use std::io;
-
-use std::{fmt, io::BufRead};
+use std::{
+    fmt,
+    io::{self, Read},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Table<T>
+struct Table<T>
 where
     T: Clone,
     T: From<char>,
 {
-    pub arr: Vec<T>,
-    pub width: usize,
-    pub height: usize,
+    arr: Vec<T>,
+    width: usize,
+    height: usize,
 }
 
 impl<T> Table<T>
@@ -20,25 +19,26 @@ where
     T: Clone,
     T: From<char>,
 {
-    pub fn new(arr: Vec<T>, width: usize, height: usize) -> Self {
+    fn new(arr: Vec<T>, width: usize, height: usize) -> Self {
         assert_eq!(arr.len(), width * height);
         Self { arr, width, height }
     }
 
-    pub fn empty() -> Self {
+    fn empty() -> Self {
         Self::new(Vec::new(), 0, 0)
     }
 
-    pub fn elt(&self, row: usize, col: usize) -> &T {
+    #[allow(dead_code)]
+    fn elt(&self, row: usize, col: usize) -> &T {
         &self.arr[row * self.width + col]
     }
 
-    pub fn row(&self, row: usize) -> &[T] {
+    fn row(&self, row: usize) -> &[T] {
         let idx = row * self.width;
         &self.arr[idx..idx + self.width]
     }
 
-    pub fn col(&self, col: usize) -> Vec<T> {
+    fn col(&self, col: usize) -> Vec<T> {
         // Much less efficient than line unfortunately
         self.arr
             .iter()
@@ -49,14 +49,11 @@ where
     }
 
     /// Builds a Table with each table line on a separate line.
-    pub fn build<R>(reader: &mut R) -> Table<T>
-    where
-        R: BufRead,
-    {
+    #[allow(dead_code)]
+    fn build(input: &str) -> Table<T> {
         let mut p = Table::empty();
-        for l in reader.lines() {
-            let line = l.unwrap();
-            p.arr.extend(line.chars().map(|c| c.into()));
+        for line in input.lines() {
+            p.arr.extend(line.chars().map(std::convert::Into::into));
             p.width = line.len();
             p.height += 1;
         }
@@ -79,21 +76,19 @@ where
     }
 }
 
-pub fn build_tables<R, T>(reader: &mut R) -> Vec<Table<T>>
+fn build_tables<T>(input: &str) -> Vec<Table<T>>
 where
-    R: BufRead,
     T: Clone,
     T: From<char>,
 {
     let mut patterns: Vec<Table<T>> = Vec::new();
     let mut p = Table::empty();
-    for l in reader.lines() {
-        let line = l.unwrap();
+    for line in input.lines() {
         if line.is_empty() {
             patterns.push(p);
             p = Table::empty();
         } else {
-            p.arr.extend(line.chars().map(|c| c.into()));
+            p.arr.extend(line.chars().map(std::convert::Into::into));
             p.width = line.len();
             p.height += 1;
         }
@@ -103,7 +98,7 @@ where
 }
 
 #[cfg(test)]
-pub mod tests_table {
+mod tests_table {
     use super::*;
 
     #[test]
@@ -209,9 +204,8 @@ fn find_reflexions_for_line(line: &[char], to_check: &[usize]) -> Vec<usize> {
         2 => {
             if line[0] == line[1] {
                 return vec![0];
-            } else {
-                return Vec::new();
             }
+            return Vec::new();
         }
         _ => {}
     }
@@ -278,27 +272,26 @@ fn find_summary_with_smudges(patterns: &[Table<char>]) -> usize {
 }
 
 fn main() {
-    let stdin = io::stdin();
-
-    let patterns: Vec<Table<char>> = build_tables(&mut stdin.lock());
-    for p in &patterns {
-        println!("{}", p);
-    }
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let patterns: Vec<Table<char>> = build_tables(&input);
+    // for p in &patterns {
+    //     println!("{}", p);
+    // }
 
     println!("Part 1: {}", find_summary(&patterns));
     println!("Part 2: {}", find_summary_with_smudges(&patterns));
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use super::*;
-    use std::{fs::File, io::BufReader};
+
+    const INPUT_TEST: &str = include_str!("../resources/input_test");
 
     #[test]
     fn test_data() {
-        let file = File::open("resources/input_test").unwrap();
-        let mut reader = BufReader::new(file);
-        let records: Vec<Table<char>> = build_tables(&mut reader);
+        let records: Vec<Table<char>> = build_tables(INPUT_TEST);
         assert_eq!(find_summary(&records), 405);
         assert_eq!(find_summary_with_smudges(&records), 400);
     }
