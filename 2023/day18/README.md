@@ -2,8 +2,12 @@
 
 This exercise was all about finding the surface of a polygon.
 
-In part 1, after the silly attempts that worked only on simple polynoms, I implemented flood-filling approach.
+## Part 1
+
+After the silly attempts that worked only on simple polynoms, I implemented flood-filling approach.
 This got me the part 1 answer.
 
-But in part 2 the polygon became huge and flood-filling wasn't possible anymore.
+## Part 2
+
+The polygon became huge and flood-filling wasn't possible anymore.
 So I implemented the Shoelace algorithm, which fortunately didn't end-up being too difficult with some clear description I found online.

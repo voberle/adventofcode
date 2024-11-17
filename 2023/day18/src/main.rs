@@ -1,6 +1,4 @@
-// https://adventofcode.com/2023/day/18
-
-use std::io::{self, BufRead};
+use std::io::{self, Read};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Pos {
@@ -139,29 +137,21 @@ fn trench_surface(trench: &[(Pos, Pos)]) -> u64 {
     interior_area + boundary / 2 + 1
 }
 
-fn build_dig_plan<R>(reader: &mut R) -> Vec<Instruction>
-where
-    R: BufRead,
-{
-    reader
-        .lines()
-        .map(|l| {
-            let line = l.unwrap();
-            Instruction::build(&line)
-        })
-        .collect()
+fn build_dig_plan(input: &str) -> Vec<Instruction> {
+    input.lines().map(Instruction::build).collect()
 }
 
 fn main() {
-    let stdin = io::stdin();
-    let dig_plan = build_dig_plan(&mut stdin.lock());
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let dig_plan = build_dig_plan(&input);
     // println!("{:?}", dig_plan);
 
     let trench: Vec<(Pos, Pos)> = dig(&dig_plan);
     // print::print_trench(&trench);
     println!("Part 1: {}", trench_surface(&trench));
 
-    let inverted_plan: Vec<_> = dig_plan.iter().map(|i| i.invert()).collect();
+    let inverted_plan: Vec<_> = dig_plan.iter().map(Instruction::invert).collect();
     // println!("{:?}", inverted_plan);
     let trench_inverted = dig(&inverted_plan);
     println!("Part 2: {}", trench_surface(&trench_inverted));
@@ -170,12 +160,12 @@ fn main() {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use std::{fs::File, io::BufReader};
+
+    const INPUT_TEST: &str = include_str!("../resources/input_test");
 
     #[test]
     fn test_part1_and_2() {
-        let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
-        let dig_plan = build_dig_plan(&mut reader);
+        let dig_plan = build_dig_plan(INPUT_TEST);
         let trench = dig(&dig_plan);
 
         assert_eq!(trench_len(&trench), 38);
@@ -190,8 +180,9 @@ pub mod tests {
 
 // Code used to print the trench.
 // Only works for small ones of course.
+#[allow(dead_code)]
 mod print {
-    use super::*;
+    use super::Pos;
 
     fn min_max_of_trench(trench: &[(Pos, Pos)]) -> (Pos, Pos) {
         assert!(!trench.is_empty());
@@ -250,10 +241,11 @@ mod print {
         trench.iter().any(|v| is_on_vertice(pos, v))
     }
 
+    #[allow(clippy::module_name_repetitions)]
     pub fn print_trench(trench: &[(Pos, Pos)]) {
         let (min, max) = min_max_of_trench(trench);
-        for row in min.row..max.row + 1 {
-            for col in min.col..max.col + 1 {
+        for row in min.row..=max.row {
+            for col in min.col..=max.col {
                 let p = Pos::new(row, col);
                 print!(
                     "{}",
