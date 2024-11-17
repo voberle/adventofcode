@@ -17,7 +17,7 @@ fn get_scaffolds_view(computer: &mut IntcodeComputer) -> Vec<char> {
 #[allow(dead_code)]
 fn print_scaffolds_view(scaffolds: &[char]) {
     for c in scaffolds {
-        print!("{}", c);
+        print!("{c}");
     }
 }
 
@@ -142,8 +142,8 @@ impl Instruction {
             A => "A".to_string(),
             B => "B".to_string(),
             C => "C".to_string(),
-            Left(n) => format!("L,{}", n),
-            Right(n) => format!("R,{}", n),
+            Left(n) => format!("L,{n}"),
+            Right(n) => format!("R,{n}"),
             VideoFeedOn => "y".to_string(),
             VideoFeedOff => "n".to_string(),
         }

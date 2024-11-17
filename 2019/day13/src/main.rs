@@ -42,7 +42,7 @@ impl TileType {
             2 => TileType::Block,
             3 => TileType::Paddle,
             4 => TileType::Ball,
-            _ => panic!("Invalid tile type {}", v),
+            _ => panic!("Invalid tile type {v}"),
         }
     }
 }

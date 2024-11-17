@@ -20,7 +20,7 @@ impl Param {
         match mode {
             0 => Position(program[loc].try_into().unwrap()),
             1 => Immediate(program[loc]),
-            _ => panic!("Invalid parameter mode {}", mode),
+            _ => panic!("Invalid parameter mode {mode}"),
         }
     }
 
@@ -40,7 +40,7 @@ impl Address {
         match mode {
             0 => Self(program[loc].try_into().unwrap()),
             1 => panic!("Immediate mode not supported for writing to"),
-            _ => panic!("Invalid parameter mode {}", mode),
+            _ => panic!("Invalid parameter mode {mode}"),
         }
     }
 
@@ -101,7 +101,7 @@ impl Instruction {
             7 => Instruction::LessThan(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
             8 => Instruction::Equal(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
             99 => Instruction::Halt,
-            _ => panic!("Unknown opcode {}", opcode),
+            _ => panic!("Unknown opcode {opcode}"),
         }
     }
 

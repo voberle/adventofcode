@@ -65,8 +65,7 @@ fn find_keys(
             // This is the last key we needed to find.
             *shortest_distance = new_dist.min(*shortest_distance);
             println!(
-                "Last key, dist to it {}, dist {}, shortest {}",
-                dist_to_key, new_dist, shortest_distance
+                "Last key, dist to it {dist_to_key}, dist {new_dist}, shortest {shortest_distance}"
             );
             continue;
         }

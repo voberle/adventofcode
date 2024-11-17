@@ -21,7 +21,7 @@ impl Param {
             Self::POSITION => Position(program[loc].try_into().unwrap()),
             Self::IMMEDIATE => Immediate(program[loc]),
             Self::RELATIVE => Relative(program[loc]),
-            _ => panic!("Invalid parameter mode {}", mode),
+            _ => panic!("Invalid parameter mode {mode}"),
         }
     }
 }
@@ -94,7 +94,7 @@ impl Instruction {
             8 => Equal(next_p(&mut i), next_p(&mut i), next_a(&mut i)),
             9 => ChangeRelativeBase(next_p(&mut i)),
             99 => Halt,
-            _ => panic!("Unknown opcode {}", opcode),
+            _ => panic!("Unknown opcode {opcode}"),
         }
     }
 
@@ -400,7 +400,7 @@ impl Bus for ASCIIInputOutput {
     fn write(&mut self, v: i64) {
         // Convert the value to ASCII.
         let c = char::from_u32(u32::try_from(v).unwrap()).unwrap();
-        print!("{}", c);
+        print!("{c}");
     }
 }
 

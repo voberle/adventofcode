@@ -1,15 +1,15 @@
 /// All previous days tasks and tests.
 ///
 /// Run real inputs with:
-///     cargo t --features previous_days
+///     cargo t --features `previous_days`
 
 #[cfg(test)]
 fn get_input_results(day: &str) -> (String, String, String) {
-    let input = std::fs::read_to_string(format!("../{}/resources/input", day))
+    let input = std::fs::read_to_string(format!("../{day}/resources/input"))
         .expect("Unable to read input file");
-    let result1 = std::fs::read_to_string(format!("../{}/resources/part1.answer", day))
+    let result1 = std::fs::read_to_string(format!("../{day}/resources/part1.answer"))
         .expect("Unable to read part 1 answer file");
-    let result2 = std::fs::read_to_string(format!("../{}/resources/part2.answer", day))
+    let result2 = std::fs::read_to_string(format!("../{day}/resources/part2.answer"))
         .expect("Unable to read part 2 answer file");
     (
         input,

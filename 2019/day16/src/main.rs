@@ -135,7 +135,7 @@ mod tests {
 
     #[test]
     fn test_get_message_offset() {
-        assert_eq!(get_message_offset(&build("0303673257721294")), 303673)
+        assert_eq!(get_message_offset(&build("0303673257721294")), 303673);
     }
 
     #[test]

@@ -50,7 +50,7 @@ impl Status {
             0 => Self::HitWall,
             1 => Self::Moved,
             2 => Self::MovedAndFound,
-            _ => panic!("Invalid status code {}", code),
+            _ => panic!("Invalid status code {code}"),
         }
     }
 }

@@ -59,7 +59,7 @@ impl fmt::Display for Reg {
             Reg::H => 'H',
             Reg::I => 'I',
         };
-        write!(f, "{}", c)
+        write!(f, "{c}")
     }
 }
 
@@ -98,9 +98,9 @@ fn NOT(x: Reg, y: Reg) -> Instruction {
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Instruction::And(x, y) => write!(f, "AND {} {}", x, y),
-            Instruction::Or(x, y) => write!(f, "OR {} {}", x, y),
-            Instruction::Not(x, y) => write!(f, "NOT {} {}", x, y),
+            Instruction::And(x, y) => write!(f, "AND {x} {y}"),
+            Instruction::Or(x, y) => write!(f, "OR {x} {y}"),
+            Instruction::Not(x, y) => write!(f, "NOT {x} {y}"),
         }
     }
 }
@@ -143,11 +143,11 @@ impl ComputerOutput {
         match self {
             ComputerOutput::LastMoments(output) => {
                 for c in output {
-                    print!("{}", c);
+                    print!("{c}");
                 }
             }
             ComputerOutput::HullDamage(d) => {
-                println!("Hull damage {}", d);
+                println!("Hull damage {d}");
             }
         }
     }
@@ -293,10 +293,10 @@ mod tests {
             .multi_cartesian_product()
             .collect();
         for p in combi {
-            let r: Vec<bool> = p.iter().cloned().cloned().collect(); // ugly..
-            let springscript_result = exec_springscript(&instructions, &regs(&r));
+            let r: Vec<bool> = p.iter().copied().copied().collect(); // ugly..
+            let springscript_result = exec_springscript(instructions, &regs(&r));
             let converted_result = exec_fn(&regs(&r));
-            assert_eq!(springscript_result, converted_result, "Failed for {:?}", r);
+            assert_eq!(springscript_result, converted_result, "Failed for {r:?}");
         }
     }
 

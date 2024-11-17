@@ -107,7 +107,7 @@ impl Maze {
                     Some(Space) => ' ',
                     None => panic!("Bug in print()"),
                 };
-                print!("{}", c);
+                print!("{c}");
             }
             println!();
         }

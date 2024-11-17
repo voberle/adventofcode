@@ -14,7 +14,7 @@ impl Color {
         match c {
             0 => Self::Black,
             1 => Self::White,
-            _ => panic!("Invalid color int {}", c),
+            _ => panic!("Invalid color int {c}"),
         }
     }
 
@@ -37,7 +37,7 @@ impl Turn {
         match d {
             0 => Self::Left,
             1 => Self::Right,
-            _ => panic!("Invalid direction int {}", d),
+            _ => panic!("Invalid direction int {d}"),
         }
     }
 }

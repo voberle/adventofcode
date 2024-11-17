@@ -30,7 +30,7 @@ impl Element {
             '#' => Wall,
             'a'..='z' => Key(c),
             'A'..='Z' => Door(c.to_ascii_lowercase()),
-            _ => panic!("Unrecognized char {}", c),
+            _ => panic!("Unrecognized char {c}"),
         }
     }
 
@@ -88,7 +88,7 @@ impl Map {
         for row in 0..self.rows {
             for p in row * self.cols..(row + 1) * self.cols {
                 let c = self.values[p];
-                print!("{}", c);
+                print!("{c}");
             }
             println!();
         }
@@ -191,7 +191,7 @@ impl Map {
             1 => row <= e_row && col >= e_col,
             2 => row >= e_row && col <= e_col,
             3 => row >= e_row && col >= e_col,
-            _ => panic!("Invalid quadrant {}", quadrant),
+            _ => panic!("Invalid quadrant {quadrant}"),
         }
     }
 }

@@ -172,7 +172,7 @@ fn main() {
     let map = build(&input);
 
     let (best_coord, in_sight_count) = best_position(&map);
-    println!("Part 1: {}", in_sight_count);
+    println!("Part 1: {in_sight_count}");
     println!("Part 2: {}", asteroid_vaporized(&map, best_coord, 200));
 }
 

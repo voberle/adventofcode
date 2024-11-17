@@ -54,7 +54,7 @@ fn print_beam_with_ship(
             } else {
                 '.'
             };
-            print!("{}", c);
+            print!("{c}");
         }
         println!();
     }

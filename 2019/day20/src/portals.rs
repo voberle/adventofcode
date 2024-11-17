@@ -48,10 +48,10 @@ pub fn get_portals_from_input(input: &str) -> FxHashMap<usize, String> {
             let c1 = grid.values[p1];
             let c2 = grid.values[p2];
             if is_portal(c0) && is_portal(c1) && is_open(c2) {
-                portals.insert(p2, format!("{}{}", c0, c1));
+                portals.insert(p2, format!("{c0}{c1}"));
             }
             if is_open(c0) && is_portal(c1) && is_portal(c2) {
-                portals.insert(p0, format!("{}{}", c1, c2));
+                portals.insert(p0, format!("{c1}{c2}"));
             }
         }
     }
@@ -67,10 +67,10 @@ pub fn get_portals_from_input(input: &str) -> FxHashMap<usize, String> {
             let c1 = grid.values[p1];
             let c2 = grid.values[p2];
             if is_portal(c0) && is_portal(c1) && is_open(c2) {
-                portals.insert(p2, format!("{}{}", c0, c1));
+                portals.insert(p2, format!("{c0}{c1}"));
             }
             if is_open(c0) && is_portal(c1) && is_portal(c2) {
-                portals.insert(p0, format!("{}{}", c1, c2));
+                portals.insert(p0, format!("{c1}{c2}"));
             }
         }
     }

@@ -59,7 +59,7 @@ fn play(computer: &IntcodeComputer, saved_cmds: &str) {
     loop {
         computer.exec();
         let s = get_output(&mut computer);
-        println!("{}", s);
+        println!("{s}");
 
         if computer.is_halted() {
             println!("Game over");
@@ -68,7 +68,7 @@ fn play(computer: &IntcodeComputer, saved_cmds: &str) {
 
         print!("> ");
         let input = if let Some(cmd) = replay_cmds.pop() {
-            println!("{}", cmd);
+            println!("{cmd}");
             cmd
         } else {
             read_line()
@@ -117,7 +117,7 @@ fn try_all_combinations(computer: &mut IntcodeComputer) -> String {
 
         // Drop all we carry.
         for i in last_combi {
-            write_string(computer, &format!("drop {}", i));
+            write_string(computer, &format!("drop {i}"));
             computer.exec();
             let _ = get_output(computer);
         }
@@ -125,7 +125,7 @@ fn try_all_combinations(computer: &mut IntcodeComputer) -> String {
         last_combi = next_combi;
         // Take all from next combination.
         for i in &last_combi {
-            write_string(computer, &format!("take {}", i));
+            write_string(computer, &format!("take {i}"));
             computer.exec();
             let _ = get_output(computer);
         }
@@ -170,7 +170,7 @@ fn main() {
         let input = std::fs::read_to_string("resources/input").expect("Unable to read input file");
         let computer = IntcodeComputer::build(&input);
 
-        if let Ok(saved_cmds) = std::fs::read_to_string(format!("resources/{}", param)) {
+        if let Ok(saved_cmds) = std::fs::read_to_string(format!("resources/{param}")) {
             play(&computer, &saved_cmds);
         } else {
             play(&computer, "");
