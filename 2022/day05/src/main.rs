@@ -112,13 +112,13 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        let (crates, rearrangements) = build(&INPUT_TEST);
+        let (crates, rearrangements) = build(INPUT_TEST);
         assert_eq!(top_crates(&crates, &rearrangements, 9000), "CMZ");
     }
 
     #[test]
     fn test_part2() {
-        let (crates, rearrangements) = build(&INPUT_TEST);
+        let (crates, rearrangements) = build(INPUT_TEST);
         assert_eq!(top_crates(&crates, &rearrangements, 9001), "MCD");
     }
 }

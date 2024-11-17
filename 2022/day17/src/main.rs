@@ -127,7 +127,7 @@ impl Chamber {
             if !something_printed && s == "......." {
                 continue;
             }
-            println!("|{}|", s);
+            println!("|{s}|");
             something_printed = true;
         }
         println!("+-------+");

@@ -132,7 +132,7 @@ impl From<char> for Tile {
             '.' => Tile::Open,
             '#' => Tile::Wall,
             ' ' => Tile::Void,
-            _ => panic!("Invalid tile char '{}'", value),
+            _ => panic!("Invalid tile char '{value}'"),
         }
     }
 }
@@ -194,7 +194,7 @@ impl Map {
                         continue;
                     }
                 }
-                print!("{}", t);
+                print!("{t}");
             }
             println!();
         }

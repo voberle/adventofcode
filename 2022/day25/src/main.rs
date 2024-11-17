@@ -126,7 +126,7 @@ mod tests {
     fn test_snafu_to_decimal() {
         println!("SNAFU\tDecimal");
         for (snafu, decimal) in EXAMPLES {
-            println!("{}\t{}", snafu, decimal);
+            println!("{snafu}\t{decimal}");
             assert_eq!(snafu_to_decimal(snafu), decimal);
         }
     }
@@ -135,7 +135,7 @@ mod tests {
     fn test_decimal_to_snafu() {
         println!("Decimal\tSNAFU");
         for (snafu, decimal) in EXAMPLES {
-            println!("{}\t{}", snafu, decimal);
+            println!("{snafu}\t{decimal}");
             assert_eq!(decimal_to_snafu(decimal), snafu);
         }
     }

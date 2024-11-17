@@ -103,7 +103,7 @@ impl fmt::Display for Crt {
                 s.push('\n');
             }
         }
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 

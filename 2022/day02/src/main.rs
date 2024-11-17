@@ -19,7 +19,7 @@ impl From<char> for Shape {
             'A' | 'X' => Shape::Rock,
             'B' | 'Y' => Shape::Paper,
             'C' | 'Z' => Shape::Scissors,
-            _ => panic!("Invalid element {}", c),
+            _ => panic!("Invalid element {c}"),
         }
     }
 }

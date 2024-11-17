@@ -122,7 +122,7 @@ fn exec_round<const DROP_WORRY_LEVEL: bool>(monkeys: &mut [Monkey], modular: u64
 
 #[allow(dead_code)]
 fn print_inspect_counts(monkeys: &[Monkey], rounds: usize) {
-    println!("== After round {} ==", rounds);
+    println!("== After round {rounds} ==");
     for (i, m) in monkeys.iter().enumerate() {
         println!("Monkey {} inspected items {} times.", i, m.inspect_count);
     }

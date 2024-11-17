@@ -18,8 +18,8 @@ enum Element {
 impl Display for Element {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Element::Monkey(m) => write!(f, "{}", m),
-            Element::Number(n) => write!(f, "{}", n),
+            Element::Monkey(m) => write!(f, "{m}"),
+            Element::Number(n) => write!(f, "{n}"),
         }
     }
 }
@@ -83,11 +83,11 @@ impl From<&str> for Operation {
 impl Display for Operation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Operation::Value(v) => write!(f, "{}", v),
-            Operation::Addition(m1, m2) => write!(f, "{} + {}", m1, m2),
-            Operation::Subtraction(m1, m2) => write!(f, "{} - {}", m1, m2),
-            Operation::Multiplication(m1, m2) => write!(f, "{} * {}", m1, m2),
-            Operation::Division(m1, m2) => write!(f, "{} / {}", m1, m2),
+            Operation::Value(v) => write!(f, "{v}"),
+            Operation::Addition(m1, m2) => write!(f, "{m1} + {m2}"),
+            Operation::Subtraction(m1, m2) => write!(f, "{m1} - {m2}"),
+            Operation::Multiplication(m1, m2) => write!(f, "{m1} * {m2}"),
+            Operation::Division(m1, m2) => write!(f, "{m1} / {m2}"),
         }
     }
 }
@@ -248,7 +248,7 @@ fn build(input: &str) -> Vec<Equation> {
 #[allow(dead_code)]
 fn print_equations(equations: &[Equation]) {
     for eq in equations {
-        println!("{}", eq);
+        println!("{eq}");
     }
 }
 

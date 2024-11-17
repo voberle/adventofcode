@@ -198,7 +198,7 @@ fn main() {
     let cubes = build(&input);
 
     let lava_exposed_sides = exposed_sides(&cubes);
-    println!("Part 1: {}", lava_exposed_sides);
+    println!("Part 1: {lava_exposed_sides}");
     println!(
         "Part 2: {}",
         exposed_sides_minus_droplets(&cubes, lava_exposed_sides)
