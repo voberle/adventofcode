@@ -1,8 +1,6 @@
-// https://adventofcode.com/2023/day/23
-
 use std::{
     collections::{HashMap, HashSet},
-    io::{self, BufRead},
+    io::{self, Read},
 };
 
 // NB: Direction and Grid code is mostly the same as Day 21.
@@ -14,10 +12,10 @@ enum Direction {
     South,
     West,
 }
-use Direction::*;
+use Direction::{East, North, South, West};
 
 impl Direction {
-    fn index(&self) -> usize {
+    fn index(self) -> usize {
         match self {
             North => 0,
             East => 1,
@@ -26,7 +24,7 @@ impl Direction {
         }
     }
 
-    fn opposite(&self) -> Self {
+    fn opposite(self) -> Self {
         match self {
             North => South,
             East => West,
@@ -47,14 +45,10 @@ struct Grid {
 
 #[allow(dead_code)]
 impl Grid {
-    fn build<R>(reader: &mut R) -> Self
-    where
-        R: BufRead,
-    {
+    fn build(input: &str) -> Self {
         let mut rows = 0;
-        let values: Vec<_> = reader
+        let values: Vec<_> = input
             .lines()
-            .filter_map(|result| result.ok())
             .flat_map(|l| {
                 rows += 1;
                 l.chars()
@@ -136,8 +130,8 @@ impl Grid {
 
 #[test]
 fn test_grid() {
-    let input = "123\n456";
-    let grid = Grid::build(&mut input.as_bytes());
+    const INPUT: &str = "123\n456";
+    let grid = Grid::build(INPUT);
     assert_eq!(grid.cols, 3);
     assert_eq!(grid.rows, 2);
     assert_eq!(grid.pos(0, 1), 1);
@@ -316,7 +310,7 @@ fn build_graph<const IGNORE_SLOPES: bool>(grid: &Grid, start: usize, end: usize)
     }
 
     // Connect the nodes
-    graph.iter_mut().for_each(|(key, val)| {
+    for (key, val) in &mut graph {
         // println!("Connecting nodes for {:?}", key);
         match key {
             Node::Start => {
@@ -341,7 +335,7 @@ fn build_graph<const IGNORE_SLOPES: bool>(grid: &Grid, start: usize, end: usize)
                 }
             }),
         }
-    });
+    }
     graph
 }
 
@@ -360,7 +354,7 @@ fn get_intersections(graph: &Graph) -> Vec<usize> {
 fn print_graph_as_graphviz<const IGNORE_SLOPES: bool>(graph: &Graph) {
     let edgeop = if IGNORE_SLOPES { "--" } else { "->" };
     println!("digraph Maze {{");
-    for (key, val) in graph.iter() {
+    for (key, val) in graph {
         for node in val.iter().flatten() {
             println!(
                 "    {} {} {} [label=\"{}\"];",
@@ -383,8 +377,7 @@ fn traverse_graph(graph: &Graph) {
     let mut discovered: HashSet<Node> = HashSet::new();
     let mut stack: Vec<Node> = Vec::new();
     stack.push(start);
-    while !stack.is_empty() {
-        let node = stack.pop().unwrap();
+    while let Some(node) = stack.pop() {
         if !discovered.contains(&node) {
             println!("-> {:?}", node);
             discovered.insert(node);
@@ -393,13 +386,7 @@ fn traverse_graph(graph: &Graph) {
                 .get(&node)
                 .unwrap()
                 .iter()
-                .filter_map(|node_len| {
-                    if let Some(n) = node_len {
-                        Some(n.0)
-                    } else {
-                        None
-                    }
-                })
+                .filter_map(|node_len| node_len.as_ref().map(|n| n.0))
                 .for_each(|next| {
                     stack.push(next);
                 });
@@ -415,7 +402,7 @@ fn longest_path_rec(
     node: &Node,
     curr_sum: u32,
 ) {
-    if discovered.contains(&node) {
+    if discovered.contains(node) {
         return;
     }
     discovered.insert(*node);
@@ -425,7 +412,7 @@ fn longest_path_rec(
         .entry(*node)
         .and_modify(|e| {
             if *e < curr_sum {
-                *e = curr_sum
+                *e = curr_sum;
             }
         })
         .or_insert(0);
@@ -445,7 +432,7 @@ fn longest_hike_step_count<const IGNORE_SLOPES: bool>(grid: &Grid) -> u32 {
     let start = 1;
     let end = grid.pos(grid.rows - 1, grid.cols - 2);
 
-    let graph = build_graph::<IGNORE_SLOPES>(&grid, start, end);
+    let graph = build_graph::<IGNORE_SLOPES>(grid, start, end);
 
     let mut discovered: HashSet<Node> = HashSet::new();
     let mut longest_path: HashMap<Node, u32> = HashMap::new();
@@ -459,7 +446,7 @@ fn debug_graph(grid: &Grid) {
     let start = 1;
     let end = grid.pos(grid.rows - 1, grid.cols - 2);
 
-    let graph = build_graph::<false>(&grid, start, end);
+    let graph = build_graph::<false>(grid, start, end);
     let intersections = get_intersections(&graph);
     println!("{:?}", intersections);
     grid.print_with_pos(&intersections);
@@ -467,8 +454,9 @@ fn debug_graph(grid: &Grid) {
 }
 
 fn main() {
-    let stdin = io::stdin();
-    let grid = Grid::build(&mut stdin.lock());
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let grid = Grid::build(&input);
 
     println!("Part 1: {}", longest_hike_step_count::<false>(&grid));
     println!("Part 2: {}", longest_hike_step_count::<true>(&grid));
@@ -477,16 +465,12 @@ fn main() {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use std::{fs::File, io::BufReader};
 
-    fn get_grid() -> Grid {
-        let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
-        Grid::build(&mut reader)
-    }
+    const INPUT_TEST: &str = include_str!("../resources/input_test");
 
     #[test]
     fn test_is_intersection() {
-        let grid = get_grid();
+        let grid = Grid::build(INPUT_TEST);
         assert!(!is_intersection(&grid, 1));
         assert!(is_intersection(&grid, 312));
         assert!(!is_intersection(&grid, 313));
@@ -494,7 +478,7 @@ pub mod tests {
 
     #[test]
     fn test_walk() {
-        let g = get_grid();
+        let g = Grid::build(INPUT_TEST);
         assert_eq!(walk::<false>(&g, 1, South), Some((g.pos(5, 3), 15)));
         assert_eq!(walk::<false>(&g, 1, North), None);
         assert_eq!(walk::<false>(&g, 1, East), None);
@@ -508,7 +492,7 @@ pub mod tests {
 
     #[test]
     fn test_part1_2() {
-        let grid = get_grid();
+        let grid = Grid::build(INPUT_TEST);
         assert_eq!(longest_hike_step_count::<false>(&grid), 94);
 
         assert_eq!(longest_hike_step_count::<true>(&grid), 154);
