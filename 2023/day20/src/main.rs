@@ -69,12 +69,15 @@ impl ModuleCommon {
 
     fn build(line: &str) -> Self {
         // module -> a, b, c
-        let src_dest: Vec<String> = line.split(" -> ").map(|s| s.to_string()).collect();
+        let src_dest: Vec<String> = line
+            .split(" -> ")
+            .map(std::string::ToString::to_string)
+            .collect();
         Self::new(
             src_dest[0].clone(),
             src_dest[1]
                 .split(", ")
-                .map(|s| s.to_string())
+                .map(std::string::ToString::to_string)
                 .collect::<Vec<String>>(),
         )
     }
@@ -244,7 +247,7 @@ struct Broadcast {
 }
 
 impl Broadcast {
-    const NAME: &str = "broadcaster";
+    const NAME: &'static str = "broadcaster";
 
     fn build(line: &str) -> Self {
         Self {
@@ -298,7 +301,7 @@ struct Button {
 }
 
 impl Button {
-    const NAME: &str = "button";
+    const NAME: &'static str = "button";
 
     fn new() -> Self {
         Self {
@@ -372,9 +375,9 @@ fn run_once_with_module_detection(
             let sent_pulses = module.exec(&received_pulse);
             for sent in sent_pulses {
                 if sent.value {
-                    count_high += 1
+                    count_high += 1;
                 } else {
-                    count_low += 1
+                    count_low += 1;
                 }
                 if let Some(mod_to_catch) = module_to_detect {
                     if *mod_to_catch == sent.to && sent.value == LOW {
