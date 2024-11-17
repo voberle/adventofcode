@@ -1,17 +1,15 @@
-// https://adventofcode.com/2023/day/14
-
 use std::io;
-use std::{fmt, io::BufRead};
+use std::{fmt, io::Read};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Table<T>
+struct Table<T>
 where
     T: Clone,
     T: From<char>,
 {
-    pub arr: Vec<T>,
-    pub width: usize,
-    pub height: usize,
+    arr: Vec<T>,
+    width: usize,
+    height: usize,
 }
 
 impl<T> Table<T>
@@ -19,25 +17,26 @@ where
     T: Clone,
     T: From<char>,
 {
-    pub fn new(arr: Vec<T>, width: usize, height: usize) -> Self {
+    fn new(arr: Vec<T>, width: usize, height: usize) -> Self {
         assert_eq!(arr.len(), width * height);
         Self { arr, width, height }
     }
 
-    pub fn empty() -> Self {
+    fn empty() -> Self {
         Self::new(Vec::new(), 0, 0)
     }
 
-    pub fn elt(&self, row: usize, col: usize) -> &T {
+    #[allow(dead_code)]
+    fn elt(&self, row: usize, col: usize) -> &T {
         &self.arr[row * self.width + col]
     }
 
-    pub fn row(&self, row: usize) -> &[T] {
+    fn row(&self, row: usize) -> &[T] {
         let idx = row * self.width;
         &self.arr[idx..idx + self.width]
     }
 
-    pub fn col(&self, col: usize) -> Vec<T> {
+    fn col(&self, col: usize) -> Vec<T> {
         // Much less efficient than line unfortunately
         self.arr
             .iter()
@@ -47,14 +46,10 @@ where
             .collect::<Vec<T>>()
     }
 
-    pub fn build<R>(reader: &mut R) -> Table<T>
-    where
-        R: BufRead,
-    {
+    fn build(input: &str) -> Table<T> {
         let mut p = Table::empty();
-        for l in reader.lines() {
-            let line = l.unwrap();
-            p.arr.extend(line.chars().map(|c| c.into()));
+        for line in input.lines() {
+            p.arr.extend(line.chars().map(std::convert::Into::into));
             p.width = line.len();
             p.height += 1;
         }
@@ -77,21 +72,20 @@ where
     }
 }
 
-pub fn build_tables<R, T>(reader: &mut R) -> Vec<Table<T>>
+#[allow(dead_code)]
+fn build_tables<T>(input: &str) -> Vec<Table<T>>
 where
-    R: BufRead,
     T: Clone,
     T: From<char>,
 {
     let mut patterns: Vec<Table<T>> = Vec::new();
     let mut p = Table::empty();
-    for l in reader.lines() {
-        let line = l.unwrap();
+    for line in input.lines() {
         if line.is_empty() {
             patterns.push(p);
             p = Table::empty();
         } else {
-            p.arr.extend(line.chars().map(|c| c.into()));
+            p.arr.extend(line.chars().map(std::convert::Into::into));
             p.width = line.len();
             p.height += 1;
         }
@@ -201,13 +195,9 @@ fn collapse_down(s: &[char]) -> Vec<char> {
     for c in s {
         match c {
             '#' => {
-                for _ in 0..o_cnt {
-                    res.push('O')
-                }
+                res.resize(res.len() + o_cnt, 'O');
                 o_cnt = 0;
-                for _ in 0..dot_cnt {
-                    res.push('.')
-                }
+                res.resize(res.len() + dot_cnt, '.');
                 dot_cnt = 0;
                 res.push(*c);
             }
@@ -220,12 +210,8 @@ fn collapse_down(s: &[char]) -> Vec<char> {
             _ => {}
         }
     }
-    for _ in 0..o_cnt {
-        res.push('O')
-    }
-    for _ in 0..dot_cnt {
-        res.push('.')
-    }
+    res.resize(res.len() + o_cnt, 'O');
+    res.resize(res.len() + dot_cnt, '.');
     res
 }
 
@@ -241,18 +227,18 @@ fn cycle_nth(platform: Table<char>, count: usize) -> Table<char> {
 // Returns the value and its period.
 fn find_period(platform: Table<char>, warmup: usize) -> (usize, Table<char>) {
     let initial_pattern = cycle_nth(platform, warmup);
-    println!("initial_pattern: {:?}", initial_pattern);
+    // println!("initial_pattern: {:?}", initial_pattern);
     let mut p = initial_pattern.clone();
     let mut i = 0;
     loop {
         i += 1;
         p = cycle(&p);
-        println!("{} cycles: {}", i, total_load_north(&p));
+        // println!("{} cycles: {}", i, total_load_north(&p));
         if p == initial_pattern {
             break;
         }
     }
-    println!("Period is {} cycles: {:?}", i, p);
+    // println!("Period is {} cycles: {:?}", i, p);
     (i, p)
 }
 
@@ -271,8 +257,9 @@ fn total_load_north_after_n_cycles(platform: Table<char>, cycles: usize) -> usiz
 }
 
 fn main() {
-    let stdin = io::stdin();
-    let platform = Table::build(&mut stdin.lock());
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let platform = Table::build(&input);
 
     println!("Part 1: {}", total_load_north(&collapse_north(&platform)));
 
@@ -283,9 +270,8 @@ fn main() {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use super::*;
-    use std::{fs::File, io::BufReader};
 
     #[test]
     fn test_collapse_down() {
@@ -307,17 +293,18 @@ pub mod tests {
         );
     }
 
+    const INPUT_TEST: &str = include_str!("../resources/input_test");
+    const RESULT_TEST: &str = include_str!("../resources/result_test");
+
     #[test]
     fn test_part1() {
-        let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
-        let platform = Table::build(&mut reader);
+        let platform = Table::build(INPUT_TEST);
         println!("{}", platform);
 
         let platform_collapsed = collapse_north(&platform);
         println!("{}", platform_collapsed);
 
-        let mut reader_res = BufReader::new(File::open("resources/result_test").unwrap());
-        let platform_res = Table::build(&mut reader_res);
+        let platform_res = Table::build(RESULT_TEST);
         println!("{}", platform_res);
 
         assert_eq!(platform_collapsed, platform_res);
@@ -325,17 +312,18 @@ pub mod tests {
         assert_eq!(total_load_north(&platform_collapsed), 136);
     }
 
+    const RESULT_TEST_1CYCLE: &str = include_str!("../resources/result_test_1cycle");
+    const RESULT_TEST_3CYCLE: &str = include_str!("../resources/result_test_3cycle");
+
     #[test]
     fn test_part2() {
-        let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
-        let platform = Table::build(&mut reader);
+        let platform = Table::build(INPUT_TEST);
         println!("{}", platform);
 
         let platform_1cycle = cycle(&platform);
         println!("{}", platform_1cycle);
 
-        let mut reader_res = BufReader::new(File::open("resources/result_test_1cycle").unwrap());
-        let platform_res = Table::build(&mut reader_res);
+        let platform_res = Table::build(RESULT_TEST_1CYCLE);
         println!("{}", platform_res);
 
         assert_eq!(platform_1cycle, platform_res);
@@ -345,8 +333,7 @@ pub mod tests {
         platform_3cycle = cycle(&platform_3cycle);
         println!("{}", platform_3cycle);
 
-        let mut reader_res3 = BufReader::new(File::open("resources/result_test_3cycle").unwrap());
-        let platform_res3 = Table::build(&mut reader_res3);
+        let platform_res3 = Table::build(RESULT_TEST_3CYCLE);
         println!("{}", platform_res);
 
         assert_eq!(platform_3cycle, platform_res3);
