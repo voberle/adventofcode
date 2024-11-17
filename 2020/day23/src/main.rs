@@ -11,7 +11,7 @@ fn cups_next_to_string(cups_next: &[usize], current: usize) -> String {
     let mut result = String::new();
     let mut p = current;
     loop {
-        result += &format!("{} ", p);
+        result += &format!("{p} ");
         p = cups_next[p];
         if p == current {
             break;

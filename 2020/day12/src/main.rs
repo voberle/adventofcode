@@ -25,7 +25,7 @@ impl Direction {
             1 => Self::East,
             2 => Self::South,
             3 => Self::West,
-            _ => panic!("Invalid index {}", i),
+            _ => panic!("Invalid index {i}"),
         }
     }
 

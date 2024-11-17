@@ -50,7 +50,7 @@ fn main() {
     let numbers = build(&input);
 
     let invalid_number = first_invalid_number(&numbers, 25);
-    println!("Part 1: {}", invalid_number);
+    println!("Part 1: {invalid_number}");
     println!("Part 2: {}", encryption_weakness(&numbers, invalid_number));
 }
 

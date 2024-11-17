@@ -9,7 +9,7 @@ pub fn cups_to_string(cups: &[u32], current: usize) -> String {
         .enumerate()
         .map(|(i, c)| {
             if i == current {
-                format!("({})", c)
+                format!("({c})")
             } else {
                 c.to_string()
             }
@@ -35,7 +35,7 @@ fn move_cups(cups: &mut Vec<u32>, moves: usize) {
             cups[(current + 3).rem_euclid(cups.len())],
         ];
         cups.retain(|v| !picks.contains(v));
-        println!("pick up: {:?}", picks);
+        println!("pick up: {picks:?}");
 
         // Cup label to use for the destination cup
         let mut destination_cup = current_cup - 1;
@@ -44,7 +44,7 @@ fn move_cups(cups: &mut Vec<u32>, moves: usize) {
         }
         loop {
             if let Some(dest_cup_pos) = cups.iter().position(|c| *c == destination_cup) {
-                println!("destination: {}", destination_cup);
+                println!("destination: {destination_cup}");
 
                 // Insert picked up cups after destination.
                 cups.insert(dest_cup_pos + 1, picks[0]);

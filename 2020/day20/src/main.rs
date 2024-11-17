@@ -158,7 +158,7 @@ fn print_graphviz(graph: &[Vec<usize>]) {
     println!("digraph {{");
     for (i, connections) in graph.iter().enumerate() {
         for c in connections {
-            println!("\t{} -> {};", i, c);
+            println!("\t{i} -> {c};");
         }
     }
     println!("}}");

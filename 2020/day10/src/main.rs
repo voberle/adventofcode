@@ -32,10 +32,10 @@ fn create_graph(adapters: &[u32]) -> Vec<Vec<usize>> {
 #[allow(dead_code)]
 fn print_graph(adapters: &[u32], graph: &[Vec<usize>]) {
     for (i, n) in adapters.iter().enumerate() {
-        println!("{}: jolt {}", i, n);
+        println!("{i}: jolt {n}");
     }
     for (i, n) in graph.iter().enumerate() {
-        println!("{}: {:?}", i, n);
+        println!("{i}: {n:?}");
     }
 }
 

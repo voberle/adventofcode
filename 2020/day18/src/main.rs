@@ -77,7 +77,7 @@ impl Expression {
                         let result = match operator {
                             Addition => val1 + val2,
                             Multiplication => val1 * val2,
-                            _ => panic!("Invalid operator: {:?}", operator),
+                            _ => panic!("Invalid operator: {operator:?}"),
                         };
                         // Push the result onto the value stack.
                         values.push(result);
@@ -96,7 +96,7 @@ impl Expression {
                         let result = match operator {
                             Addition => val1 + val2,
                             Multiplication => val1 * val2,
-                            _ => panic!("Invalid operator: {:?}", operator),
+                            _ => panic!("Invalid operator: {operator:?}"),
                         };
                         values.push(result);
                     }
@@ -112,7 +112,7 @@ impl Expression {
             let result = match operator {
                 Addition => val1 + val2,
                 Multiplication => val1 * val2,
-                _ => panic!("Invalid operator: {:?}", operator),
+                _ => panic!("Invalid operator: {operator:?}"),
             };
             values.push(result);
         }

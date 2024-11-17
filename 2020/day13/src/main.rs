@@ -54,7 +54,7 @@ fn _opt_depart_time(bus_ids: &[Option<u64>]) -> i128 {
         let candidate = max_timeoffset.0 * n - max_timeoffset.1;
 
         if n % 10_000_000_000 == 0 {
-            println!("candidate {}", candidate);
+            println!("candidate {candidate}");
         }
 
         if time_offset
