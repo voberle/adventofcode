@@ -1,17 +1,15 @@
-// https://adventofcode.com/2023/day/16
-
 use std::{collections::HashSet, io};
-use std::{fmt, io::BufRead};
+use std::{fmt, io::Read};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Table<T>
+struct Table<T>
 where
     T: Clone,
     T: From<char>,
 {
-    pub arr: Vec<T>,
-    pub width: usize,
-    pub height: usize,
+    arr: Vec<T>,
+    width: usize,
+    height: usize,
 }
 
 impl<T> Table<T>
@@ -19,42 +17,28 @@ where
     T: Clone,
     T: From<char>,
 {
-    pub fn new(arr: Vec<T>, width: usize, height: usize) -> Self {
+    fn new(arr: Vec<T>, width: usize, height: usize) -> Self {
         assert_eq!(arr.len(), width * height);
         Self { arr, width, height }
     }
 
-    pub fn empty() -> Self {
+    fn empty() -> Self {
         Self::new(Vec::new(), 0, 0)
     }
 
-    pub fn elt(&self, row: usize, col: usize) -> &T {
+    fn elt(&self, row: usize, col: usize) -> &T {
         &self.arr[row * self.width + col]
     }
 
-    pub fn row(&self, row: usize) -> &[T] {
+    fn row(&self, row: usize) -> &[T] {
         let idx = row * self.width;
         &self.arr[idx..idx + self.width]
     }
 
-    pub fn col(&self, col: usize) -> Vec<T> {
-        // Much less efficient than line unfortunately
-        self.arr
-            .iter()
-            .skip(col)
-            .step_by(self.width)
-            .cloned()
-            .collect::<Vec<T>>()
-    }
-
-    pub fn build<R>(reader: &mut R) -> Table<T>
-    where
-        R: BufRead,
-    {
+    fn build(input: &str) -> Table<T> {
         let mut p = Table::empty();
-        for l in reader.lines() {
-            let line = l.unwrap();
-            p.arr.extend(line.chars().map(|c| c.into()));
+        for line in input.lines() {
+            p.arr.extend(line.chars().map(std::convert::Into::into));
             p.width = line.len();
             p.height += 1;
         }
@@ -77,21 +61,20 @@ where
     }
 }
 
-pub fn build_tables<R, T>(reader: &mut R) -> Vec<Table<T>>
+#[allow(dead_code)]
+fn build_tables<T>(input: &str) -> Vec<Table<T>>
 where
-    R: BufRead,
     T: Clone,
     T: From<char>,
 {
     let mut patterns: Vec<Table<T>> = Vec::new();
     let mut p = Table::empty();
-    for l in reader.lines() {
-        let line = l.unwrap();
+    for line in input.lines() {
         if line.is_empty() {
             patterns.push(p);
             p = Table::empty();
         } else {
-            p.arr.extend(line.chars().map(|c| c.into()));
+            p.arr.extend(line.chars().map(std::convert::Into::into));
             p.width = line.len();
             p.height += 1;
         }
@@ -131,11 +114,11 @@ impl Position {
         }
     }
 
-    fn row(&self) -> usize {
+    fn row(self) -> usize {
         self.row as usize
     }
 
-    fn col(&self) -> usize {
+    fn col(self) -> usize {
         self.col as usize
     }
 }
@@ -209,19 +192,15 @@ fn next_directions(next_elt: char, direction: DirectionCb) -> Vec<DirectionCb> {
             }
         },
         '|' => match direction {
-            LEFT => vec![UP, DOWN],
-            RIGHT => vec![UP, DOWN],
-            UP => vec![direction],
-            DOWN => vec![direction],
+            LEFT | RIGHT => vec![UP, DOWN],
+            UP | DOWN => vec![direction],
             _ => {
                 panic!("Invalid direction {:?}", direction);
             }
         },
         '-' => match direction {
-            UP => vec![LEFT, RIGHT],
-            DOWN => vec![LEFT, RIGHT],
-            LEFT => vec![direction],
-            RIGHT => vec![direction],
+            UP | DOWN => vec![LEFT, RIGHT],
+            LEFT | RIGHT => vec![direction],
             _ => {
                 panic!("Invalid direction {:?}", direction);
             }
@@ -363,22 +342,23 @@ fn print_energized_cave(cave: &Table<char>, energized_points: &HashSet<DirectedP
 }
 
 fn main() {
-    let stdin = io::stdin();
-    let cave = Table::build(&mut stdin.lock());
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let cave = Table::build(&input);
 
     println!("Part 1: {}", energized_count(&cave));
     println!("Part 2: {}", highest_energized_count(&cave));
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use super::*;
-    use std::{fs::File, io::BufReader};
+
+    const INPUT_TEST: &str = include_str!("../resources/input_test");
 
     #[test]
     fn test_part1() {
-        let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
-        let cave = Table::build(&mut reader);
+        let cave = Table::build(INPUT_TEST);
         println!("{}", cave);
         assert_eq!(energized_count(&cave), 46);
     }
