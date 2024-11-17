@@ -1,9 +1,7 @@
-// https://adventofcode.com/2023/day/17
-
 use fxhash::{FxHashMap, FxHashSet};
 use std::{
     collections::BinaryHeap,
-    io::{self, BufRead},
+    io::{self, Read},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -13,10 +11,10 @@ enum Direction {
     South,
     West,
 }
-use Direction::*;
+use Direction::{North, East, South, West};
 
 impl Direction {
-    fn opposite(&self) -> Self {
+    fn opposite(self) -> Self {
         match self {
             North => South,
             East => West,
@@ -37,14 +35,10 @@ struct Grid {
 
 #[allow(dead_code)]
 impl Grid {
-    fn build<R>(reader: &mut R) -> Self
-    where
-        R: BufRead,
-    {
+    fn build(input: &str) -> Self {
         let mut rows = 0;
-        let values: Vec<_> = reader
+        let values: Vec<_> = input
             .lines()
-            .map_while(Result::ok)
             .flat_map(|l| {
                 rows += 1;
                 l.chars()
@@ -120,7 +114,7 @@ impl Grid {
 #[test]
 fn test_grid() {
     let input = "123\n456";
-    let grid = Grid::build(&mut input.as_bytes());
+    let grid = Grid::build(&input);
     assert_eq!(grid.cols, 3);
     assert_eq!(grid.rows, 2);
     assert_eq!(grid.pos(0, 1), 1);
@@ -218,6 +212,7 @@ fn find_shortest_path<const ULTRA_CRUCIBLE: bool>(grid: &Grid, start: usize, end
                 return None;
             }
 
+            #[allow(clippy::if_not_else)]
             if !ULTRA_CRUCIBLE {
                 // Not allowed: Going too long straight
                 if is_same_direction && line_len > 2 {
@@ -274,13 +269,13 @@ fn find_shortest_path<const ULTRA_CRUCIBLE: bool>(grid: &Grid, start: usize, end
         .map(|(k, _)| k)
         .unwrap();
 
-    let path_back = path_back(&previous, end_key, start);
-    grid.print_with_pos(&path_back);
+    // grid.print_with_pos(&path_back(&previous, end_key, start));
 
     assert_eq!(shortest_distance, *distance.get(end_key).unwrap());
     shortest_distance
 }
 
+#[allow(dead_code)]
 fn path_back(previous: &FxHashMap<HashKey, HashKey>, from: &HashKey, to: usize) -> Vec<usize> {
     let mut path_back: Vec<usize> = Vec::new();
     let mut p = *from;
@@ -306,8 +301,9 @@ fn minimal_heat_loss<const ULTRA_CRUCIBLE: bool>(grid: &Grid) -> u32 {
 }
 
 fn main() {
-    let stdin = io::stdin();
-    let grid = Grid::build(&mut stdin.lock());
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let grid = Grid::build(&input);
 
     println!("Part 1: {}", minimal_heat_loss::<false>(&grid));
     println!("Part 2: {}", minimal_heat_loss::<true>(&grid));
@@ -316,23 +312,22 @@ fn main() {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use std::{fs::File, io::BufReader};
+
+    const INPUT_TEST_1: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_2: &str = include_str!("../resources/input_test_2");
 
     #[test]
     fn test_part1() {
-        let mut reader = BufReader::new(File::open("resources/input_test_1").unwrap());
-        let grid = Grid::build(&mut reader);
+        let grid = Grid::build(INPUT_TEST_1);
         assert_eq!(minimal_heat_loss::<false>(&grid), 102);
     }
 
     #[test]
     fn test_part2() {
-        let mut reader1 = BufReader::new(File::open("resources/input_test_1").unwrap());
-        let grid1 = Grid::build(&mut reader1);
+        let grid1 = Grid::build(INPUT_TEST_1);
         assert_eq!(minimal_heat_loss::<true>(&grid1), 94);
 
-        let mut reader2 = BufReader::new(File::open("resources/input_test_2").unwrap());
-        let grid2 = Grid::build(&mut reader2);
+        let grid2 = Grid::build(INPUT_TEST_2);
         assert_eq!(minimal_heat_loss::<true>(&grid2), 71);
     }
 }
