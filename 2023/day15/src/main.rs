@@ -1,6 +1,4 @@
-// https://adventofcode.com/2023/day/15
-
-use std::io::{self, BufRead};
+use std::io::{self, Read};
 
 fn ascii(c: char) -> u32 {
     c as u32
@@ -10,16 +8,11 @@ fn hash(s: &str) -> u32 {
     s.chars().fold(0, |acc, c| (ascii(c) + acc) * 17 % 256)
 }
 
-fn build_records<R>(reader: &mut R) -> Vec<String>
-where
-    R: BufRead,
-{
-    let mut s = String::new();
-    reader.read_line(&mut s).unwrap();
-    s.trim().split(",").map(String::from).collect()
+fn build_records(input: &str) -> Vec<String> {
+    input.trim().split(',').map(String::from).collect()
 }
 
-fn sum_hashes(steps: &Vec<String>) -> u32 {
+fn sum_hashes(steps: &[String]) -> u32 {
     steps.iter().map(|s| hash(s)).sum()
 }
 
@@ -34,24 +27,18 @@ enum Operation {
 
 impl Operation {
     fn new(c: &str) -> Self {
-        if c.ends_with("-") {
-            let label = &c[..c.len() - 1];
-            return Self::Remove(hash(&label) as usize, label.to_string());
-        } else if c.contains("=") {
-            let v: Vec<&str> = c.split("=").collect();
-            return Self::Add(
-                hash(&v[0]) as usize,
-                v[0].to_string(),
-                v[1].parse().unwrap(),
-            );
+        if let Some(label) = c.strip_suffix('-') {
+            return Self::Remove(hash(label) as usize, label.to_string());
+        } else if c.contains('=') {
+            let v: Vec<&str> = c.split('=').collect();
+            return Self::Add(hash(v[0]) as usize, v[0].to_string(), v[1].parse().unwrap());
         }
         panic!("Cannot build Operation with {}", c);
     }
 
     fn box_nb(&self) -> usize {
         match self {
-            Operation::Remove(i, _) => *i,
-            Operation::Add(i, _, _) => *i,
+            Operation::Remove(i, _) | Operation::Add(i, _, _) => *i,
         }
     }
 }
@@ -68,8 +55,8 @@ fn test_operation_new() {
     );
 }
 
-fn build_operations(records: &Vec<String>) -> Vec<Operation> {
-    records.iter().map(|s| Operation::new(&s)).collect()
+fn build_operations(records: &[String]) -> Vec<Operation> {
+    records.iter().map(|s| Operation::new(s)).collect()
 }
 
 #[derive(Debug, Default)]
@@ -112,18 +99,19 @@ impl LightBox {
         self.lenses
             .iter()
             .enumerate()
-            .map(|(i, lens)| box_param * (i as u64 + 1) * lens.focal_len as u64)
+            .map(|(i, lens)| box_param * (i as u64 + 1) * u64::from(lens.focal_len))
             .sum()
     }
 }
 
 fn main() {
-    let stdin = io::stdin();
-    let records: Vec<String> = build_records(&mut stdin.lock());
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let records: Vec<String> = build_records(&input);
     println!("Part 1: {}", sum_hashes(&records));
 
     let operations = build_operations(&records);
-    let mut boxes: [LightBox; 256] = std::array::from_fn(|_| Default::default());
+    let mut boxes: [LightBox; 256] = std::array::from_fn(|_| LightBox::default());
     for op in operations {
         let idx = op.box_nb();
         boxes[idx].apply(op);
@@ -141,9 +129,9 @@ fn main() {
 
 #[cfg(test)]
 pub mod tests {
-    use std::{fs::File, io::BufReader};
-
     use super::*;
+
+    const INPUT_TEST: &str = include_str!("../resources/input_test");
 
     #[test]
     fn test_hash() {
@@ -155,8 +143,7 @@ pub mod tests {
 
     #[test]
     fn test_part1() {
-        let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
-        let records: Vec<String> = build_records(&mut reader);
+        let records: Vec<String> = build_records(INPUT_TEST);
         assert_eq!(sum_hashes(&records), 1320);
     }
 }
