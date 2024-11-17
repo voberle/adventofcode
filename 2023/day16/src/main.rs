@@ -96,114 +96,113 @@ impl Position {
 
     fn from_usize(row: usize, col: usize) -> Self {
         Self {
-            row: row as i32,
-            col: col as i32,
+            row: i32::try_from(row).unwrap(),
+            col: i32::try_from(col).unwrap(),
         }
     }
 
     // Allows to create a position just outside the table.
-    fn negative(idx: usize, dir: DirectionCb, dims: &Position) -> Self {
+    fn negative(idx: usize, dir: Direction, dims: Position) -> Self {
+        let i = i32::try_from(idx).unwrap();
         match dir {
-            RIGHT => Self::new(idx as i32, -1),
-            LEFT => Self::new(idx as i32, dims.col),
-            DOWN => Self::new(-1, idx as i32),
-            UP => Self::new(dims.row, idx as i32),
-            _ => {
-                panic!("Invalid direction {:?}", dir);
-            }
+            Right => Self::new(i, -1),
+            Left => Self::new(i, dims.col),
+            Down => Self::new(-1, i),
+            Up => Self::new(dims.row, i),
         }
     }
 
+    #[allow(clippy::cast_sign_loss)]  // that's not nice, or buggy?
     fn row(self) -> usize {
         self.row as usize
     }
 
+    #[allow(clippy::cast_sign_loss)]
     fn col(self) -> usize {
         self.col as usize
     }
 }
 
-type DirectionCb = fn(&Position, &Position) -> Option<Position>;
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum Direction {
+    Left,
+    Right,
+    Up,
+    Down,
+}
 
-const LEFT: DirectionCb = |p: &Position, _: &Position| {
-    if p.col == 0 {
-        return None;
-    }
-    Some(Position::new(p.row, p.col - 1))
-};
+use Direction::{Down, Left, Right, Up};
 
-const RIGHT: DirectionCb = |p: &Position, dims: &Position| {
-    if p.col >= dims.col - 1 {
-        return None;
+impl Direction {
+    fn exec_move(self, p: Position, dims: Position) -> Option<Position> {
+        match self {
+            Left => {
+                if p.col == 0 {
+                    return None;
+                }
+                Some(Position::new(p.row, p.col - 1))
+            }
+            Right => {
+                if p.col >= dims.col - 1 {
+                    return None;
+                }
+                Some(Position::new(p.row, p.col + 1))
+            }
+            Up => {
+                if p.row == 0 {
+                    return None;
+                }
+                Some(Position::new(p.row - 1, p.col))
+            }
+            Down => {
+                if p.row >= dims.row - 1 {
+                    return None;
+                }
+                Some(Position::new(p.row + 1, p.col))
+            }
+        }
     }
-    Some(Position::new(p.row, p.col + 1))
-};
-
-const UP: DirectionCb = |p: &Position, _: &Position| {
-    if p.row == 0 {
-        return None;
-    }
-    Some(Position::new(p.row - 1, p.col))
-};
-
-const DOWN: DirectionCb = |p: &Position, dims: &Position| {
-    if p.row >= dims.row - 1 {
-        return None;
-    }
-    Some(Position::new(p.row + 1, p.col))
-};
+}
 
 #[test]
 fn test_move_functions() {
     let dims: Position = Position::new(20, 10);
     let p = Position::new(2, 3);
-    assert_eq!(LEFT(&p, &dims), Some(Position::new(2, 2)));
-    assert_eq!(RIGHT(&p, &dims), Some(Position::new(2, 4)));
-    assert_eq!(UP(&p, &dims), Some(Position::new(1, 3)));
-    assert_eq!(DOWN(&p, &dims), Some(Position::new(3, 3)));
+    assert_eq!(Left.exec_move(p, dims), Some(Position::new(2, 2)));
+    assert_eq!(Right.exec_move(p, dims), Some(Position::new(2, 4)));
+    assert_eq!(Up.exec_move(p, dims), Some(Position::new(1, 3)));
+    assert_eq!(Down.exec_move(p, dims), Some(Position::new(3, 3)));
     let p1 = Position::new(0, 0);
-    assert_eq!(LEFT(&p1, &dims), None);
-    assert_eq!(UP(&p1, &dims), None);
+    assert_eq!(Left.exec_move(p1, dims), None);
+    assert_eq!(Up.exec_move(p1, dims), None);
     let p2 = Position::new(19, 9);
-    assert_eq!(RIGHT(&p2, &dims), None);
-    assert_eq!(DOWN(&p2, &dims), None);
+    assert_eq!(Right.exec_move(p2, dims), None);
+    assert_eq!(Down.exec_move(p2, dims), None);
 }
 
 // We find the next directions to go by knowing which element we are on and from which direction we come.
-fn next_directions(next_elt: char, direction: DirectionCb) -> Vec<DirectionCb> {
+fn next_directions(next_elt: char, direction: Direction) -> Vec<Direction> {
     match next_elt {
         '.' => vec![direction],
         '/' => match direction {
-            LEFT => vec![DOWN],
-            RIGHT => vec![UP],
-            UP => vec![RIGHT],
-            DOWN => vec![LEFT],
-            _ => {
-                panic!("Invalid direction {:?}", direction);
-            }
+            Left => vec![Down],
+            Right => vec![Up],
+            Up => vec![Right],
+            Down => vec![Left],
         },
         '\\' => match direction {
-            LEFT => vec![UP],
-            RIGHT => vec![DOWN],
-            UP => vec![LEFT],
-            DOWN => vec![RIGHT],
-            _ => {
-                panic!("Invalid direction {:?}", direction);
-            }
+            Left => vec![Up],
+            Right => vec![Down],
+            Up => vec![Left],
+            Down => vec![Right],
         },
         '|' => match direction {
-            LEFT | RIGHT => vec![UP, DOWN],
-            UP | DOWN => vec![direction],
-            _ => {
-                panic!("Invalid direction {:?}", direction);
-            }
+            Left | Right => vec![Up, Down],
+            Up | Down => vec![direction],
         },
         '-' => match direction {
-            UP | DOWN => vec![LEFT, RIGHT],
-            LEFT | RIGHT => vec![direction],
-            _ => {
-                panic!("Invalid direction {:?}", direction);
-            }
+            Up | Down => vec![Left, Right],
+            Left | Right => vec![direction],
         },
         _ => {
             panic!("Invalid cave element {}", next_elt);
@@ -214,11 +213,11 @@ fn next_directions(next_elt: char, direction: DirectionCb) -> Vec<DirectionCb> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct DirectedPos {
     position: Position,
-    direction: DirectionCb,
+    direction: Direction,
 }
 
 impl DirectedPos {
-    fn new(position: Position, direction: DirectionCb) -> Self {
+    fn new(position: Position, direction: Direction) -> Self {
         Self {
             position,
             direction,
@@ -234,10 +233,10 @@ fn move_beam(
     let dims = Position::from_usize(cave.height, cave.width);
 
     let mut position = dir_pos.position;
-    let mut directions: Vec<DirectionCb> = vec![dir_pos.direction];
+    let mut directions: Vec<Direction> = vec![dir_pos.direction];
     assert!(!directions.is_empty());
 
-    while let Some(next_pos) = directions[0](&position, &dims) {
+    while let Some(next_pos) = directions[0].exec_move(position, dims) {
         position = next_pos;
         let next_elt = cave.elt(position.row(), position.col());
         directions = next_directions(*next_elt, directions[0]);
@@ -279,7 +278,7 @@ fn energized_count_from(cave: &Table<char>, initial_dir_pos: DirectedPos) -> usi
 
 fn energized_count(cave: &Table<char>) -> usize {
     let dims = Position::from_usize(cave.height, cave.width);
-    let initial_dir_pos = DirectedPos::new(Position::negative(0, RIGHT, &dims), RIGHT);
+    let initial_dir_pos = DirectedPos::new(Position::negative(0, Right, dims), Right);
     energized_count_from(cave, initial_dir_pos)
 }
 
@@ -289,14 +288,14 @@ fn highest_energized_count(cave: &Table<char>) -> usize {
     let mut initial_dp: Vec<DirectedPos> = Vec::new();
     for row in 0..cave.height {
         initial_dp.push(DirectedPos::new(
-            Position::negative(row, RIGHT, &dims),
-            RIGHT,
+            Position::negative(row, Right, dims),
+            Right,
         ));
-        initial_dp.push(DirectedPos::new(Position::negative(row, LEFT, &dims), LEFT));
+        initial_dp.push(DirectedPos::new(Position::negative(row, Left, dims), Left));
     }
     for col in 0..cave.width {
-        initial_dp.push(DirectedPos::new(Position::negative(col, DOWN, &dims), DOWN));
-        initial_dp.push(DirectedPos::new(Position::negative(col, UP, &dims), UP));
+        initial_dp.push(DirectedPos::new(Position::negative(col, Down, dims), Down));
+        initial_dp.push(DirectedPos::new(Position::negative(col, Up, dims), Up));
     }
 
     initial_dp
