@@ -29,6 +29,17 @@ members = [
     "day25",
 ]
 
+[workspace.lints.clippy]
+bool_to_int_with_if = "warn"
+flat_map_option = "warn"
+items_after_statements = "warn"
+match_same_arms = "warn"
+needless-for-each = "warn"
+range_plus_one = "warn"
+redundant_closure_for_method_calls = "warn"
+semicolon_if_nothing_returned = "warn"
+trivially_copy_pass_by_ref = "warn"
+
 [workspace.package]
 version = "0.1.0"
 edition = "2021"

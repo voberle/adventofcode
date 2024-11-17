@@ -5,6 +5,9 @@ authors.workspace = true
 description.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 fxhash = "0.2.1"
 regex = "1"
