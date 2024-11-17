@@ -1,7 +1,5 @@
-// https://adventofcode.com/2023/day/24
-
 use std::{
-    io::{self, BufRead},
+    io::{self, Read},
     ops::RangeInclusive,
 };
 
@@ -13,8 +11,8 @@ struct Pos {
     z: i128,
 }
 
-#[cfg(test)]
 impl Pos {
+    #[allow(dead_code)]
     fn new(x: i128, y: i128, z: i128) -> Self {
         Self { x, y, z }
     }
@@ -103,6 +101,7 @@ impl Hailstone2d {
     //  a1x + b1y + c1 = 0 and a2x + b2y + c2 = 0,
     // Intersection is:
     //  (x, y) = ((b1c2-b2c1)/(a1b2-a2b1), (c1a2-c2a1)/(a1b2-a2b1))
+    #[allow(clippy::cast_precision_loss)]
     fn intersection(h1: &Hailstone2d, h2: &Hailstone2d) -> Option<(f64, f64)> {
         let m1: f64 = h1.v.y as f64 / h1.v.x as f64;
         let a1: f64 = m1;
@@ -148,6 +147,7 @@ impl Hailstone2d {
         }
     }
 
+    #[allow(clippy::cast_precision_loss)]
     fn crosses_in_future(&self, b: &Hailstone2d, cross: &(f64, f64)) -> bool {
         (cross.0 - self.p.x as f64) * self.v.x as f64 > 0.0
             && (cross.1 - self.p.y as f64) * self.v.y as f64 > 0.0
@@ -278,6 +278,7 @@ fn change_hailstone_to_rock_still_reference(
     }
 }
 
+#[allow(clippy::cast_possible_truncation)]
 fn find_collision_in_2d<const RANGE: i128>(hailstones: &[Hailstone2d]) -> Pos2d {
     for v1 in -RANGE..RANGE {
         for v2 in -RANGE..RANGE {
@@ -304,6 +305,7 @@ fn find_collision_in_2d<const RANGE: i128>(hailstones: &[Hailstone2d]) -> Pos2d 
     panic!("Didn't work :-(");
 }
 
+#[allow(clippy::similar_names)]
 fn perfect_collision_initial_pos(hailstones: &[Hailstone]) -> i128 {
     let hailstones_on_xy = project_xy(hailstones);
     let rock_xy = find_collision_in_2d::<500>(&hailstones_on_xy);
@@ -314,13 +316,9 @@ fn perfect_collision_initial_pos(hailstones: &[Hailstone]) -> i128 {
     rock_xy.x + rock_xy.y + rock_xz.y
 }
 
-fn build_hailstones<R>(reader: &mut R) -> Vec<Hailstone>
-where
-    R: BufRead,
-{
+fn build_hailstones(input: &str) -> Vec<Hailstone> {
     let mut hailstones = Vec::new();
-    for l in reader.lines() {
-        let line = l.unwrap();
+    for line in input.lines() {
         let pv: Vec<&str> = line.split(" @ ").collect();
         let pos: Vec<i128> = pv[0]
             .split(", ")
@@ -337,9 +335,11 @@ where
     hailstones
 }
 
+#[allow(clippy::unreadable_literal)]
 fn main() {
-    let stdin = io::stdin();
-    let hailstones = build_hailstones(&mut stdin.lock());
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let hailstones = build_hailstones(&input);
     let area = 200000000000000f64..=400000000000000f64;
 
     println!("Part 1: {}", count_crossing_hailstones(&hailstones, &area));
@@ -350,12 +350,12 @@ fn main() {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use std::{fs::File, io::BufReader};
+
+    const INPUT_TEST: &str = include_str!("../resources/input_test");
 
     #[test]
     fn test_part1_2() {
-        let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
-        let hailstones = build_hailstones(&mut reader);
+        let hailstones = build_hailstones(INPUT_TEST);
         let area = 7f64..=27f64;
         assert_eq!(count_crossing_hailstones(&hailstones, &area), 2);
 
