@@ -134,7 +134,7 @@ fn build(input: &str) -> Vec<Instruction> {
             } else if let Some(p) = re_move_position.captures(line) {
                 Instruction::MovePosition(usize(&p[1]), usize(&p[2]))
             } else {
-                panic!("Invalid instruction {}", line)
+                panic!("Invalid instruction {line}")
             }
         })
         .collect()

@@ -56,7 +56,7 @@ mod tests {
 
     #[test]
     fn test_is_triangle() {
-        assert_eq!(is_triangle(&[5, 10, 25]), false);
+        assert!(!is_triangle(&[5, 10, 25]));
     }
 
     #[test]

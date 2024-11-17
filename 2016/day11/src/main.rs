@@ -59,8 +59,8 @@ impl Object {
 impl fmt::Display for Object {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Generator(e) => write!(f, "{}G", e),
-            Self::Microchip(e) => write!(f, "{}M", e),
+            Self::Generator(e) => write!(f, "{e}G"),
+            Self::Microchip(e) => write!(f, "{e}M"),
         }
     }
 }

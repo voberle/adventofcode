@@ -39,7 +39,7 @@ fn build(input: &str) -> Vec<Node> {
                     use_perc: int(&parts[6]),
                 }
             } else {
-                panic!("Invalid input {}", line)
+                panic!("Invalid input {line}")
             }
         })
         .collect()

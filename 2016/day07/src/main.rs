@@ -140,22 +140,22 @@ mod tests {
 
     #[test]
     fn test_is_abba() {
-        assert_eq!(is_abba(&['a', 'b', 'b', 'a']), true);
-        assert_eq!(is_abba(&['a', 'a', 'a', 'a']), false);
+        assert!(is_abba(&['a', 'b', 'b', 'a']));
+        assert!(!is_abba(&['a', 'a', 'a', 'a']));
     }
 
     #[test]
     fn test_support_tls() {
-        assert_eq!(support_tls(&build_parts("abba[mnop]qrst")), true);
-        assert_eq!(support_tls(&build_parts("abcd[bddb]xyyx")), false);
-        assert_eq!(support_tls(&build_parts("aaaa[qwer]tyui")), false);
-        assert_eq!(support_tls(&build_parts("ioxxoj[asdfgh]zxcvbn")), true);
+        assert!(support_tls(&build_parts("abba[mnop]qrst")));
+        assert!(!support_tls(&build_parts("abcd[bddb]xyyx")));
+        assert!(!support_tls(&build_parts("aaaa[qwer]tyui")));
+        assert!(support_tls(&build_parts("ioxxoj[asdfgh]zxcvbn")));
     }
 
     #[test]
     fn test_is_aba() {
-        assert_eq!(is_aba(&['a', 'b', 'a']), true);
-        assert_eq!(is_aba(&['a', 'a', 'a']), false);
+        assert!(is_aba(&['a', 'b', 'a']));
+        assert!(!is_aba(&['a', 'a', 'a']));
     }
 
     #[test]
@@ -163,14 +163,14 @@ mod tests {
         let e = Part::External(vec!['a', 'b', 'a']);
         assert_eq!(e.get_aba(), vec![vec!['a', 'b', 'a']]);
         let i = Part::Internal(vec!['b', 'a', 'b']);
-        assert_eq!(i.contains_aba_as_bab(&['a', 'b', 'a']), true);
+        assert!(i.contains_aba_as_bab(&['a', 'b', 'a']));
     }
 
     #[test]
     fn test_support_ssl() {
-        assert_eq!(support_ssl(&build_parts("aba[bab]xyz")), true);
-        assert_eq!(support_ssl(&build_parts("xyx[xyx]xyx")), false);
-        assert_eq!(support_ssl(&build_parts("aaa[kek]eke")), true);
-        assert_eq!(support_ssl(&build_parts("zazbz[bzb]cdb")), true);
+        assert!(support_ssl(&build_parts("aba[bab]xyz")));
+        assert!(!support_ssl(&build_parts("xyx[xyx]xyx")));
+        assert!(support_ssl(&build_parts("aaa[kek]eke")));
+        assert!(support_ssl(&build_parts("zazbz[bzb]cdb")));
     }
 }

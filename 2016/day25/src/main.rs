@@ -38,7 +38,7 @@ impl Index<char> for Registers {
             'b' => &self.b,
             'c' => &self.c,
             'd' => &self.d,
-            _ => panic!("Invalid index {}", reg),
+            _ => panic!("Invalid index {reg}"),
         }
     }
 }
@@ -50,7 +50,7 @@ impl IndexMut<char> for Registers {
             'b' => &mut self.b,
             'c' => &mut self.c,
             'd' => &mut self.d,
-            _ => panic!("Invalid index {}", reg),
+            _ => panic!("Invalid index {reg}"),
         }
     }
 }

@@ -3,8 +3,8 @@ use std::io::{self, Read};
 use itertools::Itertools;
 
 fn hash(door_id: &str, index: i32) -> String {
-    let digest = md5::compute(format!("{}{}", door_id, index).as_bytes());
-    format!("{:x}", digest)
+    let digest = md5::compute(format!("{door_id}{index}").as_bytes());
+    format!("{digest:x}")
 }
 
 const START: &str = "00000";

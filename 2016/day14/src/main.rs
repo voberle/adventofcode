@@ -1,8 +1,8 @@
 use std::io::{self, Read};
 
 fn calc_hash(salt: &str, i: usize) -> String {
-    let digest = md5::compute(format!("{}{}", salt, i).as_bytes());
-    format!("{:x}", digest)
+    let digest = md5::compute(format!("{salt}{i}").as_bytes());
+    format!("{digest:x}")
 }
 
 fn has_three_char_in_row(s: &[char]) -> Option<char> {

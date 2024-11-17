@@ -114,22 +114,10 @@ mod tests {
 
     #[test]
     fn test_is_real_room() {
-        assert_eq!(
-            Room::build("aaaaa-bbb-z-y-x-123[abxyz]").is_real_room(),
-            true
-        );
-        assert_eq!(
-            Room::build("a-b-c-d-e-f-g-h-987[abcde]").is_real_room(),
-            true
-        );
-        assert_eq!(
-            Room::build("not-a-real-room-404[oarel]").is_real_room(),
-            true
-        );
-        assert_eq!(
-            Room::build("totally-real-room-200[decoy]").is_real_room(),
-            false
-        );
+        assert!(Room::build("aaaaa-bbb-z-y-x-123[abxyz]").is_real_room());
+        assert!(Room::build("a-b-c-d-e-f-g-h-987[abcde]").is_real_room());
+        assert!(Room::build("not-a-real-room-404[oarel]").is_real_room());
+        assert!(!Room::build("totally-real-room-200[decoy]").is_real_room());
     }
 
     #[test]

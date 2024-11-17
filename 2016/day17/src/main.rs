@@ -42,8 +42,8 @@ impl fmt::Display for Direction {
 const ALL_DIRECTIONS: [Direction; 4] = [Up, Down, Left, Right];
 
 fn hash(passcode: &str, path: &str) -> String {
-    let digest = md5::compute(format!("{}{}", passcode, path).as_bytes());
-    format!("{:x}", digest)
+    let digest = md5::compute(format!("{passcode}{path}").as_bytes());
+    format!("{digest:x}")
 }
 
 fn open_doors(passcode: &str, path: &str) -> Vec<bool> {
