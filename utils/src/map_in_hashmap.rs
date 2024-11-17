@@ -1,6 +1,6 @@
 use fxhash::FxHashMap;
 
-/// Printing a 2D map that is stored in a HashMap
+/// Printing a 2D map that is stored in a `HashMap`
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Pos {
@@ -27,7 +27,7 @@ fn borders(map: &FxHashMap<Pos, char>) -> (Pos, Pos) {
     (min_pos, max_pos)
 }
 
-fn print_with_positions(map: &FxHashMap<Pos, char>, positions: Vec<Pos>) {
+fn print_with_positions(map: &FxHashMap<Pos, char>, positions: &[Pos]) {
     const RED: &str = "\x1b[31m";
     const BLUE: &str = "\x1b[94m";
     const RESET: &str = "\x1b[0m";
@@ -40,7 +40,7 @@ fn print_with_positions(map: &FxHashMap<Pos, char>, positions: Vec<Pos>) {
                 continue;
             }
             if let Some(c) = map.get(&pos) {
-                print!("{BLUE}{}{RESET}", c);
+                print!("{BLUE}{c}{RESET}");
             } else {
                 print!(" ");
             }
@@ -51,5 +51,5 @@ fn print_with_positions(map: &FxHashMap<Pos, char>, positions: Vec<Pos>) {
 
 #[allow(dead_code)]
 fn print(map: &FxHashMap<Pos, char>) {
-    print_with_positions(map, vec![]);
+    print_with_positions(map, &[]);
 }
