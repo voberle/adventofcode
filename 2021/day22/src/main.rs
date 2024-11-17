@@ -447,7 +447,7 @@ mod tests {
         assert_eq!(vol_bf, 1511);
         assert_eq!(a.volume(), 1331);
         assert_eq!(b.volume(), 216);
-        let a_minus_b_vol: u64 = a.split(&b).iter().map(|c| c.volume()).sum();
+        let a_minus_b_vol: u64 = a.split(&b).iter().map(super::Cuboid::volume).sum();
         assert_eq!(a_minus_b_vol + b.volume(), vol_bf);
     }
 

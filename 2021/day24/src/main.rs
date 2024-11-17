@@ -79,18 +79,18 @@ impl Instruction {
 
     fn to_rust(&self) -> String {
         match self {
-            Instruction::Inp(a) => format!("{} = *it.next().unwrap();", a),
-            Instruction::Add(a, b) => format!("{} += {};", a, b),
+            Instruction::Inp(a) => format!("{a} = *it.next().unwrap();"),
+            Instruction::Add(a, b) => format!("{a} += {b};"),
             Instruction::Mul(a, b) => {
                 if b.is_zero() {
-                    format!("{} = 0;", a)
+                    format!("{a} = 0;")
                 } else {
-                    format!("{} *= {};", a, b)
+                    format!("{a} *= {b};")
                 }
             }
-            Instruction::Div(a, b) => format!("{} /= {};", a, b),
-            Instruction::Mod(a, b) => format!("{} %= {};", a, b),
-            Instruction::Eql(a, b) => format!("{} = if {} == {} {{ 1 }} else {{ 0 }};", a, a, b),
+            Instruction::Div(a, b) => format!("{a} /= {b};"),
+            Instruction::Mod(a, b) => format!("{a} %= {b};"),
+            Instruction::Eql(a, b) => format!("{a} = if {a} == {b} {{ 1 }} else {{ 0 }};"),
         }
     }
 }

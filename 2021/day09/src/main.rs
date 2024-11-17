@@ -43,9 +43,9 @@ impl Grid {
             for p in row * self.cols..(row + 1) * self.cols {
                 let c = self.values[p];
                 if positions.contains(&p) {
-                    print!("{RED}{}{RESET}", c);
+                    print!("{RED}{c}{RESET}");
                 } else {
-                    print!("{}", c);
+                    print!("{c}");
                 }
             }
             println!();

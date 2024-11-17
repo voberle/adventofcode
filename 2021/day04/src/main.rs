@@ -23,8 +23,8 @@ impl Board {
             for col in 0..self.0[row].len() {
                 let spot = self.0[row][col];
                 match spot {
-                    Spot::Unmarked(v) => print!("{}\t", v),
-                    Spot::Marked(v) => print!("{RED}{}{RESET}\t", v),
+                    Spot::Unmarked(v) => print!("{v}\t"),
+                    Spot::Marked(v) => print!("{RED}{v}{RESET}\t"),
                 }
             }
             println!();

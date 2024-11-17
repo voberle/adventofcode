@@ -124,7 +124,7 @@ impl fmt::Display for Scanner {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "-- scanner {} --", self.scanner_number)?;
         for p in &self.positions {
-            writeln!(f, "{}", p)?;
+            writeln!(f, "{p}")?;
         }
         Ok(())
     }

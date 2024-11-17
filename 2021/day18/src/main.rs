@@ -235,7 +235,7 @@ impl SnailfishNb {
 impl fmt::Display for SnailfishNb {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            SnailfishNb::Number(v) => write!(f, "{}", v),
+            SnailfishNb::Number(v) => write!(f, "{v}"),
             SnailfishNb::Pair(p) => write!(f, "[{},{}]", p.0, p.1),
         }
     }

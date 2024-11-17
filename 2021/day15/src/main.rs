@@ -31,9 +31,9 @@ trait Cave {
             for p in row * self.get_cols()..(row + 1) * self.get_cols() {
                 let c = self.get_risk_level(p);
                 if positions.contains(&p) {
-                    print!("{RED}{}{RESET}", c);
+                    print!("{RED}{c}{RESET}");
                 } else {
-                    print!("{}", c);
+                    print!("{c}");
                 }
             }
             println!();

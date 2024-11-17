@@ -32,9 +32,9 @@ impl Grid {
             for p in row * self.cols..(row + 1) * self.cols {
                 let c = self.values[p];
                 if c == 0 {
-                    print!("{RED}{}{RESET}", c);
+                    print!("{RED}{c}{RESET}");
                 } else {
-                    print!("{}", c);
+                    print!("{c}");
                 }
             }
             println!();
