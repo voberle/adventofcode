@@ -24,11 +24,7 @@ with following in `$CARGO_HOME/cargo-generate.toml`:
 
 ## Clippy
 
-I try to have all exercises free of any default Clippy warnings.
-
-I also run Clippy in pedantic mode regularly, and add interesting checks to the workspace cargo file.
-
-    cargo clippy -- -W clippy::all -W clippy::pedantic -A clippy::uninlined_format_args
+All exercises are free of any Clippy warnings. Clippy is set by default in pedantic mode in the workspace cargo file.
 
 ## Compatibility
 

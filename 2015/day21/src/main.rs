@@ -12,6 +12,7 @@ mod shop {
     }
 
     #[derive(Debug, Clone)]
+    #[allow(clippy::module_name_repetitions)]
     pub struct ShopItem {
         name: String,
         pub item: Item,
@@ -23,7 +24,7 @@ mod shop {
         }
 
         fn empty() -> Self {
-            Self { name: "".to_string(), item: Item { cost: 0, damage: 0, armor: 0 } }
+            Self { name: String::new(), item: Item { cost: 0, damage: 0, armor: 0 } }
         }
     }
 
@@ -193,7 +194,7 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let boss = build_boss(&input);
-    println!("Boss {:?}", boss);
+    println!("Boss {boss:?}");
 
     println!("Part 1: {}", least_gold_and_win(&boss, 100));
     println!("Part 2: {}", most_gold_and_loose(&boss, 100));

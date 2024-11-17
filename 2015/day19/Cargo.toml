@@ -5,6 +5,9 @@ edition.workspace = true
 authors.workspace = true
 description.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 fxhash = "0.2.1"
 rand = "0.8.5"

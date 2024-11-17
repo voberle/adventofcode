@@ -30,7 +30,7 @@ fn distinct_molecules_count(replacements: &[(String, String)], molecule: &str) -
             let mut new_mol = molecule.to_string();
             new_mol.replace_range(idx..idx + source.len(), dest);
             set.insert(new_mol);
-        })
+        });
     }
     set.len()
 }
@@ -40,7 +40,7 @@ fn recursive_min_find(
     input: &str,
     steps_so_far: usize,
 ) -> Option<usize> {
-    for (d, s) in dest_to_source.iter() {
+    for (d, s) in dest_to_source {
         if let Some(idx) = input.find(d) {
             let mut new_mol = input.to_string();
             new_mol.replace_range(idx..idx + d.len(), s);

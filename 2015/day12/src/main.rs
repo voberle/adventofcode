@@ -21,9 +21,8 @@ fn closing_bracket_position(s: &str, pos: usize) -> Option<usize> {
         if c == '}' {
             if open == 0 {
                 return Some(i);
-            } else {
-                open -= 1;
             }
+            open -= 1;
         }
         if c == '{' {
             open += 1;
@@ -40,9 +39,8 @@ fn opening_bracket_position(s: &str, pos: usize) -> Option<usize> {
         if c == '{' {
             if open == 0 {
                 return Some(s.len() - i);
-            } else {
-                open -= 1;
             }
+            open -= 1;
         }
         if c == '}' {
             open += 1;
@@ -53,6 +51,8 @@ fn opening_bracket_position(s: &str, pos: usize) -> Option<usize> {
 }
 
 fn sum_all_minus_red(input: &str) -> i32 {
+    const PATTERN: &str = r#":"red""#;
+
     // We search the position of :"red", as the semi-colon indicates it's a red in a an object, not in an array.
     // Then for each red, we search for the opening bracket before and the closing one after, and remove the section in between.
     // Just need to be careful to get the correct bracket - done with the opening/closing_bracket_position functions.
@@ -60,7 +60,6 @@ fn sum_all_minus_red(input: &str) -> i32 {
     // The string with the red parts removed
     let mut new = input.to_string();
 
-    const PATTERN: &str = r#":"red""#;
     while let Some(pos) = new.find(PATTERN) {
         if let Some(opening_bracket) = opening_bracket_position(&new, pos) {
             if let Some(closing_bracket) = closing_bracket_position(&new, pos) {
@@ -98,7 +97,7 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(sum_all_minus_red(r#"[1,2,3]"#), 6);
+        assert_eq!(sum_all_minus_red(r"[1,2,3]"), 6);
         assert_eq!(sum_all_minus_red(r#"[1,{"c":"red","b":2},3]"#), 4);
         assert_eq!(sum_all_minus_red(r#"{"d":"red","e":[1,2,3,4],"f":5}"#), 0);
         assert_eq!(sum_all_minus_red(r#"[1,"red",5]"#), 6);

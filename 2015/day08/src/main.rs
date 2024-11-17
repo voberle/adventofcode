@@ -10,7 +10,8 @@ fn total_string_chars(input: &str) -> usize {
     while let Some(c) = iter.next() {
         if c == '\n' || c == '"' {
             continue;
-        } else if c == '\\' {
+        }
+        if c == '\\' {
             if let Some(&n) = iter.peek() {
                 if n == '\\' || n == '"' {
                     iter.next();
@@ -32,10 +33,7 @@ fn newly_encoded_string_code_size(line: &str) -> usize {
 }
 
 fn total_newly_encoded_string_code(input: &str) -> usize {
-    input
-        .lines()
-        .map(newly_encoded_string_code_size)
-        .sum()
+    input.lines().map(newly_encoded_string_code_size).sum()
 }
 
 fn part1(input: &str) -> usize {

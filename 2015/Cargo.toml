@@ -29,6 +29,12 @@ members = [
     "day25",
 ]
 
+[workspace.lints.clippy]
+pedantic = "deny"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
 [workspace.package]
 version = "0.1.0"
 edition = "2021"

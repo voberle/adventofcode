@@ -8,11 +8,11 @@ fn look_and_say(s: &str) -> String {
         count += 1;
         if let Some(&next) = iter.peek() {
             if next != c {
-                result.push_str(&format!("{}{}", count, c));
+                result.push_str(&format!("{count}{c}"));
                 count = 0;
             }
         } else {
-            result.push_str(&format!("{}{}", count, c));
+            result.push_str(&format!("{count}{c}"));
         }
     }
     result

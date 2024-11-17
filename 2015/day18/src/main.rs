@@ -10,7 +10,7 @@ pub enum Direction {
     SouthEast,
     SouthWest,
 }
-use Direction::*;
+use Direction::{East, North, NorthEast, NorthWest, South, SouthEast, SouthWest, West};
 
 const ALL_DIRECTIONS: [Direction; 8] = [
     North, East, South, West, NorthEast, NorthWest, SouthEast, SouthWest,
@@ -24,7 +24,7 @@ pub struct Grid {
 }
 
 impl Grid {
-    pub fn build(input: &str) -> Self {
+    fn build(input: &str) -> Self {
         let mut rows = 0;
         let values: Vec<_> = input
             .lines()
@@ -45,9 +45,9 @@ impl Grid {
             for p in row * self.cols..(row + 1) * self.cols {
                 let c = self.values[p];
                 if positions.contains(&p) {
-                    print!("{RED}{}{RESET}", c);
+                    print!("{RED}{c}{RESET}");
                 } else {
-                    print!("{}", c);
+                    print!("{c}");
                 }
             }
             println!();
@@ -74,6 +74,7 @@ impl Grid {
         pos % self.cols == 0
     }
 
+    #[must_use]
     pub fn direction_forbidden(&self, pos: usize, direction: &Direction) -> bool {
         match direction {
             North => self.north_forbidden(pos),
@@ -88,6 +89,7 @@ impl Grid {
     }
 
     // Assumes validity of the move has been checked before with `can_go`.
+    #[must_use]
     pub fn position_in(&self, pos: usize, direction: &Direction) -> usize {
         match direction {
             North => pos - self.cols,
@@ -102,6 +104,7 @@ impl Grid {
     }
 
     // Get the up to 8 positions around
+    #[must_use]
     pub fn neighbors(&self, pos: usize) -> Vec<usize> {
         ALL_DIRECTIONS
             .iter()

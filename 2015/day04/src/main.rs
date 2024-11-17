@@ -5,14 +5,14 @@ use rayon::prelude::*;
 
 #[inline]
 fn starts_with(digest: &Digest, start: &str) -> bool {
-    format!("{:x}", digest).starts_with(start)
+    format!("{digest:x}").starts_with(start)
 }
 
 fn find_lowest_number<const MAX: u32>(secret_key: &str, start: &str) -> u32 {
     (1..MAX)
         .into_par_iter()
         .filter_map(|n| {
-            let digest = md5::compute(format!("{}{}", secret_key, n).as_bytes());
+            let digest = md5::compute(format!("{secret_key}{n}").as_bytes());
             if starts_with(&digest, start) {
                 Some(n)
             } else {

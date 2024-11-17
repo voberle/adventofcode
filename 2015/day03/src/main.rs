@@ -8,10 +8,10 @@ pub enum Direction {
     South,
     West,
 }
-use Direction::*;
+use Direction::{East, North, South, West};
 
 impl Direction {
-    pub fn new(c: char) -> Self {
+    fn new(c: char) -> Self {
         match c {
             '^' => North,
             '>' => East,
@@ -33,7 +33,7 @@ impl Pos {
         Self { row, col }
     }
 
-    fn towards(&self, dir: &Direction) -> Pos {
+    fn towards(&self, dir: Direction) -> Pos {
         match dir {
             North => Pos::new(self.row - 1, self.col),
             South => Pos::new(self.row + 1, self.col),
@@ -52,7 +52,7 @@ fn at_least_one_present(dirs: &Vec<Direction>) -> usize {
     let mut visited: FxHashSet<Pos> = FxHashSet::default();
     visited.insert(santa);
     for d in dirs {
-        santa = santa.towards(d);
+        santa = santa.towards(*d);
         visited.insert(santa);
     }
     visited.len()
@@ -66,12 +66,12 @@ fn with_robot_santa(dirs: &Vec<Direction>) -> usize {
 
     let mut turn = false;
     for d in dirs {
-        if !turn {
-            santa = santa.towards(d);
-            visited.insert(santa);
-        } else {
-            robot = robot.towards(d);
+        if turn {
+            robot = robot.towards(*d);
             visited.insert(robot);
+        } else {
+            santa = santa.towards(*d);
+            visited.insert(santa);
         }
         turn ^= true; // toggle the boolean
     }

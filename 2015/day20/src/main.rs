@@ -19,6 +19,7 @@ fn house_presents_count<const MULT: usize>(house_nb: usize) -> usize {
     // if house_nb % 10_000 == 0 { println!("House {house_nb}: {c}"); }
 }
 
+#[allow(clippy::maybe_infinite_iter)]
 fn lowest_house_to_get(presents_count: usize) -> usize {
     let present_count_adjusted = presents_count / 10;
     (1..)
@@ -64,6 +65,7 @@ fn house_presents_count_lazy_elfs<const MULT: usize>(
     // if house_nb % 10_000 == 0 { println!("House {house_nb}: {c}"); }
 }
 
+#[allow(clippy::maybe_infinite_iter)]
 fn lowest_house_to_get_lazy_elfs(presents_count: usize) -> usize {
     // Tracks how many presents each elf delivered.
     let mut elves: Vec<usize> = Vec::new();

@@ -48,7 +48,7 @@ fn best_route_from(
             .entry(node.clone())
             .and_modify(|e| {
                 if cmp(*e, curr_distance) {
-                    *e = curr_distance
+                    *e = curr_distance;
                 }
             })
             .or_insert(curr_distance);

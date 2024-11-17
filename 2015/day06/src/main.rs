@@ -26,7 +26,7 @@ where
         }
     }
 
-    pub fn pos(&self, row: usize, col: usize) -> usize {
+    fn pos(&self, row: usize, col: usize) -> usize {
         row * self.cols + col
     }
 }
@@ -38,7 +38,7 @@ pub struct Point {
 }
 
 impl Point {
-    pub const fn new(row: usize, col: usize) -> Self {
+    const fn new(row: usize, col: usize) -> Self {
         Point { row, col }
     }
 }

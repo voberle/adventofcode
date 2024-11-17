@@ -44,8 +44,8 @@ impl Input {
 impl fmt::Display for Input {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Input::AsWire(v) => write!(f, "{}", v),
-            Input::AsSignal(v) => write!(f, "{}", v),
+            Input::AsWire(v) => write!(f, "{v}"),
+            Input::AsSignal(v) => write!(f, "{v}"),
         }
     }
 }
@@ -84,9 +84,8 @@ impl<const TYPE: u8> Gate for BinaryOp<TYPE> {
             if let Some(s2) = self.inputs[1].signal(signals) {
                 if TYPE == AND {
                     return Some((self.target.clone(), s1 & s2));
-                } else {
-                    return Some((self.target.clone(), s1 | s2));
                 }
+                return Some((self.target.clone(), s1 | s2));
             }
         }
         None
@@ -129,9 +128,8 @@ impl<const DIR: u8> Gate for Shift<DIR> {
         if let Some(s1) = self.input.signal(signals) {
             if DIR == LEFT {
                 return Some((self.target.clone(), s1 << self.value));
-            } else {
-                return Some((self.target.clone(), s1 >> self.value));
             }
+            return Some((self.target.clone(), s1 >> self.value));
         }
         None
     }
@@ -168,9 +166,8 @@ impl<const TYPE: u8> Gate for Unary<TYPE> {
         if let Some(s1) = self.input.signal(signals) {
             if TYPE == NOT {
                 return Some((self.target.clone(), !s1));
-            } else {
-                return Some((self.target.clone(), s1));
             }
+            return Some((self.target.clone(), s1));
         }
         None
     }
@@ -301,7 +298,7 @@ fn main() {
     // print_graphviz(&circuit);
 
     let signal_on_a = signal_to_wire(&circuit, "a");
-    println!("Part 1: {}", signal_on_a);
+    println!("Part 1: {signal_on_a}");
     println!(
         "Part 2: {}",
         signal_to_wire_part2(&mut circuit, signal_on_a, "a")

@@ -20,7 +20,7 @@ fn two_different_non_overlapping_pairs(password: &str) -> bool {
         .collect();
     if pair_chars.len() > 1 {
         // If there are at least two pairs, dedup them to see if they are not all the same
-        pair_chars.sort();
+        pair_chars.sort_unstable();
         pair_chars.dedup();
         return pair_chars.len() > 1;
     }
@@ -70,7 +70,7 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let n = next_password(&input);
-    println!("Part 1: {}", n);
+    println!("Part 1: {n}");
     println!("Part 2: {}", next_password(&n));
 }
 

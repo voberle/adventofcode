@@ -23,6 +23,7 @@ fn assert_real_input_assumptions(weights: &[u32]) {
 }
 
 // Get the weight each group must have
+#[allow(clippy::cast_possible_truncation)]
 fn get_group_weight<const GROUP_COUNT: usize>(weights: &[u32]) -> u32 {
     let total_weight = weights.iter().sum::<u32>();
     assert!(total_weight % GROUP_COUNT as u32 == 0);
@@ -31,7 +32,7 @@ fn get_group_weight<const GROUP_COUNT: usize>(weights: &[u32]) -> u32 {
 
 // Returns the quantum entanglement aka the product of all the weights.
 fn get_qe(weights: &[u32]) -> u64 {
-    weights.iter().map(|e| *e as u64).product::<u64>()
+    weights.iter().map(|e| u64::from(*e)).product::<u64>()
 }
 
 // Find what is the minimum size the group 1 can have just based on the group weights, not trying to divide them.
@@ -67,7 +68,7 @@ fn ordered_valid_groups(weights: &[u32], group_size: usize, required_sum: u32) -
         .filter(|v| v.iter().copied().sum::<u32>() == required_sum)
         .map(|v| {
             // not using get_qe as params are not exactly what we need
-            let p = v.iter().map(|e| **e as u64).product::<u64>();
+            let p = v.iter().map(|e| u64::from(**e)).product::<u64>();
             (v, p)
         })
         .sorted_by_key(|(_, p)| *p)
@@ -80,7 +81,7 @@ fn subset(weights: &[u32], to_remove: &[u32]) -> Vec<u32> {
     weights
         .iter()
         .filter(|w| !to_remove.contains(w))
-        .cloned()
+        .copied()
         .collect()
 }
 
@@ -151,6 +152,7 @@ fn find_partition_optimized(v: &[u32]) -> bool {
 }
 
 // Idea from https://stackoverflow.com/a/4804123
+#[allow(clippy::cast_possible_wrap, clippy::cast_sign_loss)]
 fn find_3partition(v: &[u32]) -> bool {
     let sum = v.iter().map(|e| *e as i32).sum::<i32>();
     if sum % 3 == 1 {
@@ -190,22 +192,19 @@ fn find_3partition(v: &[u32]) -> bool {
 // Find the 6 group number whose sum is 512 and with the smallest smallest quantum entanglement (product of them),
 // and see if the remaining numbers can be divided into 2 or 3.
 fn group1_qe<const GROUP_COUNT: usize>(weights: &[u32]) -> u64 {
-    println!("Into {} groups:", GROUP_COUNT);
+    println!("Into {GROUP_COUNT} groups:");
     assert_real_input_assumptions(weights);
 
     let group_weight = get_group_weight::<GROUP_COUNT>(weights);
     let min_group_1_size = get_group1_min_possible_size(weights, group_weight);
-    println!(
-        "Need at least {} elements in a group to reach {}",
-        min_group_1_size, group_weight
-    );
+    println!("Need at least {min_group_1_size} elements in a group to reach {group_weight}");
 
     // note that the max should be decreased there to a more reasonable value
     for group_1_size in min_group_1_size..weights.len() {
-        println!("Checking group size {}", group_1_size);
+        println!("Checking group size {group_1_size}");
         let valid_group1s = ordered_valid_groups(weights, group_1_size, group_weight);
         if valid_group1s.is_empty() {
-            println!("Group size {} doesn't work", group_1_size);
+            println!("Group size {group_1_size} doesn't work");
             continue;
         }
         // let permutations_count = group_1_permutations_count(weights, group_1_size, group_weight);
@@ -229,7 +228,7 @@ fn group1_qe<const GROUP_COUNT: usize>(weights: &[u32]) -> u64 {
                     return get_qe(&perm);
                 }
             } else {
-                panic!("Group count of {} not supported", GROUP_COUNT);
+                panic!("Group count of {GROUP_COUNT} not supported");
             }
         }
     }

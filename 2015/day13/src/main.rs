@@ -26,6 +26,11 @@ fn build(input: &str) -> HappinessFactors {
         .collect()
 }
 
+#[allow(
+    clippy::cast_sign_loss,
+    clippy::cast_possible_wrap,
+    clippy::cast_possible_truncation
+)]
 const fn wrapping_index(i: i32, len: usize) -> usize {
     // https://stackoverflow.com/a/45397704
     let c = len as i32;
@@ -49,6 +54,11 @@ fn list_of_guests(happiness_factors: &HappinessFactors) -> Vec<String> {
         .collect()
 }
 
+#[allow(
+    clippy::cast_sign_loss,
+    clippy::cast_possible_wrap,
+    clippy::cast_possible_truncation
+)]
 fn max_happiness_change(happiness_factors: &HappinessFactors) -> i32 {
     // Brute-forced by finding all possible permutations of guests
     list_of_guests(happiness_factors)
@@ -62,10 +72,10 @@ fn max_happiness_change(happiness_factors: &HappinessFactors) -> i32 {
                     let n1 = perm[wrapping_index(i as i32 - 1, perm.len())];
                     let n2 = perm[wrapping_index(i as i32 + 1, perm.len())];
                     happiness_factors
-                        .get(&(g.to_string(), n1.to_string()))
+                        .get(&((*g).to_string(), n1.to_string()))
                         .unwrap()
                         + happiness_factors
-                            .get(&(g.to_string(), n2.to_string()))
+                            .get(&((*g).to_string(), n2.to_string()))
                             .unwrap()
                 })
                 .sum()
@@ -77,10 +87,10 @@ fn max_happiness_change(happiness_factors: &HappinessFactors) -> i32 {
 fn happiness_with_me(happiness_factors: &mut HappinessFactors) -> i32 {
     const ME: &str = "Vincent";
     let guests = list_of_guests(happiness_factors);
-    guests.iter().for_each(|g| {
+    for g in &guests {
         happiness_factors.insert((ME.to_string(), g.to_string()), 0);
         happiness_factors.insert((g.to_string(), ME.to_string()), 0);
-    });
+    }
 
     max_happiness_change(happiness_factors)
 }

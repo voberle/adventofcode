@@ -22,7 +22,7 @@ impl Index<char> for Registers {
         match reg {
             'a' => &self.a,
             'b' => &self.b,
-            _ => panic!("Invalid index {}", reg),
+            _ => panic!("Invalid index {reg}"),
         }
     }
 }
@@ -32,7 +32,7 @@ impl IndexMut<char> for Registers {
         match reg {
             'a' => &mut self.a,
             'b' => &mut self.b,
-            _ => panic!("Invalid index {}", reg),
+            _ => panic!("Invalid index {reg}"),
         }
     }
 }
@@ -48,6 +48,7 @@ enum Instruction {
 }
 
 impl Instruction {
+    #[allow(clippy::match_on_vec_items)]
     fn build(s: &str) -> Self {
         let parts: Vec<_> = s.split(' ').collect();
         match parts[0] {
@@ -62,6 +63,11 @@ impl Instruction {
     }
 
     // Executes the instruction, modifying the registers if needed, and returns the next instruction ID.
+    #[allow(
+        clippy::cast_sign_loss,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     fn execute(&self, ir: usize, regs: &mut Registers) -> usize {
         match self {
             Instruction::Half(r) => {

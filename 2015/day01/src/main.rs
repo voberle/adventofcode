@@ -1,5 +1,6 @@
 use std::io::{self, Read};
 
+#[allow(clippy::cast_possible_wrap)]
 fn part1(input: &str) -> i64 {
     let up_count = input.chars().filter(|c| *c == '(').count();
     let down_count = input.chars().filter(|c| *c == ')').count();
@@ -12,7 +13,7 @@ fn part2(input: &str) -> usize {
         floor += match c {
             '(' => 1,
             ')' => -1,
-            _ => panic!("Invalid char {}", c),
+            _ => panic!("Invalid char {c}"),
         };
         if floor == -1 {
             return i + 1;
