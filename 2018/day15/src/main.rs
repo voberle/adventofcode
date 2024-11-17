@@ -18,7 +18,7 @@ impl UnitType {
         match c {
             'E' => Self::Elf,
             'G' => Self::Goblin,
-            _ => panic!("Invalid unit char: {}", c),
+            _ => panic!("Invalid unit char: {c}"),
         }
     }
 

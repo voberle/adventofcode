@@ -114,7 +114,7 @@ fn main() {
 
     let seconds = find_message::<12>(&sky);
     println!("Part 1: Read above");
-    println!("Part 2: {}", seconds);
+    println!("Part 2: {seconds}");
 }
 
 #[cfg(test)]

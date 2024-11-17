@@ -40,7 +40,7 @@ pub fn fancy(lumber_collection: &Grid) -> Result<()> {
             let mut spans_vec = vec![];
             for p in row * grid.cols..(row + 1) * grid.cols {
                 let c = grid.values[p];
-                let mut span = Span::styled(format!("{}", c), Style::default().fg(Color::Black));
+                let mut span = Span::styled(format!("{c}"), Style::default().fg(Color::Black));
                 if c == Area::OpenGround {
                     span.style = Style::default().fg(Color::Gray);
                 }
@@ -57,7 +57,7 @@ pub fn fancy(lumber_collection: &Grid) -> Result<()> {
         let p = Paragraph::new(text)
             .block(
                 Block::default()
-                    .title(format!("Minute {}", minute))
+                    .title(format!("Minute {minute}"))
                     .borders(Borders::ALL)
                     .border_style(Style::default().black()),
             )

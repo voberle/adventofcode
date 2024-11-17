@@ -109,7 +109,7 @@ fn exec(
 
     regs[ip_binding] = *ip;
     if DEBUG {
-        print!("[{}] ip={} {} {:?}", step, ip, ins, regs);
+        print!("[{step}] ip={ip} {ins} {regs:?}");
     }
 
     ins.exec(regs);
@@ -117,7 +117,7 @@ fn exec(
     *ip = regs[ip_binding];
     *ip += 1;
     if DEBUG {
-        println!(" {:?}", regs);
+        println!(" {regs:?}");
     }
 }
 

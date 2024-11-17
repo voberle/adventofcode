@@ -73,9 +73,9 @@ impl Grid {
             for p in row * self.cols..(row + 1) * self.cols {
                 let c = self.values[p];
                 if positions.contains(&p) {
-                    print!("{BOLD}{GREEN}{}{RESET}", c);
+                    print!("{BOLD}{GREEN}{c}{RESET}");
                 } else {
-                    print!("{}", c);
+                    print!("{c}");
                 }
             }
             println!();
@@ -243,10 +243,10 @@ fn main() {
     let map = Grid::build(&input);
 
     let (x, y) = first_crash(&map);
-    println!("Part 1: {},{}", x, y);
+    println!("Part 1: {x},{y}");
 
     let (x, y) = last_cart_location(&map);
-    println!("Part 2: {},{}", x, y);
+    println!("Part 2: {x},{y}");
 }
 
 #[cfg(test)]

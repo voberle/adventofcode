@@ -87,9 +87,9 @@ impl Grid {
             for p in row * self.cols..(row + 1) * self.cols {
                 let c = self.values[p];
                 match c {
-                    OpenGround => print!("{YELLOW}{}{RESET}", c),
-                    Tree => print!("{GREEN}{}{RESET}", c),
-                    Lumberyard => print!("{BLUE}{}{RESET}", c),
+                    OpenGround => print!("{YELLOW}{c}{RESET}"),
+                    Tree => print!("{GREEN}{c}{RESET}"),
+                    Lumberyard => print!("{BLUE}{c}{RESET}"),
                 }
             }
             println!();

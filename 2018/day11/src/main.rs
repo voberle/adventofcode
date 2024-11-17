@@ -68,9 +68,9 @@ fn main() {
     let serial_number = input.trim().parse().unwrap();
 
     let (x, y) = largest_power_3x3(serial_number);
-    println!("Part 1: {},{}", x, y);
+    println!("Part 1: {x},{y}");
     let (x, y, size) = largest_power_any_size(serial_number);
-    println!("Part 2: {},{},{}", x, y, size);
+    println!("Part 2: {x},{y},{size}");
 }
 
 #[cfg(test)]

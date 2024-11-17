@@ -79,7 +79,7 @@ fn fast_version(input: &str) {
         let v = input.iter().filter(|&&c| c != b'a' + i && c != b'A' + i);
         min = usize::min(react(v), min);
     }
-    println!("Part 2: {}", min);
+    println!("Part 2: {min}");
 }
 
 fn main() {

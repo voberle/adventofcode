@@ -162,9 +162,9 @@ impl fmt::Display for Worker {
 
 #[allow(dead_code)]
 fn print_workers_state(workers: &[Worker], seconds: usize) {
-    print!("{}\t", seconds);
+    print!("{seconds}\t");
     for w in workers {
-        print!("{}\t", w);
+        print!("{w}\t");
     }
     println!();
 }

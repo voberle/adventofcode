@@ -76,7 +76,7 @@ fn print(lines: &[Line]) {
     for y in 0..=max_y {
         for x in min_x..=max_x {
             let c = if contains(lines, x, y) { '#' } else { '.' };
-            print!("{}", c);
+            print!("{c}");
         }
         println!();
     }

@@ -132,9 +132,9 @@ impl Grid {
             for p in row * self.cols..(row + 1) * self.cols {
                 let c = self.values[p];
                 if [WaterAtRest, WaterFlow].contains(&c) {
-                    print!("{BLUE}{}{RESET}", c);
+                    print!("{BLUE}{c}{RESET}");
                 } else {
-                    print!("{}", c);
+                    print!("{c}");
                 }
             }
             println!();
@@ -312,7 +312,7 @@ fn main() {
     let water_flow_count = count_tiles(&grid, WaterFlow);
 
     println!("Part 1: {}", water_at_rest_count + water_flow_count);
-    println!("Part 2: {}", water_at_rest_count);
+    println!("Part 2: {water_at_rest_count}");
 }
 
 #[cfg(test)]

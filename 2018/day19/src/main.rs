@@ -101,7 +101,7 @@ fn exec(ip_binding: u32, instructions: &[Instruction], regs: &mut Registers, ip:
 
     regs[ip_binding] = *ip;
     if DEBUG {
-        print!("ip={} {} {:?}", ip, ins, regs);
+        print!("ip={ip} {ins} {regs:?}");
     }
 
     ins.exec(regs);
@@ -109,7 +109,7 @@ fn exec(ip_binding: u32, instructions: &[Instruction], regs: &mut Registers, ip:
     *ip = regs[ip_binding];
     *ip += 1;
     if DEBUG {
-        println!(" {:?}", regs);
+        println!(" {regs:?}");
     }
 }
 

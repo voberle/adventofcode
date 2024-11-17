@@ -53,7 +53,7 @@ fn preprocess_regex(regex: &[u8], skip_empty_options: bool) -> Vec<Elt> {
             output.push(Elt::CloseGroup(level));
             level -= 1;
         } else {
-            panic!("Invalid char in regex {}", c)
+            panic!("Invalid char in regex {c}")
         }
     }
     output
@@ -70,8 +70,8 @@ impl GraphNode {
     #[cfg(test)]
     fn new(value: &str, next: &[usize]) -> Self {
         Self {
-            value: value.bytes().map(|c| Direction::new(c)).collect(),
-            next: FxHashSet::from_iter(next.iter().cloned()),
+            value: value.bytes().map(Direction::new).collect(),
+            next: FxHashSet::from_iter(next.iter().copied()),
         }
     }
 
@@ -180,15 +180,15 @@ where
 
     for (i, n) in nodes.iter().enumerate() {
         let name = n.dirs_to_string();
-        writeln!(out, "\t{} [shape = oval label = \"{}\"];", i, name)?;
+        writeln!(out, "\t{i} [shape = oval label = \"{name}\"];")?;
     }
 
     for (i, f) in nodes.iter().enumerate() {
         if f.next.is_empty() {
-            writeln!(out, "\t{} -> END;", i)?;
+            writeln!(out, "\t{i} -> END;")?;
         } else {
             for n in &f.next {
-                writeln!(out, "\t{} -> {};", i, n)?;
+                writeln!(out, "\t{i} -> {n};")?;
             }
         }
     }
@@ -446,7 +446,7 @@ mod tests {
 
     fn save_gv(input: &[u8], nb: usize) {
         let graph = parse_regex(input);
-        let path = format!("resources/input_test_{}.gv", nb);
+        let path = format!("resources/input_test_{nb}.gv");
         let mut output = File::create(path).unwrap();
         write_graphviz(&mut output, &graph).unwrap();
     }

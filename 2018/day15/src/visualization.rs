@@ -43,7 +43,7 @@ pub fn fancy(map: &Grid) -> Result<()> {
             let mut spans_vec = vec![];
             for p in row * map.cols..(row + 1) * map.cols {
                 let c = map.values[p];
-                let mut span = Span::styled(format!("{}", c), Style::default().fg(Color::Black));
+                let mut span = Span::styled(format!("{c}"), Style::default().fg(Color::Black));
                 if c == '.' {
                     span.style = Style::default().fg(Color::Gray);
                 }
@@ -60,7 +60,7 @@ pub fn fancy(map: &Grid) -> Result<()> {
         let p = Paragraph::new(text)
             .block(
                 Block::default()
-                    .title(format!("Round {}", combat_rounds))
+                    .title(format!("Round {combat_rounds}"))
                     .borders(Borders::ALL)
                     .border_style(Style::default().black()),
             )
