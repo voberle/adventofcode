@@ -214,9 +214,9 @@ pub mod tests {
 
     #[test]
     fn test_part1() {
-        let records1: Vec<Record> = build_records(&INPUT_TEST_1);
+        let records1: Vec<Record> = build_records(INPUT_TEST_1);
         assert_eq!(sum_of_arrangements(&records1), 6);
-        let records2: Vec<Record> = build_records(&INPUT_TEST_2);
+        let records2: Vec<Record> = build_records(INPUT_TEST_2);
         assert_eq!(sum_of_arrangements(&records2), 21);
     }
 }

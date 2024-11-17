@@ -112,7 +112,7 @@ impl Position {
         }
     }
 
-    #[allow(clippy::cast_sign_loss)]  // that's not nice, or buggy?
+    #[allow(clippy::cast_sign_loss)] // that's not nice, or buggy?
     fn row(self) -> usize {
         self.row as usize
     }
@@ -205,7 +205,7 @@ fn next_directions(next_elt: char, direction: Direction) -> Vec<Direction> {
             Left | Right => vec![direction],
         },
         _ => {
-            panic!("Invalid cave element {}", next_elt);
+            panic!("Invalid cave element {next_elt}");
         }
     }
 }
@@ -358,7 +358,7 @@ mod tests {
     #[test]
     fn test_part1() {
         let cave = Table::build(INPUT_TEST);
-        println!("{}", cave);
+        println!("{cave}");
         assert_eq!(energized_count(&cave), 46);
     }
 }

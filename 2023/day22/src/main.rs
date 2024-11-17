@@ -160,7 +160,7 @@ fn test_xy_overlap() {
     assert!(!e.xy_overlap(&b));
     assert!(e.xy_overlap(&c));
     let z = Brick::from(1, 1, 8, 1, 1, 9);
-    println!("g: {:?}", z);
+    println!("g: {z:?}");
     assert!(z.xy_overlap(&z));
     assert!(z.xy_overlap(&a));
     assert!(!z.xy_overlap(&b));
@@ -257,7 +257,7 @@ impl Snapshot {
     #[allow(dead_code)]
     fn print(&self) {
         for b in &self.bricks {
-            println!("{:?}", b);
+            println!("{b:?}");
         }
     }
 }
@@ -347,8 +347,8 @@ fn main() {
     let snapshot = Snapshot::build(&input);
 
     let (safe_to_disintegrate, bricks_that_would_fall_total) = disintegrate_all_counts(&snapshot);
-    println!("Part 1: {}", safe_to_disintegrate);
-    println!("Part 2: {}", bricks_that_would_fall_total);
+    println!("Part 1: {safe_to_disintegrate}");
+    println!("Part 2: {bricks_that_would_fall_total}");
 }
 
 #[cfg(test)]

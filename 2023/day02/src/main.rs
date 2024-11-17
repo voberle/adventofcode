@@ -58,8 +58,8 @@ fn main() {
 
     let (sum_ids, power_sum) = analyze_games(&input);
 
-    println!("Part 1: {}", sum_ids);
-    println!("Part 2: {}", power_sum);
+    println!("Part 1: {sum_ids}");
+    println!("Part 2: {power_sum}");
 }
 
 #[cfg(test)]

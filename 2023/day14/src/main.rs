@@ -299,13 +299,13 @@ mod tests {
     #[test]
     fn test_part1() {
         let platform = Table::build(INPUT_TEST);
-        println!("{}", platform);
+        println!("{platform}");
 
         let platform_collapsed = collapse_north(&platform);
-        println!("{}", platform_collapsed);
+        println!("{platform_collapsed}");
 
         let platform_res = Table::build(RESULT_TEST);
-        println!("{}", platform_res);
+        println!("{platform_res}");
 
         assert_eq!(platform_collapsed, platform_res);
 
@@ -318,23 +318,23 @@ mod tests {
     #[test]
     fn test_part2() {
         let platform = Table::build(INPUT_TEST);
-        println!("{}", platform);
+        println!("{platform}");
 
         let platform_1cycle = cycle(&platform);
-        println!("{}", platform_1cycle);
+        println!("{platform_1cycle}");
 
         let platform_res = Table::build(RESULT_TEST_1CYCLE);
-        println!("{}", platform_res);
+        println!("{platform_res}");
 
         assert_eq!(platform_1cycle, platform_res);
 
         let mut platform_3cycle = cycle(&platform);
         platform_3cycle = cycle(&platform_3cycle);
         platform_3cycle = cycle(&platform_3cycle);
-        println!("{}", platform_3cycle);
+        println!("{platform_3cycle}");
 
         let platform_res3 = Table::build(RESULT_TEST_3CYCLE);
-        println!("{}", platform_res);
+        println!("{platform_res}");
 
         assert_eq!(platform_3cycle, platform_res3);
 

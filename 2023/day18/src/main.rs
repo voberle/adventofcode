@@ -69,13 +69,13 @@ impl Instruction {
 fn test_instruction_dig() {
     let start = Pos::new(0, 0);
     let ins = Instruction::build("R 2 (#70c710)");
-    assert_eq!(ins.dig(&start), Pos::new(0, 2))
+    assert_eq!(ins.dig(&start), Pos::new(0, 2));
 }
 
 #[test]
 fn test_instruction_invert() {
     let ins = Instruction::build("R 2 (#70c710)");
-    assert_eq!(ins.invert(), Instruction::new('R', 461937, "".to_string()));
+    assert_eq!(ins.invert(), Instruction::new('R', 461937, String::new()));
 }
 
 // Digs the trench, and return a list of vertices.
@@ -99,7 +99,7 @@ fn vertice_len(v: &(Pos, Pos)) -> u64 {
     if v.0.row == v.1.row {
         return v.0.col.abs_diff(v.1.col);
     }
-    panic!("Invalid pair for vertice_len(): {:?}", v);
+    panic!("Invalid pair for vertice_len(): {v:?}");
 }
 
 fn trench_len(trench: &[(Pos, Pos)]) -> u64 {
@@ -171,7 +171,7 @@ pub mod tests {
         assert_eq!(trench_len(&trench), 38);
         assert_eq!(trench_surface(&trench), 62);
 
-        let inverted_plan: Vec<_> = dig_plan.iter().map(|i| i.invert()).collect();
+        let inverted_plan: Vec<_> = dig_plan.iter().map(super::Instruction::invert).collect();
         let trench_inverted = dig(&inverted_plan);
 
         assert_eq!(trench_surface(&trench_inverted), 952408144115);

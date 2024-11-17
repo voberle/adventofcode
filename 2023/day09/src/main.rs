@@ -37,8 +37,8 @@ fn main() {
 
     let (sum_end, sum_begin) = sum_extrapolated_values(report);
 
-    println!("Part 1: {}", sum_end);
-    println!("Part 2: {}", sum_begin);
+    println!("Part 1: {sum_end}");
+    println!("Part 2: {sum_begin}");
 }
 
 #[cfg(test)]

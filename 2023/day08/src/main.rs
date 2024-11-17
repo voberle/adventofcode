@@ -94,16 +94,16 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        let (instructions, network) = build(&INPUT_TEST_1);
+        let (instructions, network) = build(INPUT_TEST_1);
         assert_eq!(part1(&instructions, &network), 2);
 
-        let (instructions, network) = build(&INPUT_TEST_2);
+        let (instructions, network) = build(INPUT_TEST_2);
         assert_eq!(part1(&instructions, &network), 6);
     }
 
     #[test]
     fn test_part2() {
-        let (instructions, network) = build(&INPUT_TEST_3);
+        let (instructions, network) = build(INPUT_TEST_3);
         assert_eq!(part2(&instructions, &network), 6);
     }
 }

@@ -77,9 +77,9 @@ impl Grid {
             for p in row * self.cols..(row + 1) * self.cols {
                 let c = self.values[p];
                 if positions.contains(&p) {
-                    print!("\x1b[91m{}\x1b[0m", c);
+                    print!("\x1b[91m{c}\x1b[0m");
                 } else {
-                    print!("{}", c);
+                    print!("{c}");
                 }
             }
             println!();
@@ -156,7 +156,7 @@ fn slopes_to_dir(c: char) -> Direction {
         // Observation: ^ is never found in the input.
         '^' => North,
         'v' => South,
-        _ => panic!("Invalid char {}", c),
+        _ => panic!("Invalid char {c}"),
     }
 }
 
@@ -174,7 +174,7 @@ fn can_go_towards<const IGNORE_SLOPES: bool>(grid: &Grid, pos: usize, d: Directi
                     d == slopes_to_dir(c)
                 }
             }
-            _ => panic!("Invalid char in map {}", c),
+            _ => panic!("Invalid char in map {c}"),
         }
     } else {
         // Falling out of the grid.
@@ -379,7 +379,7 @@ fn traverse_graph(graph: &Graph) {
     stack.push(start);
     while let Some(node) = stack.pop() {
         if !discovered.contains(&node) {
-            println!("-> {:?}", node);
+            println!("-> {node:?}");
             discovered.insert(node);
 
             graph
@@ -448,7 +448,7 @@ fn debug_graph(grid: &Grid) {
 
     let graph = build_graph::<false>(grid, start, end);
     let intersections = get_intersections(&graph);
-    println!("{:?}", intersections);
+    println!("{intersections:?}");
     grid.print_with_pos(&intersections);
     print_graph_as_graphviz::<false>(&graph);
 }

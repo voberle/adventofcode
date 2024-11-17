@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn check_ordering() {
-        let mut hands = vec![
+        let mut hands = [
             Hand::new("32T3K"),
             Hand::new("T55J5"),
             Hand::new("KK677"),

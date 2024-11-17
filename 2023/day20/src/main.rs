@@ -439,13 +439,13 @@ fn pulse_count_for_low_to(configuration: &mut Configuration, module: &str) -> u6
         let res = run_once_with_module_detection(configuration, &rx);
         count += 1;
         if is_config_in_initial_state(configuration) {
-            println!("We are back in initial state after {} runs", count);
+            println!("We are back in initial state after {count} runs");
         }
         if res == (u64::MIN, u64::MIN) {
             break;
         }
         if count % 100_000 == 0 {
-            println!("{} runs..", count);
+            println!("{count} runs..");
         }
     }
     count
@@ -479,7 +479,7 @@ where
         } else if line.starts_with(Broadcast::NAME) {
             Box::new(Broadcast::build(&line))
         } else {
-            panic!("Invalid line: {}", line)
+            panic!("Invalid line: {line}")
         };
         configuration.insert(m.get_name().to_string(), m);
     }

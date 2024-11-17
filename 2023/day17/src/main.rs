@@ -11,7 +11,7 @@ enum Direction {
     South,
     West,
 }
-use Direction::{North, East, South, West};
+use Direction::{East, North, South, West};
 
 impl Direction {
     fn opposite(self) -> Self {
@@ -56,9 +56,9 @@ impl Grid {
             for p in row * self.cols..(row + 1) * self.cols {
                 let c = self.values[p];
                 if positions.contains(&p) {
-                    print!("\x1b[91m{}\x1b[0m", c);
+                    print!("\x1b[91m{c}\x1b[0m");
                 } else {
-                    print!("{}", c);
+                    print!("{c}");
                 }
             }
             println!();
@@ -114,7 +114,7 @@ impl Grid {
 #[test]
 fn test_grid() {
     let input = "123\n456";
-    let grid = Grid::build(&input);
+    let grid = Grid::build(input);
     assert_eq!(grid.cols, 3);
     assert_eq!(grid.rows, 2);
     assert_eq!(grid.pos(0, 1), 1);

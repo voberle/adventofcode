@@ -20,7 +20,7 @@ impl Category {
             "m" => Self::M,
             "a" => Self::A,
             "s" => Self::S,
-            _ => panic!("Invalid category char: {}", s),
+            _ => panic!("Invalid category char: {s}"),
         }
     }
 }
@@ -311,7 +311,7 @@ fn build_workflows_ratings(input: &str) -> (HashMap<String, Workflow>, Vec<Ratin
                             instruction_cap[4].to_string(),
                         ));
                     } else {
-                        panic!("Invalid instruction sign: {}", more_or_less);
+                        panic!("Invalid instruction sign: {more_or_less}");
                     }
                 } else if ins_str == "A" {
                     workflow.rules.push(Rule::Accepted);

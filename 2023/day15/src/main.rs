@@ -33,7 +33,7 @@ impl Operation {
             let v: Vec<&str> = c.split('=').collect();
             return Self::Add(hash(v[0]) as usize, v[0].to_string(), v[1].parse().unwrap());
         }
-        panic!("Cannot build Operation with {}", c);
+        panic!("Cannot build Operation with {c}");
     }
 
     fn box_nb(&self) -> usize {

@@ -57,8 +57,8 @@ fn main() {
 
     let (total_points, total_scratchpads) = analyze(input.as_str());
 
-    println!("Part 1: {}", total_points);
-    println!("Part 2: {}", total_scratchpads);
+    println!("Part 1: {total_points}");
+    println!("Part 2: {total_scratchpads}");
 }
 
 #[cfg(test)]

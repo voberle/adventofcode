@@ -121,8 +121,8 @@ fn main() {
 
     let (total, gear_ratio_sum) = schematic.analyze();
 
-    println!("Part 1: {}", total);
-    println!("Part 2: {}", gear_ratio_sum);
+    println!("Part 1: {total}");
+    println!("Part 2: {gear_ratio_sum}");
 }
 
 #[cfg(test)]

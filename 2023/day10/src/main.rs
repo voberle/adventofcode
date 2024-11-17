@@ -33,7 +33,7 @@ impl Pipe {
             '.' => Self::Ground,      // ground; there is no pipe in this tile.
             'S' => Self::StartingPos, // the starting position of the animal;
             // there is a pipe on this tile, but your sketch doesn't show what shape the pipe has.
-            _ => panic!("Invalid tile: '{}'", c),
+            _ => panic!("Invalid tile: '{c}'"),
         }
     }
 
@@ -391,7 +391,7 @@ pub mod tests {
 LJL
 FSF
 |LJ";
-        let grid = build_grid(&g);
+        let grid = build_grid(g);
         assert_eq!(guess_start(&grid, Position::new(1, 1)), Pipe::new('7'));
     }
 
@@ -403,7 +403,7 @@ FSF
 L|7||
 -L-J|
 L|-JF";
-        let grid = build_grid(&g);
+        let grid = build_grid(g);
 
         assert_eq!(
             next_pipes(&grid, &Position::new(3, 1)),

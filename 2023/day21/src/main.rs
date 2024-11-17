@@ -7,7 +7,7 @@ enum Direction {
     South,
     West,
 }
-use Direction::{North, East, South, West};
+use Direction::{East, North, South, West};
 
 const ALL_DIRECTIONS: [Direction; 4] = [North, East, South, West];
 
