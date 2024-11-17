@@ -1,6 +1,4 @@
-// https://adventofcode.com/2023/day/21
-
-use std::io::{self, BufRead};
+use std::io::{self, Read};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Direction {
@@ -9,7 +7,7 @@ enum Direction {
     South,
     West,
 }
-use Direction::*;
+use Direction::{North, East, South, West};
 
 const ALL_DIRECTIONS: [Direction; 4] = [North, East, South, West];
 
@@ -20,15 +18,12 @@ struct Grid {
     cols: usize,
 }
 
+#[allow(dead_code)]
 impl Grid {
-    fn build<R>(reader: &mut R) -> Self
-    where
-        R: BufRead,
-    {
+    fn build(input: &str) -> Self {
         let mut rows = 0;
-        let values: Vec<_> = reader
+        let values: Vec<_> = input
             .lines()
-            .filter_map(|result| result.ok())
             .flat_map(|l| {
                 rows += 1;
                 l.chars()
@@ -115,7 +110,7 @@ fn walk_one_step(grid: &mut Grid) {
 
 #[test]
 fn test_walk_one_step() {
-    let s = "...........
+    let source = "...........
 .....###.#.
 .###.##..#.
 ..#.#O..#..
@@ -126,7 +121,7 @@ fn test_walk_one_step() {
 .##.#.####.
 .##..##.##.
 ...........";
-    let r = "...........
+    let result = "...........
 .....###.#.
 .###.##..#.
 ..#.#.O.#..
@@ -137,9 +132,9 @@ fn test_walk_one_step() {
 .##.#.####.
 .##..##.##.
 ...........";
-    let mut grid = Grid::build(&mut s.as_bytes());
+    let mut grid = Grid::build(source);
     walk_one_step(&mut grid);
-    assert_eq!(grid, Grid::build(&mut r.as_bytes()));
+    assert_eq!(grid, Grid::build(result));
 }
 
 fn get_initial_pos(grid: &Grid) -> Option<usize> {
@@ -207,6 +202,7 @@ fn garden_plots_count_after(grid: &Grid, target_step_count: u64) -> u64 {
 
 // Part 2
 // Works only for real input, taking into account its patterns.
+#[allow(clippy::unreadable_literal)]
 fn mega_garden_count() -> u64 {
     // Once the input is full, we have following number of plots in base square
     // depending on number of steps:
@@ -247,15 +243,15 @@ fn mega_garden_count() -> u64 {
 
     // Full formula
     count_odd_big_squares * base_count_odd_nb_steps
-    + count_even_big_squares * base_count_even_nb_steps
-    - count_corners_remove / 4 * corner_count_to_remove_group4
-    + count_corners_add / 4 * corner_count_to_add_group4
+        + count_even_big_squares * base_count_even_nb_steps
+        - count_corners_remove / 4 * corner_count_to_remove_group4
+        + count_corners_add / 4 * corner_count_to_add_group4
 }
 
 fn main() {
-    let stdin = io::stdin();
-
-    let grid = Grid::build(&mut stdin.lock());
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let grid = Grid::build(&input);
     // grid.print();
 
     println!("Part 1: {}", garden_plots_count_after(&grid, 64));
@@ -265,12 +261,12 @@ fn main() {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use std::{fs::File, io::BufReader};
+
+    const INPUT_TEST: &str = include_str!("../resources/input_test");
 
     #[test]
     fn test_part1() {
-        let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
-        let grid = Grid::build(&mut reader);
+        let grid = Grid::build(INPUT_TEST);
 
         assert_eq!(garden_plots_count_after(&grid, 6), 16);
         assert_eq!(garden_plots_count_after(&grid, 64), 42);
