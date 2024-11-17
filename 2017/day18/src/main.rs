@@ -192,7 +192,7 @@ fn execute_send_receive(
     match ins {
         Instruction::Snd(x) => {
             let val = regs.get_ic(*x);
-            assert!(sender.send(val).is_ok(), "Failed to send {}", val);
+            assert!(sender.send(val).is_ok(), "Failed to send {val}");
             *ir += 1;
             return Ok(true);
         }

@@ -136,7 +136,7 @@ fn divide_grid(grid: &[bool]) -> Vec<Vec<bool>> {
     } else if grid_size % 3 == 0 {
         3
     } else {
-        panic!("Something wrong with grid sizes {}", grid_size)
+        panic!("Something wrong with grid sizes {grid_size}")
     };
 
     let mut small_squares: Vec<Vec<bool>> = Vec::new();
@@ -164,7 +164,7 @@ fn divide_grid(grid: &[bool]) -> Vec<Vec<bool>> {
                     grid[pos_fn(row + 2, col + 2)],
                 ]
             } else {
-                panic!("Something wrong with grid sizes {}", grid_size)
+                panic!("Something wrong with grid sizes {grid_size}")
             });
         }
     }

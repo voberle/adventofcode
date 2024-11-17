@@ -225,7 +225,7 @@ int main() {
     // Declare all the registers as variables.
     let registers = get_register_names(instructions);
     for r in registers {
-        code += &format!("\tlong long {} = 0;\n", r);
+        code += &format!("\tlong long {r} = 0;\n");
     }
     code += "\n";
 
@@ -265,14 +265,14 @@ int main() {
         }
         let mut line = String::new();
         if !label.is_empty() {
-            line += &format!("{}: ", label);
+            line += &format!("{label}: ");
         }
         line += "\t";
         if let Some(ins) = instructions.get(i) {
             line += &match ins {
-                Instruction::Set(x, y) => format!("{} = {}", x, y),
-                Instruction::Sub(x, y) => format!("{} -= {}", x, y),
-                Instruction::Mul(x, y) => format!("{} *= {}", x, y),
+                Instruction::Set(x, y) => format!("{x} = {y}"),
+                Instruction::Sub(x, y) => format!("{x} -= {y}"),
+                Instruction::Mul(x, y) => format!("{x} *= {y}"),
                 Instruction::JumpNotZero(x, y) => {
                     #[allow(
                         clippy::cast_possible_truncation,

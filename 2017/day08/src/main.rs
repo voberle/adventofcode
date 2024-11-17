@@ -21,7 +21,7 @@ fn get_cond_fn(cond: &str) -> fn(i32, i32) -> bool {
         ">=" => |a, b| a >= b,
         "==" => |a, b| a == b,
         "!=" => |a, b| a != b,
-        _ => panic!("Invalid condition {}", cond),
+        _ => panic!("Invalid condition {cond}"),
     }
 }
 

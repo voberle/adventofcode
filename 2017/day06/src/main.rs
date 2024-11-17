@@ -58,8 +58,8 @@ fn main() {
     let mem_banks = build(&input);
 
     let (since_beginning, since_seen) = redistribution_cycles_count(&mem_banks);
-    println!("Part 1: {}", since_beginning);
-    println!("Part 2: {}", since_seen);
+    println!("Part 1: {since_beginning}");
+    println!("Part 2: {since_seen}");
 }
 
 #[cfg(test)]

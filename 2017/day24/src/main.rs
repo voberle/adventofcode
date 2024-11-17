@@ -24,7 +24,7 @@ impl Component {
         } else if self.p2 == port {
             self.p1
         } else {
-            panic!("other_port: Port {} invalid for {}", port, self);
+            panic!("other_port: Port {port} invalid for {self}");
         }
     }
 }
@@ -141,8 +141,8 @@ fn main() {
     let mapped = convert_components_list(&components);
 
     let (strongest, longest) = bridges_strength(&mapped);
-    println!("Part 1: {}", strongest);
-    println!("Part 2: {}", longest);
+    println!("Part 1: {strongest}");
+    println!("Part 2: {longest}");
 }
 
 #[cfg(test)]

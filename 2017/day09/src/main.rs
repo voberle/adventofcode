@@ -53,8 +53,8 @@ fn main() {
     let input_parsed = build(&input);
 
     let (score, garbage_char_count) = process(&input_parsed);
-    println!("Part 1: {}", score);
-    println!("Part 2: {}", garbage_char_count);
+    println!("Part 1: {score}");
+    println!("Part 2: {garbage_char_count}");
 }
 
 #[cfg(test)]
@@ -63,24 +63,24 @@ mod tests {
 
     #[test]
     fn test_score() {
-        assert_eq!(process(&build(r#"{}"#)).0, 1);
-        assert_eq!(process(&build(r#"{{{}}}"#)).0, 6);
-        assert_eq!(process(&build(r#"{{},{}}"#)).0, 5);
-        assert_eq!(process(&build(r#"{{{},{},{{}}}}"#)).0, 16);
-        assert_eq!(process(&build(r#"{<a>,<a>,<a>,<a>}"#)).0, 1);
-        assert_eq!(process(&build(r#"{{<ab>},{<ab>},{<ab>},{<ab>}}"#)).0, 9);
-        assert_eq!(process(&build(r#"{{<!!>},{<!!>},{<!!>},{<!!>}}"#)).0, 9);
-        assert_eq!(process(&build(r#"{{<a!>},{<a!>},{<a!>},{<ab>}}"#)).0, 3);
+        assert_eq!(process(&build(r"{}")).0, 1);
+        assert_eq!(process(&build(r"{{{}}}")).0, 6);
+        assert_eq!(process(&build(r"{{},{}}")).0, 5);
+        assert_eq!(process(&build(r"{{{},{},{{}}}}")).0, 16);
+        assert_eq!(process(&build(r"{<a>,<a>,<a>,<a>}")).0, 1);
+        assert_eq!(process(&build(r"{{<ab>},{<ab>},{<ab>},{<ab>}}")).0, 9);
+        assert_eq!(process(&build(r"{{<!!>},{<!!>},{<!!>},{<!!>}}")).0, 9);
+        assert_eq!(process(&build(r"{{<a!>},{<a!>},{<a!>},{<ab>}}")).0, 3);
     }
 
     #[test]
     fn test_garbage_char_count() {
-        assert_eq!(process(&build(r#"<>"#)).1, 0);
-        assert_eq!(process(&build(r#"<random characters>"#)).1, 17);
-        assert_eq!(process(&build(r#"<<<<>"#)).1, 3);
-        assert_eq!(process(&build(r#"<{!>}>"#)).1, 2);
-        assert_eq!(process(&build(r#"<!!>"#)).1, 0);
-        assert_eq!(process(&build(r#"<!!!>>"#)).1, 0);
+        assert_eq!(process(&build(r"<>")).1, 0);
+        assert_eq!(process(&build(r"<random characters>")).1, 17);
+        assert_eq!(process(&build(r"<<<<>")).1, 3);
+        assert_eq!(process(&build(r"<{!>}>")).1, 2);
+        assert_eq!(process(&build(r"<!!>")).1, 0);
+        assert_eq!(process(&build(r"<!!!>>")).1, 0);
         assert_eq!(process(&build(r#"<{o"i!a,<{i<a>"#)).1, 10);
     }
 }

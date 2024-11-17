@@ -118,7 +118,7 @@ fn walk(grid: &Grid) -> (String, usize) {
                 // If there is no bug, it means we got to the end
                 break;
             }
-            _ => panic!("Invalid char in grid {}", c),
+            _ => panic!("Invalid char in grid {c}"),
         }
     }
 
@@ -132,8 +132,8 @@ fn main() {
 
     let (seen_letters, steps) = walk(&grid);
 
-    println!("Part 1: {}", seen_letters);
-    println!("Part 2: {}", steps);
+    println!("Part 1: {seen_letters}");
+    println!("Part 2: {steps}");
 }
 
 #[cfg(test)]

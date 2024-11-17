@@ -42,7 +42,7 @@ fn build(input: &str) -> Programs {
                     .map(|item| {
                         *name2id
                             .get(item)
-                            .unwrap_or_else(|| panic!("Didn't find {} in map", item))
+                            .unwrap_or_else(|| panic!("Didn't find {item} in map"))
                     })
                     .collect(),
             );

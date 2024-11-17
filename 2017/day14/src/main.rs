@@ -20,7 +20,7 @@ fn hexa2bool(c: char) -> [bool; 4] {
         'd' => [true, true, false, true],
         'e' => [true, true, true, false],
         'f' => [true, true, true, true],
-        _ => panic!("Invalid char {}", c),
+        _ => panic!("Invalid char {c}"),
     }
 }
 
@@ -116,23 +116,6 @@ fn main() {
     println!("Part 2: {}", regions_count(&grid));
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_part1() {
-        let grid = get_grid("flqrgnkx");
-        assert_eq!(squares_used(&grid), 8108);
-    }
-
-    #[test]
-    fn test_part2() {
-        let grid = get_grid("flqrgnkx");
-        assert_eq!(regions_count(&grid), 1242);
-    }
-}
-
 // Below is exact code from From Day 10
 
 fn reverse(list: &mut [usize], length: usize, current_pos: usize) {
@@ -168,7 +151,24 @@ fn knot_hash(input: &str) -> String {
         let xored = block.iter().copied().reduce(|acc, e| acc ^ e).unwrap();
 
         // fold() and write! is better than map and format!, less allocations
-        let _ = write!(output, "{:02x?}", xored);
+        let _ = write!(output, "{xored:02x?}");
         output
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_part1() {
+        let grid = get_grid("flqrgnkx");
+        assert_eq!(squares_used(&grid), 8108);
+    }
+
+    #[test]
+    fn test_part2() {
+        let grid = get_grid("flqrgnkx");
+        assert_eq!(regions_count(&grid), 1242);
+    }
 }

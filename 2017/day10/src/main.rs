@@ -49,7 +49,7 @@ fn knot_hash(input: &str) -> String {
         let xored = block.iter().copied().reduce(|acc, e| acc ^ e).unwrap();
 
         // fold() and write! is better than map and format!, less allocations
-        let _ = write!(output, "{:02x?}", xored);
+        let _ = write!(output, "{xored:02x?}");
         output
     })
 }
