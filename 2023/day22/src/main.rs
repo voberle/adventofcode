@@ -1,8 +1,6 @@
-// https://adventofcode.com/2023/day/22
-
 use std::{
     collections::HashMap,
-    io::{stdin, BufRead},
+    io::{self, Read},
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -67,13 +65,12 @@ impl Brick {
                     p2: c2,
                     dir: Dir::X,
                 };
-            } else {
-                return Self {
-                    p1: c2,
-                    p2: c1,
-                    dir: Dir::X,
-                };
             }
+            return Self {
+                p1: c2,
+                p2: c1,
+                dir: Dir::X,
+            };
         }
         if c1.y != c2.y {
             if c1.y < c2.y {
@@ -82,13 +79,12 @@ impl Brick {
                     p2: c2,
                     dir: Dir::Y,
                 };
-            } else {
-                return Self {
-                    p1: c2,
-                    p2: c1,
-                    dir: Dir::Y,
-                };
             }
+            return Self {
+                p1: c2,
+                p2: c1,
+                dir: Dir::Y,
+            };
         }
         if c1.z != c2.z {
             if c1.z < c2.z {
@@ -97,13 +93,12 @@ impl Brick {
                     p2: c2,
                     dir: Dir::Z,
                 };
-            } else {
-                return Self {
-                    p1: c2,
-                    p2: c1,
-                    dir: Dir::Z,
-                };
             }
+            return Self {
+                p1: c2,
+                p2: c1,
+                dir: Dir::Z,
+            };
         }
         panic!("Something went wrong building Brick")
     }
@@ -187,13 +182,9 @@ struct Snapshot {
 }
 
 impl Snapshot {
-    fn build<R>(reader: &mut R) -> Self
-    where
-        R: BufRead,
-    {
+    fn build(input: &str) -> Self {
         let mut bricks: Vec<Brick> = Vec::new();
-        for l in reader.lines() {
-            let line = l.unwrap();
+        for line in input.lines() {
             let p: Vec<Vec<usize>> = line
                 .split('~')
                 .map(|c| c.split(',').map(|i| i.parse().unwrap()).collect())
@@ -234,11 +225,17 @@ impl Snapshot {
         }
 
         assert_eq!(
-            self.levels_bottom.values().map(|v| v.len()).sum::<usize>(),
+            self.levels_bottom
+                .values()
+                .map(std::vec::Vec::len)
+                .sum::<usize>(),
             self.bricks.len()
         );
         assert_eq!(
-            self.levels_top.values().map(|v| v.len()).sum::<usize>(),
+            self.levels_top
+                .values()
+                .map(std::vec::Vec::len)
+                .sum::<usize>(),
             self.bricks.len()
         );
         // println!("Bottom({}): {:?}", self.levels_bottom.len(), self.levels_bottom);
@@ -257,6 +254,7 @@ impl Snapshot {
         self.order_bricks_by_level();
     }
 
+    #[allow(dead_code)]
     fn print(&self) {
         for b in &self.bricks {
             println!("{:?}", b);
@@ -301,7 +299,7 @@ fn move_bricks_downward(snapshot: &Snapshot, z_to_start_at: usize) -> Snapshot {
         }
         if let Some(i) = index_to_move_down {
             s.move_brick_down(i);
-            index_to_move_down = None
+            index_to_move_down = None;
         } else {
             break;
         }
@@ -344,8 +342,9 @@ fn disintegrate_all_counts(snapshot: &Snapshot) -> (u32, u32) {
 }
 
 fn main() {
-    let stdin = stdin();
-    let snapshot = Snapshot::build(&mut stdin.lock());
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let snapshot = Snapshot::build(&input);
 
     let (safe_to_disintegrate, bricks_that_would_fall_total) = disintegrate_all_counts(&snapshot);
     println!("Part 1: {}", safe_to_disintegrate);
@@ -355,12 +354,12 @@ fn main() {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use std::{fs::File, io::BufReader};
+
+    const INPUT_TEST: &str = include_str!("../resources/input_test");
 
     #[test]
     fn test_part1_2() {
-        let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
-        let snapshot = Snapshot::build(&mut reader);
+        let snapshot = Snapshot::build(INPUT_TEST);
 
         let (safe_to_disintegrate, bricks_that_would_fall_total) =
             disintegrate_all_counts(&snapshot);
