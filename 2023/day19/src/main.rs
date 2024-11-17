@@ -1,8 +1,6 @@
-// https://adventofcode.com/2023/day/19
-
 use std::{
     collections::HashMap,
-    io::{self, BufRead},
+    io::{self, Read},
 };
 
 use regex::Regex;
@@ -152,7 +150,10 @@ impl RatingRange {
     }
 
     fn combinations_count(&self) -> u64 {
-        self.values.iter().map(|r| (r.1 - r.0 + 1) as u64).product()
+        self.values
+            .iter()
+            .map(|r| u64::from(r.1 - r.0 + 1))
+            .product()
     }
 
     // Split the ranges for this category.
@@ -260,10 +261,7 @@ fn distinct_combinations(workflows: &HashMap<String, Workflow>) -> u64 {
         .sum()
 }
 
-fn build_workflows_ratings<R>(reader: &mut R) -> (HashMap<String, Workflow>, Vec<Rating>)
-where
-    R: BufRead,
-{
+fn build_workflows_ratings(input: &str) -> (HashMap<String, Workflow>, Vec<Rating>) {
     let mut workflows: HashMap<String, Workflow> = HashMap::new();
     let mut ratings: Vec<Rating> = Vec::new();
 
@@ -275,8 +273,7 @@ where
     // {x=787,m=2655,a=1222,s=2876}
     let rating_re = Regex::new(r"([xmas])=(\d+)").unwrap();
 
-    for l in reader.lines() {
-        let line = l.unwrap();
+    for line in input.lines() {
         if line.starts_with('{') {
             // Ratings
             let mut rating = Rating::new();
@@ -293,7 +290,7 @@ where
             continue;
         } else {
             // Workflows
-            let workflow_cap = workflow_re.captures(&line).unwrap();
+            let workflow_cap = workflow_re.captures(line).unwrap();
             let (name, instructions_str) = (&workflow_cap[1], &workflow_cap[2]);
             let mut workflow = Workflow::new(name.to_string());
 
@@ -331,8 +328,9 @@ where
 }
 
 fn main() {
-    let stdin = io::stdin();
-    let (workflows, ratings) = build_workflows_ratings(&mut stdin.lock());
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).unwrap();
+    let (workflows, ratings) = build_workflows_ratings(&input);
 
     println!(
         "Part 1: {}",
@@ -345,12 +343,12 @@ fn main() {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use std::{fs::File, io::BufReader};
+
+    const INPUT_TEST: &str = include_str!("../resources/input_test");
 
     #[test]
     fn test_part1_and_2() {
-        let mut reader = BufReader::new(File::open("resources/input_test").unwrap());
-        let (workflows, ratings) = build_workflows_ratings(&mut reader);
+        let (workflows, ratings) = build_workflows_ratings(INPUT_TEST);
 
         assert_eq!(sum_ratings_all_accepted_parts(&workflows, &ratings), 19114);
 
