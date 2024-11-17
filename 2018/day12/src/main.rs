@@ -50,8 +50,8 @@ fn state_to_string(state: &[bool]) -> String {
 #[allow(dead_code)]
 fn state_to_string_trimed(state: &[bool]) -> String {
     state_to_string(state)
-        .trim_start_matches(|c| c == '.')
-        .trim_end_matches(|c| c == '.')
+        .trim_start_matches('.')
+        .trim_end_matches('.')
         .to_string()
 }
 

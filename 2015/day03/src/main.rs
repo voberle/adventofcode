@@ -52,7 +52,7 @@ fn at_least_one_present(dirs: &Vec<Direction>) -> usize {
     let mut visited: FxHashSet<Pos> = FxHashSet::default();
     visited.insert(santa);
     for d in dirs {
-        santa = santa.towards(&d);
+        santa = santa.towards(d);
         visited.insert(santa);
     }
     visited.len()
@@ -67,10 +67,10 @@ fn with_robot_santa(dirs: &Vec<Direction>) -> usize {
     let mut turn = false;
     for d in dirs {
         if !turn {
-            santa = santa.towards(&d);
+            santa = santa.towards(d);
             visited.insert(santa);
         } else {
-            robot = robot.towards(&d);
+            robot = robot.towards(d);
             visited.insert(robot);
         }
         turn ^= true; // toggle the boolean

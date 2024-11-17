@@ -32,4 +32,4 @@ I also run Clippy in pedantic mode regularly, and add interesting checks to the 
 
 ## Compatibility
 
-Tested on Rust 1.79.0.
+Tested on Rust 1.82.0.

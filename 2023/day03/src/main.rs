@@ -14,6 +14,7 @@ impl Is for IsSymbol {
     }
 }
 
+#[allow(dead_code)]
 struct IsGear;
 
 impl Is for IsGear {
