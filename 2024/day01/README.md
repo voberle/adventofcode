@@ -8,3 +8,4 @@ As per tradition, first day is easy. Most interesting was that I used for the fi
 
 ## Part 2
 
+ Main question in part 2 was if I should try some smart optimization or not. But this would be only worth it if for example there are a lot of duplicates in the left list, which doesn't seem to be the case.

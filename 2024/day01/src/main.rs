@@ -14,26 +14,35 @@ fn build(input: &str) -> (Vec<u32>, Vec<u32>) {
         .unzip()
 }
 
-fn total_distance(list1: &[u32], list2: &[u32]) -> u32 {
-    list1
+fn total_distance(left_list: &[u32], right_list: &[u32]) -> u32 {
+    left_list
         .iter()
         .sorted_unstable()
-        .zip(list2.iter().sorted_unstable())
+        .zip(right_list.iter().sorted_unstable())
         .map(|(e1, e2)| e1.abs_diff(*e2))
         .sum()
 }
 
-fn part2(list1: &[u32], list2: &[u32]) -> u32 {
-    0
+fn similarity_score(left_list: &[u32], right_list: &[u32]) -> u32 {
+    left_list
+        .iter()
+        .map(|left_elt| {
+            let count = right_list
+                .iter()
+                .filter(|right_elt| *right_elt == left_elt)
+                .count();
+            left_elt * u32::try_from(count).unwrap()
+        })
+        .sum()
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let (list1, list2) = build(&input);
+    let (left_list, right_list) = build(&input);
 
-    println!("Part 1: {}", total_distance(&list1, &list2));
-    println!("Part 2: {}", part2(&list1, &list2));
+    println!("Part 1: {}", total_distance(&left_list, &right_list));
+    println!("Part 2: {}", similarity_score(&left_list, &right_list));
 }
 
 #[cfg(test)]
@@ -44,13 +53,13 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        let (list1, list2) = build(INPUT_TEST);
-        assert_eq!(total_distance(&list1, &list2), 11);
+        let (left_list, right_list) = build(INPUT_TEST);
+        assert_eq!(total_distance(&left_list, &right_list), 11);
     }
 
     #[test]
     fn test_part2() {
-        let (list1, list2) = build(INPUT_TEST);
-        assert_eq!(part2(&list1, &list2), 0);
+        let (left_list, right_list) = build(INPUT_TEST);
+        assert_eq!(similarity_score(&left_list, &right_list), 31);
     }
 }
