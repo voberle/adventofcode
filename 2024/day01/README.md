@@ -4,7 +4,7 @@
 
 Let's start 2024!
 
-As per tradition, first day is easy. I'm not very happy with the parsing of the input however, needs to be reworked.
+As per tradition, first day is easy. Most interesting was that I used for the first time `Iterator::unzip()`.
 
 ## Part 2
 

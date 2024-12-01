@@ -3,26 +3,22 @@ use std::io::{self, Read};
 use itertools::Itertools;
 
 fn build(input: &str) -> (Vec<u32>, Vec<u32>) {
-    let mut list1: Vec<u32> = Vec::new();
-    let mut list2: Vec<u32> = Vec::new();
-    for (e1, e2) in input.lines().map(|line| {
-        line.split_ascii_whitespace()
-            .map(|e| e.parse().unwrap())
-            .collect_tuple()
-            .unwrap()
-    }) {
-        list1.push(e1);
-        list2.push(e2);
-    }
-    list1.sort_unstable();
-    list2.sort_unstable();
-    (list1, list2)
+    input
+        .lines()
+        .map(|line| {
+            line.split_ascii_whitespace()
+                .map(|e| e.parse::<u32>().unwrap())
+                .collect_tuple()
+                .unwrap()
+        })
+        .unzip()
 }
 
 fn total_distance(list1: &[u32], list2: &[u32]) -> u32 {
     list1
         .iter()
-        .zip(list2.iter())
+        .sorted_unstable()
+        .zip(list2.iter().sorted_unstable())
         .map(|(e1, e2)| e1.abs_diff(*e2))
         .sum()
 }
