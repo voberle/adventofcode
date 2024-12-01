@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+
+members = [
+]
+
+[workspace.lints.clippy]
+pedantic = "deny"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Vincent Oberle"]
+description = "Advent of Code 2024"
