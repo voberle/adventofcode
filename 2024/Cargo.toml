@@ -1,8 +1,6 @@
 [workspace]
+members = ["day01"]
 resolver = "2"
-
-members = [
-]
 
 [workspace.lints.clippy]
 pedantic = "deny"
@@ -11,7 +9,7 @@ pedantic = "deny"
 unsafe_code = "forbid"
 
 [workspace.package]
-version = "0.1.0"
-edition = "2021"
 authors = ["Vincent Oberle"]
 description = "Advent of Code 2024"
+edition = "2021"
+version = "0.1.0"
