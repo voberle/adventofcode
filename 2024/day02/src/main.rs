@@ -37,6 +37,27 @@ impl Report {
         }
         true
     }
+
+    fn clone_with_level_removed(&self, level_pos: usize) -> Self {
+        let mut copy = self.0.clone();
+        copy.remove(level_pos);
+        Self(copy)
+    }
+
+    fn is_safe_with_problem_dampener(&self) -> bool {
+        if self.is_safe() {
+            return true;
+        }
+
+        for pos in 0..self.0.len() {
+            let dampened_report = self.clone_with_level_removed(pos);
+            if dampened_report.is_safe() {
+                return true;
+            }
+        }
+
+        false
+    }
 }
 
 fn build(input: &str) -> Vec<Report> {
@@ -47,8 +68,11 @@ fn safe_reports_count(reports: &[Report]) -> usize {
     reports.iter().filter(|r| r.is_safe()).count()
 }
 
-fn part2(reports: &[Report]) -> i64 {
-    0
+fn safe_reports_with_dampener_count(reports: &[Report]) -> usize {
+    reports
+        .iter()
+        .filter(|r| r.is_safe_with_problem_dampener())
+        .count()
 }
 
 fn main() {
@@ -57,7 +81,7 @@ fn main() {
     let reports = build(&input);
 
     println!("Part 1: {}", safe_reports_count(&reports));
-    println!("Part 2: {}", part2(&reports));
+    println!("Part 2: {}", safe_reports_with_dampener_count(&reports));
 }
 
 #[cfg(test)]
@@ -73,6 +97,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(safe_reports_with_dampener_count(&build(INPUT_TEST)), 4);
     }
 }
