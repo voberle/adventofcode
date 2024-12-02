@@ -15,23 +15,21 @@ impl Report {
         let mut prev = self.0[0];
         let mut sign: i64 = 0;
         for n in self.0.iter().skip(1) {
-            let diff: i64 = *n as i64 - prev as i64;
+            let diff: i64 = i64::from(*n) - i64::from(prev);
             if sign != 0 {
                 if diff * sign < 0 {
                     // Direction is changing
                     return false;
                 }
+            } else if diff < 0 {
+                sign = -1;
+            } else if diff > 0 {
+                sign = 1;
             } else {
-                if diff < 0 {
-                    sign = -1;
-                } else if diff > 0 {
-                    sign = 1;
-                } else {
-                    return false;
-                }
+                return false;
             }
-            let abs_diff = diff.abs();
-            if abs_diff < 1 || abs_diff > 3 {
+
+            if !(1..=3).contains(&diff.abs()) {
                 return false;
             }
 
