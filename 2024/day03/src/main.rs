@@ -2,35 +2,33 @@ use std::io::{self, Read};
 
 use regex::Regex;
 
-fn multiplication_result(input: &str) -> u64 {
-    let re = Regex::new(r"mul\((\d+),(\d+)\)").unwrap();
+use std::sync::LazyLock;
 
-    re.captures_iter(input)
+static RE_MUL: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"mul\((\d+),(\d+)\)").unwrap());
+
+fn multiplication_result(input: &str) -> u64 {
+    RE_MUL
+        .captures_iter(input)
         .map(|c| c.extract())
         .map(|(_, [x, y])| x.parse::<u64>().unwrap() * y.parse::<u64>().unwrap())
         .sum()
 }
 
-fn better_result(input: &str) -> u64 {
-    let re = Regex::new(r"mul\(\d+,\d+\)|do\(\)|don't\(\)").unwrap();
-    let re_mul = Regex::new(r"mul\((\d+),(\d+)\)").unwrap();
+static RE_WITH_DO_DONT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"mul\(\d+,\d+\)|do\(\)|don't\(\)").unwrap());
 
+fn better_result(input: &str) -> u64 {
     let mut result: u64 = 0;
     let mut enabled = true;
 
-    for m in re.find_iter(input).map(|m| m.as_str()) {
+    for m in RE_WITH_DO_DONT.find_iter(input).map(|m| m.as_str()) {
         if m == "do()" {
             enabled = true;
         } else if m == "don't()" {
             enabled = false;
         } else if enabled {
             assert!(m.starts_with("mul"));
-            let mul_result: u64 = re_mul
-                .captures_iter(m)
-                .map(|c| c.extract())
-                .map(|(_, [x, y])| x.parse::<u64>().unwrap() * y.parse::<u64>().unwrap())
-                .sum();
-            result += mul_result;
+            result += multiplication_result(m);
         }
     }
 

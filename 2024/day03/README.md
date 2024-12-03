@@ -7,3 +7,5 @@ This turned out very easy with regex. Nicest was to use for the first time `capt
 ## Part 2
 
 Is there a way to do that part with only one regex?
+
+Also I started using `LazyLock` for the initialization of the regex, which is easy and doesn't require another crate.
