@@ -11,6 +11,6 @@ Iterator:unzip().
 ### Day 2: [Red-Nosed Reports](day02/README.md) 🌟🌟
 
 
-### Day 3: [Mull It Over](day03/README.md) 🌟
+### Day 3: [Mull It Over](day03/README.md) 🌟🌟
 
 Regex.
