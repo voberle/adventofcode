@@ -22,13 +22,11 @@ fn better_result(input: &str) -> u64 {
     let mut enabled = true;
 
     for m in RE_WITH_DO_DONT.find_iter(input).map(|m| m.as_str()) {
-        if m == "do()" {
-            enabled = true;
-        } else if m == "don't()" {
-            enabled = false;
-        } else if enabled {
-            assert!(m.starts_with("mul"));
-            result += multiplication_result(m);
+        match m {
+            "do()" => enabled = true,
+            "don't()" => enabled = false,
+            _ if enabled => result += multiplication_result(m),
+            _ => {}
         }
     }
 
