@@ -69,6 +69,7 @@ fn xmas_count(grid: &Grid) -> usize {
                 return 0;
             }
 
+            // For each X, we look into the 8 directions around.
             [
                 (-1, -1),
                 (-1, 0),
@@ -94,6 +95,7 @@ fn xmas_count(grid: &Grid) -> usize {
                 if grid.values[m_pos] != 'M' {
                     return 0;
                 }
+                // Once we started looking into one direction, we remain in that same direction.
                 grid.next_positions_into(m_pos, d_row, d_col)
                     .map(|a_pos| {
                         if grid.values[a_pos] != 'A' {
@@ -131,6 +133,7 @@ fn x_shame_mas_count(grid: &Grid) -> usize {
                 .into_iter()
                 .map(move |d_col| {
                     (
+                        // Get row and col for the two positions opposite the A.
                         // Top row
                         ((pos / grid.cols) as isize - 1) as usize,
                         ((pos % grid.cols) as isize + d_col) as usize,
@@ -140,23 +143,21 @@ fn x_shame_mas_count(grid: &Grid) -> usize {
                     )
                 })
                 .filter(|&(top_row, top_col, bottom_row, bottom_col)| {
+                    // Filter out if any of the position is outside the grid.
                     top_row < grid.rows
                         && top_col < grid.cols
                         && bottom_row < grid.rows
                         && bottom_col < grid.cols
                 })
-                .map(|(top_row, top_col, bottom_row, bottom_col)| {
-                    (
-                        top_row * grid.cols + top_col,
-                        bottom_row * grid.cols + bottom_col,
-                    )
-                })
-                // Not using 'all', as it returns true for empty iterators. We want true only when we have two real diagonals.
-                .filter(|(pos1, pos2)| {
-                    let val1 = grid.values[*pos1];
-                    let val2 = grid.values[*pos2];
+                .filter(|(top_row, top_col, bottom_row, bottom_col)| {
+                    // Convert into actual positions.
+                    let pos1 = top_row * grid.cols + top_col;
+                    let pos2 = bottom_row * grid.cols + bottom_col;
+                    let val1 = grid.values[pos1];
+                    let val2 = grid.values[pos2];
                     (val1 == 'M' && val2 == 'S') || (val1 == 'S' && val2 == 'M')
                 })
+                // Not using 'all', as it returns true for empty iterators. We want true only when we have two real diagonals.
                 .count()
                 == 2
         })
