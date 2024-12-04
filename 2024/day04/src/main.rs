@@ -110,7 +110,7 @@ fn xmas_count(grid: &Grid) -> usize {
 }
 
 #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-fn x_shame_mas_count(grid: &Grid) -> usize {
+fn x_shape_mas_count(grid: &Grid) -> usize {
     // Search all 'A' and look if there are 'M' and 'S' in the diagonals.
     grid.values
         .iter()
@@ -162,7 +162,7 @@ fn main() {
     let grid = Grid::build(&input);
 
     println!("Part 1: {}", xmas_count(&grid));
-    println!("Part 2: {}", x_shame_mas_count(&grid));
+    println!("Part 2: {}", x_shape_mas_count(&grid));
 }
 
 #[cfg(test)]
@@ -178,6 +178,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(x_shame_mas_count(&Grid::build(INPUT_TEST)), 9);
+        assert_eq!(x_shape_mas_count(&Grid::build(INPUT_TEST)), 9);
     }
 }
