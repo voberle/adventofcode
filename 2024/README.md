@@ -14,3 +14,7 @@ Iterator:unzip().
 ### Day 3: [Mull It Over](day03/README.md) 🌟🌟
 
 Regex. LazyLock.
+
+### Day 4: [Ceres Search](day04/README.md) 🌟
+
+Word search.
