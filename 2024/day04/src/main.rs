@@ -119,8 +119,52 @@ fn xmas_count(grid: &Grid) -> usize {
         .sum()
 }
 
-fn part2(grid: &Grid) -> i64 {
-    0
+#[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+fn x_shame_mas_count(grid: &Grid) -> usize {
+    // Search all 'A' and look if there are 'M' and 'S' in the diagonals.
+    grid.values
+        .iter()
+        .enumerate()
+        .filter(|(_, val)| **val == 'A')
+        .filter(|(pos, _)| {
+            [-1, 1]
+                .into_iter()
+                .map(move |d_col| {
+                    (
+                        // Top row
+                        ((pos / grid.cols) as isize - 1) as usize,
+                        ((pos % grid.cols) as isize + d_col) as usize,
+                        // Bottom row
+                        ((pos / grid.cols) as isize + 1) as usize,
+                        ((pos % grid.cols) as isize - d_col) as usize,
+                    )
+                })
+                .filter(|&(top_row, top_col, bottom_row, bottom_col)| {
+                    top_row < grid.rows
+                        && top_col < grid.cols
+                        && bottom_row < grid.rows
+                        && bottom_col < grid.cols
+                })
+                .map(|(top_row, top_col, bottom_row, bottom_col)| {
+                    (
+                        top_row * grid.cols + top_col,
+                        bottom_row * grid.cols + bottom_col,
+                    )
+                })
+                // Not using 'all', as it returns true for empty iterators. We want true only when we have two real diagonals.
+                .filter(|(pos1, pos2)| {
+                    let val1 = grid.values[*pos1];
+                    let val2 = grid.values[*pos2];
+                    (val1 == 'M' && val2 == 'S') || (val1 == 'S' && val2 == 'M')
+                })
+                .count()
+                == 2
+        })
+        // .inspect(|(pos, _)| {
+        //     grid.print_with_pos(&[*pos]);
+        //     println!();
+        // })
+        .count()
 }
 
 fn main() {
@@ -129,7 +173,7 @@ fn main() {
     let grid = Grid::build(&input);
 
     println!("Part 1: {}", xmas_count(&grid));
-    println!("Part 2: {}", part2(&grid));
+    println!("Part 2: {}", x_shame_mas_count(&grid));
 }
 
 #[cfg(test)]
@@ -145,6 +189,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        assert_eq!(x_shame_mas_count(&Grid::build(INPUT_TEST)), 9);
     }
 }

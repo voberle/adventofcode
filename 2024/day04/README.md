@@ -6,3 +6,4 @@ I reused by Grid code and the method to get all directions from a position as an
 
 ## Part 2
 
+I solved part 2 with one big iterator.
