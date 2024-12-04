@@ -38,25 +38,27 @@ impl Grid {
             println!();
         }
     }
+}
 
-    #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-    fn next_positions_into(
-        &self,
-        pos: usize,
-        d_row: isize,
-        d_col: isize,
-    ) -> impl Iterator<Item = usize> + '_ {
-        [(d_row, d_col)]
-            .into_iter()
-            .map(move |(d_row, d_col)| {
-                (
-                    ((pos / self.cols) as isize + d_row) as usize,
-                    ((pos % self.cols) as isize + d_col) as usize,
-                )
-            })
-            .filter(|&(row, col)| (row < self.rows && col < self.cols))
-            .map(|(row, col)| row * self.cols + col)
-    }
+// Returns an iterator on the positions around this one, in the directions specified.
+#[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+fn next_positions<'a>(
+    grid: &'a Grid,
+    pos: usize,
+    directions: &'a [(isize, isize)],
+) -> impl Iterator<Item = (&'a isize, &'a isize, usize)> + 'a {
+    directions
+        .iter()
+        .map(move |(d_row, d_col)| {
+            (
+                d_row,
+                d_col,
+                ((pos / grid.cols) as isize + d_row) as usize,
+                ((pos % grid.cols) as isize + d_col) as usize,
+            )
+        })
+        .filter(|&(_, _, row, col)| (row < grid.rows && col < grid.cols))
+        .map(|(d_row, d_col, row, col)| (d_row, d_col, row * grid.cols + col))
 }
 
 #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
@@ -65,53 +67,39 @@ fn xmas_count(grid: &Grid) -> usize {
         .iter()
         .enumerate()
         .map(|(x_pos, x_val)| {
+            // Count the XMAS as all the positions where there is an X.
             if *x_val != 'X' {
                 return 0;
             }
 
             // For each X, we look into the 8 directions around.
-            [
-                (-1, -1),
-                (-1, 0),
-                (-1, 1),
-                (0, -1),
-                (0, 1),
-                (1, -1),
-                (1, 0),
-                (1, 1),
-            ]
-            .into_iter()
-            .map(|(d_row, d_col)| {
-                (
-                    d_row,
-                    d_col,
-                    ((x_pos / grid.cols) as isize + d_row) as usize,
-                    ((x_pos % grid.cols) as isize + d_col) as usize,
-                )
-            })
-            .filter(|&(_, _, row, col)| (row < grid.rows && col < grid.cols))
-            .map(|(d_row, d_col, row, col)| (d_row, d_col, row * grid.cols + col))
+            next_positions(
+                grid,
+                x_pos,
+                &[
+                    (-1, -1),
+                    (-1, 0),
+                    (-1, 1),
+                    (0, -1),
+                    (0, 1),
+                    (1, -1),
+                    (1, 0),
+                    (1, 1),
+                ],
+            )
             .map(|(d_row, d_col, m_pos)| {
+                // For a valid XMAS, we need a M next to the X.
                 if grid.values[m_pos] != 'M' {
                     return 0;
                 }
-                // Once we started looking into one direction, we remain in that same direction.
-                grid.next_positions_into(m_pos, d_row, d_col)
-                    .map(|a_pos| {
+                // Once we started looking into one direction, we remain in that same direction and check if we have A and a S.
+                next_positions(grid, m_pos, &[(*d_row, *d_col)])
+                    .map(|(_, _, a_pos)| {
                         if grid.values[a_pos] != 'A' {
                             return 0;
                         }
-                        grid.next_positions_into(a_pos, d_row, d_col)
-                            .map(|s_pos| {
-                                #[allow(clippy::bool_to_int_with_if)]
-                                if grid.values[s_pos] == 'S' {
-                                    // grid.print_with_pos(&[x_pos, m_pos, a_pos, s_pos]);
-                                    // println!();
-                                    1
-                                } else {
-                                    0
-                                }
-                            })
+                        next_positions(grid, a_pos, &[(*d_row, *d_col)])
+                            .map(|(_, _, s_pos)| usize::from(grid.values[s_pos] == 'S'))
                             .sum()
                     })
                     .sum()
