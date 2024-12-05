@@ -43,15 +43,23 @@ fn is_page_list_in_order(rules: &[Vec<usize>], pages: &[usize]) -> bool {
     true
 }
 
+// Split the list of pages into the ordered and the incorrectly ordered ones.
+fn partition_pages<'a>(
+    rules: &[Vec<usize>],
+    page_lists: &'a [Vec<usize>],
+) -> (Vec<&'a Vec<usize>>, Vec<&'a Vec<usize>>) {
+    page_lists
+        .iter()
+        .partition(|pages| is_page_list_in_order(rules, pages))
+}
+
 fn get_middle_number(pages: &[usize]) -> usize {
     pages[pages.len() / 2]
 }
 
-// Part 1
-fn middle_numbers_sum(rules: &[Vec<usize>], page_lists: &[Vec<usize>]) -> usize {
-    page_lists
+fn middle_numbers_sum(_rules: &[Vec<usize>], ordered_pages_list: &[&Vec<usize>]) -> usize {
+    ordered_pages_list
         .iter()
-        .filter(|pages| is_page_list_in_order(rules, pages))
         .map(|pages| get_middle_number(pages))
         .sum()
 }
@@ -72,11 +80,12 @@ fn reorder_pages(rules: &[Vec<usize>], pages: &[usize]) -> Vec<usize> {
     sorted_pages
 }
 
-// Part 2
-fn middle_after_reorder_sum(rules: &[Vec<usize>], page_lists: &[Vec<usize>]) -> usize {
-    page_lists
+fn middle_after_reordering_sum(
+    rules: &[Vec<usize>],
+    unordered_pages_list: &[&Vec<usize>],
+) -> usize {
+    unordered_pages_list
         .iter()
-        .filter(|pages| !is_page_list_in_order(rules, pages))
         .map(|pages| reorder_pages(rules, pages))
         .map(|pages| get_middle_number(&pages))
         .sum()
@@ -87,8 +96,16 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let (rules, page_lists) = build(&input);
 
-    println!("Part 1: {}", middle_numbers_sum(&rules, &page_lists));
-    println!("Part 2: {}", middle_after_reorder_sum(&rules, &page_lists));
+    let (ordered_pages_list, unordered_pages_list) = partition_pages(&rules, &page_lists);
+
+    println!(
+        "Part 1: {}",
+        middle_numbers_sum(&rules, &ordered_pages_list)
+    );
+    println!(
+        "Part 2: {}",
+        middle_after_reordering_sum(&rules, &unordered_pages_list)
+    );
 }
 
 #[cfg(test)]
@@ -100,12 +117,17 @@ mod tests {
     #[test]
     fn test_part1() {
         let (rules, page_lists) = build(INPUT_TEST);
-        assert_eq!(middle_numbers_sum(&rules, &page_lists), 143);
+        let (ordered_pages_list, _) = partition_pages(&rules, &page_lists);
+        assert_eq!(middle_numbers_sum(&rules, &ordered_pages_list), 143);
     }
 
     #[test]
     fn test_part2() {
         let (rules, page_lists) = build(INPUT_TEST);
-        assert_eq!(middle_after_reorder_sum(&rules, &page_lists), 123);
+        let (_, unordered_pages_list) = partition_pages(&rules, &page_lists);
+        assert_eq!(
+            middle_after_reordering_sum(&rules, &unordered_pages_list),
+            123
+        );
     }
 }
