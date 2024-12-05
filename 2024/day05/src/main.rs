@@ -43,27 +43,52 @@ fn is_page_list_in_order(rules: &[Vec<usize>], pages: &[usize]) -> bool {
     true
 }
 
+fn get_middle_number(pages: &[usize]) -> usize {
+    pages[pages.len() / 2]
+}
+
+// Part 1
 fn middle_numbers_sum(rules: &[Vec<usize>], page_lists: &[Vec<usize>]) -> usize {
     page_lists
         .iter()
         .filter(|pages| is_page_list_in_order(rules, pages))
-        .map(|pages| pages[pages.len() / 2])
+        .map(|pages| get_middle_number(pages))
         .sum()
 }
 
-fn part2(rules: &[Vec<usize>], page_lists: &[Vec<usize>]) -> usize {
-    0
+fn reorder_pages(rules: &[Vec<usize>], pages: &[usize]) -> Vec<usize> {
+    // We take each number and we place it in the list just before the first
+    // number it needs to precede. If none, we place it at the end.
+    let mut sorted_pages = Vec::new();
+    for page in pages {
+        let rule = &rules[*page];
+        // Find first page in `sorted_pages` that is in the rules.
+        if let Some(pos) = sorted_pages.iter().position(|c| rule.contains(c)) {
+            sorted_pages.insert(pos, *page);
+        } else {
+            sorted_pages.push(*page);
+        }
+    }
+    sorted_pages
+}
+
+// Part 2
+fn middle_after_reorder_sum(rules: &[Vec<usize>], page_lists: &[Vec<usize>]) -> usize {
+    page_lists
+        .iter()
+        .filter(|pages| !is_page_list_in_order(rules, pages))
+        .map(|pages| reorder_pages(rules, pages))
+        .map(|pages| get_middle_number(&pages))
+        .sum()
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let (rules, page_lists) = build(&input);
-    // println!("{:?}", rules);
-    // println!("{:?}", page_lists);
 
     println!("Part 1: {}", middle_numbers_sum(&rules, &page_lists));
-    println!("Part 2: {}", part2(&rules, &page_lists));
+    println!("Part 2: {}", middle_after_reorder_sum(&rules, &page_lists));
 }
 
 #[cfg(test)]
@@ -81,6 +106,6 @@ mod tests {
     #[test]
     fn test_part2() {
         let (rules, page_lists) = build(INPUT_TEST);
-        assert_eq!(part2(&rules, &page_lists), 0);
+        assert_eq!(middle_after_reorder_sum(&rules, &page_lists), 123);
     }
 }

@@ -19,6 +19,6 @@ Regex. LazyLock.
 
 Word search.
 
-### Day 5: [Print Queue](day05/README.md) 🌟
+### Day 5: [Print Queue](day05/README.md) 🌟🌟
 
 Rule checking.
