@@ -2,18 +2,16 @@ use std::io::{self, Read};
 
 use itertools::Itertools;
 
+const PAGES_COUNT: usize = 100;
+
 // First return value are the ordering rules: It's a vector of size 100,
 // with a each index a list of all the pages that need to follow the pages corresponding to that page.
 // Second return value is the list of pages.
 fn build(input: &str) -> (Vec<Vec<usize>>, Vec<Vec<usize>>) {
-    let mut rules: Vec<Vec<usize>> = vec![Vec::new(); 100];
-    let mut page_lists: Vec<Vec<usize>> = Vec::new();
-
     let mut it = input.lines();
-    for line in it.by_ref() {
-        if line.is_empty() {
-            break;
-        }
+
+    let mut rules: Vec<Vec<usize>> = vec![Vec::new(); PAGES_COUNT];
+    for line in it.by_ref().take_while(|line| !line.is_empty()) {
         let (before, after) = line
             .split('|')
             .map(|v| v.parse::<usize>().unwrap())
@@ -21,20 +19,21 @@ fn build(input: &str) -> (Vec<Vec<usize>>, Vec<Vec<usize>>) {
             .unwrap();
         rules[before].push(after);
     }
-    for line in it {
-        page_lists.push(
+
+    let page_lists = it
+        .map(|line| {
             line.split(',')
                 .map(|v| v.parse::<usize>().unwrap())
-                .collect(),
-        );
-    }
+                .collect()
+        })
+        .collect();
     (rules, page_lists)
 }
 
 fn is_page_list_in_order(rules: &[Vec<usize>], pages: &[usize]) -> bool {
     // We maintain a table with the numbers we have seen so far.
     // For each new number we check, we look if there are any rules for it, and if any is not respected.
-    let mut seen = [false; 100];
+    let mut seen = [false; PAGES_COUNT];
     for page in pages {
         if rules[*page].iter().any(|after| seen[*after]) {
             return false;
