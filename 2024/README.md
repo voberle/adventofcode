@@ -10,6 +10,7 @@ Iterator:unzip().
 
 ### Day 2: [Red-Nosed Reports](day02/README.md) 🌟🌟
 
+-
 
 ### Day 3: [Mull It Over](day03/README.md) 🌟🌟
 
@@ -22,3 +23,7 @@ Word search.
 ### Day 5: [Print Queue](day05/README.md) 🌟🌟
 
 Rule checking.
+
+### Day 6: [Guard Gallivant](day06/README.md) 🌟
+
+Moving in map.

@@ -65,18 +65,18 @@ fn middle_numbers_sum(_rules: &[Vec<usize>], ordered_pages_list: &[&Vec<usize>])
 }
 
 fn reorder_pages(rules: &[Vec<usize>], pages: &[usize]) -> Vec<usize> {
-    // We take each number and we place it in the list just before the first
-    // number it needs to precede. If none, we place it at the end.
-    let mut sorted_pages = Vec::new();
-    for page in pages {
-        let rule = &rules[*page];
-        // Find first page in `sorted_pages` that is in the rules.
-        if let Some(pos) = sorted_pages.iter().position(|c| rule.contains(c)) {
-            sorted_pages.insert(pos, *page);
-        } else {
-            sorted_pages.push(*page);
-        }
+// We take each number and we place it in the list just before the first
+// number it needs to precede. If none, we place it at the end.
+let mut sorted_pages = Vec::new();
+for page in pages {
+    let rule = &rules[*page];
+    // Find first page in `sorted_pages` that is in the rules.
+    if let Some(pos) = sorted_pages.iter().position(|c| rule.contains(c)) {
+        sorted_pages.insert(pos, *page);
+    } else {
+        sorted_pages.push(*page);
     }
+}
     sorted_pages
 }
 
