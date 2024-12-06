@@ -1,6 +1,6 @@
 use std::io::{self, Read};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Direction {
     Up,
     Right,
@@ -16,6 +16,17 @@ impl Direction {
             Right => Down,
             Down => Left,
             Left => Up,
+        }
+    }
+}
+
+impl From<Direction> for usize {
+    fn from(d: Direction) -> Self {
+        match d {
+            Up => 0,
+            Right => 1,
+            Down => 2,
+            Left => 3,
         }
     }
 }
@@ -90,8 +101,108 @@ fn visited_positions_count(map: &Grid) -> usize {
     visited.iter().filter(|&&v| v).count()
 }
 
-fn part2(map: &Grid) -> usize {
-    0
+// Returns true if we reach a loop, false if we get out.
+fn walk_until_loop_or_out(
+    map: &Grid,
+    extra_obstacle_pos: usize,
+    mut guard_pos: usize,
+    mut direction: Direction,
+    mut visited: Vec<[bool; 4]>,
+) -> bool {
+    while map.allowed(guard_pos, direction) {
+        let next_pos = map.next_pos(guard_pos, direction);
+        if visited[next_pos][usize::from(direction)] {
+            // Got a loop.
+            // println!("");
+            // print_with_visited(map, extra_obstacle_pos, &visited);
+
+            return true;
+        }
+
+        if next_pos == extra_obstacle_pos {
+            direction = direction.turn_right_90_degrees();
+        } else {
+            match map.values.get(next_pos) {
+                Some('.' | '^') => {
+                    guard_pos = next_pos;
+                    visited[guard_pos][usize::from(direction)] = true;
+                }
+                Some('#') => {
+                    direction = direction.turn_right_90_degrees();
+                }
+                _ => panic!("Invalid map element"),
+            }
+        }
+    }
+    false
+}
+
+#[allow(dead_code)]
+fn print_with_visited(map: &Grid, extra_obstacle_pos: usize, visited: &[[bool; 4]]) {
+    for row in 0..map.rows {
+        for (p, visit) in visited.iter().enumerate().take((row + 1) * map.cols).skip(row * map.cols) {
+        // for p in row * map.cols..(row + 1) * map.cols {
+            if p == extra_obstacle_pos {
+                print!("O");
+                continue;
+            }
+            match map.values.get(p) {
+                Some('#') => print!("#"),
+                Some('^') => print!("^"),
+                Some('.') => {
+                    if visit.iter().any(|v| *v) {
+                        if !visit[usize::from(Up)] && !visit[usize::from(Down)] {
+                            print!("-");
+                        } else if !visit[usize::from(Left)] && !visit[usize::from(Right)]
+                        {
+                            print!("|");
+                        } else {
+                            print!("+");
+                        }
+                    } else {
+                        print!(".");
+                    }
+                }
+                _ => panic!("Invalid map element"),
+            }
+        }
+        println!();
+    }
+}
+
+fn obstruction_positions_count(map: &Grid) -> usize {
+    // A loop happens when we reach a previously visited place with the same direction.
+    // So as we walk through the map, on each step we try to place an obstruction and check if we reach a loop.
+
+    let mut obstructions_count = 0;
+
+    // Visited positions with directions.
+    let mut visited: Vec<[bool; 4]> = vec![[false; 4]; map.values.len()];
+
+    let mut guard_pos = map.get_initial_position();
+    visited[guard_pos][usize::from(Up)] = true;
+
+    let mut direction = Direction::Up;
+    while map.allowed(guard_pos, direction) {
+        let next_pos = map.next_pos(guard_pos, direction);
+        match map.values.get(next_pos) {
+            Some('.' | '^') => {
+                // If next position is free, test if putting an obstacle would result in a loop.
+                if walk_until_loop_or_out(map, next_pos, guard_pos, direction, visited.clone()) {
+                    obstructions_count += 1;
+                }
+
+                guard_pos = next_pos;
+                visited[guard_pos][usize::from(direction)] = true;
+            }
+            Some('#') => {
+                direction = direction.turn_right_90_degrees();
+            }
+            _ => panic!("Invalid map element"),
+        }
+    }
+
+    obstructions_count
 }
 
 fn main() {
@@ -100,7 +211,7 @@ fn main() {
     let map = Grid::build(&input);
 
     println!("Part 1: {}", visited_positions_count(&map));
-    println!("Part 2: {}", part2(&map));
+    println!("Part 2: {}", obstruction_positions_count(&map));
 }
 
 #[cfg(test)]
@@ -116,6 +227,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        assert_eq!(obstruction_positions_count(&Grid::build(INPUT_TEST)), 6);
     }
 }
