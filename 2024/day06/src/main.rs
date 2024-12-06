@@ -117,10 +117,11 @@ fn walk_until_loop(
         let next_pos = map.next_pos(guard_pos, direction);
         if next_pos == extra_obstacle_pos || matches!(map.values.get(next_pos), Some('#')) {
             direction = direction.turn_right_90_degrees();
+            visited[guard_pos][usize::from(direction)] = true; // only matters for debug printing.
         } else {
             if visited[next_pos][usize::from(direction)] {
-                // println!("Loop:");
-                // print_with_visited(map, extra_obstacle_pos, &visited);
+                println!("Loop:");
+                print_with_visited(map, extra_obstacle_pos, &visited);
                 return true;
             }
             guard_pos = next_pos;
@@ -147,8 +148,8 @@ fn print_with_visited(map: &Grid, extra_obstacle_pos: usize, visited: &[[bool; 4
                 Some('#') => print!("#"),
                 Some('^') => print!("^"),
                 Some('.') => {
-                    // This doesn't print + for all the corners, but it's good enough to debug.
                     if visit.iter().any(|v| *v) {
+                        // print!("{}", visit.iter().enumerate().map(|(i, v)| if *v { i } else { 0 }).sum::<usize>());
                         if !visit[usize::from(Up)] && !visit[usize::from(Down)] {
                             print!("-");
                         } else if !visit[usize::from(Left)] && !visit[usize::from(Right)] {
@@ -184,27 +185,23 @@ fn obstruction_positions_count(map: &Grid) -> usize {
     while map.allowed(guard_pos, direction) {
         let next_pos = map.next_pos(guard_pos, direction);
         match map.values.get(next_pos) {
-            Some('.') => {
+            Some('.' | '^') => {
                 // If next position is free, test if putting an obstacle would result in a loop.
-                // We don't need to check it if we have already found a working obstruction there before.
+                // - The new obstruction can't be placed at the guard's starting position.
+                // - We don't need to check it if we have already found a working obstruction there before.
                 if !obstructions.contains(&next_pos)
+                    && next_pos != map.guard_starting_position
                     && walk_until_loop(map, next_pos, guard_pos, direction, visited.clone())
                 {
                     obstructions.insert(next_pos);
                 }
 
-                visited[guard_pos][usize::from(direction)] = true; // only matters for debug printing it seems
-                guard_pos = next_pos;
-                visited[guard_pos][usize::from(direction)] = true;
-            }
-            Some('^') => {
-                // The new obstruction can't be placed at the guard's starting position.
-                visited[guard_pos][usize::from(direction)] = true; // only matters for debug printing it seems
                 guard_pos = next_pos;
                 visited[guard_pos][usize::from(direction)] = true;
             }
             Some('#') => {
                 direction = direction.turn_right_90_degrees();
+                visited[guard_pos][usize::from(direction)] = true; // only matters for debug printing.
             }
             _ => panic!("Invalid map element"),
         }
