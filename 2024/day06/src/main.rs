@@ -120,8 +120,8 @@ fn walk_until_loop(
             visited[guard_pos][usize::from(direction)] = true; // only matters for debug printing.
         } else {
             if visited[next_pos][usize::from(direction)] {
-                println!("Loop:");
-                print_with_visited(map, extra_obstacle_pos, &visited);
+                println!("Loop (at {next_pos}):");
+                print_with_visited(map, extra_obstacle_pos, &visited, &[guard_pos], false);
                 return true;
             }
             guard_pos = next_pos;
@@ -132,7 +132,15 @@ fn walk_until_loop(
 }
 
 #[allow(dead_code)]
-fn print_with_visited(map: &Grid, extra_obstacle_pos: usize, visited: &[[bool; 4]]) {
+fn print_with_visited(
+    map: &Grid,
+    extra_obstacle_pos: usize,
+    visited: &[[bool; 4]],
+    positions: &[usize],
+    pretty: bool,
+) {
+    const RED: &str = "\x1b[31m";
+    const RESET: &str = "\x1b[0m";
     for row in 0..map.rows {
         for (p, visit) in visited
             .iter()
@@ -149,13 +157,27 @@ fn print_with_visited(map: &Grid, extra_obstacle_pos: usize, visited: &[[bool; 4
                 Some('^') => print!("^"),
                 Some('.') => {
                     if visit.iter().any(|v| *v) {
-                        // print!("{}", visit.iter().enumerate().map(|(i, v)| if *v { i } else { 0 }).sum::<usize>());
-                        if !visit[usize::from(Up)] && !visit[usize::from(Down)] {
-                            print!("-");
-                        } else if !visit[usize::from(Left)] && !visit[usize::from(Right)] {
-                            print!("|");
+                        if pretty {
+                            // Pretty-printing like in the description.
+                            if !visit[usize::from(Up)] && !visit[usize::from(Down)] {
+                                print!("-");
+                            } else if !visit[usize::from(Left)] && !visit[usize::from(Right)] {
+                                print!("|");
+                            } else {
+                                print!("+");
+                            }
                         } else {
-                            print!("+");
+                            // Prints the path with hex to see which directions are taken.
+                            let code = visit
+                                .iter()
+                                .enumerate()
+                                .map(|(i, v)| if *v { 1 << i } else { 0 })
+                                .sum::<usize>();
+                            if positions.contains(&p) {
+                                print!("{RED}{code:X}{RESET}");
+                            } else {
+                                print!("{code:X}");
+                            }
                         }
                     } else {
                         print!(".");
