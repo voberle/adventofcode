@@ -1,3 +1,6 @@
+mod debug;
+
+use fxhash::FxHashSet;
 use std::io::{self, Read};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -7,7 +10,6 @@ enum Direction {
     Down,
     Left,
 }
-use fxhash::FxHashSet;
 use Direction::{Down, Left, Right, Up};
 
 impl Direction {
@@ -80,6 +82,7 @@ impl Grid {
     }
 }
 
+// Part 1. Could be merged with part 2, but readability may be worse.
 fn visited_positions_count(map: &Grid) -> usize {
     // A grid of the same size as the map to mark the visited positions.
     let mut visited = vec![false; map.values.len()];
@@ -91,20 +94,23 @@ fn visited_positions_count(map: &Grid) -> usize {
     while map.allowed(guard_pos, direction) {
         let next_pos = map.next_pos(guard_pos, direction);
         match map.values.get(next_pos) {
+            Some('#') => {
+                direction = direction.turn_right_90_degrees();
+            }
             Some('.' | '^') => {
                 guard_pos = next_pos;
                 visited[guard_pos] = true;
-            }
-            Some('#') => {
-                direction = direction.turn_right_90_degrees();
             }
             _ => panic!("Invalid map element"),
         }
     }
 
+    debug::simple(map, &visited);
+
     visited.iter().filter(|&&v| v).count()
 }
 
+// Walks the map, starting from guard_pos / direction.
 // Returns true if we reach a loop, false if we get out.
 fn walk_until_loop(
     map: &Grid,
@@ -119,9 +125,11 @@ fn walk_until_loop(
             direction = direction.turn_right_90_degrees();
             visited[guard_pos][usize::from(direction)] = true; // only matters for debug printing.
         } else {
+            assert!(visited[guard_pos][usize::from(direction)]);
             if visited[next_pos][usize::from(direction)] {
                 println!("Loop (at {next_pos}):");
-                print_with_visited(map, extra_obstacle_pos, &visited, &[guard_pos], false);
+                debug::print(map, extra_obstacle_pos, &visited, &[guard_pos], true);
+
                 return true;
             }
             guard_pos = next_pos;
@@ -129,65 +137,6 @@ fn walk_until_loop(
         }
     }
     false
-}
-
-#[allow(dead_code)]
-fn print_with_visited(
-    map: &Grid,
-    extra_obstacle_pos: usize,
-    visited: &[[bool; 4]],
-    positions: &[usize],
-    pretty: bool,
-) {
-    const RED: &str = "\x1b[31m";
-    const RESET: &str = "\x1b[0m";
-    for row in 0..map.rows {
-        for (p, visit) in visited
-            .iter()
-            .enumerate()
-            .take((row + 1) * map.cols)
-            .skip(row * map.cols)
-        {
-            if p == extra_obstacle_pos {
-                print!("O");
-                continue;
-            }
-            match map.values.get(p) {
-                Some('#') => print!("#"),
-                Some('^') => print!("^"),
-                Some('.') => {
-                    if visit.iter().any(|v| *v) {
-                        if pretty {
-                            // Pretty-printing like in the description.
-                            if !visit[usize::from(Up)] && !visit[usize::from(Down)] {
-                                print!("-");
-                            } else if !visit[usize::from(Left)] && !visit[usize::from(Right)] {
-                                print!("|");
-                            } else {
-                                print!("+");
-                            }
-                        } else {
-                            // Prints the path with hex to see which directions are taken.
-                            let code = visit
-                                .iter()
-                                .enumerate()
-                                .map(|(i, v)| if *v { 1 << i } else { 0 })
-                                .sum::<usize>();
-                            if positions.contains(&p) {
-                                print!("{RED}{code:X}{RESET}");
-                            } else {
-                                print!("{code:X}");
-                            }
-                        }
-                    } else {
-                        print!(".");
-                    }
-                }
-                _ => panic!("Invalid map element"),
-            }
-        }
-        println!();
-    }
 }
 
 fn obstruction_positions_count(map: &Grid) -> usize {
@@ -203,14 +152,18 @@ fn obstruction_positions_count(map: &Grid) -> usize {
     let mut guard_pos = map.guard_starting_position;
     visited[guard_pos][usize::from(Up)] = true;
 
-    let mut direction = Direction::Up;
+    let mut direction = Up;
     while map.allowed(guard_pos, direction) {
         let next_pos = map.next_pos(guard_pos, direction);
         match map.values.get(next_pos) {
+            Some('#') => {
+                direction = direction.turn_right_90_degrees();
+                visited[guard_pos][usize::from(direction)] = true; // only matters for debug printing.
+            }
             Some('.' | '^') => {
                 // If next position is free, test if putting an obstacle would result in a loop.
-                // - The new obstruction can't be placed at the guard's starting position.
                 // - We don't need to check it if we have already found a working obstruction there before.
+                // - The new obstruction can't be placed at the guard's starting position.
                 if !obstructions.contains(&next_pos)
                     && next_pos != map.guard_starting_position
                     && walk_until_loop(map, next_pos, guard_pos, direction, visited.clone())
@@ -220,10 +173,6 @@ fn obstruction_positions_count(map: &Grid) -> usize {
 
                 guard_pos = next_pos;
                 visited[guard_pos][usize::from(direction)] = true;
-            }
-            Some('#') => {
-                direction = direction.turn_right_90_degrees();
-                visited[guard_pos][usize::from(direction)] = true; // only matters for debug printing.
             }
             _ => panic!("Invalid map element"),
         }
