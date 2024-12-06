@@ -35,6 +35,7 @@ struct Grid {
     values: Vec<char>,
     rows: usize,
     cols: usize,
+    guard_starting_position: usize,
 }
 
 impl Grid {
@@ -49,11 +50,13 @@ impl Grid {
             .collect();
         assert_eq!(values.len() % rows, 0);
         let cols = values.len() / rows;
-        Self { values, rows, cols }
-    }
-
-    fn get_initial_position(&self) -> usize {
-        self.values.iter().position(|&c| c == '^').unwrap()
+        let guard_starting_position = values.iter().position(|&c| c == '^').unwrap();
+        Self {
+            values,
+            rows,
+            cols,
+            guard_starting_position,
+        }
     }
 
     fn allowed(&self, pos: usize, direction: Direction) -> bool {
@@ -80,7 +83,7 @@ fn visited_positions_count(map: &Grid) -> usize {
     // A grid of the same size as the map to mark the visited positions.
     let mut visited = vec![false; map.values.len()];
 
-    let mut guard_pos = map.get_initial_position();
+    let mut guard_pos = map.guard_starting_position;
     visited[guard_pos] = true;
 
     let mut direction = Direction::Up;
@@ -102,7 +105,7 @@ fn visited_positions_count(map: &Grid) -> usize {
 }
 
 // Returns true if we reach a loop, false if we get out.
-fn walk_until_loop_or_out(
+fn walk_until_loop(
     map: &Grid,
     extra_obstacle_pos: usize,
     mut guard_pos: usize,
@@ -140,8 +143,12 @@ fn walk_until_loop_or_out(
 #[allow(dead_code)]
 fn print_with_visited(map: &Grid, extra_obstacle_pos: usize, visited: &[[bool; 4]]) {
     for row in 0..map.rows {
-        for (p, visit) in visited.iter().enumerate().take((row + 1) * map.cols).skip(row * map.cols) {
-        // for p in row * map.cols..(row + 1) * map.cols {
+        for (p, visit) in visited
+            .iter()
+            .enumerate()
+            .take((row + 1) * map.cols)
+            .skip(row * map.cols)
+        {
             if p == extra_obstacle_pos {
                 print!("O");
                 continue;
@@ -150,11 +157,11 @@ fn print_with_visited(map: &Grid, extra_obstacle_pos: usize, visited: &[[bool; 4
                 Some('#') => print!("#"),
                 Some('^') => print!("^"),
                 Some('.') => {
+                    // This doesn't print + for all the corners, but it's good enough to debug.
                     if visit.iter().any(|v| *v) {
                         if !visit[usize::from(Up)] && !visit[usize::from(Down)] {
                             print!("-");
-                        } else if !visit[usize::from(Left)] && !visit[usize::from(Right)]
-                        {
+                        } else if !visit[usize::from(Left)] && !visit[usize::from(Right)] {
                             print!("|");
                         } else {
                             print!("+");
@@ -179,7 +186,7 @@ fn obstruction_positions_count(map: &Grid) -> usize {
     // Visited positions with directions.
     let mut visited: Vec<[bool; 4]> = vec![[false; 4]; map.values.len()];
 
-    let mut guard_pos = map.get_initial_position();
+    let mut guard_pos = map.guard_starting_position;
     visited[guard_pos][usize::from(Up)] = true;
 
     let mut direction = Direction::Up;
@@ -188,7 +195,10 @@ fn obstruction_positions_count(map: &Grid) -> usize {
         match map.values.get(next_pos) {
             Some('.' | '^') => {
                 // If next position is free, test if putting an obstacle would result in a loop.
-                if walk_until_loop_or_out(map, next_pos, guard_pos, direction, visited.clone()) {
+                // The new obstruction can't be placed at the guard's starting position.
+                if next_pos != map.guard_starting_position
+                    && walk_until_loop(map, next_pos, guard_pos, direction, visited.clone())
+                {
                     obstructions_count += 1;
                 }
 
