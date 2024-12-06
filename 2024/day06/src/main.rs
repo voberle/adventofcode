@@ -104,8 +104,7 @@ fn visited_positions_count(map: &Grid) -> usize {
             _ => panic!("Invalid map element"),
         }
     }
-
-    debug::simple(map, &visited);
+    // debug::simple(map, &visited);
 
     visited.iter().filter(|&&v| v).count()
 }
@@ -127,8 +126,8 @@ fn walk_until_loop(
         } else {
             assert!(visited[guard_pos][usize::from(direction)]);
             if visited[next_pos][usize::from(direction)] {
-                println!("Loop (at {next_pos}):");
-                debug::print(map, extra_obstacle_pos, &visited, &[guard_pos], true);
+                // println!("Loop (at {next_pos}):");
+                // debug::print(map, extra_obstacle_pos, &visited, &[guard_pos], true);
 
                 return true;
             }
@@ -139,6 +138,7 @@ fn walk_until_loop(
     false
 }
 
+// Part 2
 fn obstruction_positions_count(map: &Grid) -> usize {
     // A loop happens when we reach a previously visited place with the same direction.
     // So as we walk through the map, on each step we try to place an obstruction and check if we reach a loop.
@@ -164,8 +164,10 @@ fn obstruction_positions_count(map: &Grid) -> usize {
                 // If next position is free, test if putting an obstacle would result in a loop.
                 // - We don't need to check it if we have already found a working obstruction there before.
                 // - The new obstruction can't be placed at the guard's starting position.
+                // - We cannot put an obstacle on an already visited position.
                 if !obstructions.contains(&next_pos)
                     && next_pos != map.guard_starting_position
+                    && !visited[next_pos].iter().any(|&v| v)
                     && walk_until_loop(map, next_pos, guard_pos, direction, visited.clone())
                 {
                     obstructions.insert(next_pos);
@@ -195,14 +197,20 @@ mod tests {
     use super::*;
 
     const INPUT_TEST: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_EXTRA: &str = include_str!("../resources/input_test_2");
 
     #[test]
     fn test_part1() {
         assert_eq!(visited_positions_count(&Grid::build(INPUT_TEST)), 41);
+        assert_eq!(visited_positions_count(&Grid::build(INPUT_TEST_EXTRA)), 3);
     }
 
     #[test]
     fn test_part2() {
         assert_eq!(obstruction_positions_count(&Grid::build(INPUT_TEST)), 6);
+        assert_eq!(
+            obstruction_positions_count(&Grid::build(INPUT_TEST_EXTRA)),
+            0
+        );
     }
 }

@@ -24,6 +24,6 @@ Word search.
 
 Rule checking.
 
-### Day 6: [Guard Gallivant](day06/README.md) 🌟
+### Day 6: [Guard Gallivant](day06/README.md) 🌟🌟
 
 Moving in map.
