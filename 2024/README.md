@@ -28,6 +28,6 @@ Rule checking.
 
 Moving in map.
 
-### Day 7: [Bridge Repair](day07/README.md) 🌟
+### Day 7: [Bridge Repair](day07/README.md) 🌟🌟
 
 Maths: Checking operations.
