@@ -8,4 +8,4 @@ Brute-forcing it by trying all possible combinations of operators works well her
 
 Fortunately part 2 can still be brute-forced, the whole things running in 360 ms.
 
-Optimizing concatenation brings it down to 340 ms.
+Optimizing concatenation brings it down to 340 ms. Interrupting the iteration when the total is bigger than the expected result brings it down to 313 ms.

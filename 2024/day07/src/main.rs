@@ -52,11 +52,23 @@ impl Equation {
         itertools::repeat_n(operations_list.iter(), self.numbers.len() - 1)
             .multi_cartesian_product()
             .any(|operations| {
-                let result = operations
-                    .iter()
-                    .zip(self.numbers.iter().skip(1))
-                    .fold(self.numbers[0], |acc, (op, nb)| op.apply(acc, *nb));
-                result == self.test_value
+                let result = operations.iter().zip(self.numbers.iter().skip(1)).try_fold(
+                    self.numbers[0],
+                    |acc, (op, nb)| {
+                        let r = op.apply(acc, *nb);
+                        // As an optimization, we interrupt the iteration if we are bigger than the expected result.
+                        if r <= self.test_value {
+                            Some(r)
+                        } else {
+                            None
+                        }
+                    },
+                );
+                if let Some(r) = result {
+                    r == self.test_value
+                } else {
+                    false
+                }
             })
     }
 }
