@@ -47,35 +47,26 @@ impl Equation {
                 result == self.test_value
             })
     }
-
-    fn check_simple(&self) -> bool {
-        self.check(&[Operation::Add, Operation::Mul])
-    }
-
-    fn check_with_concatenation(&self) -> bool {
-        self.check(&[Operation::Add, Operation::Mul, Operation::Concat])
-    }
 }
 
 fn build(input: &str) -> Vec<Equation> {
     input.lines().map(Equation::build).collect()
 }
 
-fn total_calibration_result(equations: &[Equation]) -> u64 {
-    // println!("Max {}", equations.iter().map(|eq| eq.numbers.len()).max().unwrap());
+fn total_calibration_result(equations: &[Equation], operations_list: &[Operation]) -> u64 {
     equations
         .iter()
-        .filter(|eq| eq.check_simple())
+        .filter(|eq| eq.check(operations_list))
         .map(|eq| eq.test_value)
         .sum()
 }
 
+fn result_simple(equations: &[Equation]) -> u64 {
+    total_calibration_result(equations, &[Operation::Add, Operation::Mul])
+}
+
 fn result_with_concatenation(equations: &[Equation]) -> u64 {
-    equations
-        .iter()
-        .filter(|eq| eq.check_with_concatenation())
-        .map(|eq| eq.test_value)
-        .sum()
+    total_calibration_result(equations, &[Operation::Add, Operation::Mul, Operation::Concat])
 }
 
 fn main() {
@@ -83,7 +74,7 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let equations = build(&input);
 
-    println!("Part 1: {}", total_calibration_result(&equations));
+    println!("Part 1: {}", result_simple(&equations));
     println!("Part 2: {}", result_with_concatenation(&equations));
 }
 
@@ -93,18 +84,28 @@ mod tests {
 
     const INPUT_TEST: &str = include_str!("../resources/input_test_1");
 
+    fn check_simple(s: &str) -> bool {
+        let eq = Equation::build(s);
+        eq.check(&[Operation::Add, Operation::Mul])
+    }
+
+    fn check_with_concatenation(s: &str) -> bool {
+        let eq = Equation::build(s);
+        eq.check(&[Operation::Add, Operation::Mul, Operation::Concat])
+    }
+
     #[test]
     fn test_check() {
-        assert!(Equation::build("190: 10 19").check_simple());
-        assert!(Equation::build("3267: 81 40 27").check_simple());
-        assert!(Equation::build("292: 11 6 16 20").check_simple());
+        assert!(check_simple("190: 10 19"));
+        assert!(check_simple("3267: 81 40 27"));
+        assert!(check_simple("292: 11 6 16 20"));
 
-        assert!(!Equation::build("83: 17 5").check_simple());
-        assert!(!Equation::build("156: 15 6").check_simple());
-        assert!(!Equation::build("7290: 6 8 6 15").check_simple());
-        assert!(!Equation::build("161011: 16 10 13").check_simple());
-        assert!(!Equation::build("192: 17 8 14").check_simple());
-        assert!(!Equation::build("21037: 9 7 18 13").check_simple());
+        assert!(!check_simple("83: 17 5"));
+        assert!(!check_simple("156: 15 6"));
+        assert!(!check_simple("7290: 6 8 6 15"));
+        assert!(!check_simple("161011: 16 10 13"));
+        assert!(!check_simple("192: 17 8 14"));
+        assert!(!check_simple("21037: 9 7 18 13"));
     }
 
     #[test]
@@ -114,21 +115,21 @@ mod tests {
 
     #[test]
     fn test_check_with_concatenation() {
-        assert!(Equation::build("190: 10 19").check_with_concatenation());
-        assert!(Equation::build("3267: 81 40 27").check_with_concatenation());
-        assert!(Equation::build("292: 11 6 16 20").check_with_concatenation());
-        assert!(Equation::build("156: 15 6").check_with_concatenation());
-        assert!(Equation::build("7290: 6 8 6 15").check_with_concatenation());
-        assert!(Equation::build("192: 17 8 14").check_with_concatenation());
+        assert!(check_with_concatenation("190: 10 19"));
+        assert!(check_with_concatenation("3267: 81 40 27"));
+        assert!(check_with_concatenation("292: 11 6 16 20"));
+        assert!(check_with_concatenation("156: 15 6"));
+        assert!(check_with_concatenation("7290: 6 8 6 15"));
+        assert!(check_with_concatenation("192: 17 8 14"));
 
-        assert!(!Equation::build("83: 17 5").check_with_concatenation());
-        assert!(!Equation::build("161011: 16 10 13").check_with_concatenation());
-        assert!(!Equation::build("21037: 9 7 18 13").check_with_concatenation());
+        assert!(!check_with_concatenation("83: 17 5"));
+        assert!(!check_with_concatenation("161011: 16 10 13"));
+        assert!(!check_with_concatenation("21037: 9 7 18 13"));
     }
 
     #[test]
     fn test_part1() {
-        assert_eq!(total_calibration_result(&build(INPUT_TEST)), 3749);
+        assert_eq!(result_simple(&build(INPUT_TEST)), 3749);
     }
 
     #[test]
