@@ -20,3 +20,5 @@ Second, I was simply counting how many loops I hit, but some of those loops were
 Finally, the last bug took me a while. It turned out to be a problem when I was going on the same path back. I allowed to place obstructions on an already visited part, which cannot happen, since I couldn't have got to this place if there was an obstruction.
 
 At the end, it's quite a nice solution, and fast, with both parts running in 15 ms.
+
+Note that it's possible to remove the cloning of visited when calling `walk_until_loop`, by maintaining two vectors of visited data, but this removes only about 1 ms of execution time.
