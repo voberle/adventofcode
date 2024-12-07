@@ -27,3 +27,7 @@ Rule checking.
 ### Day 6: [Guard Gallivant](day06/README.md) 🌟🌟
 
 Moving in map.
+
+### Day 7: [Bridge Repair](day07/README.md) 🌟
+
+Maths: Checking operations.
