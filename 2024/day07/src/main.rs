@@ -10,8 +10,14 @@ enum Operation {
 
 impl Operation {
     fn concat(a: u64, b: u64) -> u64 {
-        let nb_digits_in_b = b.checked_ilog10().unwrap_or(0) + 1;
-        a * 10_u64.pow(nb_digits_in_b) + b
+        // This is way faster than trying to be smart with log()
+        // let nb_digits_in_b = b.checked_ilog10().unwrap_or(0) + 1;
+        // a * 10_u64.pow(nb_digits_in_b) + b
+        let mut pow: u64 = 10;
+        while b >= pow {
+            pow *= 10;
+        }
+        a * pow + b
     }
 
     fn apply(&self, left: u64, right: u64) -> u64 {
