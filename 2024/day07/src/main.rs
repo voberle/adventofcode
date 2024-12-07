@@ -8,9 +8,19 @@ enum Operation {
     Concat,
 }
 
-fn concat(a: u64, b: u64) -> u64 {
-    let nb_digits_in_b = b.checked_ilog10().unwrap_or(0) + 1;
-    a * 10_u64.pow(nb_digits_in_b) + b
+impl Operation {
+    fn concat(a: u64, b: u64) -> u64 {
+        let nb_digits_in_b = b.checked_ilog10().unwrap_or(0) + 1;
+        a * 10_u64.pow(nb_digits_in_b) + b
+    }
+
+    fn apply(&self, left: u64, right: u64) -> u64 {
+        match self {
+            Operation::Add => left + right,
+            Operation::Mul => left * right,
+            Operation::Concat => Self::concat(left, right),
+        }
+    }
 }
 
 struct Equation {
@@ -36,14 +46,10 @@ impl Equation {
         itertools::repeat_n(operations_list.iter(), self.numbers.len() - 1)
             .multi_cartesian_product()
             .any(|operations| {
-                let result = operations.iter().zip(self.numbers.iter().skip(1)).fold(
-                    self.numbers[0],
-                    |acc, (op, nb)| match op {
-                        Operation::Add => acc + *nb,
-                        Operation::Mul => acc * *nb,
-                        Operation::Concat => concat(acc, *nb),
-                    },
-                );
+                let result = operations
+                    .iter()
+                    .zip(self.numbers.iter().skip(1))
+                    .fold(self.numbers[0], |acc, (op, nb)| op.apply(acc, *nb));
                 result == self.test_value
             })
     }
@@ -66,7 +72,10 @@ fn result_simple(equations: &[Equation]) -> u64 {
 }
 
 fn result_with_concatenation(equations: &[Equation]) -> u64 {
-    total_calibration_result(equations, &[Operation::Add, Operation::Mul, Operation::Concat])
+    total_calibration_result(
+        equations,
+        &[Operation::Add, Operation::Mul, Operation::Concat],
+    )
 }
 
 fn main() {
@@ -110,7 +119,7 @@ mod tests {
 
     #[test]
     fn test_concat() {
-        assert_eq!(concat(12, 345), 12345);
+        assert_eq!(Operation::concat(12, 345), 12345);
     }
 
     #[test]
