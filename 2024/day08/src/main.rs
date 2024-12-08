@@ -72,7 +72,7 @@ fn get_antinode_side_pos(p1: usize, p2: usize) -> (usize, usize) {
     )
 }
 
-fn antinode_positions(map: &Grid, f1: usize, f2: usize) -> (Option<usize>, Option<usize>) {
+fn antinode_positions(map: &Grid, f1: usize, f2: usize) -> impl Iterator<Item = usize> {
     let (up_row, down_row) = get_antinode_side_pos(map.row(f1), map.row(f2));
     let (mut left_col, mut right_col) = get_antinode_side_pos(map.col(f1), map.col(f2));
 
@@ -87,18 +87,18 @@ fn antinode_positions(map: &Grid, f1: usize, f2: usize) -> (Option<usize>, Optio
         swap(&mut left_col, &mut right_col);
     }
 
-    (
-        if up_row < map.rows && left_col < map.cols {
-            Some(map.pos(up_row, left_col))
-        } else {
-            None
-        },
-        if down_row < map.rows && right_col < map.cols {
-            Some(map.pos(down_row, right_col))
-        } else {
-            None
-        },
-    )
+    let up = if up_row < map.rows && left_col < map.cols {
+        Some(map.pos(up_row, left_col))
+    } else {
+        None
+    };
+    let down = if down_row < map.rows && right_col < map.cols {
+        Some(map.pos(down_row, right_col))
+    } else {
+        None
+    };
+
+    up.into_iter().chain(down)
 }
 
 fn unique_antinode_locations(map: &Grid) -> usize {
@@ -118,13 +118,7 @@ fn unique_antinode_locations(map: &Grid) -> usize {
             .filter_map(|(pos, c)| if *c == f { Some(pos) } else { None })
             .combinations(2)
         {
-            let (a1, a2) = antinode_positions(map, pair[0], pair[1]);
-            if let Some(a_loc) = a1 {
-                antinode_locations.insert(a_loc);
-            }
-            if let Some(a_loc) = a2 {
-                antinode_locations.insert(a_loc);
-            }
+            antinode_locations.extend(antinode_positions(map, pair[0], pair[1]));
         }
     }
 
