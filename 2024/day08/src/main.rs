@@ -127,20 +127,14 @@ fn antinode_positions<const WITH_HARMONICS: bool>(map: &Grid, f1: usize, f2: usi
 }
 
 fn unique_antinode_locations<const WITH_HARMONICS: bool>(map: &Grid) -> usize {
-    // Find all different frequencies and their occurences count.
-    let mut frequencies: FxHashSet<char> = FxHashSet::default();
-    for f in map.values.iter().filter(|&&c| c != '.') {
-        frequencies.insert(*f);
-    }
-
-    // For each, create all pair permutations and get the anti-node positions.
     let mut antinode_locations: FxHashSet<usize> = FxHashSet::default();
-    for f in frequencies {
+    // Find all different frequencies, and for each, create all pair permutations and get the anti-node positions.
+    for f in map.values.iter().filter(|&&c| c != '.').unique() {
         for pair in map
             .values
             .iter()
             .enumerate()
-            .filter_map(|(pos, c)| if *c == f { Some(pos) } else { None })
+            .filter_map(|(pos, c)| if c == f { Some(pos) } else { None })
             .combinations(2)
         {
             antinode_locations.extend(antinode_positions::<WITH_HARMONICS>(map, pair[0], pair[1]));
