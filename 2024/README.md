@@ -32,6 +32,6 @@ Moving in map.
 
 Maths: Checking operations.
 
-### Day 8: [Resonant Collinearity](day08/README.md) 🌟
+### Day 8: [Resonant Collinearity](day08/README.md) 🌟🌟
 
 Positions calculation on map.
