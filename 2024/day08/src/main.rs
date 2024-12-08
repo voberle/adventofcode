@@ -63,6 +63,14 @@ impl Grid {
 
 #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
 fn antinode_positions<const WITH_HARMONICS: bool>(map: &Grid, f1: usize, f2: usize) -> Vec<usize> {
+    let mut results = Vec::new();
+
+    if WITH_HARMONICS {
+        // The frequencies themselves are locations.
+        results.push(f1);
+        results.push(f2);
+    }
+
     let p1_row = map.row(f1);
     let p2_row = map.row(f2);
     let diff_row = p1_row.abs_diff(p2_row) as isize;
@@ -71,10 +79,10 @@ fn antinode_positions<const WITH_HARMONICS: bool>(map: &Grid, f1: usize, f2: usi
     let p2_col = map.col(f2);
     let mut diff_col = p1_col.abs_diff(p2_col) as isize;
 
-    let mut up_row = p1_row.min(p2_row);
-    let mut down_row = p1_row.max(p2_row);
-    let mut left_col = p1_col.min(p2_col);
-    let mut right_col = p1_col.max(p2_col);
+    let mut up_row = (p1_row.min(p2_row) as isize - diff_row) as usize;
+    let mut down_row = (p1_row.max(p2_row) as isize + diff_row) as usize;
+    let mut left_col = (p1_col.min(p2_col) as isize - diff_col) as usize;
+    let mut right_col = (p1_col.max(p2_col) as isize + diff_col) as usize;
 
     // If the antinode positions are like:
     //   ..a
@@ -88,35 +96,19 @@ fn antinode_positions<const WITH_HARMONICS: bool>(map: &Grid, f1: usize, f2: usi
         diff_col = -diff_col;
     }
 
-    let mut results = Vec::new();
-
-    if WITH_HARMONICS {
-        // The frequencies themselves are locations.
+    while up_row < map.rows && left_col < map.cols {
         results.push(map.pos(up_row, left_col));
-        results.push(map.pos(down_row, right_col));
-    }
-
-    loop {
         up_row = (up_row as isize - diff_row) as usize;
         left_col = (left_col as isize - diff_col) as usize;
-
-        if !(up_row < map.rows && left_col < map.cols) {
-            break;
-        }
-        results.push(map.pos(up_row, left_col));
 
         if !WITH_HARMONICS {
             break;
         }
     }
-    loop {
+    while down_row < map.rows && right_col < map.cols {
+        results.push(map.pos(down_row, right_col));
         down_row = (down_row as isize + diff_row) as usize;
         right_col = (right_col as isize + diff_col) as usize;
-
-        if !(down_row < map.rows && right_col < map.cols) {
-            break;
-        }
-        results.push(map.pos(down_row, right_col));
 
         if !WITH_HARMONICS {
             break;

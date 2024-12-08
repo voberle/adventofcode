@@ -7,3 +7,5 @@ The most work here was given two positions, calculating the positions of the ant
 ## Part 2
 
 Part 2 was making a version of part 1 with a while instead of an if, in a very simplified description.
+
+Later I updated the code to be shared between parts 1 and 2.
