@@ -31,3 +31,7 @@ Moving in map.
 ### Day 7: [Bridge Repair](day07/README.md) 🌟🌟
 
 Maths: Checking operations.
+
+### Day 8: [Resonant Collinearity](day08/README.md) 🌟
+
+Positions calculation on map.
