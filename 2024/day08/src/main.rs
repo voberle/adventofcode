@@ -1,4 +1,7 @@
-use std::io::{self, Read};
+use std::{
+    io::{self, Read},
+    mem::swap,
+};
 
 use fxhash::FxHashSet;
 use itertools::Itertools;
@@ -24,6 +27,7 @@ impl Grid {
         Self { values, rows, cols }
     }
 
+    #[allow(dead_code)]
     fn print(&self, positions: &[usize]) {
         const RED: &str = "\x1b[31m";
         const RESET: &str = "\x1b[0m";
@@ -57,51 +61,44 @@ impl Grid {
     }
 }
 
+// Given two numbers, returns the number on both sides.
+// If the number would be negative, it overlaps, to a very big positive one.
 #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+fn get_antinode_side_pos(p1: usize, p2: usize) -> (usize, usize) {
+    let diff = p1.abs_diff(p2) as isize;
+    (
+        (p1.min(p2) as isize - diff) as usize,
+        (p1.max(p2) as isize + diff) as usize,
+    )
+}
+
 fn antinode_positions(map: &Grid, f1: usize, f2: usize) -> (Option<usize>, Option<usize>) {
-    let f1_row = map.row(f1);
-    let f2_row = map.row(f2);
-    let diff_row = f1_row.abs_diff(f2_row) as isize;
-    let min_row = f1_row.min(f2_row);
-    let max_row = f1_row.max(f2_row);
-    let up_row = ((min_row % map.rows) as isize - diff_row) as usize;
-    let down_row = ((max_row % map.rows) as isize + diff_row) as usize;
+    let (up_row, down_row) = get_antinode_side_pos(map.row(f1), map.row(f2));
+    let (mut left_col, mut right_col) = get_antinode_side_pos(map.col(f1), map.col(f2));
 
-    let f1_col = map.col(f1);
-    let f2_col = map.col(f2);
-    let diff_col = f1_col.abs_diff(f2_col) as isize;
-    let min_col = f1_col.min(f2_col);
-    let max_col = f1_col.max(f2_col);
-    let left_col = ((min_col % map.cols) as isize - diff_col) as usize;
-    let right_col = ((max_col % map.cols) as isize + diff_col) as usize;
-
-    if f1_col < f2_col {
-        (
-            if up_row < map.rows && left_col < map.cols {
-                Some(map.pos(up_row, left_col))
-            } else {
-                None
-            },
-            if down_row < map.rows && right_col < map.cols {
-                Some(map.pos(down_row, right_col))
-            } else {
-                None
-            },
-        )
-    } else {
-        (
-            if up_row < map.rows && right_col < map.cols {
-                Some(map.pos(up_row, right_col))
-            } else {
-                None
-            },
-            if down_row < map.rows && left_col < map.cols {
-                Some(map.pos(down_row, left_col))
-            } else {
-                None
-            },
-        )
+    // If the antinode positions are like:
+    //   ..a
+    //   a..
+    // instead of:
+    //   a..
+    //   ..a
+    // then swap the columns.
+    if map.col(f1) > map.col(f2) {
+        swap(&mut left_col, &mut right_col);
     }
+
+    (
+        if up_row < map.rows && left_col < map.cols {
+            Some(map.pos(up_row, left_col))
+        } else {
+            None
+        },
+        if down_row < map.rows && right_col < map.cols {
+            Some(map.pos(down_row, right_col))
+        } else {
+            None
+        },
+    )
 }
 
 fn unique_antinode_locations(map: &Grid) -> usize {
@@ -131,7 +128,7 @@ fn unique_antinode_locations(map: &Grid) -> usize {
         }
     }
 
-    map.print(&antinode_locations.iter().copied().collect::<Vec<usize>>());
+    // map.print(&antinode_locations.iter().copied().collect::<Vec<usize>>());
 
     antinode_locations.len()
 }
