@@ -61,21 +61,20 @@ impl Grid {
     }
 }
 
-// Given two numbers, returns the number on both sides.
-// If the number would be negative, it overlaps, to a very big positive one.
 #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-fn get_antinode_side_pos(p1: usize, p2: usize) -> (usize, usize) {
-    let diff = p1.abs_diff(p2) as isize;
-    (
-        (p1.min(p2) as isize - diff) as usize,
-        (p1.max(p2) as isize + diff) as usize,
-    )
-}
+fn antinode_positions<const WITH_HARMONICS: bool>(map: &Grid, f1: usize, f2: usize) -> Vec<usize> {
+    let p1_row = map.row(f1);
+    let p2_row = map.row(f2);
+    let diff_row = p1_row.abs_diff(p2_row) as isize;
 
-// Part 1
-fn antinode_positions_base(map: &Grid, f1: usize, f2: usize) -> Vec<usize> {
-    let (up_row, down_row) = get_antinode_side_pos(map.row(f1), map.row(f2));
-    let (mut left_col, mut right_col) = get_antinode_side_pos(map.col(f1), map.col(f2));
+    let p1_col = map.col(f1);
+    let p2_col = map.col(f2);
+    let mut diff_col = p1_col.abs_diff(p2_col) as isize;
+
+    let mut up_row = p1_row.min(p2_row);
+    let mut down_row = p1_row.max(p2_row);
+    let mut left_col = p1_col.min(p2_col);
+    let mut right_col = p1_col.max(p2_col);
 
     // If the antinode positions are like:
     //   ..a
@@ -86,64 +85,48 @@ fn antinode_positions_base(map: &Grid, f1: usize, f2: usize) -> Vec<usize> {
     // then swap the columns.
     if map.col(f1) > map.col(f2) {
         swap(&mut left_col, &mut right_col);
-    }
-
-    let up = if up_row < map.rows && left_col < map.cols {
-        Some(map.pos(up_row, left_col))
-    } else {
-        None
-    };
-    let down = if down_row < map.rows && right_col < map.cols {
-        Some(map.pos(down_row, right_col))
-    } else {
-        None
-    };
-
-    up.into_iter().chain(down).collect()
-}
-
-// Part 2
-#[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-fn antinode_positions_with_harmonics(map: &Grid, f1: usize, f2: usize) -> Vec<usize> {
-    let p1_row = map.row(f1);
-    let p2_row = map.row(f2);
-    let diff_row = p1_row.abs_diff(p2_row) as isize;
-
-    let p1_col = map.col(f1);
-    let p2_col = map.col(f2);
-    let mut diff_col = p1_col.abs_diff(p2_col) as isize;
-
-    let mut results = Vec::new();
-
-    // The frequencies themselves are locations.
-    let mut up_row = p1_row.min(p2_row);
-    let mut down_row = p1_row.max(p2_row);
-    let mut left_col = p1_col.min(p2_col);
-    let mut right_col = p1_col.max(p2_col);
-
-    if map.col(f1) > map.col(f2) {
-        swap(&mut left_col, &mut right_col);
         diff_col = -diff_col;
     }
 
-    while up_row < map.rows && left_col < map.cols {
+    let mut results = Vec::new();
+
+    if WITH_HARMONICS {
+        // The frequencies themselves are locations.
         results.push(map.pos(up_row, left_col));
+        results.push(map.pos(down_row, right_col));
+    }
+
+    loop {
         up_row = (up_row as isize - diff_row) as usize;
         left_col = (left_col as isize - diff_col) as usize;
+
+        if !(up_row < map.rows && left_col < map.cols) {
+            break;
+        }
+        results.push(map.pos(up_row, left_col));
+
+        if !WITH_HARMONICS {
+            break;
+        }
     }
-    while down_row < map.rows && right_col < map.cols {
-        results.push(map.pos(down_row, right_col));
+    loop {
         down_row = (down_row as isize + diff_row) as usize;
         right_col = (right_col as isize + diff_col) as usize;
+
+        if !(down_row < map.rows && right_col < map.cols) {
+            break;
+        }
+        results.push(map.pos(down_row, right_col));
+
+        if !WITH_HARMONICS {
+            break;
+        }
     }
 
     results
 }
 
-fn unique_antinode_locations(
-    map: &Grid,
-    antinode_positions_fn: fn(&Grid, usize, usize) -> Vec<usize>,
-) -> usize {
+fn unique_antinode_locations<const WITH_HARMONICS: bool>(map: &Grid) -> usize {
     // Find all different frequencies and their occurences count.
     let mut frequencies: FxHashSet<char> = FxHashSet::default();
     for f in map.values.iter().filter(|&&c| c != '.') {
@@ -160,7 +143,7 @@ fn unique_antinode_locations(
             .filter_map(|(pos, c)| if *c == f { Some(pos) } else { None })
             .combinations(2)
         {
-            antinode_locations.extend(antinode_positions_fn(map, pair[0], pair[1]));
+            antinode_locations.extend(antinode_positions::<WITH_HARMONICS>(map, pair[0], pair[1]));
         }
     }
 
@@ -170,11 +153,11 @@ fn unique_antinode_locations(
 }
 
 fn unique_antinode_locs_base(map: &Grid) -> usize {
-    unique_antinode_locations(map, antinode_positions_base)
+    unique_antinode_locations::<false>(map)
 }
 
 fn unique_antinode_locs_with_harmonics(map: &Grid) -> usize {
-    unique_antinode_locations(map, antinode_positions_with_harmonics)
+    unique_antinode_locations::<true>(map)
 }
 
 fn main() {
