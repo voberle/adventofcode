@@ -16,6 +16,14 @@ enum Block {
     File(u32, usize),
 }
 
+impl Block {
+    fn count(self) -> usize {
+        match self {
+            Block::Free(cnt) | Block::File(_, cnt) => cnt,
+        }
+    }
+}
+
 impl fmt::Display for Block {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
@@ -67,11 +75,10 @@ fn move_blocks(blocks: &mut Vec<Block>) {
         while !matches!(blocks[file_block_pos], Block::File(_, _)) && file_block_pos > 0 {
             file_block_pos -= 1;
         }
+
+        let size = blocks.get(file_block_pos).unwrap().count();
+
         // Find left most free spot that would fit this block
-        let size = match blocks[file_block_pos] {
-            Block::Free(_) => panic!("bug"),
-            Block::File(_, cnt) => cnt,
-        };
         let mut free_space_block_pos = 0;
         while free_space_block_pos < file_block_pos
             && !matches!(blocks[free_space_block_pos], Block::Free(c) if size <= c)
@@ -82,21 +89,23 @@ fn move_blocks(blocks: &mut Vec<Block>) {
         if free_space_block_pos >= file_block_pos {
             initial_file_block_pos -= 1;
             if initial_file_block_pos == 0 {
+                // Couldn't move any file block, we're done.
                 break;
             }
+            // Couldn't move this file block, trying next.
             continue;
         }
 
+        // Replace file block with free space.
         let b = std::mem::replace(&mut blocks[file_block_pos], Block::Free(size));
 
-        let cnt = match blocks[free_space_block_pos] {
-            Block::Free(cnt) => cnt,
-            Block::File(_, _) => panic!("bug"),
-        };
+        let cnt = blocks.get(free_space_block_pos).unwrap().count();
         if cnt - size > 0 {
+            // Target free space needs to be split into file block + smaller free space.
             blocks[free_space_block_pos] = Block::Free(cnt - size);
             blocks.insert(free_space_block_pos, b);
         } else {
+            // File block takes all the target free space.
             let _ = std::mem::replace(&mut blocks[free_space_block_pos], b);
         }
 

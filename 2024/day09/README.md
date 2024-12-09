@@ -11,3 +11,5 @@ For part 2, I decided to track groups instead of individual spaces/files in my b
 The move method turned out a bit ugly and complicated, and because of moving things around in a vector, the whole implementation is rather slow (70 seconds).
 
 I then optimized the reallocation of the vector by using `std::mem::replace` when possible, bringing the time to 45 seconds.
+
+However this approach of tracking groups might be less efficient than the initial method used for part 1, since in the initial method no vector reallocation is needed.
