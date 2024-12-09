@@ -35,3 +35,5 @@ Maths: Checking operations.
 ### Day 8: [Resonant Collinearity](day08/README.md) 🌟🌟
 
 Positions calculation on map.
+
+### Day 9: [Disk Fragmenter](day09/README.md)
