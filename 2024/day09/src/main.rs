@@ -87,23 +87,20 @@ fn move_blocks(blocks: &mut Vec<Block>) {
             continue;
         }
 
-        // for (i, b) in blocks.iter().enumerate() {
-        //     println!("{i}: {b}");
-        // }
-        // println!("Moving {file_block_pos} to {free_space_block_pos}");
+        let b = std::mem::replace(&mut blocks[file_block_pos], Block::Free(size));
 
-        let b = blocks.remove(file_block_pos);
-        blocks.insert(file_block_pos, Block::Free(size));
         let cnt = match blocks[free_space_block_pos] {
             Block::Free(cnt) => cnt,
             Block::File(_, _) => panic!("bug"),
         };
-        blocks[free_space_block_pos] = Block::Free(cnt - size);
-        blocks.insert(free_space_block_pos, b);
+        if cnt - size > 0 {
+            blocks[free_space_block_pos] = Block::Free(cnt - size);
+            blocks.insert(free_space_block_pos, b);
+        } else {
+            let _ = std::mem::replace(&mut blocks[free_space_block_pos], b);
+        }
 
         initial_file_block_pos = blocks.len() - 1;
-
-        // println!("{}", block_list_to_string(&blocks));
     }
 }
 
@@ -136,14 +133,6 @@ fn whole_file_frag_checksum(disk_map: &[u8]) -> u64 {
 
     move_blocks(&mut blocks);
     // println!("{}", block_list_to_string(&blocks));
-
-    // for (i, b) in blocks.iter().enumerate() {
-    //     let p = match b {
-    //         Block::Free(_) => 0,
-    //         Block::File(id, cnt) => u64::try_from(*cnt).unwrap() * u64::from(*id),
-    //     };
-    //     println!("{p}\t{i}: {b}");
-    // }
 
     calc_checksum(&blocks)
 }
