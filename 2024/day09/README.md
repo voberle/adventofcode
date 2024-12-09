@@ -13,3 +13,5 @@ The move method turned out a bit ugly and complicated, and because of moving thi
 I then optimized the reallocation of the vector by using `std::mem::replace` when possible, bringing the time to 45 seconds.
 
 However this approach of tracking groups might be less efficient than the initial method used for part 1, since in the initial method no vector reallocation is needed.
+
+I also later realized that there was a bug in it: When adding a free space at the end, I don't merge it with the free spaces around it, and as I result it's possible that later a bigger free space would not be found. I'm not sure why this didn't hit me with the real input, might simple luck.
