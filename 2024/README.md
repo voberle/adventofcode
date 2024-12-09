@@ -36,4 +36,6 @@ Maths: Checking operations.
 
 Positions calculation on map.
 
-### Day 9: [Disk Fragmenter](day09/README.md)
+### Day 9: [Disk Fragmenter](day09/README.md) 🌟
+
+-

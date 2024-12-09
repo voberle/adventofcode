@@ -48,6 +48,7 @@ fn make_block_list(disk_map: &[u8]) -> Vec<Block> {
         .collect()
 }
 
+#[allow(dead_code)]
 fn block_list_to_string(blocks: &[Block]) -> String {
     blocks
         .iter()
@@ -55,10 +56,44 @@ fn block_list_to_string(blocks: &[Block]) -> String {
         .collect()
 }
 
-fn checksum(disk_map: &[u8]) -> i64 {
-    let blocks = make_block_list(disk_map);
-    println!("{}", block_list_to_string(&blocks));
-    0
+fn move_blocks(blocks: &mut [Block]) {
+    let mut free_space_pos = 0;
+    let mut file_pos = blocks.len() - 1;
+    while free_space_pos <= file_pos {
+        while !matches!(blocks[free_space_pos], Block::Free) {
+            free_space_pos += 1;
+        }
+        while !matches!(blocks[file_pos], Block::File(_)) {
+            file_pos -= 1;
+        }
+        if free_space_pos >= file_pos {
+            break;
+        }
+        blocks.swap(free_space_pos, file_pos);
+
+        // println!("{} ({},{})", block_list_to_string(&blocks), free_space_pos, file_pos);
+    }
+}
+
+fn calc_checksum(blocks: &[Block]) -> u64 {
+    blocks
+        .iter()
+        .enumerate()
+        .map(|(i, block)| match block {
+            Block::Free => 0,
+            Block::File(id) => i as u64 * u64::from(*id),
+        })
+        .sum()
+}
+
+fn checksum(disk_map: &[u8]) -> u64 {
+    let mut blocks = make_block_list(disk_map);
+    // println!("{}", block_list_to_string(&blocks));
+
+    move_blocks(&mut blocks);
+    // println!("{}", block_list_to_string(&blocks));
+
+    calc_checksum(&blocks)
 }
 
 fn part2(disk_map: &[u8]) -> i64 {
@@ -68,7 +103,7 @@ fn part2(disk_map: &[u8]) -> i64 {
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let disk_map = build(&input);
+    let disk_map = build(input.trim());
 
     println!("Part 1: {}", checksum(&disk_map));
     println!("Part 2: {}", part2(&disk_map));

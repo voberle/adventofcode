@@ -2,6 +2,7 @@
 
 ## Part 1
 
+It was a bit of work, but not very hard. I created the block list and moved them (using `Vec::swap`).
 
 ## Part 2
 
