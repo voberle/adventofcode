@@ -1,0 +1,12 @@
+[package]
+name = "day10"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+fxhash = "0.2.1"

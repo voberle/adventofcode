@@ -39,3 +39,7 @@ Positions calculation on map.
 ### Day 9: [Disk Fragmenter](day09/README.md) 🌟🌟
 
 -
+
+### Day 10: [Hoof It](day10/README.md) 🌟
+
+Recursive map exploration.
