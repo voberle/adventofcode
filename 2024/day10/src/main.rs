@@ -67,25 +67,20 @@ fn scores_sum(map: &Grid) -> usize {
 }
 
 // Explores all the trails possible from the trail so far.
-// Recursive function.
-fn walk_and_count_trails(map: &Grid, trail: &[usize], all_trails: &mut FxHashSet<Vec<usize>>) {
-    let pos = *trail.last().unwrap();
-    let height = map.values[pos];
-
+// We don't need to record the trails, just count how many we find.
+fn walk_and_count(map: &Grid, pos: usize, height: u8) -> usize {
+    let mut count = 0;
     for neighbor_pos in map.neighbors_iter(pos) {
         let neighbor_height = map.values[neighbor_pos];
         if neighbor_height == height + 1 {
-            // Neighbor is valid, extending the trail.
-            let mut trail: Vec<usize> = trail.to_vec();
-            trail.push(neighbor_pos);
-
             if neighbor_height == 9 {
-                all_trails.insert(trail);
+                count += 1;
             } else {
-                walk_and_count_trails(map, &trail, all_trails);
+                count += walk_and_count(map, neighbor_pos, neighbor_height);
             }
         }
     }
+    count
 }
 
 fn ratings_sum(map: &Grid) -> usize {
@@ -93,11 +88,8 @@ fn ratings_sum(map: &Grid) -> usize {
         .iter()
         .enumerate()
         .filter(|(_, &height)| height == 0)
-        .map(|(trailhead_pos, _)| {
-            // To count distinct trails, we can just record all 10 steps path and count the distinct ones.
-            let mut all_trails: FxHashSet<Vec<usize>> = FxHashSet::default();
-            walk_and_count_trails(map, &[trailhead_pos], &mut all_trails);
-            all_trails.len()
+        .map(|(trailhead_pos, trailhead_height)| {
+            walk_and_count(map, trailhead_pos, *trailhead_height)
         })
         .sum()
 }
