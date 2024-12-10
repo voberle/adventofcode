@@ -6,3 +6,6 @@ Once I understood the description, it wasn't very complicated with a recursive e
 
 ## Part 2
 
+Part 2 could be nicely done by reusing part 1 and recording the trails found.
+
+Whole thing runs in 3.6 ms.
