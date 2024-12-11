@@ -44,6 +44,6 @@ Positions calculation on map.
 
 Recursive map exploration.
 
-### Day 11: [Plutonian Pebbles](day11/README.md) 🌟
+### Day 11: [Plutonian Pebbles](day11/README.md) 🌟🌟
 
 Generation of fast growing list.
