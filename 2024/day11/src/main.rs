@@ -12,7 +12,7 @@ fn digits_count(s: u64) -> usize {
     (0..).take_while(|i| 10u64.pow(*i) <= s).count()
 }
 
-fn split(mut s: u64, digits_count: usize) -> Vec<u64> {
+fn split(mut s: u64, digits_count: usize) -> [u64; 2] {
     let half_digits_count = digits_count / 2;
 
     let get_half = |s: &mut u64| -> u64 {
@@ -27,35 +27,31 @@ fn split(mut s: u64, digits_count: usize) -> Vec<u64> {
 
     let right = get_half(&mut s);
     let left = get_half(&mut s);
-    vec![left, right]
+    [left, right]
 }
 
 fn blink(stones: &[u64]) -> Vec<u64> {
-    stones
-        .iter()
-        .flat_map(|s| {
-            let digits_count = digits_count(*s);
-            if *s == 0 {
-                vec![1]
-            } else if digits_count % 2 == 0 {
-                split(*s, digits_count)
-            } else {
-                vec![s * 2024]
-            }
-        })
-        .collect()
+    let mut new_stones = Vec::with_capacity(stones.len());
+    for s in stones {
+        let digits_count = digits_count(*s);
+        if *s == 0 {
+            new_stones.push(1);
+        } else if digits_count % 2 == 0 {
+            new_stones.extend(split(*s, digits_count));
+        } else {
+            new_stones.push(s * 2024);
+        }
+    }
+    new_stones
 }
 
 fn stones_count(stones: &[u64], blink_count: usize) -> usize {
     let mut stones = stones.to_vec();
-    for _ in 0..blink_count {
+    for _b in 0..blink_count {
         stones = blink(&stones);
+        // println!("At blink {}, {} stones", _b + 1, stones.len());
     }
     stones.len()
-}
-
-fn part2(stones: &[u64]) -> usize {
-    0
 }
 
 fn main() {
@@ -64,7 +60,7 @@ fn main() {
     let stones = build(&input);
 
     println!("Part 1: {}", stones_count(&stones, 25));
-    println!("Part 2: {}", part2(&stones));
+    // println!("Part 2: {}", stones_count(&stones, 75));
 }
 
 #[cfg(test)]
@@ -89,10 +85,5 @@ mod tests {
     fn test_part1() {
         assert_eq!(stones_count(&build(INPUT_TEST), 6), 22);
         assert_eq!(stones_count(&build(INPUT_TEST), 25), 55312);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
     }
 }

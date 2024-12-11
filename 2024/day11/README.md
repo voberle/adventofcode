@@ -6,5 +6,7 @@ Implemented part 1 in a brute-force way, knowing perfectly that in AoC spirit, i
 
 I'm not sure that the way I split numbers is the best one.
 
+Switching from a flat_map to a simple for loop in the blink method divided the run time by 2 (16 to 8 ms), since we removed the allocation of many small vectors.
+
 ## Part 2
 
