@@ -14,7 +14,7 @@ I made two important observations for solving part 2:
 
 First the order of the numbers doesn't matter for the final answer, as we care only about the number of stones, not the actual stone list.
 
-Second, all single digits number become again and a list of single digits after few iterations. All numbers except 8 take 3 to 4 iterations, and 8 generates 16192 which itself regenerates what 8 did. In a nutshell, it's likely there are only a limited amount of different numbers that are ever generated.
+Second, all single digits number become again a list of single digits after few iterations. All numbers except 8 take 3 to 4 iterations, and 8 generates 16192 which itself regenerates what 8 did. In a nutshell, it's likely there are only a limited amount of different numbers that are ever generated.
 
 This means we can just store the stones in a hashmap "stone" => "stone count". This allows us to do the transformation operation only once for each type of stone at each blink.
 
