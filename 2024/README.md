@@ -43,3 +43,7 @@ Positions calculation on map.
 ### Day 10: [Hoof It](day10/README.md) 🌟🌟
 
 Recursive map exploration.
+
+### Day 11: [Plutonian Pebbles](day11/README.md) 🌟
+
+Generation of fast growing list.
