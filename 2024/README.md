@@ -47,3 +47,7 @@ Recursive map exploration.
 ### Day 11: [Plutonian Pebbles](day11/README.md) 🌟🌟
 
 Generation of fast growing list.
+
+### Day 12: [Garden Groups](day12/README.md) 🌟
+
+Perimeters of regions.
