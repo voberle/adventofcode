@@ -8,6 +8,7 @@ struct Grid {
     rows: usize,
     cols: usize,
 }
+use itertools::Itertools;
 use Direction::{Down, Left, Right, Up};
 
 impl Grid {
@@ -23,6 +24,14 @@ impl Grid {
         assert_eq!(values.len() % rows, 0);
         let cols = values.len() / rows;
         Self { values, rows, cols }
+    }
+
+    fn col(&self, index: usize) -> usize {
+        index % self.cols
+    }
+
+    fn row(&self, index: usize) -> usize {
+        index / self.cols
     }
 
     fn allowed(&self, pos: usize, direction: Direction) -> bool {
@@ -100,58 +109,89 @@ fn area(_map: &Grid, region: &FxHashSet<usize>) -> usize {
     region.len()
 }
 
-fn perimeter(map: &Grid, region: &FxHashSet<usize>) -> usize {
-    let mut borders: FxHashSet<(usize, Direction)> = FxHashSet::default();
-    for &plot_pos in region {
-        if let Some(up_pos) = map.try_next_pos(plot_pos, Up) {
-            if !region.contains(&up_pos) {
-                borders.insert((plot_pos, Up));
-            }
-        } else {
-            // We are at the border of the map.
-            borders.insert((plot_pos, Up));
-        }
-        if let Some(down_pos) = map.try_next_pos(plot_pos, Down) {
-            if !region.contains(&down_pos) {
-                borders.insert((down_pos, Up));
-            }
-        } else {
-            borders.insert((plot_pos, Down));
-        }
+// Given an ordered list of unique numbers, determines how many sequences of consecutive numbers it contains.
+fn count_sequences(numbers: &[usize]) -> usize {
+    numbers.windows(2).filter(|w| w[1] > w[0] + 1).count() + 1
+}
 
-        if let Some(left_pos) = map.try_next_pos(plot_pos, Left) {
-            if !region.contains(&left_pos) {
-                borders.insert((plot_pos, Left));
+fn number_of_sides(borders: &FxHashSet<(usize, usize, Direction)>) -> usize {
+    // Go through the borders by col/directions and row/direction.
+    // Order the positions and see how many groups there are.
+    [Up, Down, Left, Right]
+        .iter()
+        .map(|direction| {
+            borders
+                .iter()
+                .filter(|(_, _, dir)| dir == direction)
+                .map(|&(row, col, _)| (row, col))
+                .into_group_map_by(|(row, col)| match direction {
+                    Up | Down => *row,
+                    Left | Right => *col,
+                })
+                .into_values()
+                .map(|v| {
+                    let columns = v
+                        .iter()
+                        .map(|(row, col)| match direction {
+                            Up | Down => *col,
+                            Left | Right => *row,
+                        })
+                        .sorted_unstable()
+                        .collect_vec();
+                    count_sequences(&columns)
+                })
+                .sum::<usize>()
+        })
+        .sum()
+}
+
+// If DISCOUNT is false, returns the perimeter.
+// If DISCOUNT is true, returns the number of sides.
+fn perimeter_or_side_count<const DISCOUNT: bool>(map: &Grid, region: &FxHashSet<usize>) -> usize {
+    // The values are separated into row / col.
+    // This isn't needed to get the perimeter, but makes getting the side count easier (for part 2)
+    let mut borders: FxHashSet<(usize, usize, Direction)> = FxHashSet::default();
+
+    for &plot_pos in region {
+        let row = map.row(plot_pos);
+        let col = map.col(plot_pos);
+        for dir in [Up, Down, Left, Right] {
+            if let Some(up_pos) = map.try_next_pos(plot_pos, dir) {
+                if !region.contains(&up_pos) {
+                    borders.insert((row, col, dir));
+                }
+            } else {
+                // We are at the border of the map.
+                borders.insert((row, col, dir));
             }
-        } else {
-            borders.insert((plot_pos, Left));
-        }
-        if let Some(right_pos) = map.try_next_pos(plot_pos, Right) {
-            if !region.contains(&right_pos) {
-                borders.insert((right_pos, Left));
-            }
-        } else {
-            borders.insert((plot_pos, Right));
         }
     }
 
-    borders.len()
+    if DISCOUNT {
+        number_of_sides(&borders)
+    } else {
+        borders.len()
+    }
 }
 
-fn total_price(map: &Grid) -> usize {
+fn price<const DISCOUNT: bool>(map: &Grid) -> usize {
     let regions = all_regions(map);
     regions
         .iter()
         .map(|r| {
             let a = area(map, r);
-            let p = perimeter(map, r);
+            let p = perimeter_or_side_count::<DISCOUNT>(map, r);
             a * p
         })
         .sum()
 }
 
-fn part2(map: &Grid) -> i64 {
-    0
+fn total_price(map: &Grid) -> usize {
+    price::<false>(map)
+}
+
+fn total_with_bulk_discount(map: &Grid) -> usize {
+    price::<true>(map)
 }
 
 fn main() {
@@ -160,7 +200,7 @@ fn main() {
     let map = Grid::build(&input);
 
     println!("Part 1: {}", total_price(&map));
-    println!("Part 2: {}", part2(&map));
+    println!("Part 2: {}", total_with_bulk_discount(&map));
 }
 
 #[cfg(test)]
@@ -170,6 +210,8 @@ mod tests {
     const INPUT_TEST_1: &str = include_str!("../resources/input_test_1");
     const INPUT_TEST_2: &str = include_str!("../resources/input_test_2");
     const INPUT_TEST_3: &str = include_str!("../resources/input_test_3");
+    const INPUT_TEST_4: &str = include_str!("../resources/input_test_4");
+    const INPUT_TEST_5: &str = include_str!("../resources/input_test_5");
 
     const TEST_1_A: [usize; 4] = [0, 1, 2, 3];
     const TEST_1_B: [usize; 4] = [4, 5, 8, 9];
@@ -185,7 +227,6 @@ mod tests {
     fn test_all_regions() {
         let map = Grid::build(INPUT_TEST_1);
         let regions = all_regions(&map);
-        // println!("{:#?}", regions);
         assert!(regions.contains(&set(&TEST_1_A)));
         assert!(regions.contains(&set(&TEST_1_B)));
         assert!(regions.contains(&set(&TEST_1_C)));
@@ -200,11 +241,29 @@ mod tests {
         // BBCC
         // EEEC
         let map = Grid::build(INPUT_TEST_1);
-        assert_eq!(perimeter(&map, &set(&TEST_1_A)), 10);
-        assert_eq!(perimeter(&map, &set(&TEST_1_B)), 8);
-        assert_eq!(perimeter(&map, &set(&TEST_1_C)), 10);
-        assert_eq!(perimeter(&map, &set(&TEST_1_D)), 4);
-        assert_eq!(perimeter(&map, &set(&TEST_1_E)), 8);
+        assert_eq!(perimeter_or_side_count::<false>(&map, &set(&TEST_1_A)), 10);
+        assert_eq!(perimeter_or_side_count::<false>(&map, &set(&TEST_1_B)), 8);
+        assert_eq!(perimeter_or_side_count::<false>(&map, &set(&TEST_1_C)), 10);
+        assert_eq!(perimeter_or_side_count::<false>(&map, &set(&TEST_1_D)), 4);
+        assert_eq!(perimeter_or_side_count::<false>(&map, &set(&TEST_1_E)), 8);
+    }
+
+    #[test]
+    fn test_perimeter_discount() {
+        let map = Grid::build(INPUT_TEST_1);
+        assert_eq!(perimeter_or_side_count::<true>(&map, &set(&TEST_1_A)), 4);
+        assert_eq!(perimeter_or_side_count::<true>(&map, &set(&TEST_1_B)), 4);
+        assert_eq!(perimeter_or_side_count::<true>(&map, &set(&TEST_1_C)), 8);
+        assert_eq!(perimeter_or_side_count::<true>(&map, &set(&TEST_1_D)), 4);
+        assert_eq!(perimeter_or_side_count::<true>(&map, &set(&TEST_1_E)), 4);
+    }
+
+    #[test]
+    fn test_count_sequences() {
+        assert_eq!(count_sequences(&[0, 1, 2, 3]), 1);
+        assert_eq!(count_sequences(&[3, 4]), 1);
+        assert_eq!(count_sequences(&[3, 4, 6, 7, 8, 9]), 2);
+        assert_eq!(count_sequences(&[3, 4, 6, 7, 9]), 3);
     }
 
     #[test]
@@ -216,6 +275,10 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST_1)), 0);
+        assert_eq!(total_with_bulk_discount(&Grid::build(INPUT_TEST_1)), 80);
+        assert_eq!(total_with_bulk_discount(&Grid::build(INPUT_TEST_2)), 436);
+        assert_eq!(total_with_bulk_discount(&Grid::build(INPUT_TEST_4)), 236);
+        assert_eq!(total_with_bulk_discount(&Grid::build(INPUT_TEST_5)), 368);
+        assert_eq!(total_with_bulk_discount(&Grid::build(INPUT_TEST_3)), 1206);
     }
 }

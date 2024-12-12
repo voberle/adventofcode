@@ -48,6 +48,6 @@ Recursive map exploration.
 
 Generation of fast growing list.
 
-### Day 12: [Garden Groups](day12/README.md) 🌟
+### Day 12: [Garden Groups](day12/README.md) 🌟🌟
 
 Perimeters of regions.
