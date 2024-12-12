@@ -32,26 +32,18 @@ fn split(mut s: u64, digits_count: usize) -> (u64, u64) {
     (left, right)
 }
 
-macro_rules! insert_or_modify {
-    ($map:expr, $key:expr, $value:expr) => {
-        $map.entry($key)
-            .and_modify(|e| *e += $value)
-            .or_insert($value);
-    };
-}
-
 fn blink(stones: &FxHashMap<u64, usize>) -> FxHashMap<u64, usize> {
     let mut new_stones = FxHashMap::default();
     for (&s, &cnt) in stones {
         let digits_count = digits_count(s);
         if s == 0 {
-            insert_or_modify!(new_stones, 1, cnt);
+            *new_stones.entry(1).or_default() += cnt;
         } else if digits_count % 2 == 0 {
             let (left, right) = split(s, digits_count);
-            insert_or_modify!(new_stones, left, cnt);
-            insert_or_modify!(new_stones, right, cnt);
+            *new_stones.entry(left).or_default() += cnt;
+            *new_stones.entry(right).or_default() += cnt;
         } else {
-            insert_or_modify!(new_stones, s * 2024, cnt);
+            *new_stones.entry(s * 2024).or_default() += cnt;
         }
     }
     new_stones
@@ -60,7 +52,7 @@ fn blink(stones: &FxHashMap<u64, usize>) -> FxHashMap<u64, usize> {
 fn stones_list_to_map(stones: &[u64]) -> FxHashMap<u64, usize> {
     let mut stones_map: FxHashMap<u64, usize> = FxHashMap::default();
     for &s in stones {
-        insert_or_modify!(stones_map, s, 1);
+        *stones_map.entry(s).or_default() += 1;
     }
     stones_map
 }

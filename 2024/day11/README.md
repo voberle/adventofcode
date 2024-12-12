@@ -19,3 +19,13 @@ Second, all single digits number become again a list of single digits after few 
 This means we can just store the stones in a hashmap "stone" => "stone count". This allows us to do the transformation operation only once for each type of stone at each blink.
 
 With such changes, both parts ran in 9 ms.
+
+## Update
+
+A user on Reddit gave me a useful tip entry hashmap stuff:
+
+> You can *map.entry(k).or_default() += val
+
+> The entry function gets us either an occupied entry or a vacant one or_default() either gives us a mutable reference to the entry that was already occupied or it fills the vacant entry with its default (zero) so now it's occupied and gives us a mutable reference to that, either way, we can add val to it.
+
+So I removed the insert_or_modify macro and used this.
