@@ -51,3 +51,7 @@ Generation of fast growing list.
 ### Day 12: [Garden Groups](day12/README.md) 🌟🌟
 
 Perimeters of regions.
+
+### Day 13: [Claw Contraption](day13/README.md) 🌟
+
+Trying all combinations.
