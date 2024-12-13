@@ -4,18 +4,18 @@ use itertools::Itertools;
 
 #[derive(Debug)]
 struct Machine {
-    a_x: u32,
-    a_y: u32,
-    b_x: u32,
-    b_y: u32,
-    prize_x: u32,
-    prize_y: u32,
+    a_x: u64,
+    a_y: u64,
+    b_x: u64,
+    b_y: u64,
+    prize_x: u64,
+    prize_y: u64,
 }
 
 impl Machine {
     // Press the buttons the specified amount of times.
     // Returns the cost if we got the prize.
-    fn press(&self, press_a: u32, press_b: u32) -> Option<u32> {
+    fn press(&self, press_a: u64, press_b: u64) -> Option<u64> {
         let p_x = press_a * self.a_x + press_b * self.b_x;
         let p_y = press_a * self.a_y + press_b * self.b_y;
         if p_x == self.prize_x && p_y == self.prize_y {
@@ -26,18 +26,18 @@ impl Machine {
     }
 }
 
-fn parse_button(line: &str, name: &str) -> (u32, u32) {
+fn parse_button(line: &str, name: &str) -> (u64, u64) {
     line.trim_start_matches(name)
         .split(", ")
-        .map(|u| u[2..].parse::<u32>().unwrap())
+        .map(|u| u[2..].parse::<u64>().unwrap())
         .collect_tuple()
         .unwrap()
 }
 
-fn parse_prize(line: &str) -> (u32, u32) {
+fn parse_prize(line: &str) -> (u64, u64) {
     line.trim_start_matches("Prize: ")
         .split(", ")
-        .map(|u| u[2..].parse::<u32>().unwrap())
+        .map(|u| u[2..].parse::<u64>().unwrap())
         .collect_tuple()
         .unwrap()
 }
@@ -68,7 +68,7 @@ fn build(input: &str) -> Vec<Machine> {
     machines
 }
 
-fn min_tokens_win_max(machines: &[Machine]) -> u32 {
+fn min_tokens_win_max(machines: &[Machine]) -> u64 {
     // The equations have only one possible solution, so there is no need to find
     // the minimum, just the first result.
     machines
@@ -80,7 +80,7 @@ fn min_tokens_win_max(machines: &[Machine]) -> u32 {
         .sum()
 }
 
-fn part2(machines: &[Machine]) -> u32 {
+fn part2(machines: &[Machine]) -> u64 {
     0
 }
 
