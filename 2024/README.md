@@ -52,6 +52,6 @@ Generation of fast growing list.
 
 Perimeters of regions.
 
-### Day 13: [Claw Contraption](day13/README.md) 🌟
+### Day 13: [Claw Contraption](day13/README.md) 🌟🌟
 
 Trying all combinations.
