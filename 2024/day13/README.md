@@ -8,3 +8,5 @@ So that's what I did. Runs in 5 ms.
 
 ## Part 2
 
+The problem can be transformed into two linear equations, that have only one solution.
+There is no concept of minimum number of tokens: There is either one solution or none.

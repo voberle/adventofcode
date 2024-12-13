@@ -69,16 +69,13 @@ fn build(input: &str) -> Vec<Machine> {
 }
 
 fn min_tokens_win_max(machines: &[Machine]) -> u32 {
+    // The equations have only one possible solution, so there is no need to find
+    // the minimum, just the first result.
     machines
         .iter()
         .filter_map(|machine| {
             (0..=100)
-                .filter_map(|press_a| {
-                    (0..=100)
-                        .filter_map(|press_b| machine.press(press_a, press_b))
-                        .min()
-                })
-                .min()
+                .find_map(|press_a| (0..=100).find_map(|press_b| machine.press(press_a, press_b)))
         })
         .sum()
 }
