@@ -13,3 +13,5 @@ Turns out this is not true. The text says **most** of the robots should arrange 
 Based on this, I started searching for pictures with just a few robots in the corner. It didn't work until I switched from the left to the right top corner. Then at some point the tree appeared. It turns out that the tree was in a square a bit in the middle of the picture, but not exactly.
 
 So for the actual code, I took the approach of looking for a cluster of 9 robots in a square.
+
+After switching to a hashset, it was fast enough, 130 ms.

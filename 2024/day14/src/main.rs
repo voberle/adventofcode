@@ -3,6 +3,7 @@ use std::{
     io::{self, Read},
 };
 
+use fxhash::FxHashSet;
 use itertools::Itertools;
 
 struct Robot {
@@ -76,7 +77,8 @@ fn safety_factor(robots: &[Robot], width: i32, height: i32) -> i32 {
     quadrant_top_left * quadrant_top_right * quadrant_bottom_left * quadrant_bottom_right
 }
 
-fn print_robots(robots_positions: &[(i32, i32)]) {
+#[allow(dead_code)]
+fn print_robots(robots_positions: &FxHashSet<(i32, i32)>) {
     for y in 0..HEIGHT_REAL {
         for x in 0..WIDTH_REAL {
             print!(
@@ -92,7 +94,7 @@ fn print_robots(robots_positions: &[(i32, i32)]) {
     }
 }
 
-fn is_cluster(robots_positions: &[(i32, i32)], pos_x: i32, pos_y: i32) -> bool {
+fn is_cluster(robots_positions: &FxHashSet<(i32, i32)>, x: i32, y: i32) -> bool {
     [
         (-1, -1),
         (-1, 0),
@@ -104,7 +106,7 @@ fn is_cluster(robots_positions: &[(i32, i32)], pos_x: i32, pos_y: i32) -> bool {
         (1, 1),
     ]
     .into_iter()
-    .map(move |(d_row, d_col)| (pos_x + d_col, pos_y + d_row))
+    .map(move |(d_x, d_y)| (x + d_x, y + d_y))
     .filter(|p| robots_positions.contains(p))
     .count()
         == 8
@@ -114,24 +116,19 @@ fn find_easter_egg(robots: &[Robot]) -> i32 {
     // Find a picture that has a strong concentration of robots in one spot,
     // like a square of 3x3 robots.
     for seconds in 0.. {
-        // Collecting to a hash set is actually slower than using a vector.
-        let robots_positions = robots
+        let robots_positions: FxHashSet<(i32, i32)> = robots
             .iter()
             .map(|robot| robot.position_after(seconds, WIDTH_REAL, HEIGHT_REAL))
-            .collect_vec();
+            .collect();
 
         if robots_positions
             .iter()
             .any(|&(x, y)| is_cluster(&robots_positions, x, y))
         {
-            println!("{seconds} secs");
-            print_robots(&robots_positions);
+            // println!("{seconds} secs");
+            // print_robots(&robots_positions);
 
             return seconds;
-        }
-
-        if seconds % 1_000 == 0 {
-            println!("{seconds} secs");
         }
     }
     panic!("No Easter egg found");
