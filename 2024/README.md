@@ -55,3 +55,7 @@ Perimeters of regions.
 ### Day 13: [Claw Contraption](day13/README.md) 🌟🌟
 
 Trying all combinations.
+
+### Day 14: [Restroom Redoubt](day14/README.md) 🌟
+
+Robot deplacement.
