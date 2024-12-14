@@ -56,6 +56,6 @@ Perimeters of regions.
 
 Trying all combinations.
 
-### Day 14: [Restroom Redoubt](day14/README.md) 🌟
+### Day 14: [Restroom Redoubt](day14/README.md) 🌟🌟
 
 Robot deplacement.

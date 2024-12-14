@@ -92,30 +92,49 @@ fn print_robots(robots_positions: &[(i32, i32)]) {
     }
 }
 
-fn find_easter_egg(robots: &[Robot]) -> i64 {
+fn is_cluster(robots_positions: &[(i32, i32)], pos_x: i32, pos_y: i32) -> bool {
+    [
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
+        (0, -1),
+        (0, 1),
+        (1, -1),
+        (1, 0),
+        (1, 1),
+    ]
+    .into_iter()
+    .map(move |(d_row, d_col)| (pos_x + d_col, pos_y + d_row))
+    .filter(|p| robots_positions.contains(p))
+    .count()
+        == 8
+}
+
+fn find_easter_egg(robots: &[Robot]) -> i32 {
+    // Find a picture that has a strong concentration of robots in one spot,
+    // like a square of 3x3 robots.
     for seconds in 0.. {
         // Collecting to a hash set is actually slower than using a vector.
-        let positions = robots
+        let robots_positions = robots
             .iter()
             .map(|robot| robot.position_after(seconds, WIDTH_REAL, HEIGHT_REAL))
             .collect_vec();
 
-        // Detect if top corner has any robots.
-        if positions.iter().all(|&(x, y)| x > 15 && y > 15) {
+        if robots_positions
+            .iter()
+            .any(|&(x, y)| is_cluster(&robots_positions, x, y))
+        {
             println!("{seconds} secs");
-            print_robots(&positions);
-            break;
+            print_robots(&robots_positions);
+
+            return seconds;
         }
 
-        if seconds % 100_000 == 0 {
+        if seconds % 1_000 == 0 {
             println!("{seconds} secs");
         }
-
-        // println!("{} secs", seconds);
-        // print_robots(&positions);
-        // sleep(Duration::from_millis(100));
     }
-    0
+    panic!("No Easter egg found");
 }
 
 fn main() {
