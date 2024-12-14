@@ -100,7 +100,7 @@ fn move_blocks(blocks: &mut Vec<Block>) {
             let _ = std::mem::replace(&mut blocks[free_space_block_pos], b);
         }
 
-        initial_file_block_pos = blocks.len() - 1;
+        initial_file_block_pos = file_block_pos;
     }
 }
 
