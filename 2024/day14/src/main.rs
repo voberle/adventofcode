@@ -76,7 +76,45 @@ fn safety_factor(robots: &[Robot], width: i32, height: i32) -> i32 {
     quadrant_top_left * quadrant_top_right * quadrant_bottom_left * quadrant_bottom_right
 }
 
-fn part2(robots: &[Robot]) -> i64 {
+fn print_robots(robots_positions: &[(i32, i32)]) {
+    for y in 0..HEIGHT_REAL {
+        for x in 0..WIDTH_REAL {
+            print!(
+                "{}",
+                if robots_positions.contains(&(x, y)) {
+                    '#'
+                } else {
+                    '.'
+                }
+            );
+        }
+        println!();
+    }
+}
+
+fn find_easter_egg(robots: &[Robot]) -> i64 {
+    for seconds in 0.. {
+        // Collecting to a hash set is actually slower than using a vector.
+        let positions = robots
+            .iter()
+            .map(|robot| robot.position_after(seconds, WIDTH_REAL, HEIGHT_REAL))
+            .collect_vec();
+
+        // Detect if top corner has any robots.
+        if positions.iter().all(|&(x, y)| x > 15 && y > 15) {
+            println!("{seconds} secs");
+            print_robots(&positions);
+            break;
+        }
+
+        if seconds % 100_000 == 0 {
+            println!("{seconds} secs");
+        }
+
+        // println!("{} secs", seconds);
+        // print_robots(&positions);
+        // sleep(Duration::from_millis(100));
+    }
     0
 }
 
@@ -89,7 +127,7 @@ fn main() {
         "Part 1: {}",
         safety_factor(&robots, WIDTH_REAL, HEIGHT_REAL)
     );
-    println!("Part 2: {}", part2(&robots));
+    println!("Part 2: {}", find_easter_egg(&robots));
 }
 
 #[cfg(test)]
@@ -106,10 +144,5 @@ mod tests {
             safety_factor(&build(INPUT_TEST), WIDTH_TEST, HEIGHT_TEST),
             12
         );
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
     }
 }
