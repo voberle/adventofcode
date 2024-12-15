@@ -1,3 +1,5 @@
+#![allow(clippy::match_on_vec_items)]
+
 use std::{
     fmt,
     io::{self, Read},
@@ -51,6 +53,8 @@ enum Element {
     Robot,
     Wall,
     Box,
+    BegBox, // part 2
+    EndBox, // part 2
     Empty,
 }
 
@@ -75,6 +79,8 @@ impl fmt::Display for Element {
                 Element::Robot => '@',
                 Element::Wall => '#',
                 Element::Box => 'O',
+                Element::BegBox => '[',
+                Element::EndBox => ']',
                 Element::Empty => '.',
             }
         )
@@ -91,6 +97,13 @@ struct Grid {
 }
 
 impl Grid {
+    fn find_robot(values: &[Element]) -> usize {
+        values
+            .iter()
+            .position(|v| matches!(v, Element::Robot))
+            .unwrap()
+    }
+
     fn build(input: &str) -> Self {
         let mut rows = 0;
         let values: Vec<_> = input
@@ -102,10 +115,7 @@ impl Grid {
             .collect();
         assert_eq!(values.len() % rows, 0);
         let cols = values.len() / rows;
-        let robot_pos = values
-            .iter()
-            .position(|v| matches!(v, Element::Robot))
-            .unwrap();
+        let robot_pos = Self::find_robot(&values);
         Self {
             values,
             rows,
@@ -176,7 +186,6 @@ impl Grid {
 
     // Helper function for the move_robot() function, to explore a line where boxes might be pushed.
     // Returns true if done with exploring the line.
-    #[allow(clippy::match_on_vec_items)]
     fn explore_line(&mut self, next_pos: usize, r: usize, c: usize) -> bool {
         let p = self.pos(r, c);
         match self.values[p] {
@@ -191,6 +200,7 @@ impl Grid {
             }
             Element::Box => false, // continue
             Element::Robot => panic!("Can't have two robots"),
+            Element::BegBox | Element::EndBox => todo!(),
         }
     }
 
@@ -200,7 +210,6 @@ impl Grid {
         }
         let next_pos = self.next_pos(self.robot_pos, instruction);
 
-        #[allow(clippy::match_on_vec_items)]
         match self.values[next_pos] {
             Element::Wall => {}
             Element::Box => {
@@ -244,6 +253,29 @@ impl Grid {
                 self.robot_pos = next_pos;
             }
             Element::Robot => panic!("Can't have two robots"),
+            Element::BegBox | Element::EndBox => todo!(),
+        }
+    }
+
+    fn enlarge(&self) -> Self {
+        use Element::{BegBox, Box, Empty, EndBox, Robot, Wall};
+        let values: Vec<Element> = (0..self.rows)
+            .flat_map(|row| {
+                (row * self.cols..(row + 1) * self.cols).flat_map(|p| match self.values[p] {
+                    Wall => [Wall, Wall],
+                    Box => [BegBox, EndBox],
+                    Empty => [Empty, Empty],
+                    Robot => [Robot, Empty],
+                    BegBox | EndBox => panic!("Can't happen"),
+                })
+            })
+            .collect();
+        let robot_pos = Self::find_robot(&values);
+        Self {
+            values,
+            rows: self.rows,
+            cols: self.cols * 2,
+            robot_pos,
         }
     }
 }
@@ -284,7 +316,9 @@ fn main() {
     let (map, instructions) = build(&input);
 
     println!("Part 1: {}", gps_coords_sum(&map, &instructions));
-    println!("Part 2: {}", part2(&map, &instructions));
+    let large_map = map.enlarge();
+    large_map.print();
+    // println!("Part 2: {}", gps_coords_sum(&large_map, &instructions));
 }
 
 #[cfg(test)]
@@ -293,6 +327,7 @@ mod tests {
 
     const INPUT_TEST_1: &str = include_str!("../resources/input_test_1");
     const INPUT_TEST_2: &str = include_str!("../resources/input_test_2");
+    const INPUT_TEST_3: &str = include_str!("../resources/input_test_3");
 
     #[test]
     fn test_part1_1() {
@@ -308,6 +343,8 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST_1)), 0);
+        let (map, instructions) = build(INPUT_TEST_3);
+        let large_map = map.enlarge();
+        assert_eq!(gps_coords_sum(&map, &instructions), 9021);
     }
 }
