@@ -60,4 +60,6 @@ Trying all combinations.
 
 Robot deplacement.
 
-### Day 15: [Warehouse Woes](day15/README.md)
+### Day 15: [Warehouse Woes](day15/README.md) 🌟
+
+Robot moving on a map.
