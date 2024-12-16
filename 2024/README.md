@@ -63,3 +63,7 @@ Robot deplacement.
 ### Day 15: [Warehouse Woes](day15/README.md) 🌟
 
 Robot moving on a map.
+
+### Day 16: [Reindeer Maze](day16/README.md) 🌟
+
+Maze, Dijkstra.
