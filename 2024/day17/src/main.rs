@@ -1,5 +1,8 @@
 #![allow(non_snake_case)]
-use std::io::{self, Read};
+use std::{
+    fmt,
+    io::{self, Read},
+};
 
 use itertools::Itertools;
 
@@ -85,13 +88,29 @@ impl ComboOp {
     }
 }
 
+impl fmt::Display for ComboOp {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match *self {
+                ComboOp::LiteralValue(v) => v,
+                ComboOp::RegisterA => 4,
+                ComboOp::RegisterB => 5,
+                ComboOp::RegisterC => 6,
+                ComboOp::Reserved => 7,
+            }
+        )
+    }
+}
+
 #[derive(Debug)]
 enum Instruction {
     Adv(ComboOp),
     Bxl(u32),
     Bst(ComboOp),
     Jnz(u32),
-    Bxc,
+    Bxc(u32),
     Out(ComboOp),
     Bdv(ComboOp),
     Cdv(ComboOp),
@@ -104,7 +123,7 @@ impl Instruction {
             1 => Instruction::Bxl(u32::from(operand)),
             2 => Instruction::Bst(ComboOp::new(operand)),
             3 => Instruction::Jnz(u32::from(operand)),
-            4 => Instruction::Bxc, // operand is ignored
+            4 => Instruction::Bxc(u32::from(operand)), // operand is ignored
             5 => Instruction::Out(ComboOp::new(operand)),
             6 => Instruction::Bdv(ComboOp::new(operand)),
             7 => Instruction::Cdv(ComboOp::new(operand)),
@@ -125,13 +144,35 @@ impl Instruction {
                     return;
                 }
             }
-            Instruction::Bxc => regs.B ^= regs.C,
+            Instruction::Bxc(_) => regs.B ^= regs.C,
             Instruction::Out(combo) => output.push(combo.value(regs) % 8),
             Instruction::Bdv(combo) => regs.B = regs.A / 2u32.pow(combo.value(regs)),
             Instruction::Cdv(combo) => regs.C = regs.A / 2u32.pow(combo.value(regs)),
         }
         *ip += 1;
     }
+}
+
+impl fmt::Display for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Instruction::Adv(combo_op) => write!(f, "0,{combo_op}"),
+            Instruction::Bxl(val) => write!(f, "1,{val}"),
+            Instruction::Bst(combo_op) => write!(f, "2,{combo_op}"),
+            Instruction::Jnz(val) => write!(f, "3,{val}"),
+            Instruction::Bxc(val) => write!(f, "4,{val}"),
+            Instruction::Out(combo_op) => write!(f, "5,{combo_op}"),
+            Instruction::Bdv(combo_op) => write!(f, "6,{combo_op}"),
+            Instruction::Cdv(combo_op) => write!(f, "7,{combo_op}"),
+        }
+    }
+}
+
+fn program_to_string(program: &[Instruction]) -> String {
+    program
+        .iter()
+        .map(std::string::ToString::to_string)
+        .join(",")
 }
 
 fn run_program(registers: &mut Registers, program: &[Instruction]) -> Vec<u32> {
@@ -150,8 +191,18 @@ fn final_output(registers: &Registers, program: &[Instruction]) -> String {
     output.into_iter().join(",")
 }
 
-fn part2(registers: &Registers, program: &[Instruction]) -> i64 {
-    0
+// Brute force version.
+fn find_reg_a_val_for_self_replicate(program: &[Instruction]) -> u32 {
+    let program_as_string = program_to_string(program);
+
+    for reg_a in 0.. {
+        let registers = Registers::new(reg_a, 0, 0);
+        let output = final_output(&registers, program);
+        if output == program_as_string {
+            return reg_a;
+        }
+    }
+    panic!("Not found")
 }
 
 fn main() {
@@ -160,14 +211,14 @@ fn main() {
     let (registers, program) = build(&input);
 
     println!("Part 1: {}", final_output(&registers, &program));
-    println!("Part 2: {}", part2(&registers, &program));
+    println!("Part 2: {}", find_reg_a_val_for_self_replicate(&program));
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const INPUT_TEST: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_1: &str = include_str!("../resources/input_test_1");
 
     #[test]
     fn test_inst_1() {
@@ -216,13 +267,23 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        let (registers, program) = build(INPUT_TEST);
+        let (registers, program) = build(INPUT_TEST_1);
         assert_eq!(final_output(&registers, &program), "4,6,3,5,6,3,5,2,1,0");
+    }
+
+    const INPUT_TEST_2: &str = include_str!("../resources/input_test_2");
+
+    #[test]
+    fn test_copies_itself() {
+        let (mut registers, program) = build(INPUT_TEST_2);
+        registers.A = 117440;
+        let output = final_output(&registers, &program);
+        assert_eq!(output, program_to_string(&program));
     }
 
     #[test]
     fn test_part2() {
-        let (registers, program) = build(INPUT_TEST);
-        assert_eq!(part2(&registers, &program), 0);
+        let (_, program) = build(INPUT_TEST_2);
+        assert_eq!(find_reg_a_val_for_self_replicate(&program), 117440);
     }
 }
