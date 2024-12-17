@@ -68,6 +68,6 @@ Robot moving on a map.
 
 Maze, Dijkstra.
 
-### Day 17: [Chronospatial Computer](day17/README.md) 🌟
+### Day 17: [Chronospatial Computer](day17/README.md) 🌟🌟
 
 Virtual Machine, IntCode like.
