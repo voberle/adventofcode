@@ -192,6 +192,7 @@ fn final_output(registers: &Registers, program: &[Instruction]) -> String {
 }
 
 // Brute force version.
+#[allow(dead_code)]
 fn find_reg_a_val_for_self_replicate(program: &[Instruction]) -> u32 {
     let program_as_string = program_to_string(program);
 
@@ -205,13 +206,59 @@ fn find_reg_a_val_for_self_replicate(program: &[Instruction]) -> u32 {
     panic!("Not found")
 }
 
+#[allow(unused_assignments)]
+fn converted_prog(reg_a: u32) -> String {
+    let mut a = reg_a;
+    let mut b = 0;
+    let mut c = 0;
+    let mut output = Vec::new();
+
+    while a != 0 {
+        // Bst(A)  B = A % 8
+        b = a % 8;
+        // Bxl(3)  B = B ^ 3
+        b ^= 3;
+        // Cdv(B)  C = A / 2.pow(B)
+        c = a / 2u32.pow(b);
+        // Bxc(1)  B = B ^ C
+        b ^= c;
+        // Bxl(3)  B = B ^ 3
+        b ^= 3;
+        // Adv(3)  A = A / 2.pow(3)
+        a /= 8;
+        // Out(B)  Outputs B
+        output.push(b % 8);
+    } // Jnz(0)  If A != 0, jumps to beginning
+
+    output.into_iter().join(",")
+}
+
+fn find_reg_a_val_with_converted(program: &[Instruction]) -> u32 {
+    let program_as_string = program_to_string(program);
+
+    for reg_a in 0.. {
+        let output = converted_prog(reg_a);
+        if output == program_as_string {
+            return reg_a;
+        }
+    }
+    panic!("Not found")
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let (registers, program) = build(&input);
 
     println!("Part 1: {}", final_output(&registers, &program));
-    println!("Part 2: {}", find_reg_a_val_for_self_replicate(&program));
+
+    // To check that the converted program is correct:
+    // assert_eq!(final_output(&registers, &program), converted_prog(registers.A));
+
+    // Brute force implementation by interpreting the program
+    // println!("Part 2: {}", find_reg_a_val_for_self_replicate(&program));
+
+    println!("Part 2: {}", find_reg_a_val_with_converted(&program));
 }
 
 #[cfg(test)]
