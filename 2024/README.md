@@ -72,6 +72,6 @@ Maze, Dijkstra.
 
 Virtual Machine, IntCode like.
 
-### Day 18: [RAM Run](day18/README.md) 🌟
+### Day 18: [RAM Run](day18/README.md) 🌟🌟
 
 Maze, Dijkstra.

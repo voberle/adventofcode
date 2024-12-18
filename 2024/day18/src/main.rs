@@ -1,5 +1,6 @@
 use std::{
     collections::BinaryHeap,
+    fmt,
     io::{self, Read},
 };
 
@@ -36,6 +37,12 @@ impl From<(usize, usize)> for Coords {
             x: pair.0,
             y: pair.1,
         }
+    }
+}
+
+impl fmt::Display for Coords {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{},{}", self.x, self.y)
     }
 }
 
@@ -96,7 +103,7 @@ fn find_shortest_path(
     map_size: usize,
     start: Coords,
     end: Coords,
-) -> usize {
+) -> Option<usize> {
     let mut visited: FxHashSet<Coords> = FxHashSet::default();
     let mut distance: FxHashMap<Coords, usize> = FxHashMap::default();
     let mut shortest_distance = usize::MAX;
@@ -151,20 +158,37 @@ fn find_shortest_path(
                 }),
         );
     }
-    shortest_distance
+    if shortest_distance == usize::MAX {
+        None
+    } else {
+        Some(shortest_distance)
+    }
 }
 
-fn shortest_path_after(bytes_coords: &[Coords], bytes_to_use: usize, map_size: usize) -> usize {
+fn shortest_path_after(bytes_coords: &[Coords], map_size: usize, bytes_to_use: usize) -> usize {
     let map: FxHashSet<Coords> = bytes_coords[0..bytes_to_use].iter().copied().collect();
     let start = Coords::new(0, 0);
     let end = Coords::new(map_size - 1, map_size - 1);
     // print_map(&map, map_size, start, end);
 
-    find_shortest_path(&map, map_size, start, end)
+    find_shortest_path(&map, map_size, start, end).unwrap()
 }
 
-fn part2(bytes_coords: &[Coords]) -> usize {
-    0
+fn first_byte_preventing_exit(
+    bytes_coords: &[Coords],
+    map_size: usize,
+    start_from: usize,
+) -> String {
+    // Brute-force, but it works.
+    for bytes_to_use in start_from..bytes_coords.len() {
+        let map: FxHashSet<Coords> = bytes_coords[0..=bytes_to_use].iter().copied().collect();
+        let start = Coords::new(0, 0);
+        let end = Coords::new(map_size - 1, map_size - 1);
+        if find_shortest_path(&map, map_size, start, end).is_none() {
+            return bytes_coords[bytes_to_use].to_string();
+        }
+    }
+    panic!("No answer found")
 }
 
 const MAP_SIZE: usize = 70 + 1;
@@ -177,9 +201,12 @@ fn main() {
 
     println!(
         "Part 1: {}",
-        shortest_path_after(&bytes_coords, BYTES_TO_USE, MAP_SIZE)
+        shortest_path_after(&bytes_coords, MAP_SIZE, BYTES_TO_USE)
     );
-    println!("Part 2: {}", part2(&bytes_coords));
+    println!(
+        "Part 2: {}",
+        first_byte_preventing_exit(&bytes_coords, MAP_SIZE, BYTES_TO_USE)
+    );
 }
 
 #[cfg(test)]
@@ -193,13 +220,16 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(
-            shortest_path_after(&build(INPUT_TEST), BYTES_TO_USE_TEST, MAP_SIZE_TEST),
+            shortest_path_after(&build(INPUT_TEST), MAP_SIZE_TEST, BYTES_TO_USE_TEST),
             22
         );
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(
+            first_byte_preventing_exit(&build(INPUT_TEST), MAP_SIZE_TEST, BYTES_TO_USE_TEST),
+            "6,1"
+        );
     }
 }

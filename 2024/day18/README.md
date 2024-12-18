@@ -6,3 +6,4 @@ Another problem that is solved by a simple Dijkstra.
 
 ## Part 2
 
+I was almost surprised the second part brute-forced so easily. Runs in 530 ms.
