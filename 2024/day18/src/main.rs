@@ -180,10 +180,10 @@ fn first_byte_preventing_exit(
     start_from: usize,
 ) -> String {
     // Brute-force, but it works.
+    let start = Coords::new(0, 0);
+    let end = Coords::new(map_size - 1, map_size - 1);
     for bytes_to_use in start_from..bytes_coords.len() {
         let map: FxHashSet<Coords> = bytes_coords[0..=bytes_to_use].iter().copied().collect();
-        let start = Coords::new(0, 0);
-        let end = Coords::new(map_size - 1, map_size - 1);
         if find_shortest_path(&map, map_size, start, end).is_none() {
             return bytes_coords[bytes_to_use].to_string();
         }
