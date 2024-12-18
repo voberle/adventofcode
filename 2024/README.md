@@ -71,3 +71,7 @@ Maze, Dijkstra.
 ### Day 17: [Chronospatial Computer](day17/README.md) 🌟🌟
 
 Virtual Machine, IntCode like.
+
+### Day 18: [RAM Run](day18/README.md) 🌟
+
+Maze, Dijkstra.
