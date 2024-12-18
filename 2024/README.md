@@ -64,7 +64,7 @@ Robot deplacement.
 
 Robot moving on a map.
 
-### Day 16: [Reindeer Maze](day16/README.md) 🌟
+### Day 16: [Reindeer Maze](day16/README.md) 🌟🌟
 
 Maze, Dijkstra.
 

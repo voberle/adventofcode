@@ -1,6 +1,7 @@
 use fxhash::{FxHashMap, FxHashSet};
 use std::{
-    collections::BinaryHeap,
+    cmp::Ordering,
+    collections::{BinaryHeap, VecDeque},
     io::{self, Read},
 };
 
@@ -129,7 +130,7 @@ impl PartialOrd for Node {
     }
 }
 
-// Dijkstra shortest path.
+// Dijkstra shortest path, version which finds only the best cost.
 fn find_smallest_cost(map: &Grid, start: usize, start_direction: Direction, end: usize) -> u32 {
     let mut visited: FxHashSet<(usize, Direction)> = FxHashSet::default();
     let mut distance: FxHashMap<(usize, Direction), u32> = FxHashMap::default();
@@ -191,6 +192,7 @@ fn find_smallest_cost(map: &Grid, start: usize, start_direction: Direction, end:
     smallest_cost
 }
 
+#[allow(dead_code)]
 fn lowest_score(map: &Grid) -> u32 {
     let start = map.find_start();
     let end = map.find_end();
@@ -199,8 +201,145 @@ fn lowest_score(map: &Grid) -> u32 {
     find_smallest_cost(map, start, dir, end)
 }
 
-fn part2(map: &Grid) -> u32 {
-    0
+// Structure to record the nodes part of the path.
+#[derive(PartialEq, Eq, Clone, Debug)]
+struct PathNode {
+    pos: usize,
+    dir: Direction,
+}
+
+// Modified Dijkstra shortest path, which finds all the best paths.
+fn find_all_best_paths(
+    map: &Grid,
+    start: usize,
+    start_direction: Direction,
+    end: usize,
+) -> (u32, Vec<Vec<PathNode>>) {
+    // No visited set, we use distance to track where we have been.
+    let mut distance: FxHashMap<(usize, Direction), u32> = FxHashMap::default();
+    let mut predecessors: FxHashMap<(usize, Direction), Vec<(usize, Direction)>> =
+        FxHashMap::default();
+    let mut smallest_cost = u32::MAX;
+
+    let mut queue: BinaryHeap<Node> = BinaryHeap::new();
+    queue.push(Node {
+        pos: start,
+        dir: start_direction,
+        cost: 0,
+    });
+
+    // Initialize start distance
+    distance.insert((start, start_direction), 0);
+
+    while let Some(Node { pos, dir, cost }) = queue.pop() {
+        // Skip if the cost of this node is bigger than what we have found previously.
+        if cost > *distance.get(&(pos, dir)).unwrap_or(&u32::MAX) {
+            continue;
+        }
+
+        if pos == end {
+            smallest_cost = smallest_cost.min(cost);
+            // Don't continue; we need to explore all paths to the end
+        }
+
+        queue.extend(ALL_DIRECTIONS.iter().filter_map(|&d| {
+            // Exclude going out of the map and walls.
+            if !map.allowed(pos, d) || map.values[map.next_pos(pos, d)].is_wall() {
+                return None;
+            }
+
+            let next_pos = map.next_pos(pos, d);
+            let next_cost = cost + 1 + dir.cost_change(d);
+
+            // Ignore any paths with cost too big.
+            if next_cost > smallest_cost && pos != end {
+                return None;
+            }
+
+            // Is the path we are exploring now better than the
+            // one we already have here?
+            if match distance.get(&(next_pos, d)) {
+                Some(&existing_cost) => match next_cost.cmp(&existing_cost) {
+                    Ordering::Less => true,
+                    Ordering::Equal => false,
+                    Ordering::Greater => return None,
+                },
+                None => true,
+            } {
+                // Better path.
+                distance.insert((next_pos, d), next_cost);
+                predecessors.insert((next_pos, d), vec![(pos, dir)]);
+            } else {
+                // Same path, just update predecessors.
+                if let Some(pred_list) = predecessors.get_mut(&(next_pos, d)) {
+                    if !pred_list.contains(&(pos, dir)) {
+                        pred_list.push((pos, dir));
+                    }
+                }
+            }
+
+            Some(Node {
+                pos: next_pos,
+                dir: d,
+                cost: next_cost,
+            })
+        }));
+    }
+
+    // Now that we have explored the whole map, create the paths.
+    // Iterative Backtracking.
+    let mut all_shortest_paths: Vec<Vec<PathNode>> = Vec::new();
+    // A stack to keep all the in-progress paths we are building.
+    let mut stack: VecDeque<(Vec<PathNode>, (usize, Direction))> = VecDeque::new();
+
+    // Initialize the stack with the end position / direction pair.
+    for end_direction in ALL_DIRECTIONS
+        .iter()
+        .filter(|&&d| distance.contains_key(&(end, d)))
+    {
+        stack.push_back((
+            vec![PathNode {
+                pos: end,
+                dir: *end_direction,
+            }],
+            (end, *end_direction),
+        ));
+    }
+
+    while let Some((current_path, current_node)) = stack.pop_back() {
+        if current_node == (start, start_direction) {
+            // A complete path is found, adding it to the list.
+            let mut complete_path = current_path.clone();
+            // Path was build from end, so reverse it.
+            complete_path.reverse();
+            all_shortest_paths.push(complete_path);
+        } else if let Some(prev_nodes) = predecessors.get(&current_node) {
+            // We got all the predecessors of the current node.
+            for &(prev_pos, prev_dir) in prev_nodes {
+                // For each predecessor, we create a new path and add it
+                // to the stack, to be checked.
+                let mut new_path = current_path.clone();
+                new_path.push(PathNode {
+                    pos: prev_pos,
+                    dir: prev_dir,
+                });
+                stack.push_back((new_path, (prev_pos, prev_dir)));
+            }
+        }
+    }
+
+    (smallest_cost, all_shortest_paths)
+}
+
+fn lowest_score_and_all_tiles(map: &Grid) -> (u32, usize) {
+    let start = map.find_start();
+    let end = map.find_end();
+    let dir = East;
+
+    let (best_score, all_paths) = find_all_best_paths(map, start, dir, end);
+
+    let set: FxHashSet<usize> = all_paths.iter().flatten().map(|p| p.pos).collect();
+    (best_score, set.len())
 }
 
 fn main() {
@@ -208,8 +347,11 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let map = Grid::build(&input);
 
-    println!("Part 1: {}", lowest_score(&map));
-    println!("Part 2: {}", part2(&map));
+    // println!("Part 1: {}", lowest_score(&map));
+
+    let (lowest_score, tiles_count) = lowest_score_and_all_tiles(&map);
+    println!("Part 1: {lowest_score}");
+    println!("Part 2: {tiles_count}");
 }
 
 #[cfg(test)]
@@ -227,6 +369,12 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST_1)), 0);
+        let (lowest_score, tiles_count) = lowest_score_and_all_tiles(&Grid::build(INPUT_TEST_1));
+        assert_eq!(lowest_score, 7036);
+        assert_eq!(tiles_count, 45);
+
+        let (lowest_score, tiles_count) = lowest_score_and_all_tiles(&Grid::build(INPUT_TEST_2));
+        assert_eq!(lowest_score, 11048);
+        assert_eq!(tiles_count, 64);
     }
 }
