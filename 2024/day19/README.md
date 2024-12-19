@@ -12,3 +12,4 @@ It's nicely fast, 6 ms.
 
 ## Part 2
 
+Part 2 was very easy: Just by having part 1 code return a count instead of a boolean, it worked.
