@@ -2,6 +2,13 @@
 
 ## Part 1
 
+It didn't feel so easy, even if my solution looks fairly easy finally.
+
+The idea is that I go through the pattern in a recursive way, checking if I can find a towel set. If I do, I check the rest of the pattern by calling the same function recursively.
+
+It worked once I added memoization. Without it, the impossible patterns never stop.
+
+It's nicely fast, 6 ms.
 
 ## Part 2
 

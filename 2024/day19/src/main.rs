@@ -1,6 +1,6 @@
 use std::io::{self, Read};
 
-use fxhash::FxHashSet;
+use fxhash::{FxHashMap, FxHashSet};
 use itertools::Itertools;
 
 fn build_towels(input: &str) -> FxHashSet<Vec<char>> {
@@ -29,27 +29,34 @@ fn is_pattern_possible(
     min_towel_size: usize,
     max_towel_size: usize,
     pattern: &[char],
+    cache: &mut FxHashMap<Vec<char>, bool>,
 ) -> bool {
+    // Memoization is a must here, otherwise impossible patterns never finish.
+    if let Some(val) = cache.get(pattern) {
+        return *val;
+    }
+
     if pattern.is_empty() {
         return true;
     }
     let limit = max_towel_size.min(pattern.len());
     let mut result = false;
-    // We first check the biggest chunks possible.
-    // Does it matter??
+    // We first check the biggest chunks possible, which is a small optimization (doesn't change very much).
     for i in (min_towel_size..=limit).rev() {
         let extract = &pattern[0..i];
-        // println!("extract {:?}", extract);
         if towels.contains(extract) {
-            // println!("towels contains {:?}. Remaining {:?}", extract, &pattern[i..]);
-            // println!("towels contains {:?}. Remaining {}", extract, &pattern[i..].len());
-            result |= is_pattern_possible(towels, min_towel_size, max_towel_size, &pattern[i..]);
+            result |=
+                is_pattern_possible(towels, min_towel_size, max_towel_size, &pattern[i..], cache);
 
+            // If we find that the rest of the pattern is possible, there is no need to check for other towel sizes.
+            // It's another small optimization.
             if result {
                 break;
             }
         }
     }
+
+    cache.insert(pattern.to_vec(), result);
     result
 }
 
@@ -65,13 +72,11 @@ fn get_towel_size_minmax(towels: &FxHashSet<Vec<char>>) -> (usize, usize) {
 
 fn possible_designs_count(towels: &FxHashSet<Vec<char>>, patterns: &[Vec<char>]) -> usize {
     let (min, max) = get_towel_size_minmax(towels);
-    println!("min {min}, max {max}");
+
+    let mut cache: FxHashMap<Vec<char>, bool> = FxHashMap::default();
     patterns
         .iter()
-        .filter(|pattern| {
-            println!("Checking {:?}", pattern);
-            is_pattern_possible(towels, min, max, pattern)
-        })
+        .filter(|pattern| is_pattern_possible(towels, min, max, pattern, &mut cache))
         .count()
 }
 
@@ -98,7 +103,9 @@ mod tests {
     fn test_is_pattern_possible() {
         let towels = build_towels("r, wr, b, g, bwu, rb, gb, br");
         let (min, max) = get_towel_size_minmax(&towels);
-        let check = |p| is_pattern_possible(&towels, min, max, &build_pattern(p));
+        let mut cache: FxHashMap<Vec<char>, bool> = FxHashMap::default();
+
+        let mut check = |p| is_pattern_possible(&towels, min, max, &build_pattern(p), &mut cache);
         assert!(check("brwrr"));
         assert!(check("bggr"));
         assert!(check("gbbr"));
