@@ -51,8 +51,7 @@ fn different_ways(
     }
     let limit = max_towel_size.min(pattern.len());
     let mut result = 0;
-    // We first check the biggest chunks possible, which is a small optimization (doesn't change very much).
-    for i in (min_towel_size..=limit).rev() {
+    for i in min_towel_size..=limit {
         let extract = &pattern[0..i];
         if towels.contains(extract) {
             result += different_ways(towels, min_towel_size, max_towel_size, &pattern[i..], cache);
