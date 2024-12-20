@@ -79,3 +79,7 @@ Maze, Dijkstra.
 ### Day 19: [Linen Layout](day19/README.md) 🌟🌟
 
 Patterns testing, Memoization.
+
+### Day 20: [Race Condition](day20/README.md) 🌟
+
+Maze, Dijkstra.
