@@ -76,6 +76,6 @@ Virtual Machine, IntCode like.
 
 Maze, Dijkstra.
 
-### Day 19: [Linen Layout](day19/README.md) 🌟
+### Day 19: [Linen Layout](day19/README.md) 🌟🌟
 
 Patterns testing, Memoization.
