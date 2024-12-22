@@ -20,7 +20,7 @@ impl DirKey {
     // Returns the shortest set of keys to press to go press next starting from self.
     // Always 1, 2 or 3 moves, plus A.
     fn go_press(self, next: DirKey) -> Vec<Vec<DirKey>> {
-        use DirKey::{Up, Down, Left, Right, A};
+        use DirKey::{Down, Left, Right, Up, A};
         let mut moves = match self {
             Up => match next {
                 Up => vec![],
@@ -105,23 +105,6 @@ pub enum NumKey {
 }
 
 impl NumKey {
-    fn new(c: char) -> Self {
-        match c {
-            '7' => Self::K7,
-            '8' => Self::K8,
-            '9' => Self::K9,
-            '4' => Self::K4,
-            '5' => Self::K5,
-            '6' => Self::K6,
-            '1' => Self::K1,
-            '2' => Self::K2,
-            '3' => Self::K3,
-            '0' => Self::K0,
-            'A' => Self::KA,
-            _ => panic!("Invalid num key"),
-        }
-    }
-
     fn index(self) -> usize {
         match self {
             NumKey::K7 => 7,
@@ -141,7 +124,7 @@ impl NumKey {
     // Returns the key in that direction, if any.
     #[allow(clippy::match_same_arms)]
     fn next_key(self, dir: DirKey) -> Option<NumKey> {
-        use NumKey::{K7, K8, K9, K4, K5, K6, K1, K2, K3, K0, KA};
+        use NumKey::{K0, K1, K2, K3, K4, K5, K6, K7, K8, K9, KA};
         match self {
             K7 => match dir {
                 DirKey::Up => None,
@@ -223,6 +206,78 @@ impl NumKey {
         }
     }
 
+    // Returns the direction needed to go from two neighbour numeric keys.
+    pub fn dir(self, next: NumKey) -> DirKey {
+        use DirKey::{Down, Left, Right, Up};
+        use NumKey::{K0, K1, K2, K3, K4, K5, K6, K7, K8, K9, KA};
+        // println!("{} => {}", self, next);
+        match self {
+            K7 => match next {
+                K8 => Right,
+                K4 => Down,
+                _ => panic!("Keys are not neighours."),
+            },
+            K8 => match next {
+                K7 => Left,
+                K9 => Right,
+                K5 => Down,
+                _ => panic!("Keys are not neighours."),
+            },
+            K9 => match next {
+                K8 => Left,
+                K6 => Down,
+                _ => panic!("Keys are not neighours."),
+            },
+            K4 => match next {
+                K7 => Up,
+                K5 => Right,
+                K1 => Down,
+                _ => panic!("Keys are not neighours."),
+            },
+            K5 => match next {
+                K8 => Up,
+                K4 => Left,
+                K6 => Right,
+                K2 => Down,
+                _ => panic!("Keys are not neighours."),
+            },
+            K6 => match next {
+                K9 => Up,
+                K5 => Left,
+                K3 => Down,
+                _ => panic!("Keys are not neighours."),
+            },
+            K1 => match next {
+                K4 => Up,
+                K2 => Right,
+                _ => panic!("Keys are not neighours."),
+            },
+            K2 => match next {
+                K5 => Up,
+                K1 => Left,
+                K3 => Right,
+                K0 => Down,
+                _ => panic!("Keys are not neighours."),
+            },
+            K3 => match next {
+                K6 => Up,
+                K2 => Left,
+                KA => Down,
+                _ => panic!("Keys are not neighours."),
+            },
+            K0 => match next {
+                K2 => Up,
+                KA => Right,
+                _ => panic!("Keys are not neighours."),
+            },
+            KA => match next {
+                K0 => Left,
+                K3 => Up,
+                _ => panic!("Keys are not neighours."),
+            },
+        }
+    }
+
     fn neighbour_keys_iter(self) -> impl Iterator<Item = Self> + 'static {
         [DirKey::Up, DirKey::Down, DirKey::Left, DirKey::Right]
             .into_iter()
@@ -277,11 +332,52 @@ impl NumKey {
     }
 }
 
+impl From<char> for NumKey {
+    fn from(c: char) -> Self {
+        match c {
+            '7' => Self::K7,
+            '8' => Self::K8,
+            '9' => Self::K9,
+            '4' => Self::K4,
+            '5' => Self::K5,
+            '6' => Self::K6,
+            '1' => Self::K1,
+            '2' => Self::K2,
+            '3' => Self::K3,
+            '0' => Self::K0,
+            'A' => Self::KA,
+            _ => panic!("Invalid num key"),
+        }
+    }
+}
+
+impl fmt::Display for NumKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match *self {
+                NumKey::K7 => '7',
+                NumKey::K8 => '8',
+                NumKey::K9 => '9',
+                NumKey::K4 => '4',
+                NumKey::K5 => '5',
+                NumKey::K6 => '6',
+                NumKey::K1 => '1',
+                NumKey::K2 => '2',
+                NumKey::K3 => '3',
+                NumKey::K0 => '0',
+                NumKey::KA => 'A',
+            }
+        )
+    }
+}
+
 #[rustfmt::skip]
 pub fn print_numeric_keypad(highlight_keys: &[NumKey]) {
     const RED: &str = "\x1b[31m";
     const RESET: &str = "\x1b[0m";
-    let p = |c| if highlight_keys.contains(&NumKey::new(c)) {
+    let p = |c: char| if highlight_keys.contains(&c.into()) {
         print!("{RED}{c}{RESET}");
     } else {
         print!("{c}");
