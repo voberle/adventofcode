@@ -5,6 +5,7 @@ use std::{
 
 mod model;
 
+use itertools::Itertools;
 use model::{DirKey, NumKey};
 
 fn build(input: &str) -> Vec<Vec<char>> {
@@ -80,28 +81,27 @@ fn prepend<T: Clone>(input: &[T], elt: T) -> Vec<T> {
 }
 
 fn shortest_sequence_length(code: &[char]) -> usize {
-    let mut shortest_len = usize::MAX;
-
     let paths = find_code_paths(&prepend(code, 'A'));
-    for path in paths {
-        let dirs = convert_num_paths_to_directions(&path);
-        // println!("{}", dirs_to_string(&dirs));
+    let paths_as_dirs = paths
+        .iter()
+        .map(|p| convert_num_paths_to_directions(p))
+        .collect_vec();
 
-        let next_paths = find_dir_paths(&prepend(&dirs, DirKey::A));
-        for next_path in next_paths {
-            // println!("{}", dirs_to_string(&next_path));
+    let next_paths = next_sequence(&paths_as_dirs);
+    let next_next_paths = next_sequence(&next_paths);
 
-            let next_next_paths = find_dir_paths(&prepend(&next_path, DirKey::A));
-            shortest_len = shortest_len.min(
-                next_next_paths
-                    .iter()
-                    .map(std::vec::Vec::len)
-                    .min()
-                    .unwrap(),
-            );
-        }
-    }
-    shortest_len
+    next_next_paths
+        .iter()
+        .map(std::vec::Vec::len)
+        .min()
+        .unwrap()
+}
+
+fn next_sequence(paths_as_dirs: &[Vec<DirKey>]) -> Vec<Vec<DirKey>> {
+    paths_as_dirs
+        .iter()
+        .flat_map(|dirs| find_dir_paths(&prepend(dirs, DirKey::A)))
+        .collect()
 }
 
 fn code_numeric_part(code: &[char]) -> usize {
