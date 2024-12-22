@@ -80,21 +80,18 @@ fn prepend<T: Clone>(input: &[T], elt: T) -> Vec<T> {
     v
 }
 
-fn shortest_sequence_length(code: &[char]) -> usize {
+fn shortest_sequence_length(code: &[char], robots_count: usize) -> usize {
     let paths = find_code_paths(&prepend(code, 'A'));
-    let paths_as_dirs = paths
+    let mut next_paths = paths
         .iter()
         .map(|p| convert_num_paths_to_directions(p))
         .collect_vec();
 
-    let next_paths = next_sequence(&paths_as_dirs);
-    let next_next_paths = next_sequence(&next_paths);
+    for _ in 0..robots_count {
+        next_paths = next_sequence(&next_paths);
+    }
 
-    next_next_paths
-        .iter()
-        .map(std::vec::Vec::len)
-        .min()
-        .unwrap()
+    next_paths.iter().map(std::vec::Vec::len).min().unwrap()
 }
 
 fn next_sequence(paths_as_dirs: &[Vec<DirKey>]) -> Vec<Vec<DirKey>> {
@@ -110,14 +107,18 @@ fn code_numeric_part(code: &[char]) -> usize {
         + (code[2] as usize - '0' as usize)
 }
 
-fn complexities_sum(codes: &[Vec<char>]) -> usize {
+fn complexities_sum(codes: &[Vec<char>], robots_count: usize) -> usize {
     codes
         .iter()
-        .map(|code| shortest_sequence_length(code) * code_numeric_part(code))
+        .map(|code| shortest_sequence_length(code, robots_count) * code_numeric_part(code))
         .sum()
 }
 
-fn part2(codes: &[Vec<char>]) -> i64 {
+fn complexities_sum_2_robots(codes: &[Vec<char>]) -> usize {
+    complexities_sum(codes, 2)
+}
+
+fn complexities_sum_25_robots(codes: &[Vec<char>]) -> usize {
     0
 }
 
@@ -126,8 +127,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let codes = build(&input);
 
-    println!("Part 1: {}", complexities_sum(&codes));
-    println!("Part 2: {}", part2(&codes));
+    println!("Part 1: {}", complexities_sum_2_robots(&codes));
+    println!("Part 2: {}", complexities_sum_25_robots(&codes));
 }
 
 #[cfg(test)]
@@ -138,7 +139,7 @@ mod tests {
 
     #[test]
     fn test_shortest_sequence_length() {
-        assert_eq!(shortest_sequence_length(&['0', '2', '9', 'A']), 68)
+        assert_eq!(shortest_sequence_length(&['0', '2', '9', 'A'], 2), 68)
     }
 
     #[test]
@@ -148,11 +149,6 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(complexities_sum(&build(INPUT_TEST)), 126384);
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(complexities_sum_2_robots(&build(INPUT_TEST)), 126384);
     }
 }
