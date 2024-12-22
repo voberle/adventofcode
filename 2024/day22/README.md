@@ -8,3 +8,6 @@ Runs in 10 ms.
 
 ## Part 2
 
+This one I brute-forced, as it runs in a few minutes.
+
+I generated all possible secret numbers and all possible price differences, and then tried all change combinations on them.

@@ -84,6 +84,6 @@ Patterns testing, Memoization.
 
 Maze, Dijkstra.
 
-### Day 22: [Monkey Market](day22/README.md) 🌟
+### Day 22: [Monkey Market](day22/README.md) 🌟🌟
 
-Number generation.
+Number generation. Brute-forced.
