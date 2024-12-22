@@ -83,3 +83,7 @@ Patterns testing, Memoization.
 ### Day 20: [Race Condition](day20/README.md) 🌟
 
 Maze, Dijkstra.
+
+### Day 22: [Monkey Market](day22/README.md) 🌟
+
+Number generation.
