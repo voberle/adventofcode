@@ -1,13 +1,14 @@
 use std::{collections::VecDeque, fmt};
 
 use fxhash::FxHashMap;
+use itertools::Itertools;
 
 //     +---+---+
 //     | ^ | A |
 // +---+---+---+
 // | < | v | > |
 // +---+---+---+
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DirKey {
     Up,
     Down,
@@ -19,11 +20,11 @@ pub enum DirKey {
 impl DirKey {
     // Returns the shortest set of keys to press to go press next starting from self.
     // Always 1, 2 or 3 moves, plus A.
-    fn go_press(self, next: DirKey) -> Vec<Vec<DirKey>> {
+    pub fn go_press(self, next: DirKey) -> Vec<Vec<DirKey>> {
         use DirKey::{Down, Left, Right, Up, A};
         let mut moves = match self {
             Up => match next {
-                Up => vec![],
+                Up => vec![vec![]],
                 Down => vec![vec![Down]],
                 Left => vec![vec![Down, Left]],
                 Right => vec![vec![Down, Right], vec![Right, Down]],
@@ -31,7 +32,7 @@ impl DirKey {
             },
             Down => match next {
                 Up => vec![vec![Up]],
-                Down => vec![],
+                Down => vec![vec![]],
                 Left => vec![vec![Left]],
                 Right => vec![vec![Right]],
                 A => vec![vec![Up, Right], vec![Right, Up]],
@@ -39,7 +40,7 @@ impl DirKey {
             Left => match next {
                 Up => vec![vec![Right, Up]],
                 Down => vec![vec![Right]],
-                Left => vec![],
+                Left => vec![vec![]],
                 Right => vec![vec![Right, Right]],
                 A => vec![vec![Right, Up, Right], vec![Right, Right, Up]],
             },
@@ -47,7 +48,7 @@ impl DirKey {
                 Up => vec![vec![Up, Left], vec![Left, Up]],
                 Down => vec![vec![Left]],
                 Left => vec![vec![Left, Left]],
-                Right => vec![],
+                Right => vec![vec![]],
                 A => vec![vec![Up]],
             },
             A => match next {
@@ -55,7 +56,7 @@ impl DirKey {
                 Down => vec![vec![Left, Down], vec![Down, Left]],
                 Left => vec![vec![Left, Down, Left], vec![Down, Left, Left]],
                 Right => vec![vec![Down]],
-                A => vec![],
+                A => vec![vec![]],
             },
         };
         // After the moves we still need to press A each time.
@@ -78,6 +79,11 @@ impl fmt::Display for DirKey {
             }
         )
     }
+}
+
+#[allow(dead_code)]
+pub fn dirs_to_string(dirs: &[DirKey]) -> String {
+    dirs.iter().map(std::string::ToString::to_string).join("")
 }
 
 // +---+---+---+
@@ -105,22 +111,6 @@ pub enum NumKey {
 }
 
 impl NumKey {
-    fn index(self) -> usize {
-        match self {
-            NumKey::K7 => 7,
-            NumKey::K8 => 8,
-            NumKey::K9 => 9,
-            NumKey::K4 => 4,
-            NumKey::K5 => 5,
-            NumKey::K6 => 6,
-            NumKey::K1 => 1,
-            NumKey::K2 => 2,
-            NumKey::K3 => 3,
-            NumKey::K0 => 0,
-            NumKey::KA => 10,
-        }
-    }
-
     // Returns the key in that direction, if any.
     #[allow(clippy::match_same_arms)]
     fn next_key(self, dir: DirKey) -> Option<NumKey> {
@@ -374,6 +364,7 @@ impl fmt::Display for NumKey {
 }
 
 #[rustfmt::skip]
+#[allow(dead_code)]
 pub fn print_numeric_keypad(highlight_keys: &[NumKey]) {
     const RED: &str = "\x1b[31m";
     const RESET: &str = "\x1b[0m";
