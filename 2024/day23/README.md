@@ -10,5 +10,7 @@ Then for each computer, I go through each pair of its connections and check if t
 
 Finally I filter for computers start with 't'.
 
+It takes 9 ms, which feels a bit slow, so likely there is a better way.
+
 ## Part 2
 

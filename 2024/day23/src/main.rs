@@ -16,17 +16,17 @@ fn build(input: &str) -> Vec<(String, String)> {
 }
 
 // Returns a map with each computer to its connections.
-fn make_graph(connections: &[(String, String)]) -> FxHashMap<String, Vec<String>> {
-    let mut graph: FxHashMap<String, Vec<String>> = FxHashMap::default();
+fn make_graph(connections: &[(String, String)]) -> FxHashMap<&String, Vec<&String>> {
+    let mut graph: FxHashMap<&String, Vec<&String>> = FxHashMap::default();
     for (c1, c2) in connections {
         graph
-            .entry(c1.to_owned())
-            .and_modify(|s| s.push(c2.to_owned()))
-            .or_insert(vec![c2.to_owned()]);
+            .entry(c1)
+            .and_modify(|s| s.push(c2))
+            .or_insert(vec![c2]);
         graph
-            .entry(c2.to_owned())
-            .and_modify(|s| s.push(c1.to_owned()))
-            .or_insert(vec![c1.to_owned()]);
+            .entry(c2)
+            .and_modify(|s| s.push(c1))
+            .or_insert(vec![c1]);
     }
     graph
 }
@@ -34,7 +34,7 @@ fn make_graph(connections: &[(String, String)]) -> FxHashMap<String, Vec<String>
 fn set_counts_with_t_computer(connections: &[(String, String)]) -> usize {
     let graph = make_graph(connections);
 
-    let mut lists_of_3_connected: FxHashSet<Vec<&String>> = FxHashSet::default();
+    let mut lists_of_3_connected = FxHashSet::default();
 
     // For each computer, we go through each pair of its connections and check of they are connected.
     for (key, values) in &graph {
