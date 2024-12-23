@@ -28,16 +28,18 @@ fn make_graph(connections: &[(String, String)]) -> FxHashMap<&String, Vec<&Strin
             .and_modify(|s| s.push(c1))
             .or_insert(vec![c1]);
     }
+    // println!("{} computers", graph.len());
     graph
 }
 
-fn set_counts_with_t_computer(connections: &[(String, String)]) -> usize {
-    let graph = make_graph(connections);
-
+// Returns the list of 3 computers all connected to each other.
+fn build_list_of_3<'a>(
+    graph: &'a FxHashMap<&'a String, Vec<&'a String>>,
+) -> FxHashSet<Vec<&'a &'a String>> {
     let mut lists_of_3_connected = FxHashSet::default();
 
     // For each computer, we go through each pair of its connections and check of they are connected.
-    for (key, values) in &graph {
+    for (key, values) in graph {
         for pair in values.iter().combinations(2) {
             if let Some(v) = graph.get(pair[0]) {
                 if v.contains(pair[1]) {
@@ -48,6 +50,13 @@ fn set_counts_with_t_computer(connections: &[(String, String)]) -> usize {
             }
         }
     }
+    lists_of_3_connected
+}
+
+fn set_counts_with_t_computer(connections: &[(String, String)]) -> usize {
+    let graph = make_graph(connections);
+
+    let lists_of_3_connected = build_list_of_3(&graph);
 
     lists_of_3_connected
         .iter()
@@ -55,8 +64,56 @@ fn set_counts_with_t_computer(connections: &[(String, String)]) -> usize {
         .count()
 }
 
-fn part2(connections: &[(String, String)]) -> usize {
-    0
+fn lan_party_password(connections: &[(String, String)]) -> String {
+    let graph = make_graph(connections);
+
+    let mut groups = build_list_of_3(&graph);
+
+    // Finding groups of 4:
+    // Take a group of 3
+    // For all other computers:
+    //     Add a 4th. Gen the combi of 3, and check if the 4 combinations are in the set.
+    //     If yes, we have a group.
+
+    let mut next_groups = FxHashSet::default();
+    loop {
+
+        let computers = groups.iter().flatten().collect_vec();
+        for group in &groups {
+            for d in &computers {
+                if group.contains(d) {
+                    continue;
+                }
+                let mut g = group.clone();
+                g.push(d);
+
+                if g.iter()
+                    .cloned()
+                    .combinations(group.len())
+                    .all(|combi| groups.contains(&combi))
+                {
+                    g.sort();
+                    next_groups.insert(g);
+                }
+            }
+        }
+
+        for g in &next_groups {
+            println!("{:?}", g);
+        }
+
+        std::mem::swap(&mut groups, &mut next_groups);
+
+        if groups.len() == 1 {
+            break;
+        }
+
+        next_groups.clear();
+    }
+
+    println!("{:?}", groups.iter().take(1).next().unwrap());
+
+    "".to_string()
 }
 
 fn main() {
@@ -65,7 +122,7 @@ fn main() {
     let connections = build(&input);
 
     println!("Part 1: {}", set_counts_with_t_computer(&connections));
-    println!("Part 2: {}", part2(&connections));
+    println!("Part 2: {}", lan_party_password(&connections));
 }
 
 #[cfg(test)]
@@ -81,6 +138,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(lan_party_password(&build(INPUT_TEST)), "co,de,ka,ta");
     }
 }
