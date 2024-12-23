@@ -1,0 +1,13 @@
+[package]
+name = "day23"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+fxhash = "0.2.1"
+itertools = "0.13.0"
