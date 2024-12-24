@@ -95,3 +95,7 @@ Number generation. Brute-forced.
 ### Day 23: [LAN Party](day23/README.md) 🌟
 
 Graph and cycles.
+
+### Day 24: [Crossed Wires](day24/README.md) 🌟
+
+Gates.
