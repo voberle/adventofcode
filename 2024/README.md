@@ -99,3 +99,7 @@ Graph and cycles.
 ### Day 24: [Crossed Wires](day24/README.md) 🌟
 
 Gates.
+
+### Day 25: [Code Chronicle](day25/README.md) 🌟
+
+Pattern matching.
