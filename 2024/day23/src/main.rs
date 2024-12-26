@@ -15,9 +15,11 @@ fn build(input: &str) -> Vec<(String, String)> {
         .collect()
 }
 
+// Fast implementation of the graph.
 struct Graph {
-    indexes: FxHashMap<String, usize>,
+    // For an index, finds the computer name.
     reverse_indexes: Vec<String>,
+    // Given two indexes, we can check if the computers are connected.
     matrix: Vec<Vec<bool>>,
 }
 
@@ -46,31 +48,35 @@ impl Graph {
         }
 
         Self {
-            indexes,
             reverse_indexes,
             matrix,
         }
     }
+
+    fn computer_count(&self) -> usize {
+        self.matrix.len()
+    }
+
+    fn is_connected(&self, i: usize, j: usize) -> bool {
+        self.matrix[i][j]
+    }
 }
 
 // Returns the list of 3 computers all connected to each other.
-// fn build_list_of_3<'a>(
-//     graph: &'a FxHashMap<&'a String, Vec<&'a String>>,
-// ) -> FxHashSet<Vec<&'a &'a String>> {
 fn build_list_of_3(graph: &Graph) -> FxHashSet<Vec<usize>> {
     let mut lists_of_3_connected = FxHashSet::default();
 
     // For each computer, we go through each pair of its connections and check of they are connected.
-    for computer_index in 0..graph.matrix.len() {
+    for computer_index in 0..graph.computer_count() {
         for pair in graph.matrix[computer_index]
             .iter()
             .enumerate()
             .filter_map(|(i, is_set)| if *is_set { Some(i) } else { None })
             .combinations(2)
         {
-            if graph.matrix[pair[0]][pair[1]] {
+            if graph.is_connected(pair[0], pair[1]) {
                 let mut triplet = vec![computer_index, pair[0], pair[1]];
-                triplet.sort();
+                triplet.sort_unstable();
                 lists_of_3_connected.insert(triplet);
             }
         }
@@ -105,33 +111,35 @@ fn lan_party_password(connections: &[(String, String)]) -> String {
 
     let mut groups = build_list_of_3(&graph);
 
-    // Finding groups of 4:
-    // Take a group of 3
-    // Take a 4th computer and check if connected to all 3.
+    // Finding groups of n + 1:
+    // For each group of n, take a computer not part of the group, and check if connected to all of the group.
     // If yes, we have a group.
+    let computers = groups.iter().flatten().copied().collect_vec();
 
     let mut next_groups = FxHashSet::default();
     loop {
-        let computers = groups.iter().flatten().collect_vec();
         for group in &groups {
             for to_check in &computers {
-                if group.contains(to_check) {
-                    continue;
-                }
                 if group.iter().all(|gr_index| {
-                    graph.matrix[**to_check][*gr_index]
+                    if to_check == gr_index {
+                        false
+                    } else {
+                        graph.is_connected(*to_check, *gr_index)
+                    }
                 }) {
                     let mut g = group.clone();
-                    g.push(**to_check);
-                    g.sort();
+                    g.push(*to_check);
+                    g.sort_unstable();
                     next_groups.insert(g);
                 }
             }
         }
 
-        for g in &next_groups {
-            println!("{:?}", g);
-        }
+        // println!("{} groups", next_groups.len());
+        // for g in &next_groups {
+        //     println!("Groups size: {}", g.len());
+        //     break;
+        // }
 
         std::mem::swap(&mut groups, &mut next_groups);
 
@@ -143,9 +151,9 @@ fn lan_party_password(connections: &[(String, String)]) -> String {
     }
 
     let answer_indexes = groups.iter().take(1).next().unwrap();
-    println!("{:?}", answer_indexes);
+    // println!("{:?}", answer_indexes);
 
-    indexes_to_string(&graph, &answer_indexes)
+    indexes_to_string(&graph, answer_indexes)
 }
 
 fn main() {

@@ -92,7 +92,7 @@ Moving robot.
 
 Number generation. Brute-forced.
 
-### Day 23: [LAN Party](day23/README.md) 🌟
+### Day 23: [LAN Party](day23/README.md) 🌟🌟
 
 Graph and cycles.
 
