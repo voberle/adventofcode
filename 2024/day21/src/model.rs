@@ -42,7 +42,10 @@ impl DirKey {
                 Down => vec![vec![Right]],
                 Left => vec![vec![]],
                 Right => vec![vec![Right, Right]],
-                A => vec![vec![Right, Up, Right], vec![Right, Right, Up]],
+                // When we have 3 options, we prefer the ones with consecutive keys,
+                // as it allows to press A multiple times on the same key.
+                // A => vec![vec![Right, Up, Right], vec![Right, Right, Up]],
+                A => vec![vec![Right, Right, Up]],
             },
             Right => match next {
                 Up => vec![vec![Up, Left], vec![Left, Up]],
@@ -54,7 +57,8 @@ impl DirKey {
             A => match next {
                 Up => vec![vec![Left]],
                 Down => vec![vec![Left, Down], vec![Down, Left]],
-                Left => vec![vec![Left, Down, Left], vec![Down, Left, Left]],
+                // Left => vec![vec![Left, Down, Left], vec![Down, Left, Left]],
+                Left => vec![vec![Down, Left, Left]],
                 Right => vec![vec![Down]],
                 A => vec![vec![]],
             },
