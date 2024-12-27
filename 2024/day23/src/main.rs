@@ -17,10 +17,12 @@ fn build(input: &str) -> Vec<(String, String)> {
 
 // Fast implementation of the graph.
 struct Graph {
+    computer_count: usize,
     // For an index, finds the computer name.
     reverse_indexes: Vec<String>,
     // Given two indexes, we can check if the computers are connected.
-    matrix: Vec<Vec<bool>>,
+    // The simple vector represents a grid.
+    matrix: Vec<bool>,
 }
 
 impl Graph {
@@ -39,26 +41,29 @@ impl Graph {
             .map(|(name, _)| name.clone())
             .collect();
 
-        let mut matrix = vec![vec![false; indexes.len()]; indexes.len()];
+        let computer_count = indexes.len();
+
+        let mut matrix = vec![false; computer_count * computer_count];
         for conn in connections {
             let i1 = *indexes.get(&conn.0).unwrap();
             let i2 = *indexes.get(&conn.1).unwrap();
-            matrix[i1][i2] = true;
-            matrix[i2][i1] = true;
+            matrix[i1 * computer_count + i2] = true;
+            matrix[i2 * computer_count + i1] = true;
         }
 
         Self {
+            computer_count,
             reverse_indexes,
             matrix,
         }
     }
 
-    fn computer_count(&self) -> usize {
-        self.matrix.len()
+    fn is_connected(&self, i: usize, j: usize) -> bool {
+        self.matrix[i * self.computer_count + j]
     }
 
-    fn is_connected(&self, i: usize, j: usize) -> bool {
-        self.matrix[i][j]
+    fn get_line(&self, row: usize) -> &[bool] {
+        &self.matrix[row * self.computer_count..(row + 1) * self.computer_count]
     }
 }
 
@@ -67,8 +72,9 @@ fn build_list_of_3(graph: &Graph) -> FxHashSet<Vec<usize>> {
     let mut lists_of_3_connected = FxHashSet::default();
 
     // For each computer, we go through each pair of its connections and check of they are connected.
-    for computer_index in 0..graph.computer_count() {
-        for pair in graph.matrix[computer_index]
+    for computer_index in 0..graph.computer_count {
+        for pair in graph
+            .get_line(computer_index)
             .iter()
             .enumerate()
             .filter_map(|(i, is_set)| if *is_set { Some(i) } else { None })

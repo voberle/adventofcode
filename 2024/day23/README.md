@@ -22,4 +22,4 @@ One set of optimizations was to implement the graph with a grid indicating if tw
 
 Then I improved the new group building until it was fast enough.
 
-Now it runs in 18 seconds.
+Now it runs in 16 seconds.
