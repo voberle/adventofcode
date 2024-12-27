@@ -90,11 +90,11 @@ fn build_list_of_3(graph: &Graph) -> FxHashSet<Vec<usize>> {
     lists_of_3_connected
 }
 
-fn set_counts_with_t_computer(connections: &[(String, String)]) -> usize {
-    let graph = Graph::new(connections);
-
-    let lists_of_3_connected = build_list_of_3(&graph);
-
+// Part 1
+fn set_counts_with_t_computer(
+    graph: &Graph,
+    lists_of_3_connected: &FxHashSet<Vec<usize>>,
+) -> usize {
     lists_of_3_connected
         .iter()
         .filter(|list| {
@@ -112,10 +112,9 @@ fn indexes_to_string(graph: &Graph, indexes: &[usize]) -> String {
         .join(",")
 }
 
-fn lan_party_password(connections: &[(String, String)]) -> String {
-    let graph = Graph::new(connections);
-
-    let mut groups = build_list_of_3(&graph);
+// Part 2
+fn lan_party_password(graph: &Graph, lists_of_3_connected: &FxHashSet<Vec<usize>>) -> String {
+    let mut groups = lists_of_3_connected.clone();
 
     // Finding groups of n + 1:
     // For each group of n, take a computer not part of the group, and check if connected to all of the group.
@@ -141,12 +140,6 @@ fn lan_party_password(connections: &[(String, String)]) -> String {
             }
         }
 
-        // println!("{} groups", next_groups.len());
-        // for g in &next_groups {
-        //     println!("Groups size: {}", g.len());
-        //     break;
-        // }
-
         std::mem::swap(&mut groups, &mut next_groups);
 
         if groups.len() == 1 {
@@ -157,18 +150,25 @@ fn lan_party_password(connections: &[(String, String)]) -> String {
     }
 
     let answer_indexes = groups.iter().take(1).next().unwrap();
-    // println!("{:?}", answer_indexes);
-
-    indexes_to_string(&graph, answer_indexes)
+    indexes_to_string(graph, answer_indexes)
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let connections = build(&input);
 
-    println!("Part 1: {}", set_counts_with_t_computer(&connections));
-    println!("Part 2: {}", lan_party_password(&connections));
+    let connections = build(&input);
+    let graph = Graph::new(&connections);
+    let lists_of_3_connected = build_list_of_3(&graph);
+
+    println!(
+        "Part 1: {}",
+        set_counts_with_t_computer(&graph, &lists_of_3_connected)
+    );
+    println!(
+        "Part 2: {}",
+        lan_party_password(&graph, &lists_of_3_connected)
+    );
 }
 
 #[cfg(test)]
@@ -179,11 +179,20 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(set_counts_with_t_computer(&build(INPUT_TEST)), 7);
+        let connections = build(INPUT_TEST);
+        let graph = Graph::new(&connections);
+        let lists_of_3_connected = build_list_of_3(&graph);
+        assert_eq!(set_counts_with_t_computer(&graph, &lists_of_3_connected), 7);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(lan_party_password(&build(INPUT_TEST)), "co,de,ka,ta");
+        let connections = build(INPUT_TEST);
+        let graph = Graph::new(&connections);
+        let lists_of_3_connected = build_list_of_3(&graph);
+        assert_eq!(
+            lan_party_password(&graph, &lists_of_3_connected),
+            "co,de,ka,ta"
+        );
     }
 }
