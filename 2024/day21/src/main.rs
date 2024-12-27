@@ -62,7 +62,8 @@ fn find_dir_paths(directions: &[DirKey]) -> Vec<DirKey> {
 }
 
 fn prepend<T: Clone>(input: &[T], elt: T) -> Vec<T> {
-    let mut v = vec![elt];
+    let mut v = Vec::with_capacity(input.len() + 1);
+    v.push(elt);
     v.extend(input.iter().cloned());
     v
 }
