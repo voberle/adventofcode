@@ -12,3 +12,8 @@ It's not very fast however: 7 seconds.
 
 ## Part 2
 
+I was stuck for a while there, as the approach I took in part 1 generated too many different paths on each step, so that it simply wasn't scaling.
+
+The insight came when I noticed following: For going to 2 for 9, we prefer ^^>A over ^>^A, since the first one just allows to press twice the A on the same key.
+
+This allowed me to first limit the number of options we have when going from direction to direction.

@@ -52,26 +52,13 @@ fn convert_num_paths_to_directions(path: &[NumKey]) -> Vec<DirKey> {
         .collect()
 }
 
-// Finds the short path(s) to reach all the direction values.
+// Finds the shortest path to reach all the direction values.
 // The code needs to include the starting position.
-fn find_dir_paths(directions: &[DirKey]) -> Vec<Vec<DirKey>> {
-    let mut paths: Vec<Vec<DirKey>> = vec![vec![]];
-    for pair in directions.windows(2) {
-        let paths_for_pair = pair[0].go_press(pair[1]);
-        assert!(!paths_for_pair.is_empty());
-
-        paths = paths_for_pair
-            .iter()
-            .flat_map(|path| {
-                paths.iter().map(move |base_path| {
-                    let mut p = base_path.clone();
-                    p.extend(path);
-                    p
-                })
-            })
-            .collect();
-    }
-    paths
+fn find_dir_paths(directions: &[DirKey]) -> Vec<DirKey> {
+    directions
+        .windows(2)
+        .flat_map(|pair| pair[0].go_press(pair[1]))
+        .collect()
 }
 
 fn prepend<T: Clone>(input: &[T], elt: T) -> Vec<T> {
@@ -97,7 +84,7 @@ fn shortest_sequence_length(code: &[char], robots_count: usize) -> usize {
 fn next_sequence(paths_as_dirs: &[Vec<DirKey>]) -> Vec<Vec<DirKey>> {
     paths_as_dirs
         .iter()
-        .flat_map(|dirs| find_dir_paths(&prepend(dirs, DirKey::A)))
+        .map(|dirs| find_dir_paths(&prepend(dirs, DirKey::A)))
         .collect()
 }
 

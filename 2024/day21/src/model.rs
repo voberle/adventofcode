@@ -20,51 +20,50 @@ pub enum DirKey {
 impl DirKey {
     // Returns the shortest set of keys to press to go press next starting from self.
     // Always 1, 2 or 3 moves, plus A.
-    pub fn go_press(self, next: DirKey) -> Vec<Vec<DirKey>> {
+    // If we have 2 options, they are equivalent, so we keep one.
+    // When we have 3 options, we prefer the ones with consecutive keys,
+    // as it allows to press A multiple times on the same key.
+    pub fn go_press(self, next: DirKey) -> Vec<DirKey> {
         use DirKey::{Down, Left, Right, Up, A};
         let mut moves = match self {
             Up => match next {
-                Up => vec![vec![]],
-                Down => vec![vec![Down]],
-                Left => vec![vec![Down, Left]],
-                Right => vec![vec![Down, Right], vec![Right, Down]],
-                A => vec![vec![Right]],
+                Up => vec![],
+                Down => vec![Down],
+                Left => vec![Down, Left],
+                Right => vec![Down, Right], // or vec![Right, Down]
+                A => vec![Right],
             },
             Down => match next {
-                Up => vec![vec![Up]],
-                Down => vec![vec![]],
-                Left => vec![vec![Left]],
-                Right => vec![vec![Right]],
-                A => vec![vec![Up, Right], vec![Right, Up]],
+                Up => vec![Up],
+                Down => vec![],
+                Left => vec![Left],
+                Right => vec![Right],
+                A => vec![Up, Right], // or vec![Right, Up]
             },
             Left => match next {
-                Up => vec![vec![Right, Up]],
-                Down => vec![vec![Right]],
-                Left => vec![vec![]],
-                Right => vec![vec![Right, Right]],
-                // When we have 3 options, we prefer the ones with consecutive keys,
-                // as it allows to press A multiple times on the same key.
-                // A => vec![vec![Right, Up, Right], vec![Right, Right, Up]],
-                A => vec![vec![Right, Right, Up]],
+                Up => vec![Right, Up],
+                Down => vec![Right],
+                Left => vec![],
+                Right => vec![Right, Right],
+                A => vec![Right, Right, Up], // not vec![Right, Up, Right]
             },
             Right => match next {
-                Up => vec![vec![Up, Left], vec![Left, Up]],
-                Down => vec![vec![Left]],
-                Left => vec![vec![Left, Left]],
-                Right => vec![vec![]],
-                A => vec![vec![Up]],
+                Up => vec![Up, Left], // or vec![Left, Up]
+                Down => vec![Left],
+                Left => vec![Left, Left],
+                Right => vec![],
+                A => vec![Up],
             },
             A => match next {
-                Up => vec![vec![Left]],
-                Down => vec![vec![Left, Down], vec![Down, Left]],
-                // Left => vec![vec![Left, Down, Left], vec![Down, Left, Left]],
-                Left => vec![vec![Down, Left, Left]],
-                Right => vec![vec![Down]],
-                A => vec![vec![]],
+                Up => vec![Left],
+                Down => vec![Left, Down],       // or vec![Down, Left]
+                Left => vec![Down, Left, Left], // not vec![Left, Down, Left]
+                Right => vec![Down],
+                A => vec![],
             },
         };
         // After the moves we still need to press A each time.
-        moves.iter_mut().for_each(|m| m.push(A));
+        moves.push(A);
         moves
     }
 }
