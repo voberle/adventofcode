@@ -5,7 +5,7 @@ use std::fmt;
 use fxhash::FxHashMap;
 use itertools::Itertools;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Gate {
     And(String, String, String),
     Or(String, String, String),
@@ -13,7 +13,7 @@ pub enum Gate {
 }
 
 impl Gate {
-    fn new(line: &str) -> Self {
+    pub fn new(line: &str) -> Self {
         // x00 AND y00 -> z00
         let parts: Vec<_> = line.split_whitespace().collect();
         let (in1, in2, out) = (
@@ -82,24 +82,6 @@ impl fmt::Display for Gate {
     }
 }
 
-pub fn build(input: &str) -> (FxHashMap<String, u8>, Vec<Gate>) {
-    let mut wires = FxHashMap::default();
-    let mut gates = Vec::new();
-
-    let mut it = input.lines();
-    for line in it.by_ref() {
-        if line.is_empty() {
-            break;
-        }
-        let (wire, val) = line.split(": ").collect_tuple().unwrap();
-        wires.insert(wire.to_string(), val.parse::<u8>().unwrap());
-    }
-    for line in it {
-        gates.push(Gate::new(line));
-    }
-    (wires, gates)
-}
-
 // Prints the wires and gates in the same format as the input.
 #[allow(dead_code)]
 fn print_input(wires: &FxHashMap<String, u8>, gates: &[Gate]) {
@@ -135,6 +117,7 @@ fn exec(gates: &[Gate], wires: &mut FxHashMap<String, u8>) {
     }
 }
 
+#[allow(dead_code)]
 pub fn z_output_number(wires: &FxHashMap<String, u8>, gates: &[Gate]) -> u64 {
     let mut wires = wires.clone();
     exec(gates, &mut wires);
@@ -143,6 +126,7 @@ pub fn z_output_number(wires: &FxHashMap<String, u8>, gates: &[Gate]) -> u64 {
 
 #[cfg(test)]
 mod tests {
+    use crate::build;
     use crate::tests::INPUT_TEST_1;
     use crate::tests::INPUT_TEST_2;
 

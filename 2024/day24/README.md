@@ -4,5 +4,7 @@
 
 Fairly simple gate simulation.
 
+After an initial implementation using `String` and maps, I reimplemented it to refer to all gates by indexes only. That was about 10 times faster for the execution part.
+
 ## Part 2
 
