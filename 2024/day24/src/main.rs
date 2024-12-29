@@ -48,7 +48,7 @@ fn main() {
     let circuit = Circuit::new(&wires, &gates);
     println!("Part 1: {}", circuit.z_output_number());
 
-    // println!("Part 2: {}", part2(&wires, &gates));
+    println!("Part 2: {}", circuit::swap_gates(&wires, &gates));
 }
 
 #[cfg(test)]

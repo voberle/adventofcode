@@ -159,6 +159,7 @@ impl Circuit {
         }
     }
 
+    #[allow(dead_code)]
     fn test_addition(&self, n1: u64, n2: u64) -> bool {
         let mut wires = self.initial_wires.clone();
         self.set_wires(&mut wires, n1, 'x');
