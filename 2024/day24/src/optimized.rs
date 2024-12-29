@@ -55,7 +55,7 @@ impl OptGate {
 
 pub struct Circuit {
     index_to_name: Vec<String>,
-    // name_to_index: FxHashMap<String, usize>,
+    name_to_index: FxHashMap<String, usize>,
     initial_wires: Vec<Option<u8>>,
     gates: Vec<OptGate>,
 }
@@ -104,9 +104,18 @@ impl Circuit {
 
         Circuit {
             index_to_name,
-            // name_to_index,
+            name_to_index,
             initial_wires,
             gates,
+        }
+    }
+
+    #[allow(dead_code)]
+    fn get_wire_val(&self, name: &str) -> Option<u8> {
+        if let Some(i) = self.name_to_index.get(name) {
+            self.initial_wires[*i]
+        } else {
+            None
         }
     }
 
@@ -123,14 +132,7 @@ impl Circuit {
     }
 
     fn extract_number(&self, wires: &[Option<u8>], prefix: char) -> u64 {
-        let range = match prefix {
-            'x' => self.get_range('x'),
-            'y' => self.get_range('y'),
-            'z' => self.get_range('z'),
-            _ => panic!("Unsupported prefix"),
-        };
-
-        wires[range]
+        wires[self.get_range(prefix)]
             .iter()
             .rev()
             .map(|v| u64::from(v.unwrap()))
@@ -141,6 +143,30 @@ impl Circuit {
         let mut wires = self.initial_wires.clone();
         self.exec(&mut wires);
         self.extract_number(&wires, 'z')
+    }
+
+    // Set the wires value to the specified number, in binary.
+    fn set_wires(&self, wires: &mut Vec<Option<u8>>, number: u64, prefix: char) {
+        // Reset the wires.
+        *wires = vec![None; self.initial_wires.len()];
+
+        let range = self.get_range(prefix);
+        let mut n = number;
+        for index in range {
+            let v = u8::try_from(n & 1).unwrap();
+            wires[index] = Some(v);
+            n >>= 1;
+        }
+    }
+
+    fn test_addition(&self, n1: u64, n2: u64) -> bool {
+        let mut wires = self.initial_wires.clone();
+        self.set_wires(&mut wires, n1, 'x');
+        self.set_wires(&mut wires, n2, 'y');
+
+        self.exec(&mut wires);
+        let result = self.extract_number(&wires, 'z');
+        n1 + n2 == result
     }
 }
 
@@ -164,5 +190,22 @@ mod tests {
         let (wires, gates) = build(INPUT_TEST_2);
         let circuit = Circuit::new(&wires, &gates);
         assert_eq!(circuit.z_output_number(), 2024);
+    }
+
+    #[test]
+    fn test_set_wires() {
+        let (wires, gates) = build(INPUT_TEST_2);
+        let circuit = Circuit::new(&wires, &gates);
+
+        let mut wires = circuit.initial_wires.clone();
+        circuit.set_wires(&mut wires, 13, 'x');
+        // println!("{:?}", circuit.index_to_name);
+        // println!("{:?}", wires);
+
+        assert_eq!(circuit.get_wire_val("x00").unwrap(), 1);
+        assert_eq!(circuit.get_wire_val("x01").unwrap(), 0);
+        assert_eq!(circuit.get_wire_val("x02").unwrap(), 1);
+        assert_eq!(circuit.get_wire_val("x03").unwrap(), 1);
+        assert_eq!(circuit.get_wire_val("x04").unwrap(), 0);
     }
 }
