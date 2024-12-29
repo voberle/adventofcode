@@ -1,4 +1,7 @@
-use std::io::{self, Read};
+use std::{
+    fmt,
+    io::{self, Read},
+};
 
 use fxhash::FxHashMap;
 use itertools::Itertools;
@@ -54,6 +57,30 @@ impl Gate {
             Gate::Xor(in1, in2, out) => Self::exec_with(in1, in2, out, wires, |i1, i2| i1 ^ i2),
         }
     }
+
+    #[allow(dead_code)]
+    fn get_output(&mut self) -> String {
+        match self {
+            Gate::And(_, _, o) | Gate::Or(_, _, o) | Gate::Xor(_, _, o) => (*o).to_string(),
+        }
+    }
+
+    #[allow(dead_code)]
+    fn set_output(&mut self, name: &str) {
+        match self {
+            Gate::And(_, _, o) | Gate::Or(_, _, o) | Gate::Xor(_, _, o) => *o = name.to_string(),
+        }
+    }
+}
+
+impl fmt::Display for Gate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Gate::And(i1, i2, o) => write!(f, "{i1} AND {i2} -> {o}"),
+            Gate::Or(i1, i2, o) => write!(f, "{i1} OR {i2} -> {o}"),
+            Gate::Xor(i1, i2, o) => write!(f, "{i1} XOR {i2} -> {o}"),
+        }
+    }
 }
 
 fn build(input: &str) -> (FxHashMap<String, u8>, Vec<Gate>) {
@@ -74,10 +101,22 @@ fn build(input: &str) -> (FxHashMap<String, u8>, Vec<Gate>) {
     (wires, gates)
 }
 
-fn create_z_number(wires: &FxHashMap<String, u8>) -> u64 {
+// Prints the wires and gates in the same format as the input.
+#[allow(dead_code)]
+fn print_input(wires: &FxHashMap<String, u8>, gates: &[Gate]) {
+    for (wire_name, wire_val) in wires {
+        println!("{wire_name}: {wire_val}");
+    }
+    println!();
+    for gate in gates {
+        println!("{gate}");
+    }
+}
+
+fn extract_number(wires: &FxHashMap<String, u8>, prefix: char) -> u64 {
     wires
         .iter()
-        .filter(|(k, _)| k.starts_with('z'))
+        .filter(|(k, _)| k.starts_with(prefix))
         .sorted_unstable_by_key(|(k, _)| &k[1..])
         .rev()
         // .inspect(|(k, v)| println!("{k} : {v}"))
@@ -85,19 +124,22 @@ fn create_z_number(wires: &FxHashMap<String, u8>) -> u64 {
         .fold(0, |acc, v| acc * 2 + v)
 }
 
-fn z_output_number(wires: &FxHashMap<String, u8>, gates: &[Gate]) -> u64 {
-    let mut wires = wires.clone();
+fn exec(gates: &[Gate], wires: &mut FxHashMap<String, u8>) {
     loop {
         let mut changed = false;
         for gate in gates {
-            changed |= gate.exec(&mut wires);
+            changed |= gate.exec(wires);
         }
         if !changed {
             break;
         }
     }
-    // println!("{:?}", wires);
-    create_z_number(&wires)
+}
+
+fn z_output_number(wires: &FxHashMap<String, u8>, gates: &[Gate]) -> u64 {
+    let mut wires = wires.clone();
+    exec(gates, &mut wires);
+    extract_number(&wires, 'z')
 }
 
 fn part2(wires: &FxHashMap<String, u8>, gates: &[Gate]) -> i64 {
@@ -130,10 +172,5 @@ mod tests {
     fn test_part1_2() {
         let (wires, gates) = build(INPUT_TEST_2);
         assert_eq!(z_output_number(&wires, &gates), 2024);
-    }
-
-    #[test]
-    fn test_part2() {
-        // assert_eq!(part2(&wires, &gates), 0);
     }
 }
