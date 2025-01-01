@@ -1,11 +1,12 @@
 use std::io::{self, Read};
 
-use circuit::Gate;
+use circuit::{swap_gates, Gate};
 use fxhash::FxHashMap;
 use itertools::Itertools;
 use optimized::Circuit;
 
 mod circuit;
+mod generate;
 mod optimized;
 
 fn build(input: &str) -> (FxHashMap<String, u8>, Vec<Gate>) {
@@ -45,13 +46,24 @@ fn main() {
 
     // println!("Part 1: {}", circuit::z_output_number(&wires, &gates));
 
-    let circuit = Circuit::new(&wires, &gates);
+    // let circuit = Circuit::new(&wires, &gates);
     // println!("Part 1: {}", circuit.z_output_number());
 
     // println!("Part 2: {}", circuit::swap_gates(&wires, &gates));
-    circuit::swap_gates(&wires, &gates);
+    // circuit::swap_gates(&wires, &gates);
     // println!("Count: {}", (0..10).combinations(2).permutations(4).count());
 
+    // let (wires, gates) = circuit::generate_circuit();
+    // circuit::print_input(&wires, &gates);
+
+    // println!("{}", circuit::test_addition(&gates, 0, 0));
+    // println!("{}", circuit::test_addition(&gates, 3, 1));
+    // println!("{}", circuit::test_addition(&gates, 3412, 5235235));
+
+    let (gates, gates_to_swap) = swap_gates(&gates);
+    generate::find_swapped_wires(&wires, &gates);
+
+    println!("Part 2: {}", gates_to_swap);
 }
 
 #[cfg(test)]
