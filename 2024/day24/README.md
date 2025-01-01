@@ -8,3 +8,5 @@ After an initial implementation using `String` and maps, I reimplemented it to r
 
 ## Part 2
 
+cat resources/input| python3 generate_graph.py > input.gv
+dot -Tpdf input.gv -o input.pdf -Kdot    
