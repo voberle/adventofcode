@@ -75,6 +75,7 @@ impl Circuit {
         range_start..range_end
     }
 
+    #[allow(dead_code)]
     pub fn new(wires_string: &FxHashMap<String, u8>, gates_string: &[Gate]) -> Self {
         // Not all wires are listed in the wires list, so we need to look into the gates list to get them.
         let index_to_name = gates_string
@@ -139,6 +140,7 @@ impl Circuit {
             .fold(0, |acc, v| acc * 2 + v)
     }
 
+    #[allow(dead_code)]
     pub fn z_output_number(&self) -> u64 {
         let mut wires = self.initial_wires.clone();
         self.exec(&mut wires);

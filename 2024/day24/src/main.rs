@@ -1,9 +1,8 @@
 use std::io::{self, Read};
 
-use circuit::{swap_gates, Gate};
+use circuit::{create_swapped_wires_string, swap_wires, Gate};
 use fxhash::FxHashMap;
 use itertools::Itertools;
-use optimized::Circuit;
 
 mod circuit;
 mod generate;
@@ -27,43 +26,35 @@ fn build(input: &str) -> (FxHashMap<String, u8>, Vec<Gate>) {
     (wires, gates)
 }
 
-// fn part2(wires: &FxHashMap<String, u8>, gates: &[Gate]) -> i64 {
-//     0
-// }
-
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let (wires, gates) = build(&input);
 
+    // Comparing the performance of optimized implementation.
     // for _ in 0..1000 {
     //     circuit::z_output_number(&wires, &gates);
     // }
-    // let circuit = Circuit::new(&wires, &gates);
+    // let circuit = optimized::Circuit::new(&wires, &gates);
     // for _ in 0..1000 {
     //     circuit.z_output_number();
     // }
 
-    // println!("Part 1: {}", circuit::z_output_number(&wires, &gates));
+    println!("Part 1: {}", circuit::z_output_number(&wires, &gates));
 
-    // let circuit = Circuit::new(&wires, &gates);
-    // println!("Part 1: {}", circuit.z_output_number());
+    // This is the version where we analyzed the circuit by hand + a bit of brute force.
+    // println!("Part 2: {}", circuit::swap_wires_investigation(&gates));
 
-    // println!("Part 2: {}", circuit::swap_gates(&wires, &gates));
-    // circuit::swap_gates(&wires, &gates);
-    // println!("Count: {}", (0..10).combinations(2).permutations(4).count());
-
-    // let (wires, gates) = circuit::generate_circuit();
-    // circuit::print_input(&wires, &gates);
-
-    // println!("{}", circuit::test_addition(&gates, 0, 0));
-    // println!("{}", circuit::test_addition(&gates, 3, 1));
-    // println!("{}", circuit::test_addition(&gates, 3412, 5235235));
-
-    let (gates, gates_to_swap) = swap_gates(&gates);
-    generate::find_swapped_wires(&wires, &gates);
-
-    println!("Part 2: {}", gates_to_swap);
+    // This is the version where we generate the correct adder and use it to find the swapped wires.
+    let wires_to_swap = [
+        ("qwf", "cnk"),
+        ("z14", "vhm"),
+        ("z27", "mps"),
+        ("z39", "msq"),
+    ];
+    let gates = swap_wires(&gates, &wires_to_swap);
+    generate::find_swapped_wires(&gates);
+    println!("Part 2: {}", create_swapped_wires_string(&wires_to_swap));
 }
 
 #[cfg(test)]

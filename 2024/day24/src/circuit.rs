@@ -101,7 +101,7 @@ fn find_gate_position(gates: &[Gate], name: &str) -> usize {
 }
 
 pub fn rename_gate_output(gates: &mut [Gate], old_name: &str, new_name: &str) {
-    let p = find_gate_position(&gates, old_name);
+    let p = find_gate_position(gates, old_name);
     gates[p].set_output(new_name);
 }
 
@@ -131,7 +131,6 @@ fn extract_number(wires: &FxHashMap<String, u8>, prefix: char) -> u64 {
         .filter(|(k, _)| k.starts_with(prefix))
         .sorted_unstable_by_key(|(k, _)| &k[1..])
         .rev()
-        // .inspect(|(k, v)| println!("{k} : {v}"))
         .map(|(_, v)| u64::from(*v))
         .fold(0, |acc, v| acc * 2 + v)
 }
@@ -142,9 +141,6 @@ fn exec(gates: &[Gate], wires: &mut FxHashMap<String, u8>) {
         for gate in gates {
             changed |= gate.exec(wires);
         }
-        // for gate in gates {
-        //     changed |= gate.exec(wires);
-        // }
         if !changed {
             break;
         }
@@ -163,11 +159,8 @@ fn set_wires(wires: &mut FxHashMap<String, u8>, number: u64, digits_count: usize
     let mut n = number;
     for index in 0..digits_count {
         let b = n & 1;
-        wires.insert(format!("{}{:0>2}", prefix, index), u8::try_from(b).unwrap());
-        n = n >> 1;
-        // if n == 0 {
-        //     break;
-        // }
+        wires.insert(format!("{prefix}{index:0>2}"), u8::try_from(b).unwrap());
+        n >>= 1;
     }
 }
 
@@ -176,36 +169,28 @@ pub fn test_addition(gates: &[Gate], n1: u64, n2: u64) -> bool {
     let mut wires = FxHashMap::default();
     set_wires(&mut wires, n1, 45, 'x');
     set_wires(&mut wires, n2, 45, 'y');
-    // println!("Wires before: {:?}", wires);
     exec(gates, &mut wires);
-    // println!("Wires after: {:?}", wires);
     let result = extract_number(&wires, 'z');
+
     // println!("{} + {}", n1, n2);
     // println!("{:#045b}", n1);
     // println!("{:#045b}", n2);
     // println!("{:#045b}", n1 + n2);
     // println!("{:#045b}", result);
     n1 + n2 == result
-    // (n1 + n2) & 3 == result & 3
 }
 
-fn create_swapped_gates_string(gates_to_swap: &[(&str, &str)]) -> String {
+pub fn create_swapped_wires_string(gates_to_swap: &[(&str, &str)]) -> String {
     gates_to_swap
-    .iter()
-    .flat_map(|(n1, n2)| [n1, n2])
-    .sorted_unstable()
-    .join(",")
+        .iter()
+        .flat_map(|(n1, n2)| [n1, n2])
+        .sorted_unstable()
+        .join(",")
 }
 
-pub fn swap_gates(gates: &[Gate]) -> (Vec<Gate>, String) {
+pub fn swap_wires(gates: &[Gate], gates_to_swap: &[(&str, &str)]) -> Vec<Gate> {
     let mut gates = gates.to_vec();
 
-    let gates_to_swap = [
-        ("qwf", "cnk"),
-        ("z14", "vhm"),
-        ("z27", "mps"),
-        ("z39", "msq"),
-    ];
     for (n1, n2) in gates_to_swap {
         let p1 = find_gate_position(&gates, n1);
         let p2 = find_gate_position(&gates, n2);
@@ -213,93 +198,72 @@ pub fn swap_gates(gates: &[Gate]) -> (Vec<Gate>, String) {
         gates[p2].set_output(n1);
     }
 
-    (gates, create_swapped_gates_string(&gates_to_swap))
+    gates
 }
 
-pub fn _swap_gates(wires: &FxHashMap<String, u8>, gates: &[Gate]) -> String {
-    let gates_to_swap = [
-        ("qwf", "cnk"),
-    ];
-        // 'outer: for p1 in 0..gates.len() {
-    //     println!("{p1}..");
-    //     for p2 in 0..gates.len() {
-    //         if p1 == p2 {
-    //             continue;
-    //         }
-    //         let mut copy_gates = gates.clone();
-    //         let n1 = copy_gates[p1].get_output();
-    //         let n2 = copy_gates[p2].get_output();
-    //         copy_gates[p1].set_output(&n2);
-    //         copy_gates[p2].set_output(&n1);
-    //         if test_addition(&copy_gates, 41421, 35252) && test_addition(&copy_gates, 234, 6436) {
-    //             println!("SWAP {} {}", n1, n2);
-    //             // Real swap
-    //             gates[p1].set_output(&n2);
-    //             gates[p2].set_output(&n1);
-    //             break 'outer;
-    //         }
-    //     }
-    // }
+// The approach here is to observe that a bunch of Z wires were connected to the wrong gate type.
+// This gives already 3 pairs of wires to swap.
+// The last one can just be found via brute-forcing.
+#[allow(dead_code)]
+pub fn swap_wires_investigation(gates: &[Gate]) -> String {
+    // All the Z wires need to be output of an XOR.
+    let wrong_z_gates = gates
+        .iter()
+        .filter(|gate| match gate {
+            Gate::Xor(_, _, _) => false,
+            Gate::And(_, _, o) | Gate::Or(_, _, o) => o.starts_with('z'),
+        })
+        .collect_vec();
+    println!("Incorrect Z wires:");
+    for g in wrong_z_gates {
+        println!("{g}");
+    }
+    println!();
 
-    //     let candidates = [
-    // "fgw",
-    // "z00",
-    // "pjh",
-    // "bgb",
-    // "wwp",
-    // "gww",
-    // "dng",
-    // "z01",
-    // "z02",
-    //     ].iter().map(|n| find_gate_position(&gates, n)).collect_vec();
-    //     'outer:
-    //     for &p1 in &candidates {
-    //         println!("{p1}..");
-    //         for &p2 in &candidates {
-    //             if p1 == p2 {
-    //                 continue;
-    //             }
-    //             let mut copy_gates = gates.clone();
-    //             let n1 = copy_gates[p1].get_output();
-    //             let n2 = copy_gates[p2].get_output();
-    //             copy_gates[p1].set_output(&n2);
-    //             copy_gates[p2].set_output(&n1);
-    //             if (0..4).permutations(2).all(|pair| test_addition(&copy_gates, pair[0], pair[1]))
-    //             {
-    //                 println!("SWAP {} {}", n1, n2);
-    //                 break 'outer;
-    //             }
-    //         }
-    //     }
+    // We found 3 pairs to swap.
+    let gates_to_swap = [("z14", "vhm"), ("z27", "mps"), ("z39", "msq")];
+    let mut gates = swap_wires(gates, &gates_to_swap);
 
-    // print_input(&wires, &gates);
+    // Brute force the last pair.
+    let mut last_pair_to_swap = None;
+    'outer: for p1 in 0..gates.len() {
+        println!("{p1}..");
+        for p2 in 0..gates.len() {
+            if p1 == p2 {
+                continue;
+            }
+            let mut copy_gates = gates.clone();
+            let n1 = copy_gates[p1].get_output();
+            let n2 = copy_gates[p2].get_output();
+            copy_gates[p1].set_output(&n2);
+            copy_gates[p2].set_output(&n1);
+            if test_addition(&copy_gates, 41421, 35252)
+                && test_addition(&copy_gates, 234, 6436)
+                && test_addition(&copy_gates, 4_398_046_511_103, 0)
+            {
+                println!("FOUND PAIR TO SWAP: {n1} {n2}");
+                // Real swap
+                gates[p1].set_output(&n2);
+                gates[p2].set_output(&n1);
+                last_pair_to_swap = Some((n1.to_string(), n2.to_string()));
+                break 'outer;
+            }
+        }
+    }
 
+    // Tests it's ok.
     println!("Test: {}", test_addition(&gates, 41421, 35252));
     println!("Test: {}", test_addition(&gates, 234, 6436));
     println!("Test: {}", test_addition(&gates, 235, 6436));
-    println!(
-        "Test: {}",
-        test_addition(
-            &gates,
-            0b0000000000000000000000000000000000000000000,
-            0b0000000000000000000000000000000000000000000
-        )
-    );
-    println!(
-        "Test: {}",
-        test_addition(
-            &gates,
-            0b0111111111111111111111111111111111111111111,
-            0b0000000000000000000000000000000000000000000
-        )
-    );
+    println!("Test: {}", test_addition(&gates, 0, 0));
+    // 0b0111111111111111111111111111111111111111111
+    println!("Test: {}", test_addition(&gates, 4_398_046_511_103, 0));
     println!("Test: {}", test_addition(&gates, 3, 0));
 
-    gates_to_swap
-        .iter()
-        .flat_map(|(n1, n2)| [n1, n2])
-        .sorted_unstable()
-        .join(",")
+    let mut result = gates_to_swap.to_vec();
+    let pair = last_pair_to_swap.unwrap();
+    result.push((&pair.0, &pair.1));
+    create_swapped_wires_string(&result)
 }
 
 #[cfg(test)]
@@ -325,7 +289,7 @@ mod tests {
     #[test]
     fn test_set_wires() {
         let mut wires = FxHashMap::default();
-        set_wires(&mut wires, 13, 5, 'x');
+        set_wires(&mut wires, 13, 4, 'x');
         assert_eq!(*wires.get("x00").unwrap(), 1);
         assert_eq!(*wires.get("x01").unwrap(), 0);
         assert_eq!(*wires.get("x02").unwrap(), 1);

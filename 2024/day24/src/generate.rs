@@ -1,9 +1,12 @@
 //! Generation of a circuit implementing a working adder.
+#![allow(clippy::many_single_char_names)]
 
 use fxhash::{FxHashMap, FxHashSet};
 
-use crate::circuit::{print_gates, print_input, rename_gate_output, Gate};
+use crate::circuit::{rename_gate_output, Gate};
 
+// Generate a name for the wires.
+// We prefix the ones that may be swapped with $.
 fn gen_name(c: char, n: usize) -> String {
     if c == 'x' || c == 'y' {
         format!("{c}{n:0>2}")
@@ -12,8 +15,9 @@ fn gen_name(c: char, n: usize) -> String {
     }
 }
 
+// Generate an adder for 2 bits.
 // Names: Letters, followed by numbers.
-fn generate_adder(n: usize, carry_over: &str) -> (String, Vec<String>, Vec<Gate>) {
+fn generate_adder(n: usize, carry_over: &str) -> (Vec<String>, Vec<Gate>, String) {
     let x = gen_name('x', n);
     let y = gen_name('y', n);
     let z = gen_name('z', n);
@@ -21,15 +25,6 @@ fn generate_adder(n: usize, carry_over: &str) -> (String, Vec<String>, Vec<Gate>
     let b = gen_name('b', n);
     let c = gen_name('c', n);
     let d = gen_name('d', n);
-    let wires = vec![
-        x.clone(),
-        y.clone(),
-        z.clone(),
-        a.clone(),
-        b.clone(),
-        c.clone(),
-        d.clone(),
-    ];
     let gates = vec![
         Gate::Xor(x.to_string(), y.to_string(), a.to_string()),
         Gate::And(x.to_string(), y.to_string(), b.to_string()),
@@ -37,9 +32,11 @@ fn generate_adder(n: usize, carry_over: &str) -> (String, Vec<String>, Vec<Gate>
         Gate::And(carry_over.to_string(), a.to_string(), c.to_string()),
         Gate::Or(c.to_string(), b.to_string(), d.to_string()),
     ];
-    (d.to_string(), wires, gates)
+    let carry_over = d.to_string();
+    (vec![x, y, z, a, b, c, d], gates, carry_over)
 }
 
+// Generate a functional adder circuit.
 fn generate_circuit(bits_count: usize) -> (FxHashMap<String, u8>, Vec<Gate>) {
     let mut wires: Vec<String> = Vec::new();
     let mut gates: Vec<Gate> = Vec::new();
@@ -57,7 +54,7 @@ fn generate_circuit(bits_count: usize) -> (FxHashMap<String, u8>, Vec<Gate>) {
     ]);
 
     for n in 1..bits_count {
-        let (c, w, g) = generate_adder(n, &carry);
+        let (w, g, c) = generate_adder(n, &carry);
         wires.extend(w);
         gates.extend(g);
         carry = c;
@@ -74,7 +71,8 @@ fn generate_circuit(bits_count: usize) -> (FxHashMap<String, u8>, Vec<Gate>) {
     (wires_map, gates)
 }
 
-fn rename_gate(gates: &mut [Gate], old_name: &str, new_name: &str){
+// Renames all instances of the wire in the circuit.
+fn rename(gates: &mut [Gate], old_name: &str, new_name: &str) {
     for gate in gates {
         match gate {
             Gate::And(i1, i2, o) | Gate::Or(i1, i2, o) | Gate::Xor(i1, i2, o) => {
@@ -92,7 +90,13 @@ fn rename_gate(gates: &mut [Gate], old_name: &str, new_name: &str){
     }
 }
 
-pub fn find_swapped_wires(wires: &FxHashMap<String, u8>, gates: &[Gate]) {
+// To find the swapped wires, we first generate a working adder.
+// Then we go through the working circuit. If there are correct wires as input,
+// we rename the output, and so on.
+// We do this until no renaming can happen anymore. This means that we hit a swapped wire
+// in the input. By comparing the working adder with the input at this stage, we can find
+// the swapped wire. We swap them and restart the process.
+pub fn find_swapped_wires(gates: &[Gate]) {
     // Given our circuit with swapped wires, and a working adder,
     // we rename all gates we can and find the remaining wrong ones.
 
@@ -106,38 +110,40 @@ pub fn find_swapped_wires(wires: &FxHashMap<String, u8>, gates: &[Gate]) {
         correct_wires.insert(gen_name('y', n));
     }
 
-    // Go through the working circuit. If there are correct wires as input,
-    // then rename the output if needed.
     loop {
         let mut something_to_rename = None;
 
-        for w_gate in & working_adder {
+        for w_gate in &working_adder {
             let (in1, in2) = w_gate.get_inputs();
             if correct_wires.contains(&in1) && correct_wires.contains(&in2) {
                 let current_name = w_gate.get_output();
-                // if !current_name.ends_with(|c: char| c.is_ascii_digit()) {
                 if !current_name.starts_with('$') {
                     // Already correct
                     continue;
                 }
 
-                // Find gate by inputs
-                if let Some(p) = gates.iter().position(|gate| 
-                    // matches!(w_gate, Gate::And(i1, i2, _) if *i1 == in1 && *i2 == in2) ||
-                    // matches!(w_gate, Gate::Xor(i1, i2, _) if *i1 == in1 && *i2 == in2) ||
-                    // matches!(w_gate, Gate::Or(i1, i2, _) if *i1 == in1 && *i2 == in2)
-                    match gate {
-                        Gate::And(i1, i2, _) => matches!(w_gate, Gate::And(_, _, _)) && ((*i1 == in1 && *i2 == in2) || (*i1 == in2 && *i2 == in1)),
-                        Gate::Or(i1, i2, _) =>matches!(w_gate, Gate::Or(_, _, _)) && ((*i1 == in1 && *i2 == in2) || (*i1 == in2 && *i2 == in1)),
-                        Gate::Xor(i1, i2, _) =>matches!(w_gate, Gate::Xor(_, _, _)) && ((*i1 == in1 && *i2 == in2) || (*i1 == in2 && *i2 == in1)),
+                // Find gate in the original circuit: Type of gate and inputs must match.
+                if let Some(p) = gates.iter().position(|gate| match gate {
+                    Gate::And(i1, i2, _) => {
+                        matches!(w_gate, Gate::And(_, _, _))
+                            && ((*i1 == in1 && *i2 == in2) || (*i1 == in2 && *i2 == in1))
                     }
-                ) {
+                    Gate::Or(i1, i2, _) => {
+                        matches!(w_gate, Gate::Or(_, _, _))
+                            && ((*i1 == in1 && *i2 == in2) || (*i1 == in2 && *i2 == in1))
+                    }
+                    Gate::Xor(i1, i2, _) => {
+                        matches!(w_gate, Gate::Xor(_, _, _))
+                            && ((*i1 == in1 && *i2 == in2) || (*i1 == in2 && *i2 == in1))
+                    }
+                }) {
                     let name_to_swap = gates[p].get_output();
 
                     if current_name == name_to_swap {
                         continue;
                     }
 
+                    // The borrow checker won't let us rename here, so we get out of the loop and rename there.
                     something_to_rename = Some((current_name, name_to_swap));
                     break;
                 }
@@ -145,9 +151,7 @@ pub fn find_swapped_wires(wires: &FxHashMap<String, u8>, gates: &[Gate]) {
         }
 
         if let Some((old, new)) = something_to_rename {
-            // Rename
-            // println!("Renaming {} => {}", old, new);
-            rename_gate(&mut working_adder, &old, &new);
+            rename(&mut working_adder, &old, &new);
 
             correct_wires.insert(new.to_string());
         } else {
@@ -155,5 +159,5 @@ pub fn find_swapped_wires(wires: &FxHashMap<String, u8>, gates: &[Gate]) {
         }
     }
 
-    print_gates(&working_adder);
+    // print_gates(&working_adder);
 }
