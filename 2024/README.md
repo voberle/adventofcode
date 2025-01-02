@@ -96,9 +96,9 @@ Number generation. Brute-forced.
 
 Graph and cycles.
 
-### Day 24: [Crossed Wires](day24/README.md) 🌟
+### Day 24: [Crossed Wires](day24/README.md) 🌟🌟
 
-Gates.
+Gates. Adder circuit.
 
 ### Day 25: [Code Chronicle](day25/README.md) 🌟
 
