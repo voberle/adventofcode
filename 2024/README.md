@@ -80,9 +80,9 @@ Maze, Dijkstra.
 
 Patterns testing, Memoization.
 
-### Day 20: [Race Condition](day20/README.md) 🌟
+### Day 20: [Race Condition](day20/README.md) 🌟🌟
 
-Maze, Dijkstra.
+Maze.
 
 ### Day 21: [Keypad Conundrum](day21/README.md) 🌟
 

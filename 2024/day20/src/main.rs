@@ -1,10 +1,7 @@
-use std::{
-    collections::BinaryHeap,
-    io::{self, Read},
-};
+use std::io::{self, Read};
 
 const TRACK: char = '.';
-const WALL: char = '#';
+// const WALL: char = '#';
 const START: char = 'S';
 const END: char = 'E';
 
@@ -30,6 +27,35 @@ impl Grid {
         Self { values, rows, cols }
     }
 
+    #[allow(dead_code)]
+    fn print_with_pos(&self, positions: &[usize]) {
+        const RED: &str = "\x1b[31m";
+        const RESET: &str = "\x1b[0m";
+        for row in 0..self.rows {
+            for p in row * self.cols..(row + 1) * self.cols {
+                let c = self.values[p];
+                if positions.contains(&p) {
+                    print!("{RED}{c}{RESET}");
+                } else {
+                    print!("{c}");
+                }
+            }
+            println!();
+        }
+    }
+
+    fn pos(&self, row: usize, col: usize) -> usize {
+        row * self.cols + col
+    }
+
+    fn row(&self, index: usize) -> usize {
+        index / self.cols
+    }
+
+    fn col(&self, index: usize) -> usize {
+        index % self.cols
+    }
+
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
     fn next_positions_iter(&self, pos: usize) -> impl Iterator<Item = usize> + '_ {
         [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -49,94 +75,101 @@ impl Grid {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-struct Node {
-    pos: usize,
-    cost: usize,
-}
-
-impl Ord for Node {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.cost.cmp(&self.cost)
+// Finds the path from start to end.
+// Returned path doesn't include the end position (but includes the start).
+fn get_path(map: &Grid) -> Vec<usize> {
+    fn is_not_in_path(path: &[usize], pos: usize) -> bool {
+        // Maybe over-optimizing here..
+        path.len() < 2 || !path[path.len() - 2..].contains(&pos)
     }
-}
 
-impl PartialOrd for Node {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-// Dijkstra shortest path.
-// Making it as efficient as possible, since it's called a lot.
-fn find_shortest_path(map: &Grid, start: usize, end: usize) -> usize {
-    let mut visited: Vec<bool> = vec![false; map.values.len()];
-    let mut distance: Vec<usize> = vec![usize::MAX; map.values.len()];
-    let mut shortest_distance = usize::MAX;
-
-    let mut queue: BinaryHeap<Node> = BinaryHeap::new();
-    queue.push(Node {
-        pos: start,
-        cost: 0,
-    });
-
-    while let Some(Node { pos, cost }) = queue.pop() {
-        visited[pos] = true;
-
-        if pos == end {
-            shortest_distance = shortest_distance.min(cost);
-            continue;
-        }
-
-        queue.extend(map.next_positions_iter(pos).filter_map(|next_pos| {
-            if visited[next_pos] {
-                return None;
-            }
-            if map.values[next_pos] == WALL {
-                return None;
-            }
-
-            let next_cost = cost + 1;
-            if distance[next_pos] <= next_cost {
-                return None;
-            }
-
-            if next_cost >= shortest_distance {
-                return None;
-            }
-
-            distance[next_pos] = next_cost;
-            Some(Node {
-                pos: next_pos,
-                cost: next_cost,
-            })
-        }));
-    }
-    shortest_distance
-}
-
-fn cheats_count(map: &Grid, saving_at_least: usize) -> usize {
-    let start = map.find_position_of(START);
     let end = map.find_position_of(END);
 
-    let base_time = find_shortest_path(map, start, end);
+    let mut path = Vec::new();
 
-    // Shamelessly brute-forced.
-    map.values
-        .iter()
-        .enumerate()
-        .filter(|(_, elt)| **elt == WALL)
-        .filter(|&(pos, _)| {
-            let mut modified_map = map.clone();
-            modified_map.values[pos] = TRACK;
-            let time = find_shortest_path(&modified_map, start, end);
-            time < base_time && base_time - time >= saving_at_least
-        })
-        .count()
+    let mut pos = map.find_position_of(START);
+    while pos != end {
+        path.push(pos);
+        pos = map
+            .next_positions_iter(pos)
+            .find(|next_pos| {
+                is_not_in_path(&path, *next_pos) && [TRACK, END].contains(&map.values[*next_pos])
+            })
+            .unwrap();
+    }
+    path
 }
 
-fn part2(map: &Grid) -> i64 {
-    0
+// Finds all the possible positions we can get to if we cheat from this position during that maximum duration.
+fn get_cheating_destinations(map: &Grid, pos: usize, cheat_max_duration: usize) -> Vec<usize> {
+    let row = map.row(pos);
+    let col = map.col(pos);
+
+    // We get a square around the position and filter all the tracks that are the right distance.
+    // A bit wasteful approach, but simple.
+    let min_row = row.saturating_sub(cheat_max_duration + 1);
+    let max_row = map.rows.min(row + cheat_max_duration + 2);
+    let min_col = col.saturating_sub(cheat_max_duration + 1);
+    let max_col = map.cols.min(col + cheat_max_duration + 2);
+    (min_row..max_row)
+        .flat_map(|r| {
+            (min_col..max_col).filter_map(move |c| {
+                let p = map.pos(r, c);
+                if p == pos || ![TRACK, END].contains(&map.values[p]) {
+                    return None;
+                }
+                if row.abs_diff(r) + col.abs_diff(c) <= cheat_max_duration {
+                    Some(map.pos(r, c))
+                } else {
+                    None
+                }
+            })
+        })
+        .collect()
+}
+
+// The cost of the cheat is the length of the cheat.
+fn cheat_cost(map: &Grid, pos: usize, cheat_pos: usize) -> usize {
+    let row = map.row(pos);
+    let col = map.col(pos);
+    let cheat_row = map.row(cheat_pos);
+    let cheat_col = map.col(cheat_pos);
+    row.abs_diff(cheat_row) + col.abs_diff(cheat_col)
+}
+
+fn cheats_count<const CHEAT_DURATION: usize>(map: &Grid, saving_at_least: usize) -> usize {
+    // Important observations:
+    // - There is only one path in the maze from start to end.
+    // - When cheating, it means we can jump to any track space around within a circle of X picoseconds.
+    // - We can cheat a maximum of one time.
+
+    let mut path = get_path(map);
+
+    let base_time = path.len();
+
+    // Adding the end to the path, so that cheats that go straight to end are included.
+    path.push(map.find_position_of(END));
+
+    path.iter()
+        .enumerate()
+        .map(|(time_so_far, pos)| {
+            get_cheating_destinations(map, *pos, CHEAT_DURATION)
+                .iter()
+                .filter(|cheat_pos| {
+                    if let Some(pos_to_end) = path.iter().position(|p| p == *cheat_pos) {
+                        let time_from_cheat_to_end = base_time - pos_to_end;
+                        let cheat_cost = cheat_cost(map, *pos, **cheat_pos);
+
+                        let time = time_so_far + cheat_cost + time_from_cheat_to_end;
+
+                        time < base_time && base_time - time >= saving_at_least
+                    } else {
+                        false
+                    }
+                })
+                .count()
+        })
+        .sum()
 }
 
 fn main() {
@@ -144,8 +177,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let map = Grid::build(&input);
 
-    println!("Part 1: {}", cheats_count(&map, 100));
-    println!("Part 2: {}", part2(&map));
+    println!("Part 1: {}", cheats_count::<2>(&map, 100));
+    println!("Part 2: {}", cheats_count::<20>(&map, 100));
 }
 
 #[cfg(test)]
@@ -155,21 +188,13 @@ mod tests {
     const INPUT_TEST: &str = include_str!("../resources/input_test_1");
 
     #[test]
-    fn test_find_shortest_path() {
-        let map = Grid::build(INPUT_TEST);
-        let start = map.find_position_of(START);
-        let end = map.find_position_of(END);
-
-        assert_eq!(find_shortest_path(&map, start, end), 84);
-    }
-
-    #[test]
     fn test_part1() {
-        assert_eq!(cheats_count(&Grid::build(INPUT_TEST), 20), 5);
+        assert_eq!(cheats_count::<2>(&Grid::build(INPUT_TEST), 20), 5);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        const RESULT: usize = 32 + 31 + 29 + 39 + 25 + 23 + 20 + 19 + 12 + 14 + 12 + 22 + 4 + 3;
+        assert_eq!(cheats_count::<20>(&Grid::build(INPUT_TEST), 50), RESULT);
     }
 }
