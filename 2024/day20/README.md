@@ -18,10 +18,10 @@ I made a few important observations:
 
 So I took following approach:
 
-First I find the bath bath, simply walking through the maze.
+First I find the base bath, simply walking through the maze.
 
 Then I go through this path, and on each position, I find all possible cheat destinations. Cheat destinations are all track positions in a circle of size 20.
 
 For each cheat destination, we know the cost to the end, it's the remaining path length. So for each cheat, it's easy to calculate the full path cost and find how many cheats are saving at least 100 picoseconds.
 
-Solution is a bit slow for now, around 5 seconds.
+Initial solution was a bit slow (around 5 seconds), but I optimized it to 50 ms later.

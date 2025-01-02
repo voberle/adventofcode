@@ -143,12 +143,16 @@ fn cheats_count<const CHEAT_DURATION: usize>(map: &Grid, saving_at_least: usize)
     // - When cheating, it means we can jump to any track space around within a circle of X picoseconds.
     // - We can cheat a maximum of one time.
 
-    let mut path = get_path(map);
-
+    let path = get_path(map);
     let base_time = path.len();
 
+    // A vector to easily find the distance to the end for each cheat position.
+    let mut distances_to_end: Vec<usize> = vec![usize::MAX; map.values.len()];
+    for (time, pos) in path.iter().enumerate() {
+        distances_to_end[*pos] = path.len() - 1 - time;
+    }
     // Adding the end to the path, so that cheats that go straight to end are included.
-    path.push(map.find_position_of(END));
+    distances_to_end[map.find_position_of(END)] = 0;
 
     path.iter()
         .enumerate()
@@ -156,16 +160,12 @@ fn cheats_count<const CHEAT_DURATION: usize>(map: &Grid, saving_at_least: usize)
             get_cheating_destinations(map, *pos, CHEAT_DURATION)
                 .iter()
                 .filter(|cheat_pos| {
-                    if let Some(pos_to_end) = path.iter().position(|p| p == *cheat_pos) {
-                        let time_from_cheat_to_end = base_time - pos_to_end;
-                        let cheat_cost = cheat_cost(map, *pos, **cheat_pos);
+                    let time_from_cheat_to_end = distances_to_end[**cheat_pos];
+                    let cheat_cost = cheat_cost(map, *pos, **cheat_pos);
 
-                        let time = time_so_far + cheat_cost + time_from_cheat_to_end;
+                    let time = time_so_far + cheat_cost + time_from_cheat_to_end;
 
-                        time < base_time && base_time - time >= saving_at_least
-                    } else {
-                        false
-                    }
+                    time < base_time && base_time - time >= saving_at_least
                 })
                 .count()
         })
