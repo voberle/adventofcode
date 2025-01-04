@@ -141,6 +141,7 @@ impl Grid {
         index / self.cols
     }
 
+    #[allow(dead_code)]
     fn pos(&self, row: usize, col: usize) -> usize {
         row * self.cols + col
     }
@@ -242,6 +243,22 @@ fn can_go(map: &Grid, p: usize) -> Option<bool> {
     }
 }
 
+fn find_bloc_of_boxes(
+    map: &Grid,
+    direction: Direction,
+    pos: usize,
+    block_to_move: &mut Vec<usize>,
+) {
+    if let Some(result) = can_go(map, pos) {
+        if !result {
+            block_to_move.clear();
+        }
+    } else {
+        block_to_move.push(pos);
+        find_bloc_of_boxes(map, direction, map.next_pos(pos, direction), block_to_move);
+    }
+}
+
 fn move_robot(map: &mut Grid, robot_pos: &mut usize, instruction: Direction) {
     if !map.allowed(*robot_pos, instruction) {
         return;
@@ -253,62 +270,16 @@ fn move_robot(map: &mut Grid, robot_pos: &mut usize, instruction: Direction) {
         Element::Box => {
             // Search for next empty space (before a wall) and collect the positions to shift.
             let mut block_to_move = vec![*robot_pos, next_pos];
-            match instruction {
-                Left => {
-                    let r = map.row(next_pos);
-                    for c in (0..map.col(next_pos)).rev() {
-                        let p = map.pos(r, c);
-                        if let Some(r) = can_go(map, p) {
-                            if !r {
-                                block_to_move.clear();
-                            }
-                            break;
-                        }
-                        block_to_move.push(p);
-                    }
-                }
-                Right => {
-                    let r = map.row(next_pos);
-                    for c in map.col(next_pos) + 1..map.cols {
-                        let p = map.pos(r, c);
-                        if let Some(r) = can_go(map, p) {
-                            if !r {
-                                block_to_move.clear();
-                            }
-                            break;
-                        }
-                        block_to_move.push(p);
-                    }
-                }
-                Up => {
-                    let c = map.col(next_pos);
-                    for r in (0..map.row(next_pos)).rev() {
-                        let p = map.pos(r, c);
-                        if let Some(r) = can_go(map, p) {
-                            if !r {
-                                block_to_move.clear();
-                            }
-                            break;
-                        }
-                        block_to_move.push(p);
-                    }
-                }
-                Down => {
-                    let c = map.col(next_pos);
-                    for r in map.row(next_pos) + 1..map.rows {
-                        let p = map.pos(r, c);
-                        if let Some(r) = can_go(map, p) {
-                            if !r {
-                                block_to_move.clear();
-                            }
-                            break;
-                        }
-                        block_to_move.push(p);
-                    }
-                }
-            }
+            find_bloc_of_boxes(
+                map,
+                instruction,
+                map.next_pos(next_pos, instruction),
+                &mut block_to_move,
+            );
+
             if !block_to_move.is_empty() {
                 shift_block(map, &block_to_move, instruction);
+                // map.print_with_pos(&block_to_move);
                 *robot_pos = map.find_robot();
             }
         }
