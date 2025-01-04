@@ -142,20 +142,6 @@ impl Grid {
         index / self.cols
     }
 
-    #[allow(dead_code)]
-    fn pos(&self, row: usize, col: usize) -> usize {
-        row * self.cols + col
-    }
-
-    fn allowed(&self, pos: usize, direction: Direction) -> bool {
-        !match direction {
-            Up => pos < self.cols,
-            Right => pos % self.cols == self.cols - 1,
-            Down => pos / self.cols == self.rows - 1,
-            Left => pos % self.cols == 0,
-        }
-    }
-
     fn next_pos(&self, pos: usize, direction: Direction) -> usize {
         match direction {
             Up => pos - self.cols,
@@ -273,26 +259,25 @@ fn find_bloc_of_boxes(
 }
 
 fn move_robot(map: &mut Grid, robot_pos: &mut usize, instruction: Direction) {
-    if !map.allowed(*robot_pos, instruction) {
-        return;
-    }
+    // The maps have borders, so we can't fall out.
     let next_pos = map.next_pos(*robot_pos, instruction);
 
     match map.values[next_pos] {
-        Element::Wall => {}
+        Element::Wall => {
+            // Robot is next to wall, doesn't move.
+        }
         Element::Box | Element::BegBox | Element::EndBox => {
-            // Collect the positions to shift.
+            // Robot tries to push boxes.
             let mut block_to_move = FxHashSet::default();
             block_to_move.insert(*robot_pos);
             if find_bloc_of_boxes(map, instruction, next_pos, &mut block_to_move) {
                 shift_block(map, &block_to_move, instruction);
-                // map.print_with_pos(&block_to_move);
                 *robot_pos = map.find_robot();
             }
         }
         Element::Empty => {
-            map.values[next_pos] = Element::Robot;
-            map.values[*robot_pos] = Element::Empty;
+            // Robot is next to an empty space, moves to it.
+            map.values.swap(next_pos, *robot_pos);
             *robot_pos = next_pos;
         }
         Element::Robot => panic!("Can't have two robots"),

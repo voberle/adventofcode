@@ -18,4 +18,4 @@ At the end, I find my solution quite nice:
 
 - A function that does a robot move, with only one simple match, map size agnostic.
 - A function that shifts blocks, using a fairly simple iterator, map size agnostic.
-- A recursive functions that finds blocks to move, with a simple special case to support going up/down on large maps.
+- A recursive function that finds blocks to move, with a simple special case to support going up/down on large maps.
