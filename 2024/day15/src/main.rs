@@ -19,6 +19,7 @@ enum Direction {
     Left,
     Right,
 }
+use itertools::Itertools;
 use Direction::{Down, Left, Right, Up};
 
 impl Direction {
@@ -48,7 +49,7 @@ impl fmt::Display for Direction {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Element {
     Robot,
     Wall,
@@ -64,6 +65,8 @@ impl Element {
             '@' => Element::Robot,
             '#' => Element::Wall,
             'O' => Element::Box,
+            '[' => Element::BegBox,
+            ']' => Element::EndBox,
             '.' => Element::Empty,
             _ => panic!("Invalid element char"),
         }
@@ -87,7 +90,7 @@ impl fmt::Display for Element {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq)]
 struct Grid {
     values: Vec<Element>,
     rows: usize,
@@ -206,6 +209,25 @@ fn build(input: &str) -> (Grid, Vec<Direction>) {
         .map(Direction::build)
         .collect();
     (map, instructions)
+}
+
+// Shift by one all elements indicated by the positions into the direction.
+// This function assumes that the position(s) after the block is free (meaning it's overwritten).
+#[allow(clippy::cast_possible_wrap)]
+fn shift_block(map: &mut Grid, positions: &[usize], direction: Direction) {
+    positions
+        .iter()
+        .sorted_unstable_by_key(|p| match direction {
+            Up => map.row(**p) as isize,
+            Down => -(map.row(**p) as isize),
+            Left => map.col(**p) as isize,
+            Right => -(map.col(**p) as isize),
+        })
+        .for_each(|p| {
+            let to = map.next_pos(*p, direction);
+            let from = *p;
+            map.values.swap(to, from);
+        });
 }
 
 // Helper function for the move_robot() function, to explore a line where boxes might be pushed.
@@ -332,6 +354,42 @@ mod tests {
     fn test_part1_2() {
         let (map, instructions) = build(INPUT_TEST_2);
         assert_eq!(gps_coords_sum(&map, &instructions), 10092);
+    }
+
+    #[test]
+    fn test_shift_block() {
+        let original_map = Grid::build(
+            r"##############
+##......##..##
+##..........##
+##...[][]...##
+##....[]....##
+##.....@....##
+##..........##
+##############",
+        );
+
+        let mut map = original_map.clone();
+        let mut positions = vec![47, 48, 49, 50, 62, 63, 77];
+        map.print_with_pos(&positions);
+
+        shift_block(&mut map, &positions, Direction::Up);
+        positions = positions.iter().map(|p| p - map.cols).collect_vec();
+        map.print_with_pos(&positions);
+
+        shift_block(&mut map, &positions, Direction::Left);
+        positions = positions.iter().map(|p| p - 1).collect_vec();
+        map.print_with_pos(&positions);
+
+        shift_block(&mut map, &positions, Direction::Down);
+        positions = positions.iter().map(|p| p + map.cols).collect_vec();
+        map.print_with_pos(&positions);
+
+        shift_block(&mut map, &positions, Direction::Right);
+        positions = positions.iter().map(|p| p + 1).collect_vec();
+        map.print_with_pos(&positions);
+
+        assert_eq!(map, original_map);
     }
 
     #[test]
