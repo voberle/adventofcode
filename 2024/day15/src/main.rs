@@ -19,6 +19,7 @@ enum Direction {
     Left,
     Right,
 }
+use fxhash::FxHashSet;
 use itertools::Itertools;
 use Direction::{Down, Left, Right, Up};
 
@@ -112,7 +113,7 @@ impl Grid {
         Self { values, rows, cols }
     }
 
-    fn print_with_pos(&self, positions: &[usize]) {
+    fn print_with_pos(&self, positions: &FxHashSet<usize>) {
         const RED: &str = "\x1b[31m";
         const RESET: &str = "\x1b[0m";
         for row in 0..self.rows {
@@ -130,7 +131,7 @@ impl Grid {
 
     #[allow(dead_code)]
     fn print(&self) {
-        self.print_with_pos(&[]);
+        self.print_with_pos(&FxHashSet::default());
     }
 
     fn col(&self, index: usize) -> usize {
@@ -175,7 +176,7 @@ impl Grid {
         self.values
             .iter()
             .enumerate()
-            .filter(|(_, v)| matches!(v, Element::Box))
+            .filter(|(_, v)| matches!(v, Element::Box | Element::BegBox))
             .map(|(p, _)| 100 * self.row(p) + self.col(p))
             .sum()
     }
@@ -215,7 +216,7 @@ fn build(input: &str) -> (Grid, Vec<Direction>) {
 // Shift by one all elements indicated by the positions into the direction.
 // This function assumes that the position(s) after the block is free (meaning it's overwritten).
 #[allow(clippy::cast_possible_wrap)]
-fn shift_block(map: &mut Grid, positions: &[usize], direction: Direction) {
+fn shift_block(map: &mut Grid, positions: &FxHashSet<usize>, direction: Direction) {
     positions
         .iter()
         .sorted_unstable_by_key(|p| match direction {
@@ -233,23 +234,41 @@ fn shift_block(map: &mut Grid, positions: &[usize], direction: Direction) {
 
 fn find_bloc_of_boxes(
     map: &Grid,
-    direction: Direction,
+    dir: Direction,
     pos: usize,
-    block_to_move: &mut Vec<usize>,
-) {
+    block_to_move: &mut FxHashSet<usize>,
+) -> bool {
     match map.values[pos] {
         Element::Wall => {
             // Wall, robot can't move.
-            block_to_move.clear();
+            false
         }
-        Element::Empty => {} // Empty space, let's move.
-        Element::Box => {
+        Element::Empty => {
+            // Empty space, let's move.
+            true
+        }
+        Element::BegBox if matches!(dir, Up | Down) => {
+            block_to_move.insert(pos);
+            let right = map.next_pos(pos, Right);
+            block_to_move.insert(right);
+
+            find_bloc_of_boxes(map, dir, map.next_pos(pos, dir), block_to_move)
+                & find_bloc_of_boxes(map, dir, map.next_pos(right, dir), block_to_move)
+        }
+        Element::EndBox if matches!(dir, Up | Down) => {
+            block_to_move.insert(pos);
+            let left = map.next_pos(pos, Left);
+            block_to_move.insert(left);
+
+            find_bloc_of_boxes(map, dir, map.next_pos(pos, dir), block_to_move)
+                & find_bloc_of_boxes(map, dir, map.next_pos(left, dir), block_to_move)
+        }
+        Element::Box | Element::BegBox | Element::EndBox => {
             // If it's a box, keep exploring.
-            block_to_move.push(pos);
-            find_bloc_of_boxes(map, direction, map.next_pos(pos, direction), block_to_move);
+            block_to_move.insert(pos);
+            find_bloc_of_boxes(map, dir, map.next_pos(pos, dir), block_to_move)
         }
         Element::Robot => panic!("Can't have two robots"),
-        Element::BegBox | Element::EndBox => todo!(),
     }
 }
 
@@ -261,17 +280,11 @@ fn move_robot(map: &mut Grid, robot_pos: &mut usize, instruction: Direction) {
 
     match map.values[next_pos] {
         Element::Wall => {}
-        Element::Box => {
-            // Search for next empty space (before a wall) and collect the positions to shift.
-            let mut block_to_move = vec![*robot_pos, next_pos];
-            find_bloc_of_boxes(
-                map,
-                instruction,
-                map.next_pos(next_pos, instruction),
-                &mut block_to_move,
-            );
-
-            if !block_to_move.is_empty() {
+        Element::Box | Element::BegBox | Element::EndBox => {
+            // Collect the positions to shift.
+            let mut block_to_move = FxHashSet::default();
+            block_to_move.insert(*robot_pos);
+            if find_bloc_of_boxes(map, instruction, next_pos, &mut block_to_move) {
                 shift_block(map, &block_to_move, instruction);
                 // map.print_with_pos(&block_to_move);
                 *robot_pos = map.find_robot();
@@ -283,11 +296,10 @@ fn move_robot(map: &mut Grid, robot_pos: &mut usize, instruction: Direction) {
             *robot_pos = next_pos;
         }
         Element::Robot => panic!("Can't have two robots"),
-        Element::BegBox | Element::EndBox => todo!(),
     }
 }
 
-fn gps_coords_sum(map: &Grid, instructions: &[Direction]) -> usize {
+fn apply_instructions(map: &Grid, instructions: &[Direction]) -> Grid {
     let mut map = map.clone();
     let mut robot_pos = map.find_robot();
 
@@ -299,6 +311,11 @@ fn gps_coords_sum(map: &Grid, instructions: &[Direction]) -> usize {
         move_robot(&mut map, &mut robot_pos, *ins);
         // map.print();
     }
+    map
+}
+
+fn gps_coords_sum(map: &Grid, instructions: &[Direction]) -> usize {
+    let map = apply_instructions(map, instructions);
     map.boxes_gps_coordinates()
 }
 
@@ -308,9 +325,11 @@ fn main() {
     let (map, instructions) = build(&input);
 
     println!("Part 1: {}", gps_coords_sum(&map, &instructions));
+
     let large_map = map.enlarge();
-    large_map.print();
-    // println!("Part 2: {}", gps_coords_sum(&large_map, &instructions));
+    // large_map.print();
+
+    println!("Part 2: {}", gps_coords_sum(&large_map, &instructions));
 }
 
 #[cfg(test)]
@@ -347,32 +366,52 @@ mod tests {
         );
 
         let mut map = original_map.clone();
-        let mut positions = vec![47, 48, 49, 50, 62, 63, 77];
+        let mut positions: FxHashSet<usize> = [47, 48, 49, 50, 62, 63, 77].into_iter().collect();
         map.print_with_pos(&positions);
 
         shift_block(&mut map, &positions, Direction::Up);
-        positions = positions.iter().map(|p| p - map.cols).collect_vec();
+        positions = positions.iter().map(|p| p - map.cols).collect();
         map.print_with_pos(&positions);
 
         shift_block(&mut map, &positions, Direction::Left);
-        positions = positions.iter().map(|p| p - 1).collect_vec();
+        positions = positions.iter().map(|p| p - 1).collect();
         map.print_with_pos(&positions);
 
         shift_block(&mut map, &positions, Direction::Down);
-        positions = positions.iter().map(|p| p + map.cols).collect_vec();
+        positions = positions.iter().map(|p| p + map.cols).collect();
         map.print_with_pos(&positions);
 
         shift_block(&mut map, &positions, Direction::Right);
-        positions = positions.iter().map(|p| p + 1).collect_vec();
+        positions = positions.iter().map(|p| p + 1).collect();
         map.print_with_pos(&positions);
 
         assert_eq!(map, original_map);
     }
 
     #[test]
-    fn test_part2() {
+    fn test_part2_1() {
         let (map, instructions) = build(INPUT_TEST_3);
         let large_map = map.enlarge();
-        // assert_eq!(gps_coords_sum(&map, &instructions), 9021);
+
+        let modified_map = apply_instructions(&large_map, &instructions);
+        assert_eq!(
+            modified_map,
+            Grid::build(
+                r"##############
+##...[].##..##
+##...@.[]...##
+##....[]....##
+##..........##
+##..........##
+##############"
+            )
+        );
+    }
+
+    #[test]
+    fn test_part2_2() {
+        let (map, instructions) = build(INPUT_TEST_2);
+        let large_map = map.enlarge();
+        assert_eq!(gps_coords_sum(&large_map, &instructions), 9021);
     }
 }
