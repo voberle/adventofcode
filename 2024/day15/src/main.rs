@@ -92,18 +92,9 @@ struct Grid {
     values: Vec<Element>,
     rows: usize,
     cols: usize,
-    // Position of the robot, to avoid having to search for it each time.
-    robot_pos: usize,
 }
 
 impl Grid {
-    fn find_robot(values: &[Element]) -> usize {
-        values
-            .iter()
-            .position(|v| matches!(v, Element::Robot))
-            .unwrap()
-    }
-
     fn build(input: &str) -> Self {
         let mut rows = 0;
         let values: Vec<_> = input
@@ -115,13 +106,7 @@ impl Grid {
             .collect();
         assert_eq!(values.len() % rows, 0);
         let cols = values.len() / rows;
-        let robot_pos = Self::find_robot(&values);
-        Self {
-            values,
-            rows,
-            cols,
-            robot_pos,
-        }
+        Self { values, rows, cols }
     }
 
     fn print_with_pos(&self, positions: &[usize]) {
@@ -175,6 +160,13 @@ impl Grid {
         }
     }
 
+    fn find_robot(&self) -> usize {
+        self.values
+            .iter()
+            .position(|v| matches!(v, Element::Robot))
+            .unwrap()
+    }
+
     fn boxes_gps_coordinates(&self) -> usize {
         self.values
             .iter()
@@ -197,12 +189,10 @@ impl Grid {
                 })
             })
             .collect();
-        let robot_pos = Self::find_robot(&values);
         Self {
             values,
             rows: self.rows,
             cols: self.cols * 2,
-            robot_pos,
         }
     }
 }
@@ -220,16 +210,22 @@ fn build(input: &str) -> (Grid, Vec<Direction>) {
 
 // Helper function for the move_robot() function, to explore a line where boxes might be pushed.
 // Returns true if done with exploring the line.
-fn explore_line(map: &mut Grid, next_pos: usize, r: usize, c: usize) -> bool {
+fn explore_line(
+    map: &mut Grid,
+    robot_pos: &mut usize,
+    next_pos: usize,
+    r: usize,
+    c: usize,
+) -> bool {
     let p = map.pos(r, c);
     match map.values[p] {
         Element::Wall => true, // wall, can't move
         Element::Empty => {
             // Found an empty space, adjust the robot and boxes.
             map.values[next_pos] = Element::Robot;
-            map.values[map.robot_pos] = Element::Empty;
+            map.values[*robot_pos] = Element::Empty;
             map.values[p] = Element::Box;
-            map.robot_pos = next_pos;
+            *robot_pos = next_pos;
             true
         }
         Element::Box => false, // continue
@@ -238,11 +234,11 @@ fn explore_line(map: &mut Grid, next_pos: usize, r: usize, c: usize) -> bool {
     }
 }
 
-fn move_robot(map: &mut Grid, instruction: Direction) {
-    if !map.allowed(map.robot_pos, instruction) {
+fn move_robot(map: &mut Grid, robot_pos: &mut usize, instruction: Direction) {
+    if !map.allowed(*robot_pos, instruction) {
         return;
     }
-    let next_pos = map.next_pos(map.robot_pos, instruction);
+    let next_pos = map.next_pos(*robot_pos, instruction);
 
     match map.values[next_pos] {
         Element::Wall => {}
@@ -253,28 +249,28 @@ fn move_robot(map: &mut Grid, instruction: Direction) {
             match instruction {
                 Left => {
                     for c in (0..map.col(next_pos)).rev() {
-                        if explore_line(map, next_pos, map.row(next_pos), c) {
+                        if explore_line(map, robot_pos, next_pos, map.row(next_pos), c) {
                             break;
                         }
                     }
                 }
                 Right => {
                     for c in map.col(next_pos) + 1..map.cols {
-                        if explore_line(map, next_pos, map.row(next_pos), c) {
+                        if explore_line(map, robot_pos, next_pos, map.row(next_pos), c) {
                             break;
                         }
                     }
                 }
                 Up => {
                     for r in (0..map.row(next_pos)).rev() {
-                        if explore_line(map, next_pos, r, map.col(next_pos)) {
+                        if explore_line(map, robot_pos, next_pos, r, map.col(next_pos)) {
                             break;
                         }
                     }
                 }
                 Down => {
                     for r in map.row(next_pos) + 1..map.rows {
-                        if explore_line(map, next_pos, r, map.col(next_pos)) {
+                        if explore_line(map, robot_pos, next_pos, r, map.col(next_pos)) {
                             break;
                         }
                     }
@@ -283,8 +279,8 @@ fn move_robot(map: &mut Grid, instruction: Direction) {
         }
         Element::Empty => {
             map.values[next_pos] = Element::Robot;
-            map.values[map.robot_pos] = Element::Empty;
-            map.robot_pos = next_pos;
+            map.values[*robot_pos] = Element::Empty;
+            *robot_pos = next_pos;
         }
         Element::Robot => panic!("Can't have two robots"),
         Element::BegBox | Element::EndBox => todo!(),
@@ -293,12 +289,13 @@ fn move_robot(map: &mut Grid, instruction: Direction) {
 
 fn gps_coords_sum(map: &Grid, instructions: &[Direction]) -> usize {
     let mut map = map.clone();
+    let mut robot_pos = map.find_robot();
 
     // println!("Initial state:");
     // map.print();
 
     for ins in instructions {
-        move_robot(&mut map, *ins);
+        move_robot(&mut map, &mut robot_pos, *ins);
 
         // println!("Move {ins}:");
         // map.print();
