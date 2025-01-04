@@ -231,31 +231,25 @@ fn shift_block(map: &mut Grid, positions: &[usize], direction: Direction) {
         });
 }
 
-// Checks if the position is wall (can't move boxes), empty (can move boxes)
-// or boxes (we need to keep exploring).
-fn can_go(map: &Grid, p: usize) -> Option<bool> {
-    match map.values[p] {
-        Element::Wall => Some(false), // wall, can't move
-        Element::Empty => Some(true), // found an empty space, adjust the robot and boxes.
-        Element::Box => None,         // continue
-        Element::Robot => panic!("Can't have two robots"),
-        Element::BegBox | Element::EndBox => todo!(),
-    }
-}
-
 fn find_bloc_of_boxes(
     map: &Grid,
     direction: Direction,
     pos: usize,
     block_to_move: &mut Vec<usize>,
 ) {
-    if let Some(result) = can_go(map, pos) {
-        if !result {
+    match map.values[pos] {
+        Element::Wall => {
+            // Wall, robot can't move.
             block_to_move.clear();
         }
-    } else {
-        block_to_move.push(pos);
-        find_bloc_of_boxes(map, direction, map.next_pos(pos, direction), block_to_move);
+        Element::Empty => {} // Empty space, let's move.
+        Element::Box => {
+            // If it's a box, keep exploring.
+            block_to_move.push(pos);
+            find_bloc_of_boxes(map, direction, map.next_pos(pos, direction), block_to_move);
+        }
+        Element::Robot => panic!("Can't have two robots"),
+        Element::BegBox | Element::EndBox => todo!(),
     }
 }
 
