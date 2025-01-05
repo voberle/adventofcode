@@ -54,16 +54,16 @@ fn walk_and_count_scores(map: &Grid, pos: usize, height: u8, tails: &mut FxHashS
 }
 
 fn scores_sum(map: &Grid) -> usize {
-map.values
-    .iter()
-    .enumerate()
-    .filter(|(_, &height)| height == 0)
-    .map(|(trailhead_pos, trailhead_height)| {
-        let mut tails: FxHashSet<usize> = FxHashSet::default();
-        walk_and_count_scores(map, trailhead_pos, *trailhead_height, &mut tails);
-        tails.len()
-    })
-    .sum()
+    map.values
+        .iter()
+        .enumerate()
+        .filter(|(_, &height)| height == 0)
+        .map(|(trailhead_pos, trailhead_height)| {
+            let mut tails: FxHashSet<usize> = FxHashSet::default();
+            walk_and_count_scores(map, trailhead_pos, *trailhead_height, &mut tails);
+            tails.len()
+        })
+        .sum()
 }
 
 // Explores all the trails possible from the trail so far.

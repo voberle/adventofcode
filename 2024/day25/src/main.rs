@@ -92,7 +92,9 @@ fn print_heights(lock_heights: &[Vec<usize>], key_heights: &[Vec<usize>]) {
 const LOCK_HEIGHT: usize = 7;
 
 fn are_fitting(lock: &[usize], key: &[usize]) -> bool {
-    lock.iter().zip(key.iter()).all(|(l, k)| l + k < LOCK_HEIGHT - 1)
+    lock.iter()
+        .zip(key.iter())
+        .all(|(l, k)| l + k < LOCK_HEIGHT - 1)
 }
 
 fn unique_pairs(schematics: &[Grid]) -> usize {
