@@ -84,7 +84,7 @@ Patterns testing, Memoization.
 
 Maze.
 
-### Day 21: [Keypad Conundrum](day21/README.md) 🌟
+### Day 21: [Keypad Conundrum](day21/README.md) 🌟🌟
 
 Moving robot.
 
@@ -100,6 +100,6 @@ Graph and cycles.
 
 Gates. Adder circuit.
 
-### Day 25: [Code Chronicle](day25/README.md) 🌟
+### Day 25: [Code Chronicle](day25/README.md) 🌟🌟
 
 Pattern matching.

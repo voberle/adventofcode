@@ -3,6 +3,7 @@ use std::{
     iter::once,
 };
 
+mod brute_force;
 mod model;
 
 use itertools::Itertools;
@@ -53,28 +54,6 @@ fn convert_num_paths_to_directions(path: &[NumKey]) -> Vec<DirKey> {
         .collect()
 }
 
-// Finds the short path(s) to reach all the direction values.
-// The code needs to include the starting position.
-fn find_dir_paths(directions: &[DirKey]) -> Vec<Vec<DirKey>> {
-    let mut paths: Vec<Vec<DirKey>> = vec![vec![]];
-    for pair in directions.windows(2) {
-        let paths_for_pair = pair[0].go_press(pair[1]);
-        assert!(!paths_for_pair.is_empty());
-
-        paths = paths_for_pair
-            .iter()
-            .flat_map(|path| {
-                paths.iter().map(move |base_path| {
-                    let mut p = base_path.clone();
-                    p.extend(path);
-                    p
-                })
-            })
-            .collect();
-    }
-    paths
-}
-
 fn prepend<T: Clone>(input: &[T], elt: T) -> Vec<T> {
     let mut v = Vec::with_capacity(input.len() + 1);
     v.push(elt);
@@ -82,54 +61,25 @@ fn prepend<T: Clone>(input: &[T], elt: T) -> Vec<T> {
     v
 }
 
-fn _shortest_sequence_length(code: &[char], robots_count: usize) -> usize {
-    let paths = find_code_paths(&prepend(code, 'A'));
-    let mut next_paths = paths
-        .iter()
-        .map(|p| convert_num_paths_to_directions(p))
-        .collect_vec();
-
-    for _ in 0..robots_count {
-        next_paths = next_sequence(&next_paths);
-    }
-
-    next_paths.iter().map(std::vec::Vec::len).min().unwrap()
-}
-
-fn next_sequence(paths_as_dirs: &[Vec<DirKey>]) -> Vec<Vec<DirKey>> {
-    paths_as_dirs
-        .iter()
-        .flat_map(|dirs| find_dir_paths(&prepend(dirs, DirKey::A)))
-        .collect()
-}
-
 #[memoize]
+#[allow(clippy::needless_pass_by_value)]
 fn sequence_length(directions: Vec<DirKey>, remaining_robots: usize) -> usize {
     if remaining_robots == 0 {
-        // directions_list.iter().map(|dirs| dirs.len()).min().unwrap()
         directions.len()
     } else {
-            prepend(&directions, DirKey::A)
-                .windows(2)
-                .map(|pair| {
-                    
-                    let paths_for_pair = pair[0].go_press(pair[1]);
-                    assert!(!paths_for_pair.is_empty());
-            
-                    paths_for_pair
-                        .iter()
-                        .map(|path| {
-                            sequence_length(path.clone(), remaining_robots - 1)
-                        })
-                        .min()
-                        .unwrap()
-            
-                    
-                    
-                    
-                    // sequence_length(pair[0].go_press(pair[1]), remaining_robots - 1)
-                })
-                .sum()
+        prepend(&directions, DirKey::A)
+            .windows(2)
+            .map(|pair| {
+                let paths_for_pair = pair[0].go_press(pair[1]);
+                assert!(!paths_for_pair.is_empty());
+
+                paths_for_pair
+                    .iter()
+                    .map(|path| sequence_length(path.clone(), remaining_robots - 1))
+                    .min()
+                    .unwrap()
+            })
+            .sum()
     }
 }
 
@@ -140,7 +90,11 @@ fn shortest_sequence_length(code: &[char], robots_count: usize) -> usize {
         .map(|p| convert_num_paths_to_directions(p))
         .collect_vec();
 
-    directions_list.iter().map(|dirs| sequence_length(dirs.clone(), robots_count)).min().unwrap()
+    directions_list
+        .iter()
+        .map(|dirs| sequence_length(dirs.clone(), robots_count))
+        .min()
+        .unwrap()
 }
 
 fn code_numeric_part(code: &[char]) -> usize {
