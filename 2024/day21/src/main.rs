@@ -111,7 +111,24 @@ fn sequence_length(directions: Vec<DirKey>, remaining_robots: usize) -> usize {
     } else {
             prepend(&directions, DirKey::A)
                 .windows(2)
-                .map(|pair| sequence_length(pair[0].go_press(pair[1]), remaining_robots - 1))
+                .map(|pair| {
+                    
+                    let paths_for_pair = pair[0].go_press(pair[1]);
+                    assert!(!paths_for_pair.is_empty());
+            
+                    paths_for_pair
+                        .iter()
+                        .map(|path| {
+                            sequence_length(path.clone(), remaining_robots - 1)
+                        })
+                        .min()
+                        .unwrap()
+            
+                    
+                    
+                    
+                    // sequence_length(pair[0].go_press(pair[1]), remaining_robots - 1)
+                })
                 .sum()
     }
 }
