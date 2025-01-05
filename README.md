@@ -2,7 +2,7 @@
 
 My *Advent Of Code* code.
 
-It contains the solutions to all years from 2015 to 2023 so far.
+It contains the solutions from all years since 2015.
 
 ## Template
 

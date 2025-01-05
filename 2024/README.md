@@ -2,6 +2,16 @@
 
 My Rust implementations of [Advent of Code 2024](https://adventofcode.com/2024).
 
+## Wrapup
+
+After doing my first AoC last year, and the catching up on all the previous years, I did 2024 and reached 500 stars!
+
+As always, it was great fun to do.
+
+I didn't attempt to be especially fast. I finished the last day on January 5th. I did the whole serie without having to check on Reddit for any hint.
+
+This year I also [shared all my solutions on the Reddit solution megathreads](https://www.reddit.com/user/pakapikk77/comments/).
+
 ## Days
 
 ### Day 1: [Historian Hysteria](day01/README.md) 🌟🌟
