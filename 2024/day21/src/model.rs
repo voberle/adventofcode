@@ -8,7 +8,7 @@ use itertools::Itertools;
 // +---+---+---+
 // | < | v | > |
 // +---+---+---+
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DirKey {
     Up,
     Down,

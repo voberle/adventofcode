@@ -6,6 +6,7 @@ use std::{
 mod model;
 
 use itertools::Itertools;
+use memoize::memoize;
 use model::{DirKey, NumKey};
 
 fn build(input: &str) -> Vec<Vec<char>> {
@@ -68,7 +69,7 @@ fn prepend<T: Clone>(input: &[T], elt: T) -> Vec<T> {
     v
 }
 
-fn shortest_sequence_length(code: &[char], robots_count: usize) -> usize {
+fn _shortest_sequence_length(code: &[char], robots_count: usize) -> usize {
     let paths = find_code_paths(&prepend(code, 'A'));
     let mut next_paths = paths
         .iter()
@@ -89,6 +90,29 @@ fn next_sequence(paths_as_dirs: &[Vec<DirKey>]) -> Vec<Vec<DirKey>> {
         .collect()
 }
 
+#[memoize]
+fn sequence_length(directions: Vec<DirKey>, remaining_robots: usize) -> usize {
+    if remaining_robots == 0 {
+        // directions_list.iter().map(|dirs| dirs.len()).min().unwrap()
+        directions.len()
+    } else {
+            prepend(&directions, DirKey::A)
+                .windows(2)
+                .map(|pair| sequence_length(pair[0].go_press(pair[1]), remaining_robots - 1))
+                .sum()
+    }
+}
+
+fn shortest_sequence_length(code: &[char], robots_count: usize) -> usize {
+    let paths = find_code_paths(&prepend(code, 'A'));
+    let directions_list = paths
+        .iter()
+        .map(|p| convert_num_paths_to_directions(p))
+        .collect_vec();
+
+    directions_list.iter().map(|dirs| sequence_length(dirs.clone(), robots_count)).min().unwrap()
+}
+
 fn code_numeric_part(code: &[char]) -> usize {
     (code[0] as usize - '0' as usize) * 100
         + (code[1] as usize - '0' as usize) * 10
@@ -107,7 +131,7 @@ fn complexities_sum_2_robots(codes: &[Vec<char>]) -> usize {
 }
 
 fn complexities_sum_25_robots(codes: &[Vec<char>]) -> usize {
-    0
+    complexities_sum(codes, 25)
 }
 
 fn main() {
