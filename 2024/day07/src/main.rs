@@ -57,11 +57,7 @@ impl Equation {
                     |acc, (op, nb)| {
                         let r = op.apply(acc, *nb);
                         // As an optimization, we interrupt the iteration if we are bigger than the expected result.
-                        if r <= self.test_value {
-                            Some(r)
-                        } else {
-                            None
-                        }
+                        if r <= self.test_value { Some(r) } else { None }
                     },
                 );
                 if let Some(r) = result {

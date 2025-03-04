@@ -8,8 +8,8 @@ struct Grid {
     rows: usize,
     cols: usize,
 }
-use itertools::Itertools;
 use Direction::{Down, Left, Right, Up};
+use itertools::Itertools;
 
 impl Grid {
     fn build(input: &str) -> Self {

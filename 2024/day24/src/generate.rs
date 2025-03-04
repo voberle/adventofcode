@@ -3,7 +3,7 @@
 
 use fxhash::{FxHashMap, FxHashSet};
 
-use crate::circuit::{rename_gate_output, Gate};
+use crate::circuit::{Gate, rename_gate_output};
 
 // Generate a name for the wires.
 // We prefix the ones that may be swapped with $.

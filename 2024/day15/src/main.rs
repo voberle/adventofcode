@@ -19,9 +19,9 @@ enum Direction {
     Left,
     Right,
 }
+use Direction::{Down, Left, Right, Up};
 use fxhash::FxHashSet;
 use itertools::Itertools;
-use Direction::{Down, Left, Right, Up};
 
 impl Direction {
     fn build(c: char) -> Self {

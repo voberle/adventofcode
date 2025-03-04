@@ -57,7 +57,7 @@ fn scores_sum(map: &Grid) -> usize {
     map.values
         .iter()
         .enumerate()
-        .filter(|(_, &height)| height == 0)
+        .filter(|&(_, &height)| height == 0)
         .map(|(trailhead_pos, trailhead_height)| {
             let mut tails: FxHashSet<usize> = FxHashSet::default();
             walk_and_count_scores(map, trailhead_pos, *trailhead_height, &mut tails);
@@ -87,7 +87,7 @@ fn ratings_sum(map: &Grid) -> usize {
     map.values
         .iter()
         .enumerate()
-        .filter(|(_, &height)| height == 0)
+        .filter(|&(_, &height)| height == 0)
         .map(|(trailhead_pos, trailhead_height)| {
             walk_and_count(map, trailhead_pos, *trailhead_height)
         })

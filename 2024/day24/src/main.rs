@@ -1,6 +1,6 @@
 use std::io::{self, Read};
 
-use circuit::{create_swapped_wires_string, swap_wires, Gate};
+use circuit::{Gate, create_swapped_wires_string, swap_wires};
 use fxhash::FxHashMap;
 use itertools::Itertools;
 

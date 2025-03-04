@@ -21,7 +21,7 @@ impl DirKey {
     // Returns the shortest set of keys to press to go press next starting from self.
     // Always 1, 2 or 3 moves, plus A.
     pub fn go_press(self, next: DirKey) -> Vec<Vec<DirKey>> {
-        use DirKey::{Down, Left, Right, Up, A};
+        use DirKey::{A, Down, Left, Right, Up};
         let mut moves = match self {
             Up => match next {
                 Up => vec![vec![]],

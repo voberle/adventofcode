@@ -37,5 +37,5 @@ unsafe_code = "forbid"
 [workspace.package]
 authors = ["Vincent Oberle"]
 description = "Advent of Code 2024"
-edition = "2021"
+edition = "2024"
 version = "0.1.0"
