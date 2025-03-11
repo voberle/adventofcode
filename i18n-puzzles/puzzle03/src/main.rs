@@ -13,22 +13,23 @@ fn is_valid(password: &str) -> bool {
     }
 
     // At least one digit.
-    if password.chars().all(|c| !c.is_ascii_digit()) {
+    if !password.chars().any(|c| c.is_ascii_digit()) {
         // same as is_digit(10)
         return false;
     }
 
     // At least one uppercase letter (with or without accents, examples: A or Ż).
-    if password.chars().all(|c| !c.is_uppercase()) {
+    if !password.chars().any(char::is_uppercase) {
         return false;
     }
 
     // At least one lowercase letter (with or without accents, examples: a or ŷ).
-    if password.chars().all(|c| !c.is_lowercase()) {
+    if !password.chars().any(char::is_lowercase) {
         return false;
     }
 
     // At least one character that is outside the standard 7-bit ASCII character set (examples: Ű, ù or ř).
+    // if !password.chars().any(|c| !c.is_ascii()) {
     if password.is_ascii() {
         return false;
     }
