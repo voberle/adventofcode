@@ -60,29 +60,19 @@ fn latin1_to_string(s: &str) -> String {
         if b < 0x80 {
             result.push(b as char);
         } else {
-            // Count how many parts there are
-            let parts_count = b.leading_ones() as usize;
+            // Each miscoded string uses 4 bytes.
+            let bytes1 = vec![bytes[i], bytes[i + 1]];
+            let bytes2 = vec![bytes[i + 2], bytes[i + 3]];
+            i += 3;
 
-            // It's always 2, but it could also be 3 or 4 normally?
-            // <https://en.wikipedia.org/wiki/UTF-8>
-            assert!(parts_count == 2);
+            let utf_str1 = String::from_utf8(bytes1).unwrap();
+            let utf_str2 = String::from_utf8(bytes2).unwrap();
 
-            // HACK: I don't get why that works?!?
-            i += 2;
+            let char1 = utf_str1.chars().next().unwrap();
+            let char2 = utf_str2.chars().next().unwrap();
 
-            // Collect bytes to convert them to a UTF-8 char
-            let mut bytes_for_char = vec![b];
-            for _ in 0..parts_count - 1 {
-                i += 1;
-                bytes_for_char.push(bytes[i]);
-            }
-
-            let utf_str = String::from_utf8(bytes_for_char).unwrap();
-
-            // for b in &bytes_for_char {
-            //     print!("    {:#010b}, ", b);
-            // }
-            // println!("- '{}'", utf_str);
+            let bytes_origine = vec![char1 as u8, char2 as u8];
+            let utf_str = String::from_utf8(bytes_origine).unwrap();
 
             result.push_str(&utf_str);
         }
@@ -178,6 +168,25 @@ mod tests {
             latin1_to_string(&latin1_to_string("pugilarÃÂ£o")),
             "pugilarão"
         );
+    }
+
+    #[test]
+    fn test_reverse_encoding() {
+        // Shows how the words were miscoded initially.
+        let original_word = "kürst";
+        let incorrect_word: String = original_word
+            .bytes()
+            .map(|b| b as char)
+            .inspect(|c| {
+                let mut bytes = [0; 4];
+                let _ = c.encode_utf8(&mut bytes);
+                for b in &bytes[0..2] {
+                    print!("    {:#010b}, ", b);
+                }
+                println!();
+            })
+            .collect();
+        assert_eq!(incorrect_word, "kÃ¼rst");
     }
 
     #[test]
