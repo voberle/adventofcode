@@ -260,6 +260,10 @@ name = "puzzle05"
 version = "0.1.0"
 
 [[package]]
+name = "puzzle06"
+version = "0.1.0"
+
+[[package]]
 name = "quote"
 version = "1.0.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
