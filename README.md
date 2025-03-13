@@ -4,6 +4,10 @@ My *Advent Of Code* code.
 
 It contains the solutions from all years since 2015.
 
+It also has some of the Advent of Code clones solutions:
+
+- [Internationali­zation Puzzles](i18n-puzzles).
+
 ## Template
 
 `template` folder has a template to be used with [Cargo Generate](https://cargo-generate.github.io/cargo-generate):
@@ -25,7 +29,3 @@ with following in `$CARGO_HOME/cargo-generate.toml`:
 ## Clippy
 
 All exercises are free of any Clippy warnings. Clippy is set by default in pedantic mode in the workspace cargo file.
-
-## Compatibility
-
-Tested on Rust 1.82.0.
