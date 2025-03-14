@@ -19,23 +19,26 @@ fn right_shift(c: char, shift: i32) -> char {
 }
 
 #[allow(clippy::cast_possible_wrap)]
-fn part1() {
+fn decipher(input: &str) -> String {
     // We need to take only the first 16 digits of Pi, and then start from the beginning again.
     const PI: &str = "3141592653589793";
     let pi_digits = PI.chars().map(|d| d.to_digit(10).unwrap() as i32).cycle();
 
+    let mut message = String::with_capacity(input.len());
     for (c, shift) in INPUT.chars().zip(pi_digits) {
-        let decoded = if c.is_ascii_alphabetic() {
+        let decoded_char = if c.is_ascii_alphabetic() {
             left_shift(c, shift)
         } else {
             c
         };
-        print!("{decoded}");
+        message.push(decoded_char);
     }
+    message
 }
 
 fn main() {
-    part1();
+    let message = decipher(INPUT);
+    println!("{message}");
 }
 
 #[cfg(test)]
