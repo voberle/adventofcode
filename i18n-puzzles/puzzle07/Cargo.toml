@@ -1,0 +1,13 @@
+[package]
+name = "puzzle07"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+chrono = "0.4.40"
+chrono-tz = "0.10.1"
+
+[lints]
+workspace = true

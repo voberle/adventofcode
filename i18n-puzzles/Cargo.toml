@@ -6,6 +6,7 @@ members = [
     "puzzle04",
     "puzzle05",
     "puzzle06",
+    "puzzle07",
 ]
 resolver = "2"
 
