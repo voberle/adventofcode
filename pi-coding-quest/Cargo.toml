@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "year2024",
+    "year2025",
 ]
 resolver = "2"
 

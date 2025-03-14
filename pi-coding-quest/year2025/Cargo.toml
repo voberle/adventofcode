@@ -1,0 +1,12 @@
+[package]
+name = "year2025"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+rust_decimal = { version = "1.36.0", default-features = false }
+
+[lints]
+workspace = true
