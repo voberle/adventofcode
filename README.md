@@ -7,6 +7,7 @@ It contains the solutions from all years since 2015.
 It also has some of the Advent of Code clones solutions:
 
 - [Internationali­zation Puzzles](i18n-puzzles).
+- [Pi Coding Quest](https://ivanr3d.com/projects/pi/).
 
 ## Template
 

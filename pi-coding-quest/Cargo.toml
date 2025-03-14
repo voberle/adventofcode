@@ -1,0 +1,17 @@
+[workspace]
+members = [
+    "year2024",
+]
+resolver = "2"
+
+[workspace.lints.clippy]
+pedantic = "deny"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.package]
+authors = ["Vincent Oberle"]
+description = "Pi Coding Quest"
+edition = "2024"
+version = "0.1.0"
