@@ -36,9 +36,42 @@ fn decipher(input: &str) -> String {
     message
 }
 
+#[allow(clippy::cast_possible_truncation)]
+fn find_code(message: &str) -> usize {
+    // Numbers we may find.. above 11 it's unlikely.
+    const NUMBERS: [&str; 12] = [
+        "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+        "eleven",
+    ];
+
+    // Remove all characters that should be ignored.
+    let normalized: String = message
+        .chars()
+        .filter_map(|c| {
+            // Description wasn't clear if only whitespaces should be removed or all non letters.
+            if c.is_alphabetic() {
+                Some(c.to_ascii_lowercase())
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    NUMBERS
+        .iter()
+        .enumerate()
+        .map(|(n, n_str)| {
+            let cnt = normalized.match_indices(n_str).count();
+            if cnt >= 1 { n.pow(cnt as u32) } else { 1 }
+        })
+        .product()
+}
+
 fn main() {
     let message = decipher(INPUT);
     println!("{message}");
+
+    println!("Code: {}", find_code(&message));
 }
 
 #[cfg(test)]
@@ -57,5 +90,10 @@ mod tests {
         assert_eq!(right_shift('a', 3), 'd');
         assert_eq!(right_shift('x', 3), 'a');
         assert_eq!(right_shift('A', 3), 'D');
+    }
+
+    #[test]
+    fn test_code() {
+        assert_eq!(find_code(&decipher(INPUT)), 53760);
     }
 }
