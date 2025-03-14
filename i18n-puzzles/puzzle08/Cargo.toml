@@ -1,0 +1,15 @@
+[package]
+name = "puzzle08"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+deunicode = "1.6.0"
+fxhash = "0.2.1"
+is-vowel = "0.1.0"
+unicode-normalization = "0.1.24"
+
+[lints]
+workspace = true
