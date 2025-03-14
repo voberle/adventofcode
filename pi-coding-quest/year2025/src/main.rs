@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use rust_decimal::Decimal;
 
 // Day          Price ($)          Ticker
@@ -34,6 +35,23 @@ const INPUT: &str = r"1            150.00             TLM
 
 const PI: &str = "31415926535897932384626433832795";
 
+const CIPHER_MAP: &str = r"X J P Z Q T M C A O W Y B G D A
+N F R S H V K U E X J P Z Q T M
+C L O W Y B G D A N F R S H V K
+G E X J P Z Q T M P L O W Y B G
+D A N F R S H V K U E X J P Z Q
+T M A L O W Y B G D A O F I S H
+A K U E X J P Z Q T M C L O W Y
+O G D A N F R S H V K U E X J P
+Y Q T M C L O W Y B G D A N F R
+S H V K U E X Y G Z Q T M C L O
+D Y B G D A N F R S H V K U D X
+J P Z Q T M C L O W Y B G D A N
+F R S H V K U E X J P Z Q T M C
+D O W Y B G D A N F R S H V K U
+E X J P Z Q T M C O O W Y B G D
+A N F R S H V K U E X J P Z Q T";
+
 #[derive(Debug)]
 struct StockEntry {
     day: u64,
@@ -42,8 +60,19 @@ struct StockEntry {
 }
 
 impl StockEntry {
+    fn new(day: &str, price: &str, ticker: &str) -> Self {
+        let day = day.parse().unwrap();
+        let price = Decimal::from_str_exact(price).unwrap();
+        let ticker = ticker.to_string();
+        StockEntry { day, price, ticker }
+    }
+
     fn price_as_string(&self) -> String {
         self.price.to_string().replace('.', "")
+    }
+
+    fn price_to_integer(&self) -> i32 {
+        self.price_as_string().parse().unwrap()
     }
 }
 
@@ -52,10 +81,7 @@ fn build(input: &str) -> Vec<StockEntry> {
         .lines()
         .map(|line| {
             let parts: Vec<_> = line.split_ascii_whitespace().collect();
-            let day = parts[0].parse().unwrap();
-            let price = Decimal::from_str_exact(parts[1]).unwrap();
-            let ticker = parts[2].to_string();
-            StockEntry { day, price, ticker }
+            StockEntry::new(parts[0], parts[1], parts[2])
         })
         .collect()
 }
@@ -93,11 +119,58 @@ fn find_secret_code(dataset: &[StockEntry], number: &str) -> String {
     }
 }
 
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+fn left_shift_uppercase(c: char, shift: i32) -> char {
+    ('A' as i32 + (c as i32 - 'A' as i32 - shift).rem_euclid(26)) as u8 as char
+}
+
+fn decipher(input: &str, shift: i32) -> String {
+    // We decipher with a right shift.
+    input
+        .chars()
+        .map(|c| left_shift_uppercase(c, -shift))
+        .collect()
+}
+
+fn get_non_manipulated_ticker(manipulated_entry: &StockEntry) -> String {
+    let shift = manipulated_entry.price_to_integer();
+    decipher(&manipulated_entry.ticker, shift)
+}
+
+fn crack_secret(dataset: &[StockEntry], number: &str) -> String {
+    let cipher_map: Vec<char> = CIPHER_MAP.chars().filter(|c| !c.is_whitespace()).collect();
+    assert_eq!(cipher_map.len(), 256);
+
+    dataset
+        .iter()
+        .filter(|e| number.contains(&e.price_as_string()))
+        .map(|manipulated_entry| {
+            let non_manipulated_ticker = get_non_manipulated_ticker(manipulated_entry);
+
+            dataset
+                .iter()
+                .find(|e| e.ticker == non_manipulated_ticker)
+                .unwrap()
+        })
+        .sorted_by_key(|e| e.day)
+        .map(|non_manipulated_entry| {
+            let nb = non_manipulated_entry.price_to_integer();
+
+            #[allow(clippy::cast_sign_loss)]
+            let i = nb as usize % cipher_map.len();
+
+            cipher_map[i]
+        })
+        .collect()
+}
+
 fn main() {
     let dataset = build(INPUT);
 
     assert_eq!(PI.len(), 32);
     println!("Code: {}", find_secret_code(&dataset, PI));
+
+    println!("Secret phrase: {}", crack_secret(&dataset, PI));
 }
 
 #[cfg(test)]
@@ -121,5 +194,14 @@ mod tests {
 
         assert_eq!(PHI.len(), 10);
         assert_eq!(find_secret_code(&dataset, PHI), "3375");
+    }
+
+    #[test]
+    fn test_get_non_manipulated_ticker() {
+        let entry = StockEntry::new("5", "1.6", "HST");
+        assert_eq!(get_non_manipulated_ticker(&entry), "XIJ");
+
+        let entry = StockEntry::new("5", "3.14", "GST");
+        assert_eq!(get_non_manipulated_ticker(&entry), "IUV");
     }
 }
