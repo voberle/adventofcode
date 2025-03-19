@@ -4,44 +4,35 @@ fn build(input: &str) -> Vec<String> {
     input.lines().map(ToString::to_string).collect()
 }
 
-fn shift_uppercase(letter: char, shift: usize) -> char {
-    static UPPERCASE_LETTERS: &[char] = &[
-        'Α', 'Β', 'Γ', 'Δ', 'Ε', 'Ζ', 'Η', 'Θ', 'Ι', 'Κ', 'Λ', 'Μ', 'Ν', 'Ξ', 'Ο', 'Π', 'Ρ', 'Σ',
-        'Τ', 'Υ', 'Φ', 'Χ', 'Ψ', 'Ω',
-    ];
-
-    // Is there a more efficient way to do this?
-    if let Some(index) = UPPERCASE_LETTERS.iter().position(|c| *c == letter) {
-        let shifted_index = (index + shift) % UPPERCASE_LETTERS.len();
-        UPPERCASE_LETTERS[shifted_index]
+fn shift_with(letter: char, shift: usize, letters_array: &[char]) -> char {
+    // Since letters are not contiguous as we would have with ASCII, we have to perform a search.
+    // Alternative would be to use a hashmap, but it doesn't perform better here.
+    if let Some(index) = letters_array.iter().position(|c| *c == letter) {
+        let shifted_index = (index + shift) % letters_array.len();
+        letters_array[shifted_index]
     } else {
         letter
     }
 }
 
-fn shift_lowercase(letter: char, shift: usize) -> char {
+fn shift_char(letter: char, shift: usize) -> char {
+    static UPPERCASE_LETTERS: &[char] = &[
+        'Α', 'Β', 'Γ', 'Δ', 'Ε', 'Ζ', 'Η', 'Θ', 'Ι', 'Κ', 'Λ', 'Μ', 'Ν', 'Ξ', 'Ο', 'Π', 'Ρ', 'Σ',
+        'Τ', 'Υ', 'Φ', 'Χ', 'Ψ', 'Ω',
+    ];
     static LOWERCASE_LETTERS: &[char] = &[
         'α', 'β', 'γ', 'δ', 'ε', 'ζ', 'η', 'θ', 'ι', 'κ', 'λ', 'μ', 'ν', 'ξ', 'ο', 'π', 'ρ', 'σ',
         'τ', 'υ', 'φ', 'χ', 'ψ', 'ω',
     ];
 
-    // Handle sigma special case
-    // 'ς' isn't in the table, but 'σ' is.
-    let fixed_letter = if letter == 'ς' { 'σ' } else { letter };
-
-    if let Some(index) = LOWERCASE_LETTERS.iter().position(|c| *c == fixed_letter) {
-        let shifted_index = (index + shift) % LOWERCASE_LETTERS.len();
-        LOWERCASE_LETTERS[shifted_index]
+    if letter.is_uppercase() {
+        shift_with(letter, shift, UPPERCASE_LETTERS)
     } else {
-        letter
-    }
-}
+        // Handle sigma special case
+        // 'ς' isn't in the table, but 'σ' is.
+        let letter = if letter == 'ς' { 'σ' } else { letter };
 
-fn shift_char(c: char, shift: usize) -> char {
-    if c.is_uppercase() {
-        shift_uppercase(c, shift)
-    } else {
-        shift_lowercase(c, shift)
+        shift_with(letter, shift, LOWERCASE_LETTERS)
     }
 }
 
@@ -62,10 +53,11 @@ const ODYSSEUS_VARIANTS: &[&str] = &[
 fn odysseus_shift_count(line: &str) -> Option<usize> {
     for shift in 1..line.len() {
         let shifted_str = shift_str(line, shift);
+
         for variant in ODYSSEUS_VARIANTS {
             // If we would need the actual index of the variant, we should use match_indices(),
             // since find() returns the byte index. But we just need to know of it's there or not.
-            if shifted_str.find(variant).is_some() {
+            if shifted_str.contains(variant) {
                 return Some(shift);
             }
         }
