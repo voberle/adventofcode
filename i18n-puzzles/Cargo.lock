@@ -417,6 +417,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "puzzle11"
+version = "0.1.0"
+dependencies = [
+ "bcrypt",
+ "fxhash",
+ "itertools",
+ "unicode-normalization",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
