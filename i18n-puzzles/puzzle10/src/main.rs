@@ -4,6 +4,7 @@ use std::{
     io::{self, Read},
 };
 
+use fxhash::FxHashMap;
 use itertools::Itertools;
 use unicode_normalization::char::compose;
 use unicode_normalization::char::decompose_canonical;
@@ -79,7 +80,11 @@ fn pairs_count(items: &[Item]) -> usize {
 }
 
 // Try all combinations until one matches the stored hash.
-fn try_all_combinations(items: &[Item], hash: &str) -> bool {
+fn try_all_combinations(
+    items: &[Item],
+    hash: &str,
+    result_cache: &mut FxHashMap<String, bool>,
+) -> bool {
     // There are 2 pow (number of pairs) combinations to try.
     let combi_count = 2u32.pow(u32::try_from(pairs_count(items)).unwrap());
 
@@ -108,10 +113,13 @@ fn try_all_combinations(items: &[Item], hash: &str) -> bool {
             })
             .collect();
 
-        if verify(&password_to_try, hash) {
-            return true;
+        if let Some(result) = result_cache.get(&password_to_try) {
+            *result
+        } else {
+            let result = verify(&password_to_try, hash);
+            result_cache.insert(password_to_try, result);
+            result
         }
-        false
     })
 }
 
@@ -129,20 +137,26 @@ impl LoginAttempt {
         }
     }
 
-    fn is_valid(&self, auth_entries: &AuthDatabase) -> bool {
+    fn is_valid(
+        &self,
+        auth_entries: &AuthDatabase,
+        result_cache: &mut FxHashMap<String, bool>,
+    ) -> bool {
         if let Some(hash) = auth_entries.get(&self.username) {
             // We need to try all possible normalization combinations.
 
             let decomposed = decompose(&self.password);
             let items = itemize(&decomposed);
 
-            if try_all_combinations(&items, hash) {
-                println!("{self}\t is valid.");
-                true
-            } else {
-                println!("{self}\t is not valid");
-                false
-            }
+            try_all_combinations(&items, hash, result_cache)
+
+            // if try_all_combinations(&items, hash, result_cache) {
+            //     println!("{self}\t is valid.");
+            //     true
+            // } else {
+            //     println!("{self}\t is not valid");
+            //     false
+            // }
         } else {
             println!("No username '{}' in DB", self.username);
             false
@@ -178,9 +192,10 @@ fn build(input: &str) -> (AuthDatabase, Vec<LoginAttempt>) {
 }
 
 fn valid_login_count(auth_entries: &AuthDatabase, login_attempts: &[LoginAttempt]) -> usize {
+    let mut result_cache = FxHashMap::default();
     login_attempts
         .iter()
-        .filter(|attempt| attempt.is_valid(auth_entries))
+        .filter(|attempt| attempt.is_valid(auth_entries, &mut result_cache))
         .count()
 }
 
@@ -309,7 +324,8 @@ mod tests {
             println!("{:?}", i);
         }
 
-        assert!(try_all_combinations(&items, hash));
+        let mut result_cache = FxHashMap::default();
+        assert!(try_all_combinations(&items, hash, &mut result_cache));
     }
 
     #[test]
@@ -320,7 +336,8 @@ mod tests {
             "$2b$07$0EBrxS4iHy/aHAhqbX/ao.n7305WlMoEpHd42aGKsG21wlktUQtNu".to_string(),
         );
         let valid_attempt = LoginAttempt::new("etasche", ".pM?XÑ0i7ÈÌ");
-        assert!(valid_attempt.is_valid(&auth_entries));
+        let mut result_cache = FxHashMap::default();
+        assert!(valid_attempt.is_valid(&auth_entries, &mut result_cache));
     }
 
     #[test]
@@ -331,17 +348,19 @@ mod tests {
             "$2b$07$bVWtf3J7xLm5KfxMLOFLiu8Mq64jVhBfsAwPf8/xx4oc5aGBIIHxO".to_string(),
         );
         let invalid_attempt = LoginAttempt::new("mpataki", "2ö$p3ÄÌgÁüy");
-        assert!(!invalid_attempt.is_valid(&auth_entries));
+        let mut result_cache = FxHashMap::default();
+        assert!(!invalid_attempt.is_valid(&auth_entries, &mut result_cache));
     }
 
     #[test]
     fn test_answer() {
         let (auth_entries, login_attempts) = build(INPUT_TEST);
 
+        let mut result_cache = FxHashMap::default();
         for (attempt, result) in login_attempts.iter().zip([
             true, false, false, true, false, false, false, false, true, true, false, false,
         ]) {
-            assert_eq!(attempt.is_valid(&auth_entries), result);
+            assert_eq!(attempt.is_valid(&auth_entries, &mut result_cache), result);
         }
 
         // assert_eq!(valid_login_count(&auth_entries, &login_attempts), 4);
