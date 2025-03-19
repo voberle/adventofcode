@@ -44,28 +44,33 @@ type CmpCharFn = fn(char, char) -> Ordering;
 type CmpStrFn = fn(&str, &str) -> Ordering;
 type CmpEntryFn = fn(&Entry, &Entry) -> Ordering;
 
-// Letter-by-letter filtering
+/// Letter-by-letter filtering
 fn letter_by_letter(s: &str) -> String {
     s.chars().filter(|c| c.is_alphabetic()).collect()
 }
 
-// Compares two entries, last names first, first names if last names are equals.
-// All names are normalized with normalize_fn.
-// Strings are compared with cmp_fn.
-fn entry_cmp(a: &Entry, b: &Entry, normalize_fn: NormalizeStrFn, cmp_fn: CmpStrFn) -> Ordering {
-    let last_name_a = normalize_fn(&a.last_name);
-    let last_name_b = normalize_fn(&b.last_name);
+/// Compares two entries, last names first, first names if last names are equals.
+/// All names are normalized before comparaison.
+fn entry_cmp(
+    a: &Entry,
+    b: &Entry,
+    normalize_last_name_fn: NormalizeStrFn,
+    normalize_first_name_fn: NormalizeStrFn,
+    cmp_fn: CmpStrFn,
+) -> Ordering {
+    let last_name_a = normalize_last_name_fn(&a.last_name);
+    let last_name_b = normalize_last_name_fn(&b.last_name);
     let res = cmp_fn(&last_name_a, &last_name_b);
     if res == Ordering::Equal {
-        let first_name_a = normalize_fn(&a.first_name);
-        let first_name_b = normalize_fn(&b.first_name);
+        let first_name_a = normalize_first_name_fn(&a.first_name);
+        let first_name_b = normalize_first_name_fn(&b.first_name);
         cmp_fn(&first_name_a, &first_name_b)
     } else {
         res
     }
 }
 
-// Compares two strings based on a custom char cmp.
+/// Compares two strings based on a custom char cmp.
 fn custom_str_cmp(s1: &str, s2: &str, cmp_fn: CmpCharFn) -> Ordering {
     let mut s1_chars = s1.chars();
     let mut s2_chars = s2.chars();
@@ -85,7 +90,10 @@ fn custom_str_cmp(s1: &str, s2: &str, cmp_fn: CmpCharFn) -> Ordering {
     }
 }
 
-// Makes all characters lowercase, removes all accents, drops non-letters.
+// English
+// -------
+
+/// Makes all characters lowercase, removes all accents, drops non-letters.
 fn normalize_for_english(s: &str) -> String {
     // Letter-by-letter
     let letters = letter_by_letter(s);
@@ -97,8 +105,11 @@ fn normalize_for_english(s: &str) -> String {
 }
 
 fn english_cmp(a: &Entry, b: &Entry) -> Ordering {
-    entry_cmp(a, b, normalize_for_english, str::cmp)
+    entry_cmp(a, b, normalize_for_english, normalize_for_english, str::cmp)
 }
+
+// Swedish
+// -------
 
 fn normalize_for_swedish(s: &str) -> String {
     // Letter-by-letter
@@ -123,21 +134,22 @@ fn normalize_for_swedish(s: &str) -> String {
         .collect()
 }
 
-fn swedish_letter_val(c: char) -> u8 {
-    // Assuming normalized, so handling only lowercase.
-    assert!(c.is_lowercase());
-    match c {
-        'å' => 27,
-        'ä' => 28,
-        'ö' => 29,
-        _ => c as u8 - b'a',
-    }
-}
-
 fn swedish_char_cmp(a: char, b: char) -> Ordering {
     // 29 letters, and they are ordered A through X, then Y, Z, Å, Ä and Ö.
-    let a_val = swedish_letter_val(a);
-    let b_val = swedish_letter_val(b);
+    // We convert the letters to an integer, so custom sorting can be done.
+    let letter_val_fn = |c: char| {
+        // Assuming normalized, so handling only lowercase.
+        assert!(c.is_lowercase());
+        match c {
+            'å' => 27,
+            'ä' => 28,
+            'ö' => 29,
+            _ => c as u8 - b'a',
+        }
+    };
+
+    let a_val = letter_val_fn(a);
+    let b_val = letter_val_fn(b);
     assert!((0..=29).contains(&a_val));
     assert!((0..=29).contains(&b_val));
     a_val.cmp(&b_val)
@@ -148,12 +160,43 @@ fn swedish_str_cmp(s1: &str, s2: &str) -> Ordering {
 }
 
 fn swedish_cmp(a: &Entry, b: &Entry) -> Ordering {
-    entry_cmp(a, b, normalize_for_swedish, swedish_str_cmp)
+    entry_cmp(
+        a,
+        b,
+        normalize_for_swedish,
+        normalize_for_swedish,
+        swedish_str_cmp,
+    )
+}
+
+// Dutch
+// -----
+
+fn normalize_last_name_for_dutch(s: &str) -> String {
+    let mut norm = s.to_string();
+
+    // Removes the infixes.
+    // We assume that the part of the last name leading up to the first capital letter are infixes.
+    let i = norm.find(|c: char| c.is_uppercase()).unwrap();
+    if i > 0 {
+        norm = norm[i..].to_string();
+    }
+
+    normalize_for_english(&norm)
 }
 
 fn dutch_cmp(a: &Entry, b: &Entry) -> Ordering {
-    Ordering::Equal
+    // English rules except for the last name infixes.
+    entry_cmp(
+        a,
+        b,
+        normalize_last_name_for_dutch,
+        normalize_for_english,
+        str::cmp,
+    )
 }
+
+// -----
 
 fn sort_by(phonebook: &[Entry], cmp_fn: CmpEntryFn) -> Vec<Entry> {
     let mut sorted = phonebook.to_vec();
@@ -214,6 +257,7 @@ mod tests {
 
     #[test]
     fn test_sort_dutch() {
+        // I modified the test input from the description to put the infixes at their original place with the last name.
         const SORTED_DUTCH: &str = include_str!("../resources/sorted_dutch");
         let phonebook = build(INPUT_TEST);
         let expected = build(SORTED_DUTCH);
