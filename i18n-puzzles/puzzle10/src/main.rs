@@ -10,6 +10,7 @@ use unicode_normalization::char::decompose_canonical;
 
 type AuthDatabase = HashMap<String, String>;
 
+// Helper function to call bcrypt verify.
 fn verify(password: &str, hash: &str) -> bool {
     if let Ok(val) = bcrypt::verify(password, hash) {
         val
@@ -32,44 +33,59 @@ fn decompose(s: &str) -> Vec<char> {
         .collect()
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 enum Item {
     Ascii(char),
     Pair(char, char),
 }
 
-// Given a list of decomposed chars, group all ASCII + Non-ASCII as pairs
-fn itemize(chars: &[char]) -> Vec<Item> {
-    let mut items: Vec<Item> = chars
-        .windows(2)
-        .filter_map(|w| {
-            if w[0].is_ascii() {
-                if w[1].is_ascii() {
-                    // Raw ascii in source, just one char.
-                    Some(Item::Ascii(w[0]))
-                } else {
-                    // Pair.
-                    Some(Item::Pair(w[0], w[1]))
-                }
+// Transforms the input list into a list where pairs of chars that match the condition
+// are an Item::Pair, and other chars are an Item::Ascii.
+fn process_chars(input: &[char], condition: fn(char, char) -> bool) -> Vec<Item> {
+    let mut result = Vec::new();
+    let mut i = 0;
+
+    while i < input.len() {
+        let current_char = input[i];
+
+        if i + 1 < input.len() {
+            let next_char = input[i + 1];
+            if condition(current_char, next_char) {
+                result.push(Item::Pair(current_char, next_char));
+                i += 2; // Skip the next char since it's part of the pair
             } else {
-                // Accent, was already handled on previous iteration.
-                None
+                result.push(Item::Ascii(current_char));
+                i += 1;
             }
-        })
-        .collect();
-    // If last item was ascii, we need to also the next one as ascii, it's missing for now
-    if matches!(items.last().unwrap(), Item::Ascii(_)) {
-        items.push(Item::Ascii(*chars.last().unwrap()));
+        } else {
+            result.push(Item::Ascii(current_char));
+            i += 1;
+        }
     }
-    items
+
+    result
 }
 
-// Try all combinations.
+// Given a list of decomposed chars, group all ASCII + Non-ASCII as pairs
+fn itemize(chars: &[char]) -> Vec<Item> {
+    process_chars(chars, |c1, c2| c1.is_alphabetic() && !c2.is_ascii())
+}
+
+fn pairs_count(items: &[Item]) -> usize {
+    items
+        .iter()
+        .filter(|item| matches!(item, Item::Pair(_, _)))
+        .count()
+}
+
+// Try all combinations until one matches the stored hash.
 fn try_all_combinations(items: &[Item], hash: &str) -> bool {
-    // There are items.len() combinations to try.
-    for combi in 0..items.len() {
+    // There are 2 pow (number of pairs) combinations to try.
+    let combi_count = 2u32.pow(u32::try_from(pairs_count(items)).unwrap());
+
+    (0..combi_count).any(|combi| {
         let mut pair_index = 0;
-        let chars: Vec<char> = items
+        let password_to_try: String = items
             .iter()
             .flat_map(|item| {
                 match item {
@@ -92,12 +108,11 @@ fn try_all_combinations(items: &[Item], hash: &str) -> bool {
             })
             .collect();
 
-        let password_to_try: String = chars.iter().collect();
         if verify(&password_to_try, hash) {
             return true;
         }
-    }
-    false
+        false
+    })
 }
 
 #[derive(Debug)]
@@ -173,8 +188,6 @@ fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let (auth_entries, login_attempts) = build(&input);
-    // println!("{:?}", auth_entries);
-    // println!("{:?}", login_attempts);
 
     println!(
         "Answer: {}",
@@ -189,6 +202,86 @@ mod tests {
     const INPUT_TEST: &str = include_str!("../resources/input_test_1");
 
     #[test]
+    fn test_empty_input() {
+        let input: Vec<char> = vec![];
+        let condition = |_, _| true;
+        let expected: Vec<Item> = vec![];
+        assert_eq!(process_chars(&input, condition), expected);
+    }
+
+    #[test]
+    fn test_single_char() {
+        let input = vec!['a'];
+        let condition = |_, _| true;
+        let expected = vec![Item::Ascii('a')];
+        assert_eq!(process_chars(&input, condition), expected);
+    }
+
+    #[test]
+    fn test_all_ascii() {
+        let input = vec!['a', 'b', 'c'];
+        let condition = |_, _| false; // Always false condition
+        let expected = vec![Item::Ascii('a'), Item::Ascii('b'), Item::Ascii('c')];
+        assert_eq!(process_chars(&input, condition), expected);
+    }
+    #[test]
+    fn test_all_pairs() {
+        let input = vec!['a', 'b', 'c', 'd', 'e', 'f'];
+        let condition = |_, _| true; // Always true condition
+        let expected = vec![
+            Item::Pair('a', 'b'),
+            Item::Pair('c', 'd'),
+            Item::Pair('e', 'f'),
+        ];
+        assert_eq!(process_chars(&input, condition), expected);
+    }
+    #[test]
+    fn test_mixed_ascii_pairs() {
+        let input = vec!['a', 'b', 'c', 'd', 'e'];
+        let condition = |_, c2| c2 == 'b' || c2 == 'd';
+        let expected = vec![Item::Pair('a', 'b'), Item::Pair('c', 'd'), Item::Ascii('e')];
+        assert_eq!(process_chars(&input, condition), expected);
+    }
+
+    #[test]
+    fn test_mixed_ascii_pairs_2() {
+        let input = vec!['a', 'b', 'c', 'd', 'e', 'f'];
+        let condition = |_, c2| c2 == 'b' || c2 == 'f';
+        let expected = vec![
+            Item::Pair('a', 'b'),
+            Item::Ascii('c'),
+            Item::Ascii('d'),
+            Item::Ascii('e'),
+            Item::Pair('f', '\0'),
+        ]; // incorrect - we have no logic to handle condition matching last char
+        let result = process_chars(&input, condition);
+        assert_ne!(result, expected); // we check that out result is *not* equal to bad logic
+        let expected2 = vec![
+            Item::Pair('a', 'b'),
+            Item::Ascii('c'),
+            Item::Ascii('d'),
+            Item::Pair('e', 'f'),
+        ];
+        assert_eq!(process_chars(&input, condition), expected2);
+    }
+
+    #[test]
+    fn test_pairs_at_end() {
+        let input = vec!['a', 'b', 'c'];
+        let condition = |_, c2| c2 == 'b' || c2 == 'c';
+        let expected = vec![Item::Pair('a', 'b'), Item::Ascii('c')];
+        assert_eq!(process_chars(&input, condition), expected);
+    }
+
+    #[test]
+    fn test_only_pairs_odd_length() {
+        let input = vec!['a', 'b', 'c', 'd', 'e'];
+        let condition = |_, _| true;
+        let expected = vec![Item::Pair('a', 'b'), Item::Pair('c', 'd'), Item::Ascii('e')];
+        assert_eq!(process_chars(&input, condition), expected);
+    }
+
+    #[test]
     fn test_bcrypt_verify() {
         assert!(
             bcrypt::verify(
@@ -201,8 +294,6 @@ mod tests {
 
     #[test]
     fn test_decompose_and_try() {
-        // let password = ".pM?XÑ0i7ÈÌ";
-        // let password = r"3+sÍkÜLg._";
         let password = r"3+sÍkÜLg?_";
         let hash = "$2b$07$4F7o9sxNeaPe..........l1ZfgXdJdYtpfyyUYXN/HQA1lhpuldO";
 
