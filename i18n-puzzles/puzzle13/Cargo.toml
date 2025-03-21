@@ -1,0 +1,12 @@
+[package]
+name = "puzzle13"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+itertools = "0.14.0"
+
+[lints]
+workspace = true
