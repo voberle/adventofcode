@@ -19,3 +19,5 @@ To determine if an office is working, I convert the time into the office timezon
 Since I do the check minute by minute, it was slow, 3.2 seconds.
 
 I optimized it to calculate first the office availability for each minute, which brought the time down to 1.3 second.
+
+But the real speed up was going by steps of 30 minutes instead of 1 minute: Now it runs in 50 ms.

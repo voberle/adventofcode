@@ -122,7 +122,9 @@ fn build(input: &str) -> (Vec<Location>, Vec<Location>) {
     )
 }
 
-const ONE_MINUTE: Duration = Duration::minutes(1);
+// We calculate the overtime by steps of 30 minutes, as this is the smallest
+// divider of work time and timezones.
+const STEP_MINUTES: i64 = 30;
 
 // Calculate for each minutes in the interval if an office is working.
 fn calc_offices_availability(
@@ -130,6 +132,8 @@ fn calc_offices_availability(
     from_incl: DateTime<Utc>,
     to_excl: DateTime<Utc>,
 ) -> Vec<bool> {
+    let step_duration = Duration::minutes(STEP_MINUTES);
+
     let mut offices_availability = Vec::new();
     let mut utc_dt = from_incl;
     while utc_dt < to_excl {
@@ -138,30 +142,33 @@ fn calc_offices_availability(
                 .iter()
                 .any(|office| office.is_office_working_at(&utc_dt)),
         );
-        utc_dt += ONE_MINUTE;
+        utc_dt += step_duration;
     }
     offices_availability
 }
 
+#[allow(clippy::cast_sign_loss)]
 fn calc_overtime_for(
     offices_availability: &[bool],
     customer: &Location,
     from_incl: DateTime<Utc>,
     to_excl: DateTime<Utc>,
 ) -> u64 {
+    let step_duration = Duration::minutes(STEP_MINUTES);
+
     let mut overtime = 0;
 
     let mut utc_dt = from_incl;
     let mut i = 0;
     while utc_dt < to_excl {
         if customer.can_request_support_at(&utc_dt) && !offices_availability[i] {
-            // println!("Nobody working at {}", dt);
-            overtime += 1;
+            overtime += STEP_MINUTES;
         }
-        utc_dt += ONE_MINUTE;
+        utc_dt += step_duration;
         i += 1;
     }
-    overtime
+
+    overtime as u64
 }
 
 fn answer(offices: &[Location], customers: &[Location]) -> u64 {
