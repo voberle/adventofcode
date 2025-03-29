@@ -1,0 +1,12 @@
+[package]
+name = "puzzle16"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+codepage-437 = "0.1.0"
+
+[lints]
+workspace = true
