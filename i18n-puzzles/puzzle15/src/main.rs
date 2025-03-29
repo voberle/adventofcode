@@ -122,27 +122,44 @@ fn build(input: &str) -> (Vec<Location>, Vec<Location>) {
     )
 }
 
-fn calc_overtime_for(
+const ONE_MINUTE: Duration = Duration::minutes(1);
+
+// Calculate for each minutes in the interval if an office is working.
+fn calc_offices_availability(
     offices: &[Location],
+    from_incl: DateTime<Utc>,
+    to_excl: DateTime<Utc>,
+) -> Vec<bool> {
+    let mut offices_availability = Vec::new();
+    let mut utc_dt = from_incl;
+    while utc_dt < to_excl {
+        offices_availability.push(
+            offices
+                .iter()
+                .any(|office| office.is_office_working_at(&utc_dt)),
+        );
+        utc_dt += ONE_MINUTE;
+    }
+    offices_availability
+}
+
+fn calc_overtime_for(
+    offices_availability: &[bool],
     customer: &Location,
     from_incl: DateTime<Utc>,
     to_excl: DateTime<Utc>,
 ) -> u64 {
-    const ONE_MINUTE: Duration = Duration::minutes(1);
-
     let mut overtime = 0;
 
     let mut utc_dt = from_incl;
+    let mut i = 0;
     while utc_dt < to_excl {
-        if customer.can_request_support_at(&utc_dt)
-            && !offices
-                .iter()
-                .any(|office| office.is_office_working_at(&utc_dt))
-        {
+        if customer.can_request_support_at(&utc_dt) && !offices_availability[i] {
             // println!("Nobody working at {}", dt);
             overtime += 1;
         }
         utc_dt += ONE_MINUTE;
+        i += 1;
     }
     overtime
 }
@@ -154,9 +171,12 @@ fn answer(offices: &[Location], customers: &[Location]) -> u64 {
     let from_incl: DateTime<Utc> = Utc.with_ymd_and_hms(2022, 1, 1, 0, 0, 0).unwrap();
     let to_excl: DateTime<Utc> = Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap();
 
+    // We calculate in advance if offices are available for each minute.
+    let offices_availability = calc_offices_availability(offices, from_incl, to_excl);
+
     if let itertools::MinMaxResult::MinMax(min, max) = customers
         .iter()
-        .map(|customer| calc_overtime_for(offices, customer, from_incl, to_excl))
+        .map(|customer| calc_overtime_for(&offices_availability, customer, from_incl, to_excl))
         .minmax()
     {
         max - min
@@ -200,9 +220,20 @@ mod tests {
         let from = Utc.with_ymd_and_hms(2022, 12, 9, 0, 0, 0).unwrap();
         let to = Utc.with_ymd_and_hms(2022, 12, 10, 0, 0, 0).unwrap();
 
-        assert_eq!(calc_overtime_for(&offices, &customers[0], from, to), 210);
-        assert_eq!(calc_overtime_for(&offices, &customers[1], from, to), 210);
-        assert_eq!(calc_overtime_for(&offices, &customers[2], from, to), 90);
+        let availability = calc_offices_availability(&offices, from, to);
+
+        assert_eq!(
+            calc_overtime_for(&availability, &customers[0], from, to),
+            210
+        );
+        assert_eq!(
+            calc_overtime_for(&availability, &customers[1], from, to),
+            210
+        );
+        assert_eq!(
+            calc_overtime_for(&availability, &customers[2], from, to),
+            90
+        );
     }
 
     #[test]
@@ -213,9 +244,17 @@ mod tests {
         let from = Utc.with_ymd_and_hms(2022, 4, 18, 0, 0, 0).unwrap();
         let to = Utc.with_ymd_and_hms(2022, 4, 19, 0, 0, 0).unwrap();
 
-        assert_eq!(calc_overtime_for(&offices, &customers[0], from, to), 300);
-        assert_eq!(calc_overtime_for(&offices, &customers[1], from, to), 0);
-        assert_eq!(calc_overtime_for(&offices, &customers[2], from, to), 480);
+        let availability = calc_offices_availability(&offices, from, to);
+
+        assert_eq!(
+            calc_overtime_for(&availability, &customers[0], from, to),
+            300
+        );
+        assert_eq!(calc_overtime_for(&availability, &customers[1], from, to), 0);
+        assert_eq!(
+            calc_overtime_for(&availability, &customers[2], from, to),
+            480
+        );
     }
 
     #[test]
@@ -226,9 +265,20 @@ mod tests {
         let from = Utc.with_ymd_and_hms(2022, 1, 1, 0, 0, 0).unwrap();
         let to = Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap();
 
-        assert_eq!(calc_overtime_for(&offices, &customers[0], from, to), 41730);
-        assert_eq!(calc_overtime_for(&offices, &customers[1], from, to), 41820);
-        assert_eq!(calc_overtime_for(&offices, &customers[2], from, to), 44760);
+        let availability = calc_offices_availability(&offices, from, to);
+
+        assert_eq!(
+            calc_overtime_for(&availability, &customers[0], from, to),
+            41730
+        );
+        assert_eq!(
+            calc_overtime_for(&availability, &customers[1], from, to),
+            41820
+        );
+        assert_eq!(
+            calc_overtime_for(&availability, &customers[2], from, to),
+            44760
+        );
     }
 
     #[test]

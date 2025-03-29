@@ -16,4 +16,6 @@ If that's true, I go through all offices and if none is working, I count an over
 
 To determine if an office is working, I convert the time into the office timezone and check if it's a working hour, a working day and not a public holiday.
 
-Since I do the check minute by minute, it's slow for now, 3.2 seconds.
+Since I do the check minute by minute, it was slow, 3.2 seconds.
+
+I optimized it to calculate first the office availability for each minute, which brought the time down to 1.3 second.
