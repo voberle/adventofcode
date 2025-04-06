@@ -3,7 +3,10 @@ use std::io::{self, Read};
 use deunicode::deunicode;
 
 fn build(input: &str) -> Vec<String> {
-    input.lines().map(std::string::ToString::to_string).collect()
+    input
+        .lines()
+        .map(std::string::ToString::to_string)
+        .collect()
 }
 
 fn remove_bidi_chars(s: &str) -> String {
@@ -21,6 +24,18 @@ enum Token {
     Divide,
 }
 use Token::{CloseParenthesis, Divide, Minus, Multiply, Number, OpenParenthesis, Plus};
+
+impl Token {
+    fn calc(self, val1: u64, val2: u64) -> u64 {
+        match self {
+            Plus => val1 + val2,
+            Minus => val1 - val2,
+            Multiply => val1 * val2,
+            Divide => val1 / val2,
+            _ => panic!("Invalid operator: {self:?}"),
+        }
+    }
+}
 
 fn str_to_tokens(input: &str) -> Vec<Token> {
     let mut tokens = Vec::new();
@@ -66,6 +81,14 @@ fn calculate(tokens: &[Token]) -> u64 {
     // Implementation of the Dijkstra Shunting Yard Algorithm
     // Based on the pseudo-code from https://www.geeksforgeeks.org/expression-evaluation/
 
+    fn pop_values_push_result(operator: &Token, values: &mut Vec<u64>) {
+        let val2 = values.pop().unwrap();
+        let val1 = values.pop().unwrap();
+        let result = operator.calc(val1, val2);
+        // Push the result onto the value stack.
+        values.push(result);
+    }
+
     // Values and operators stack.
     let mut values: Vec<u64> = Vec::new();
     let mut operators: Vec<Token> = Vec::new();
@@ -79,17 +102,7 @@ fn calculate(tokens: &[Token]) -> u64 {
                 // While the top of the operator stack is not a open parenthesis.
                 while !matches!(operators.last(), Some(OpenParenthesis)) {
                     let operator = operators.pop().unwrap();
-                    let val2 = values.pop().unwrap();
-                    let val1 = values.pop().unwrap();
-                    let result = match operator {
-                        Plus => val1 + val2,
-                        Minus => val1 - val2,
-                        Multiply => val1 * val2,
-                        Divide => val1 / val2,
-                        _ => panic!("Invalid operator: {operator:?}"),
-                    };
-                    // Push the result onto the value stack.
-                    values.push(result);
+                    pop_values_push_result(&operator, &mut values);
                 }
                 // Pop the open parenthesis from the operator stack, and discard it.
                 operators.pop();
@@ -100,16 +113,7 @@ fn calculate(tokens: &[Token]) -> u64 {
                     && precedence(operators.last().unwrap()) >= precedence(token)
                 {
                     let operator = operators.pop().unwrap();
-                    let val2 = values.pop().unwrap();
-                    let val1 = values.pop().unwrap();
-                    let result = match operator {
-                        Plus => val1 + val2,
-                        Minus => val1 - val2,
-                        Multiply => val1 * val2,
-                        Divide => val1 / val2,
-                        _ => panic!("Invalid operator: {operator:?}"),
-                    };
-                    values.push(result);
+                    pop_values_push_result(&operator, &mut values);
                 }
                 operators.push(*token);
             }
@@ -118,16 +122,7 @@ fn calculate(tokens: &[Token]) -> u64 {
 
     // While the operator stack is not empty.
     while let Some(operator) = operators.pop() {
-        let val2 = values.pop().unwrap();
-        let val1 = values.pop().unwrap();
-        let result = match operator {
-            Plus => val1 + val2,
-            Minus => val1 - val2,
-            Multiply => val1 * val2,
-            Divide => val1 / val2,
-            _ => panic!("Invalid operator: {operator:?}"),
-        };
-        values.push(result);
+        pop_values_push_result(&operator, &mut values);
     }
 
     // At this point the operator stack should be empty, and the value stack has one value, the final result.
