@@ -502,6 +502,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "puzzle18"
+version = "0.1.0"
+dependencies = [
+ "deunicode",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
