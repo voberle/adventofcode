@@ -12,6 +12,7 @@ fn build(input: &str) -> Vec<String> {
         .collect()
 }
 
+#[allow(dead_code)]
 fn remove_bidi_chars(s: &str) -> String {
     deunicode(s)
 }
@@ -33,6 +34,7 @@ enum Token {
 use Token::{
     CloseParenthesis, Divide, LRI, Minus, Multiply, Number, OpenParenthesis, PDI, Plus, RLI,
 };
+use itertools::Itertools;
 
 impl Token {
     fn calc(self, val1: u64, val2: u64) -> u64 {
@@ -174,9 +176,63 @@ impl Expression {
         assert_eq!(values.len(), 1);
         values[0]
     }
+
+    // Determine the embedding level for each token, with the method described in the puzzle.
+    fn embedding_levels(&self) -> Vec<usize> {
+        let mut level = 0;
+        self.0
+            .iter()
+            .map(|token| {
+                match token {
+                    Number(_) => {
+                        // Numbers will always end up from left to right. So 42 is always 42 and never 24, no matter what the surrounding BiDi markers say.
+                        // To account for this, you must increase the embedding level for digits up to the nearest even number.
+                        if level % 2 == 1 { level + 1 } else { level }
+                    }
+                    RLI => {
+                        level += 1;
+                        assert_eq!(level % 2, 1); // Level is now an odd number.
+                        // The new level applies only on next token
+                        level - 1
+                    }
+                    LRI => {
+                        level += 1;
+                        assert_eq!(level % 2, 0); // Level is now an even number.
+                        level - 1
+                    }
+                    PDI => {
+                        level -= 1;
+                        level
+                    }
+                    _ => level,
+                }
+            })
+            .collect()
+    }
+
+    // Represents the levels as a string, in the way done in the puzzle.
+    fn embedding_levels_as_str(&self) -> String {
+        let levels = self.embedding_levels();
+        self.0
+            .iter()
+            .zip(levels.iter())
+            .map(|(token, level)| {
+                let token_as_str = token.to_string();
+                level.to_string().repeat(token_as_str.chars().count())
+            })
+            .join("")
+    }
 }
 
 fn scams_sum(lines: &[String]) -> u64 {
+    for line in lines {
+        let expr: Expression = line.as_str().into();
+        let levels = expr.embedding_levels_as_str();
+
+        println!("{expr}");
+        println!("{levels}");
+    }
+
     0
 }
 
@@ -240,6 +296,20 @@ mod tests {
         assert_eq!(calc(&lines[3]), 6300);
         assert_eq!(calc(&lines[4]), 2760);
         assert_eq!(calc(&lines[5]), 316);
+    }
+
+    #[test]
+    fn test_embedding_levels() {
+        let input = "73 + (3 * (1 * \u{2067}(((3 + (6 - 2)) * 6) + \u{2066}((52 * 6) / \u{2067}(13 - (7 - 2))\u{2069})\u{2069})\u{2069}))";
+        let expr: Expression = input.into();
+        assert_eq!(
+            expr.to_string(),
+            "73 + (3 * (1 * ⏴(((3 + (6 - 2)) * 6) + ⏵((52 * 6) / ⏴(13 - (7 - 2))⏶)⏶)⏶))"
+        );
+        assert_eq!(
+            expr.embedding_levels_as_str(),
+            "00000000000000001112111121112111112111112222222222222344333343334332211000"
+        );
     }
 
     #[test]
