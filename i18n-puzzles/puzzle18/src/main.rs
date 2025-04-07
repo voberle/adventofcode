@@ -1,4 +1,7 @@
-use std::io::{self, Read};
+use std::{
+    fmt::Display,
+    io::{self, Read},
+};
 
 use deunicode::deunicode;
 
@@ -37,6 +40,20 @@ impl Token {
     }
 }
 
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Number(n) => write!(f, "{n}"),
+            OpenParenthesis => write!(f, "("),
+            CloseParenthesis => write!(f, ")"),
+            Plus => write!(f, " + "),
+            Minus => write!(f, " - "),
+            Multiply => write!(f, " * "),
+            Divide => write!(f, " / "),
+        }
+    }
+}
+
 struct Expression(Vec<Token>);
 
 impl From<&str> for Expression {
@@ -62,7 +79,7 @@ impl From<&str> for Expression {
                     '-' => Token::Minus,
                     '*' => Token::Multiply,
                     '/' => Token::Divide,
-                    _ => panic!("Invalid char"),
+                    _ => panic!("Invalid char '{c}'"),
                 });
             }
         }
@@ -70,6 +87,15 @@ impl From<&str> for Expression {
             tokens.push(Token::Number(current_number.parse().unwrap()));
         }
         Self(tokens)
+    }
+}
+
+impl Display for Expression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for token in &self.0 {
+            write!(f, "{}", token)?
+        }
+        Ok(())
     }
 }
 
@@ -137,6 +163,14 @@ impl Expression {
 }
 
 fn scams_sum(lines: &[String]) -> u64 {
+    for line in lines {
+        let clean = remove_bidi_chars(&line);
+        let expr: Expression = clean.as_str().into();
+        println!("{}", clean);
+        println!("{}", expr);
+        println!();
+    }
+
     0
 }
 
@@ -161,6 +195,16 @@ mod tests {
             remove_bidi_chars(input),
             "(1 * (((66 / 2) - 15) - 4)) * (1 + (1 + 1))"
         );
+    }
+
+    #[test]
+    fn test_display() {
+        let lines = build(INPUT_TEST_1);
+        for line in lines {
+            let clean = remove_bidi_chars(&line);
+            let expr: Expression = clean.as_str().into();
+            assert_eq!(expr.to_string(), clean);
+        }
     }
 
     #[test]
