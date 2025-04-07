@@ -37,97 +37,103 @@ impl Token {
     }
 }
 
-fn str_to_tokens(input: &str) -> Vec<Token> {
-    let mut tokens = Vec::new();
-    let mut current_number = String::new();
+struct Expression(Vec<Token>);
 
-    for c in input.chars() {
-        if c.is_ascii_digit() {
-            current_number.push(c);
-        } else {
-            if !current_number.is_empty() {
-                tokens.push(Token::Number(current_number.parse().unwrap()));
-                current_number.clear();
+impl From<&str> for Expression {
+    fn from(value: &str) -> Self {
+        let mut tokens = Vec::new();
+        let mut current_number = String::new();
+
+        for c in value.chars() {
+            if c.is_ascii_digit() {
+                current_number.push(c);
+            } else {
+                if !current_number.is_empty() {
+                    tokens.push(Token::Number(current_number.parse().unwrap()));
+                    current_number.clear();
+                }
+                if c == ' ' {
+                    continue;
+                }
+                tokens.push(match c {
+                    '(' => Token::OpenParenthesis,
+                    ')' => Token::CloseParenthesis,
+                    '+' => Token::Plus,
+                    '-' => Token::Minus,
+                    '*' => Token::Multiply,
+                    '/' => Token::Divide,
+                    _ => panic!("Invalid char"),
+                });
             }
-            if c == ' ' {
-                continue;
-            }
-            tokens.push(match c {
-                '(' => Token::OpenParenthesis,
-                ')' => Token::CloseParenthesis,
-                '+' => Token::Plus,
-                '-' => Token::Minus,
-                '*' => Token::Multiply,
-                '/' => Token::Divide,
-                _ => panic!("Invalid char"),
-            });
         }
-    }
-    if !current_number.is_empty() {
-        tokens.push(Token::Number(current_number.parse().unwrap()));
-    }
-    tokens
-}
-
-fn precedence(token: &Token) -> u8 {
-    match token {
-        Multiply | Divide => 2,
-        Plus | Minus => 1,
-        _ => 0,
+        if !current_number.is_empty() {
+            tokens.push(Token::Number(current_number.parse().unwrap()));
+        }
+        Self(tokens)
     }
 }
 
-fn calculate(tokens: &[Token]) -> u64 {
-    // Implementation of the Dijkstra Shunting Yard Algorithm
-    // Based on the pseudo-code from https://www.geeksforgeeks.org/expression-evaluation/
+impl Expression {
+    fn calculate(&self) -> u64 {
+        // Implementation of the Dijkstra Shunting Yard Algorithm
+        // Based on the pseudo-code from https://www.geeksforgeeks.org/expression-evaluation/
 
-    fn pop_values_push_result(operator: &Token, values: &mut Vec<u64>) {
-        let val2 = values.pop().unwrap();
-        let val1 = values.pop().unwrap();
-        let result = operator.calc(val1, val2);
-        // Push the result onto the value stack.
-        values.push(result);
-    }
-
-    // Values and operators stack.
-    let mut values: Vec<u64> = Vec::new();
-    let mut operators: Vec<Token> = Vec::new();
-
-    for token in tokens {
-        // Go through each token in order.
-        match token {
-            Number(n) => values.push(*n),
-            OpenParenthesis => operators.push(*token),
-            CloseParenthesis => {
-                // While the top of the operator stack is not a open parenthesis.
-                while !matches!(operators.last(), Some(OpenParenthesis)) {
-                    let operator = operators.pop().unwrap();
-                    pop_values_push_result(&operator, &mut values);
-                }
-                // Pop the open parenthesis from the operator stack, and discard it.
-                operators.pop();
-            }
-            Plus | Minus | Multiply | Divide => {
-                // While the operator stack is not empty, and the top has the same or greater precedence as thisOp,
-                while !operators.is_empty()
-                    && precedence(operators.last().unwrap()) >= precedence(token)
-                {
-                    let operator = operators.pop().unwrap();
-                    pop_values_push_result(&operator, &mut values);
-                }
-                operators.push(*token);
+        fn precedence(token: Token) -> u8 {
+            match token {
+                Multiply | Divide => 2,
+                Plus | Minus => 1,
+                _ => 0,
             }
         }
-    }
 
-    // While the operator stack is not empty.
-    while let Some(operator) = operators.pop() {
-        pop_values_push_result(&operator, &mut values);
-    }
+        fn pop_values_push_result(operator: &Token, values: &mut Vec<u64>) {
+            let val2 = values.pop().unwrap();
+            let val1 = values.pop().unwrap();
+            let result = operator.calc(val1, val2);
+            // Push the result onto the value stack.
+            values.push(result);
+        }
 
-    // At this point the operator stack should be empty, and the value stack has one value, the final result.
-    assert_eq!(values.len(), 1);
-    values[0]
+        // Values and operators stack.
+        let mut values: Vec<u64> = Vec::new();
+        let mut operators: Vec<Token> = Vec::new();
+
+        for token in &self.0 {
+            // Go through each token in order.
+            match token {
+                Number(n) => values.push(*n),
+                OpenParenthesis => operators.push(*token),
+                CloseParenthesis => {
+                    // While the top of the operator stack is not a open parenthesis.
+                    while !matches!(operators.last(), Some(OpenParenthesis)) {
+                        let operator = operators.pop().unwrap();
+                        pop_values_push_result(&operator, &mut values);
+                    }
+                    // Pop the open parenthesis from the operator stack, and discard it.
+                    operators.pop();
+                }
+                Plus | Minus | Multiply | Divide => {
+                    // While the operator stack is not empty, and the top has the same or greater precedence as thisOp,
+                    while !operators.is_empty()
+                        && precedence(*operators.last().unwrap()) >= precedence(*token)
+                    {
+                        let operator = operators.pop().unwrap();
+                        pop_values_push_result(&operator, &mut values);
+                    }
+                    operators.push(*token);
+                }
+            }
+        }
+
+        // While the operator stack is not empty.
+        while let Some(operator) = operators.pop() {
+            pop_values_push_result(&operator, &mut values);
+        }
+
+        // At this point the operator stack should be empty, and the value stack has one value, the final result.
+        assert_eq!(values.len(), 1);
+        values[0]
+    }
 }
 
 fn scams_sum(lines: &[String]) -> u64 {
@@ -159,16 +165,16 @@ mod tests {
 
     #[test]
     fn test_calculate() {
-        let s = "(1 * (((66 / 2) - 15) - 4)) * (1 + (1 + 1))";
-        let tokens = str_to_tokens(s);
-        // println!("{:?}", tokens);
-        assert_eq!(calculate(&tokens), 42);
+        let expr: Expression = "(1 * (((66 / 2) - 15) - 4)) * (1 + (1 + 1))".into();
+        assert_eq!(expr.calculate(), 42);
     }
 
     #[test]
     fn test_rex_calculation() {
         fn calc(line: &str) -> u64 {
-            calculate(&str_to_tokens(&remove_bidi_chars(line)))
+            let s = remove_bidi_chars(line);
+            let expr: Expression = s.as_str().into();
+            expr.calculate()
         }
 
         // Calculate by ignoring BiDi chars.
