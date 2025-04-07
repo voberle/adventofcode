@@ -38,7 +38,7 @@ use Token::{
 use itertools::Itertools;
 
 impl Token {
-    fn calc(&self, val1: i64, val2: i64) -> i64 {
+    fn calc(&self, val1: f64, val2: f64) -> f64 {
         match self {
             Plus => val1 + val2,
             Minus => val1 - val2,
@@ -126,7 +126,7 @@ impl Display for Expression {
 
 impl Expression {
     // Calculates the results by ignoring the BiDi chars.
-    fn calculate(&self) -> i64 {
+    fn calculate(&self) -> f64 {
         // Implementation of the Dijkstra Shunting Yard Algorithm
         // Based on the pseudo-code from https://www.geeksforgeeks.org/expression-evaluation/
 
@@ -138,7 +138,7 @@ impl Expression {
             }
         }
 
-        fn pop_values_push_result(operator: &Token, values: &mut Vec<i64>) {
+        fn pop_values_push_result(operator: &Token, values: &mut Vec<f64>) {
             let val2 = values.pop().unwrap();
             let val1 = values.pop().unwrap();
             let result = operator.calc(val1, val2);
@@ -147,7 +147,7 @@ impl Expression {
         }
 
         // Values and operators stack.
-        let mut values: Vec<i64> = Vec::new();
+        let mut values: Vec<f64> = Vec::new();
         let mut operators: Vec<Token> = Vec::new();
 
         for token in &self.0 {
@@ -288,29 +288,32 @@ fn flip_highest_level(expr: &mut Expression, levels: &mut Vec<usize>) -> bool {
 fn reverse_expression(expr: &Expression) -> Expression {
     let mut expr_reversed = expr.clone();
     let mut levels = expr.embedding_levels();
-    println!("{}", expr.embedding_levels_as_str(&levels));
+    // println!("{}", expr.embedding_levels_as_str(&levels));
 
     while flip_highest_level(&mut expr_reversed, &mut levels) {}
     expr_reversed
 }
 
+#[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
 fn calc_diff(line: &str) -> u64 {
     let expr: Expression = line.into();
-    println!("{expr}");
+    // println!("{expr}");
     let rex_result = expr.calculate();
 
     let expr_reversed = reverse_expression(&expr);
-    println!("{expr_reversed}");
+    // println!("{expr_reversed}");
     let lynx_result = expr_reversed.calculate();
 
-    let diff = rex_result.abs_diff(lynx_result);
-    println!("Lynx: {lynx_result}, Rex: {rex_result}. Absolute difference: {diff}.");
-    diff
+    let diff = (rex_result - lynx_result).abs();
+    // println!("Lynx: {lynx_result}, Rex: {rex_result}. Absolute difference: {diff}.");
+
+    // It's important to round only completely at the end.
+    diff.round() as u64
 }
 
 fn scams_sum(lines: &[String]) -> u64 {
-    calc_diff(&lines[1])
-    // lines.iter().map(|line| calc_diff(line)).sum()
+    // calc_diff(&lines[1])
+    lines.iter().map(|line| calc_diff(line)).sum()
 }
 
 fn main() {
@@ -354,14 +357,14 @@ mod tests {
     #[test]
     fn test_calculate() {
         let expr: Expression = "(1 * (((66 / 2) - 15) - 4)) * (1 + (1 + 1))".into();
-        assert_eq!(expr.calculate(), 42);
+        assert_eq!(expr.calculate() as u64, 42);
     }
 
     #[test]
     fn test_rex_calculation() {
-        fn calc(line: &str) -> i64 {
+        fn calc(line: &str) -> u64 {
             let expr: Expression = line.into();
-            expr.calculate()
+            expr.calculate() as u64
         }
 
         // Calculate by ignoring BiDi chars.
