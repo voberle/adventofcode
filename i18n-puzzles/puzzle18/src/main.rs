@@ -16,6 +16,7 @@ fn remove_bidi_chars(s: &str) -> String {
     deunicode(s)
 }
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, Copy)]
 enum Token {
     Number(u64),
@@ -25,8 +26,13 @@ enum Token {
     Minus,
     Multiply,
     Divide,
+    LRI,
+    RLI,
+    PDI,
 }
-use Token::{CloseParenthesis, Divide, Minus, Multiply, Number, OpenParenthesis, Plus};
+use Token::{
+    CloseParenthesis, Divide, LRI, Minus, Multiply, Number, OpenParenthesis, PDI, Plus, RLI,
+};
 
 impl Token {
     fn calc(self, val1: u64, val2: u64) -> u64 {
@@ -50,6 +56,9 @@ impl Display for Token {
             Minus => write!(f, " - "),
             Multiply => write!(f, " * "),
             Divide => write!(f, " / "),
+            LRI => write!(f, "⏵"),
+            RLI => write!(f, "⏴"),
+            PDI => write!(f, "⏶"),
         }
     }
 }
@@ -66,25 +75,28 @@ impl From<&str> for Expression {
                 current_number.push(c);
             } else {
                 if !current_number.is_empty() {
-                    tokens.push(Token::Number(current_number.parse().unwrap()));
+                    tokens.push(Number(current_number.parse().unwrap()));
                     current_number.clear();
                 }
                 if c == ' ' {
                     continue;
                 }
                 tokens.push(match c {
-                    '(' => Token::OpenParenthesis,
-                    ')' => Token::CloseParenthesis,
-                    '+' => Token::Plus,
-                    '-' => Token::Minus,
-                    '*' => Token::Multiply,
-                    '/' => Token::Divide,
+                    '(' => OpenParenthesis,
+                    ')' => CloseParenthesis,
+                    '+' => Plus,
+                    '-' => Minus,
+                    '*' => Multiply,
+                    '/' => Divide,
+                    '\u{2066}' => LRI,
+                    '\u{2067}' => RLI,
+                    '\u{2069}' => PDI,
                     _ => panic!("Invalid char '{c}'"),
                 });
             }
         }
         if !current_number.is_empty() {
-            tokens.push(Token::Number(current_number.parse().unwrap()));
+            tokens.push(Number(current_number.parse().unwrap()));
         }
         Self(tokens)
     }
@@ -93,14 +105,15 @@ impl From<&str> for Expression {
 impl Display for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for token in &self.0 {
-            write!(f, "{}", token)?
+            write!(f, "{token}")?;
         }
         Ok(())
     }
 }
 
 impl Expression {
-    fn calculate(&self) -> u64 {
+    // Calculates the results by ignoring the BiDi chars.
+    fn calculate_as_rex(&self) -> u64 {
         // Implementation of the Dijkstra Shunting Yard Algorithm
         // Based on the pseudo-code from https://www.geeksforgeeks.org/expression-evaluation/
 
@@ -148,6 +161,7 @@ impl Expression {
                     }
                     operators.push(*token);
                 }
+                LRI | RLI | PDI => {}
             }
         }
 
@@ -163,14 +177,6 @@ impl Expression {
 }
 
 fn scams_sum(lines: &[String]) -> u64 {
-    for line in lines {
-        let clean = remove_bidi_chars(&line);
-        let expr: Expression = clean.as_str().into();
-        println!("{}", clean);
-        println!("{}", expr);
-        println!();
-    }
-
     0
 }
 
@@ -188,6 +194,12 @@ mod tests {
 
     const INPUT_TEST_1: &str = include_str!("../resources/input_test_1");
 
+    fn replace_bidi_chars(s: &str) -> String {
+        s.replace('\u{2066}', "⏵")
+            .replace('\u{2067}', "⏴")
+            .replace('\u{2069}', "⏶")
+    }
+
     #[test]
     fn test_bidi_removal() {
         let input = "\u{2067}(1 * ((\u{2066}(66 / 2)\u{2069} - 15) - 4)) * (1 + (1 + 1))\u{2069}";
@@ -201,24 +213,22 @@ mod tests {
     fn test_display() {
         let lines = build(INPUT_TEST_1);
         for line in lines {
-            let clean = remove_bidi_chars(&line);
-            let expr: Expression = clean.as_str().into();
-            assert_eq!(expr.to_string(), clean);
+            let expr: Expression = line.as_str().into();
+            assert_eq!(expr.to_string(), replace_bidi_chars(&line));
         }
     }
 
     #[test]
     fn test_calculate() {
         let expr: Expression = "(1 * (((66 / 2) - 15) - 4)) * (1 + (1 + 1))".into();
-        assert_eq!(expr.calculate(), 42);
+        assert_eq!(expr.calculate_as_rex(), 42);
     }
 
     #[test]
     fn test_rex_calculation() {
         fn calc(line: &str) -> u64 {
-            let s = remove_bidi_chars(line);
-            let expr: Expression = s.as_str().into();
-            expr.calculate()
+            let expr: Expression = line.into();
+            expr.calculate_as_rex()
         }
 
         // Calculate by ignoring BiDi chars.
