@@ -18,9 +18,9 @@ fn remove_bidi_chars(s: &str) -> String {
 }
 
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Token {
-    Number(u64),
+    Number(i64),
     OpenParenthesis,
     CloseParenthesis,
     Plus,
@@ -37,13 +37,35 @@ use Token::{
 use itertools::Itertools;
 
 impl Token {
-    fn calc(self, val1: u64, val2: u64) -> u64 {
+    fn calc(self, val1: i64, val2: i64) -> i64 {
         match self {
             Plus => val1 + val2,
             Minus => val1 - val2,
             Multiply => val1 * val2,
             Divide => val1 / val2,
             _ => panic!("Invalid operator: {self:?}"),
+        }
+    }
+
+    fn flip(self) -> Token {
+        match self {
+            Number(n) => {
+                if n >= 10 {
+                    Number(
+                        n.to_string()
+                            .chars()
+                            .rev()
+                            .collect::<String>()
+                            .parse()
+                            .unwrap(),
+                    )
+                } else {
+                    self
+                }
+            }
+            OpenParenthesis => CloseParenthesis,
+            CloseParenthesis => OpenParenthesis,
+            _ => self,
         }
     }
 }
@@ -65,6 +87,7 @@ impl Display for Token {
     }
 }
 
+#[derive(Debug, Clone)]
 struct Expression(Vec<Token>);
 
 impl From<&str> for Expression {
@@ -115,7 +138,7 @@ impl Display for Expression {
 
 impl Expression {
     // Calculates the results by ignoring the BiDi chars.
-    fn calculate_as_rex(&self) -> u64 {
+    fn calculate(&self) -> i64 {
         // Implementation of the Dijkstra Shunting Yard Algorithm
         // Based on the pseudo-code from https://www.geeksforgeeks.org/expression-evaluation/
 
@@ -127,7 +150,7 @@ impl Expression {
             }
         }
 
-        fn pop_values_push_result(operator: &Token, values: &mut Vec<u64>) {
+        fn pop_values_push_result(operator: &Token, values: &mut Vec<i64>) {
             let val2 = values.pop().unwrap();
             let val1 = values.pop().unwrap();
             let result = operator.calc(val1, val2);
@@ -136,7 +159,7 @@ impl Expression {
         }
 
         // Values and operators stack.
-        let mut values: Vec<u64> = Vec::new();
+        let mut values: Vec<i64> = Vec::new();
         let mut operators: Vec<Token> = Vec::new();
 
         for token in &self.0 {
@@ -211,8 +234,8 @@ impl Expression {
     }
 
     // Represents the levels as a string, in the way done in the puzzle.
-    fn embedding_levels_as_str(&self) -> String {
-        let levels = self.embedding_levels();
+    #[allow(dead_code)]
+    fn embedding_levels_as_str(&self, levels: &[usize]) -> String {
         self.0
             .iter()
             .zip(levels.iter())
@@ -224,16 +247,75 @@ impl Expression {
     }
 }
 
-fn scams_sum(lines: &[String]) -> u64 {
-    for line in lines {
-        let expr: Expression = line.as_str().into();
-        let levels = expr.embedding_levels_as_str();
+// Flips a list of tokens.
+fn flip(tokens: &[Token]) -> Vec<Token> {
+    tokens.iter().rev().map(|token| token.flip()).collect()
+    // TODO: Return iterator
+}
 
-        println!("{expr}");
-        println!("{levels}");
+// Flips the highest level of the expression, updating both the expression and level list.
+// Returns false if nothing can be flipped (highest level is 0).
+fn flip_highest_level(expr: &mut Expression, levels: &mut Vec<usize>) -> bool {
+    let highest_level = *levels.iter().max().unwrap();
+    // println!("Highest level: {}", highest_level);
+    if highest_level == 0 {
+        return false;
     }
 
-    0
+    // Find the indexes of the sections that need to be flipped.
+    let index_levels: Vec<(usize, &usize)> = levels.iter().enumerate().collect();
+    let parts = index_levels
+        .split(|(_index, level)| **level < highest_level)
+        .filter(|p| !p.is_empty())
+        .collect_vec();
+    let sections = parts
+        .iter()
+        .map(|p| (p.first().unwrap().0, p.last().unwrap().0))
+        .collect_vec();
+
+    // Flip the sections.
+    for (start, end) in sections {
+        // println!("Flipping from {start} to {end}");
+        if start == end {
+            // Stretches of length 1 only matter if it's numbers.
+            expr.0[start] = expr.0[start].flip();
+            levels[start] -= 1;
+        } else {
+            // Longer section.
+            assert!(start < end);
+            expr.0.splice(start..=end, flip(&expr.0[start..=end]));
+            levels.splice(
+                start..=end,
+                std::iter::repeat(highest_level - 1).take(end - start + 1),
+            );
+        }
+    }
+
+    true
+}
+
+fn reverse_expression(expr: &Expression) -> Expression {
+    let mut expr_reversed = expr.clone();
+    let mut levels = expr.embedding_levels();
+
+    while flip_highest_level(&mut expr_reversed, &mut levels) {}
+    expr_reversed
+}
+
+fn calc_diff(line: &str) -> u64 {
+    let expr: Expression = line.into();
+    let rex_result = expr.calculate();
+
+    let expr_reversed = reverse_expression(&expr);
+    let lynx_result = expr_reversed.calculate();
+
+    let diff = rex_result.abs_diff(lynx_result);
+    println!("Lynx: {lynx_result}, Rex: {rex_result}. Absolute difference: {diff}.");
+    diff
+}
+
+fn scams_sum(lines: &[String]) -> u64 {
+    lines.iter().map(|line| calc_diff(line)).sum()
 }
 
 fn main() {
@@ -277,14 +359,14 @@ mod tests {
     #[test]
     fn test_calculate() {
         let expr: Expression = "(1 * (((66 / 2) - 15) - 4)) * (1 + (1 + 1))".into();
-        assert_eq!(expr.calculate_as_rex(), 42);
+        assert_eq!(expr.calculate(), 42);
     }
 
     #[test]
     fn test_rex_calculation() {
-        fn calc(line: &str) -> u64 {
+        fn calc(line: &str) -> i64 {
             let expr: Expression = line.into();
-            expr.calculate_as_rex()
+            expr.calculate()
         }
 
         // Calculate by ignoring BiDi chars.
@@ -306,10 +388,58 @@ mod tests {
             expr.to_string(),
             "73 + (3 * (1 * ⏴(((3 + (6 - 2)) * 6) + ⏵((52 * 6) / ⏴(13 - (7 - 2))⏶)⏶)⏶))"
         );
+
+        let levels = expr.embedding_levels();
         assert_eq!(
-            expr.embedding_levels_as_str(),
+            expr.embedding_levels_as_str(&levels),
             "00000000000000001112111121112111112111112222222222222344333343334332211000"
         );
+    }
+
+    #[test]
+    fn test_flip_number() {
+        assert_eq!(Number(4).flip(), Number(4));
+        assert_eq!(Number(44257).flip(), Number(75244));
+    }
+
+    #[test]
+    fn test_flip_sequence() {
+        let expr: Expression = "31 - (7 - 2)".into();
+        let res: Expression = "(2 - 7) - 13".into();
+        assert_eq!(flip(&expr.0), res.0);
+    }
+
+    #[test]
+    fn test_flip_highest_level() {
+        let input = "73 + (3 * (1 * \u{2067}(((3 + (6 - 2)) * 6) + \u{2066}((52 * 6) / \u{2067}(13 - (7 - 2))\u{2069})\u{2069})\u{2069}))";
+        let mut expr: Expression = input.into();
+        let mut levels = expr.embedding_levels();
+        // After 1st flip:
+        assert!(flip_highest_level(&mut expr, &mut levels));
+        assert_eq!(
+            expr.to_string(),
+            "73 + (3 * (1 * ⏴(((3 + (6 - 2)) * 6) + ⏵((52 * 6) / ⏴(31 - (7 - 2))⏶)⏶)⏶))"
+        );
+        // After 2nd flip:
+        assert!(flip_highest_level(&mut expr, &mut levels));
+        assert_eq!(
+            expr.to_string(),
+            "73 + (3 * (1 * ⏴(((3 + (6 - 2)) * 6) + ⏵((52 * 6) / ⏴((2 - 7) - 13)⏶)⏶)⏶))"
+        );
+        // After 3rd flip:
+        assert!(flip_highest_level(&mut expr, &mut levels));
+        assert_eq!(
+            expr.to_string(),
+            "73 + (3 * (1 * ⏴(((3 + (6 - 2)) * 6) + ⏵(⏶(31 - (7 - 2))⏴ / (6 * 25))⏶)⏶))"
+        );
+        // After 4th flip:
+        assert!(flip_highest_level(&mut expr, &mut levels));
+        assert_eq!(
+            expr.to_string(),
+            "73 + (3 * (1 * ⏴(⏶((52 * 6) / ⏴((2 - 7) - 13)⏶)⏵ + (6 * ((2 - 6) + 3)))⏶))"
+        );
+        // Max, can't flip anymore.
+        assert!(!flip_highest_level(&mut expr, &mut levels));
     }
 
     #[test]
