@@ -18,9 +18,10 @@ fn remove_bidi_chars(s: &str) -> String {
 }
 
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum Token {
-    Number(i64),
+    // We store the number as string to avoid loosing 0s when flipping.
+    Number(String),
     OpenParenthesis,
     CloseParenthesis,
     Plus,
@@ -37,7 +38,7 @@ use Token::{
 use itertools::Itertools;
 
 impl Token {
-    fn calc(self, val1: i64, val2: i64) -> i64 {
+    fn calc(&self, val1: i64, val2: i64) -> i64 {
         match self {
             Plus => val1 + val2,
             Minus => val1 - val2,
@@ -47,25 +48,12 @@ impl Token {
         }
     }
 
-    fn flip(self) -> Token {
+    fn flip(&self) -> Token {
         match self {
-            Number(n) => {
-                if n >= 10 {
-                    Number(
-                        n.to_string()
-                            .chars()
-                            .rev()
-                            .collect::<String>()
-                            .parse()
-                            .unwrap(),
-                    )
-                } else {
-                    self
-                }
-            }
+            Number(n) => Number(n.to_string().chars().rev().collect::<String>()),
             OpenParenthesis => CloseParenthesis,
             CloseParenthesis => OpenParenthesis,
-            _ => self,
+            _ => self.clone(),
         }
     }
 }
@@ -100,7 +88,7 @@ impl From<&str> for Expression {
                 current_number.push(c);
             } else {
                 if !current_number.is_empty() {
-                    tokens.push(Number(current_number.parse().unwrap()));
+                    tokens.push(Number(current_number.clone()));
                     current_number.clear();
                 }
                 if c == ' ' {
@@ -121,7 +109,7 @@ impl From<&str> for Expression {
             }
         }
         if !current_number.is_empty() {
-            tokens.push(Number(current_number.parse().unwrap()));
+            tokens.push(Number(current_number.clone()));
         }
         Self(tokens)
     }
@@ -142,7 +130,7 @@ impl Expression {
         // Implementation of the Dijkstra Shunting Yard Algorithm
         // Based on the pseudo-code from https://www.geeksforgeeks.org/expression-evaluation/
 
-        fn precedence(token: Token) -> u8 {
+        fn precedence(token: &Token) -> u8 {
             match token {
                 Multiply | Divide => 2,
                 Plus | Minus => 1,
@@ -165,8 +153,11 @@ impl Expression {
         for token in &self.0 {
             // Go through each token in order.
             match token {
-                Number(n) => values.push(*n),
-                OpenParenthesis => operators.push(*token),
+                Number(n_str) => {
+                    let nb = n_str.parse().unwrap();
+                    values.push(nb);
+                }
+                OpenParenthesis => operators.push(token.clone()),
                 CloseParenthesis => {
                     // While the top of the operator stack is not a open parenthesis.
                     while !matches!(operators.last(), Some(OpenParenthesis)) {
@@ -179,12 +170,12 @@ impl Expression {
                 Plus | Minus | Multiply | Divide => {
                     // While the operator stack is not empty, and the top has the same or greater precedence as thisOp,
                     while !operators.is_empty()
-                        && precedence(*operators.last().unwrap()) >= precedence(*token)
+                        && precedence(operators.last().unwrap()) >= precedence(token)
                     {
                         let operator = operators.pop().unwrap();
                         pop_values_push_result(&operator, &mut values);
                     }
-                    operators.push(*token);
+                    operators.push(token.clone());
                 }
                 LRI | RLI | PDI => {}
             }
@@ -249,7 +240,7 @@ impl Expression {
 
 // Flips a list of tokens.
 fn flip(tokens: &[Token]) -> Vec<Token> {
-    tokens.iter().rev().map(|token| token.flip()).collect()
+    tokens.iter().rev().map(Token::flip).collect()
     // TODO: Return iterator
 }
 
@@ -297,6 +288,7 @@ fn flip_highest_level(expr: &mut Expression, levels: &mut Vec<usize>) -> bool {
 fn reverse_expression(expr: &Expression) -> Expression {
     let mut expr_reversed = expr.clone();
     let mut levels = expr.embedding_levels();
+    println!("{}", expr.embedding_levels_as_str(&levels));
 
     while flip_highest_level(&mut expr_reversed, &mut levels) {}
     expr_reversed
@@ -304,9 +296,11 @@ fn reverse_expression(expr: &Expression) -> Expression {
 
 fn calc_diff(line: &str) -> u64 {
     let expr: Expression = line.into();
+    println!("{expr}");
     let rex_result = expr.calculate();
 
     let expr_reversed = reverse_expression(&expr);
+    println!("{expr_reversed}");
     let lynx_result = expr_reversed.calculate();
 
     let diff = rex_result.abs_diff(lynx_result);
@@ -315,7 +309,8 @@ fn calc_diff(line: &str) -> u64 {
 }
 
 fn scams_sum(lines: &[String]) -> u64 {
-    lines.iter().map(|line| calc_diff(line)).sum()
+    calc_diff(&lines[1])
+    // lines.iter().map(|line| calc_diff(line)).sum()
 }
 
 fn main() {
@@ -398,8 +393,12 @@ mod tests {
 
     #[test]
     fn test_flip_number() {
-        assert_eq!(Number(4).flip(), Number(4));
-        assert_eq!(Number(44257).flip(), Number(75244));
+        assert_eq!(Number("4".to_string()).flip(), Number("4".to_string()));
+        assert_eq!(
+            Number("44257".to_string()).flip(),
+            Number("75244".to_string())
+        );
+        assert_eq!(Number("130".to_string()).flip(), Number("031".to_string()));
     }
 
     #[test]
