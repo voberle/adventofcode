@@ -6,7 +6,6 @@ edition.workspace = true
 version.workspace = true
 
 [dependencies]
-deunicode = "1.6.1"
 itertools = "0.14.0"
 
 [lints]

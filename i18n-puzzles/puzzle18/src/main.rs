@@ -3,18 +3,13 @@ use std::{
     io::{self, Read},
 };
 
-use deunicode::deunicode;
+use itertools::Itertools;
 
 fn build(input: &str) -> Vec<String> {
     input
         .lines()
         .map(std::string::ToString::to_string)
         .collect()
-}
-
-#[allow(dead_code)]
-fn remove_bidi_chars(s: &str) -> String {
-    deunicode(s)
 }
 
 #[allow(clippy::upper_case_acronyms)]
@@ -35,7 +30,6 @@ enum Token {
 use Token::{
     CloseParenthesis, Divide, LRI, Minus, Multiply, Number, OpenParenthesis, PDI, Plus, RLI,
 };
-use itertools::Itertools;
 
 impl Token {
     fn calc(&self, val1: f64, val2: f64) -> f64 {
@@ -79,6 +73,7 @@ impl Display for Token {
 struct Expression(Vec<Token>);
 
 impl From<&str> for Expression {
+    // Parse a string into an expression (a list of tokens).
     fn from(value: &str) -> Self {
         let mut tokens = Vec::new();
         let mut current_number = String::new();
@@ -241,7 +236,6 @@ impl Expression {
 // Flips a list of tokens.
 fn flip(tokens: &[Token]) -> Vec<Token> {
     tokens.iter().rev().map(Token::flip).collect()
-    // TODO: Return iterator
 }
 
 // Flips the highest level of the expression, updating both the expression and level list.
@@ -334,15 +328,6 @@ mod tests {
         s.replace('\u{2066}', "⏵")
             .replace('\u{2067}', "⏴")
             .replace('\u{2069}', "⏶")
-    }
-
-    #[test]
-    fn test_bidi_removal() {
-        let input = "\u{2067}(1 * ((\u{2066}(66 / 2)\u{2069} - 15) - 4)) * (1 + (1 + 1))\u{2069}";
-        assert_eq!(
-            remove_bidi_chars(input),
-            "(1 * (((66 / 2) - 15) - 4)) * (1 + (1 + 1))"
-        );
     }
 
     #[test]
