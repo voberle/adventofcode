@@ -1,0 +1,17 @@
+[package]
+name = "puzzle19"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+chrono = "0.4.40"
+chrono-tz-2018c = { path = "/tmp/chrono-tz-2018c/chrono-tz", package = "chrono-tz" }
+chrono-tz-2018g = { path = "/tmp/chrono-tz-2018g/chrono-tz", package = "chrono-tz" }
+chrono-tz-2021b = { path = "/tmp/chrono-tz-2021b/chrono-tz", package = "chrono-tz" }
+chrono-tz-2023d = { path = "/tmp/chrono-tz-2023d/chrono-tz", package = "chrono-tz" }
+itertools = "0.14.0"
+
+[lints]
+workspace = true
