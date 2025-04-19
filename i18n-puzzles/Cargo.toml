@@ -18,7 +18,8 @@ members = [
     "puzzle16",
     "puzzle17",
     "puzzle18",
-    "puzzle19",
+    # Disabled by default, as it needs some special setup for building, see README.
+    # "puzzle19",
 ]
 resolver = "2"
 
