@@ -12,12 +12,22 @@ fn part1(values: &[bool]) -> usize {
         .sum()
 }
 
-fn part2(values: &[u64]) -> u64 {
-    0
+fn part2(values: &[bool]) -> usize {
+    values
+        .chunks(2)
+        .enumerate()
+        .filter(|(i, gates)| {
+            if i % 2 == 0 {
+                gates[0] && gates[1]
+            } else {
+                gates[0] || gates[1]
+            }
+        })
+        .count()
 }
 
 #[allow(clippy::cast_possible_wrap)]
-fn part3(values: &[u64]) -> u64 {
+fn part3(values: &[bool]) -> usize {
     0
 }
 
@@ -27,7 +37,7 @@ fn main() {
     let values = build(&input);
 
     println!("Part 1: {}", part1(&values));
-    // println!("Part 2: {}", part2(&values));
+    println!("Part 2: {}", part2(&values));
     // println!("Part 3: {}", part3(&values));
 }
 
@@ -44,7 +54,7 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), );
+        assert_eq!(part2(&build(INPUT_TEST)), 2);
     }
 
     #[test]
