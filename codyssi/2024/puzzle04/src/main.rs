@@ -15,8 +15,10 @@ fn unique_locations_count(paths: &[Vec<String>]) -> usize {
 }
 
 // All connections for each locations.
-fn create_connection_map(paths: &[Vec<String>]) -> HashMap<String, HashSet<String>> {
-    let mut connections: HashMap<String, HashSet<String>> = HashMap::default();
+type Connections = HashMap<String, HashSet<String>>;
+
+fn create_connection_map(paths: &[Vec<String>]) -> Connections {
+    let mut connections: Connections = HashMap::default();
     for path in paths {
         for (p1, p2) in [(&path[0], &path[1]), (&path[1], &path[0])] {
             connections
@@ -34,6 +36,16 @@ fn create_connection_map(paths: &[Vec<String>]) -> HashMap<String, HashSet<Strin
     connections
 }
 
+// Returns what can be reached directly from this set of locations.
+fn reached_from(connections: &Connections, from: &HashSet<String>) -> HashSet<String> {
+    let mut next: HashSet<String> = HashSet::default();
+    next.extend(from.clone());
+    for c in from {
+        next.extend(connections.get(c).unwrap().iter().cloned());
+    }
+    next
+}
+
 fn unique_locations_under(paths: &[Vec<String>], from: &str, time: usize) -> usize {
     let connections = create_connection_map(paths);
 
@@ -42,12 +54,7 @@ fn unique_locations_under(paths: &[Vec<String>], from: &str, time: usize) -> usi
 
     let mut t = 0;
     while t < time {
-        let mut next: HashSet<String> = HashSet::default();
-        next.extend(reached.clone());
-        for c in &reached {
-            next.extend(connections.get(c).unwrap().iter().cloned());
-        }
-        reached = next;
+        reached = reached_from(&connections, &reached);
         t += 1;
     }
 
@@ -64,28 +71,21 @@ fn shortests_time_from(paths: &[Vec<String>], from: &str) -> usize {
     let mut times: HashMap<String, usize> = HashMap::default();
     times.insert(from.to_string(), 0);
 
-    // Reuse the brute-force solution of part 2.
     let mut reached: HashSet<String> = HashSet::default();
     reached.insert(from.to_string());
 
     let mut t = 1;
     while times.len() < connections.len() {
-        // Build what can be reached next.
-        let mut next: HashSet<String> = HashSet::default();
-        next.extend(reached.clone());
-        for c in &reached {
-            next.extend(connections.get(c).unwrap().iter().cloned());
-        }
+        reached = reached_from(&connections, &reached);
 
         // Find if something can be reached that couldn't before.
-        for c in connections.keys() {
-            if !times.contains_key(c) && next.contains(c) {
-                times.insert(c.clone(), t);
+        for loc in connections.keys() {
+            if !times.contains_key(loc) && reached.contains(loc) {
+                times.insert(loc.clone(), t);
             }
         }
 
         t += 1;
-        reached = next;
     }
 
     times.values().sum()
