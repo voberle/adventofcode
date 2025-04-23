@@ -14,6 +14,18 @@ fn part2(prices: &[u64], items_for_free_cnt: usize) -> u64 {
     sorted[..sorted.len() - items_for_free_cnt].iter().sum()
 }
 
+#[allow(clippy::cast_possible_wrap)]
+fn part3(prices: &[u64]) -> i64 {
+    prices
+        .iter()
+        .enumerate()
+        .map(|(i, p)| {
+            let n = *p as i64;
+            if i % 2 == 0 { n } else { -n }
+        })
+        .sum()
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
@@ -21,6 +33,7 @@ fn main() {
 
     println!("Part 1: {}", part1(&prices));
     println!("Part 2: {}", part2(&prices, 20));
+    println!("Part 3: {}", part3(&prices));
 }
 
 #[cfg(test)]
@@ -37,5 +50,10 @@ mod tests {
     #[test]
     fn test_part2() {
         assert_eq!(part2(&build(INPUT_TEST), 2), 1261624);
+    }
+
+    #[test]
+    fn test_part3() {
+        assert_eq!(part3(&build(INPUT_TEST)), 960705);
     }
 }
