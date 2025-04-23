@@ -12,23 +12,38 @@ fn part1(values: &[bool]) -> usize {
         .sum()
 }
 
-fn part2(values: &[bool]) -> usize {
-    values
+fn value_count(values: &[bool]) -> usize {
+    values.iter().filter(|&&val| val).count()
+}
+
+fn convert_circuit(circuit: &[bool]) -> Vec<bool> {
+    circuit
         .chunks(2)
         .enumerate()
-        .filter(|(i, gates)| {
+        .map(|(i, gates)| {
             if i % 2 == 0 {
                 gates[0] && gates[1]
             } else {
                 gates[0] || gates[1]
             }
         })
-        .count()
+        .collect()
+}
+
+fn gates_count(values: &[bool]) -> usize {
+    let circuit = convert_circuit(values);
+    value_count(&circuit)
 }
 
 #[allow(clippy::cast_possible_wrap)]
-fn part3(values: &[bool]) -> usize {
-    0
+fn circuits_count(values: &[bool]) -> usize {
+    let mut cnt = 0;
+    let mut circuit = values.to_vec();
+    while circuit.len() > 1 {
+        cnt += value_count(&circuit);
+        circuit = convert_circuit(&circuit);
+    }
+    cnt
 }
 
 fn main() {
@@ -37,8 +52,8 @@ fn main() {
     let values = build(&input);
 
     println!("Part 1: {}", part1(&values));
-    println!("Part 2: {}", part2(&values));
-    // println!("Part 3: {}", part3(&values));
+    println!("Part 2: {}", gates_count(&values));
+    println!("Part 3: {}", circuits_count(&values));
 }
 
 #[cfg(test)]
@@ -54,11 +69,11 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 2);
+        assert_eq!(gates_count(&build(INPUT_TEST)), 2);
     }
 
     #[test]
     fn test_part3() {
-        // assert_eq!(part3(&build(INPUT_TEST)), );
+        assert_eq!(circuits_count(&build(INPUT_TEST)), 7);
     }
 }
