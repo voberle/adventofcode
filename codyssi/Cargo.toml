@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "2024/puzzle01",
+    "2024/puzzle02",
 ]
 resolver = "2"
 
