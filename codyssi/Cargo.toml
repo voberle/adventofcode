@@ -1,0 +1,17 @@
+[workspace]
+members = [
+    "2024/puzzle01",
+]
+resolver = "2"
+
+[workspace.lints.clippy]
+pedantic = "deny"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.package]
+authors = ["Vincent Oberle"]
+description = "Codyssi Puzzles"
+edition = "2024"
+version = "0.1.0"
