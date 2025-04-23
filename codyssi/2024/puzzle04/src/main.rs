@@ -58,6 +58,43 @@ fn part2(paths: &[Vec<String>]) -> usize {
     unique_locations_under(paths, "STT", 3)
 }
 
+fn shortests_time_from(paths: &[Vec<String>], from: &str) -> usize {
+    let connections = create_connection_map(paths);
+
+    let mut times: HashMap<String, usize> = HashMap::default();
+    times.insert(from.to_string(), 0);
+
+    // Reuse the brute-force solution of part 2.
+    let mut reached: HashSet<String> = HashSet::default();
+    reached.insert(from.to_string());
+
+    let mut t = 1;
+    while times.len() < connections.len() {
+        // Build what can be reached next.
+        let mut next: HashSet<String> = HashSet::default();
+        next.extend(reached.clone());
+        for c in &reached {
+            next.extend(connections.get(c).unwrap().iter().cloned());
+        }
+
+        // Find if something can be reached that couldn't before.
+        for c in connections.keys() {
+            if !times.contains_key(c) && next.contains(c) {
+                times.insert(c.clone(), t);
+            }
+        }
+
+        t += 1;
+        reached = next;
+    }
+
+    times.values().sum()
+}
+
+fn part3(paths: &[Vec<String>]) -> usize {
+    shortests_time_from(paths, "STT")
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
@@ -65,7 +102,7 @@ fn main() {
 
     println!("Part 1: {}", unique_locations_count(&paths));
     println!("Part 2: {}", part2(&paths));
-    // println!("Part 3: {}", part3(&paths));
+    println!("Part 3: {}", part3(&paths));
 }
 
 #[cfg(test)]
@@ -86,6 +123,6 @@ mod tests {
 
     #[test]
     fn test_part3() {
-        // assert_eq!(part3(&build(INPUT_TEST)), );
+        assert_eq!(part3(&build(INPUT_TEST)), 15);
     }
 }
