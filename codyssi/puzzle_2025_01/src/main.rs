@@ -24,13 +24,25 @@ fn actual_compass_offset(numbers: &[u32], symbols: &[char]) -> i64 {
         })
 }
 
+fn new_actual_compass_offset(numbers: &[u32], symbols: &[char]) -> i64 {
+    numbers
+        .iter()
+        .skip(1)
+        .zip(symbols.iter().rev())
+        .fold(i64::from(numbers[0]), |acc, (&n, s)| match s {
+            '+' => acc + i64::from(n),
+            '-' => acc - i64::from(n),
+            _ => panic!("Unknown symbol"),
+        })
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let (numbers, symbols) = build(&input);
 
     println!("Part 1: {}", actual_compass_offset(&numbers, &symbols));
-    // println!("Part 2: {}", part2(&numbers, &symbols));
+    println!("Part 2: {}", new_actual_compass_offset(&numbers, &symbols));
     // println!("Part 3: {}", part3(&numbers, &symbols));
 }
 
@@ -48,11 +60,13 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        // assert_eq!(part2(&build(INPUT_TEST)), );
+        let (numbers, symbols) = build(&INPUT_TEST);
+        assert_eq!(new_actual_compass_offset(&numbers, &symbols), 23);
     }
 
     #[test]
     fn test_part3() {
-        // assert_eq!(part3(&build(INPUT_TEST)), );
+        // let (numbers, symbols) = build(&INPUT_TEST);
+        // assert_eq!(part3(&numbers, &symbols)), );
     }
 }
