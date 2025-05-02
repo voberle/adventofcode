@@ -59,6 +59,19 @@ fn even_rooms_price(functions: &Functions, rooms: &[u64]) -> u64 {
     functions.apply(even_rooms)
 }
 
+fn best_room_for(functions: &Functions, rooms: &[u64]) -> u64 {
+    const MAX_PRICE: u64 = 15_000_000_000_000;
+    let index = rooms
+        .iter()
+        .map(|&r| functions.apply(r))
+        .enumerate()
+        .filter(|(_, p)| *p <= MAX_PRICE)
+        .max_by(|(_, p1), (_, p2)| p1.cmp(p2))
+        .unwrap()
+        .0;
+    rooms[index]
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
@@ -66,6 +79,7 @@ fn main() {
 
     println!("Part 1: {}", median_price(&functions, &rooms));
     println!("Part 2: {}", even_rooms_price(&functions, &rooms));
+    println!("Part 3: {}", best_room_for(&functions, &rooms));
 }
 
 #[cfg(test)]
@@ -84,5 +98,11 @@ mod tests {
     fn test_part2() {
         let (functions, rooms) = build(&INPUT_TEST);
         assert_eq!(even_rooms_price(&functions, &rooms), 1000986169836015);
+    }
+
+    #[test]
+    fn test_part3() {
+        let (functions, rooms) = build(&INPUT_TEST);
+        assert_eq!(best_room_for(&functions, &rooms), 5496);
     }
 }
