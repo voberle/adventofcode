@@ -1,5 +1,5 @@
 [package]
-name = "puzzle03"
+name = "puzzle_2024_03"
 authors.workspace = true
 description.workspace = true
 edition.workspace = true

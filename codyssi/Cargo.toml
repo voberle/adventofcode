@@ -1,9 +1,9 @@
 [workspace]
 members = [
-    "2024/puzzle01",
-    "2024/puzzle02",
-    "2024/puzzle03",
-    "2024/puzzle04",
+    "puzzle_2024_01",
+    "puzzle_2024_02",
+    "puzzle_2024_03",
+    "puzzle_2024_04",
 ]
 resolver = "2"
 

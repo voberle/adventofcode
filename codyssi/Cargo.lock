@@ -3,17 +3,17 @@
 version = 4
 
 [[package]]
-name = "puzzle01"
+name = "puzzle_2024_01"
 version = "0.1.0"
 
 [[package]]
-name = "puzzle02"
+name = "puzzle_2024_02"
 version = "0.1.0"
 
 [[package]]
-name = "puzzle03"
+name = "puzzle_2024_03"
 version = "0.1.0"
 
 [[package]]
-name = "puzzle04"
+name = "puzzle_2024_04"
 version = "0.1.0"
