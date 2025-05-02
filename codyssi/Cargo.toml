@@ -7,6 +7,7 @@ members = [
     "puzzle_2025_01",
     "puzzle_2025_02",
     "puzzle_2025_03",
+    "puzzle_2025_04",
 ]
 resolver = "2"
 
