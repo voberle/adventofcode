@@ -54,12 +54,18 @@ fn median_price(functions: &Functions, rooms: &[u64]) -> u64 {
     functions.apply(median_room)
 }
 
+fn even_rooms_price(functions: &Functions, rooms: &[u64]) -> u64 {
+    let even_rooms = rooms.iter().filter(|&n| n % 2 == 0).sum();
+    functions.apply(even_rooms)
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let (functions, rooms) = build(&input);
 
     println!("Part 1: {}", median_price(&functions, &rooms));
+    println!("Part 2: {}", even_rooms_price(&functions, &rooms));
 }
 
 #[cfg(test)]
@@ -72,5 +78,11 @@ mod tests {
     fn test_part1() {
         let (functions, rooms) = build(&INPUT_TEST);
         assert_eq!(median_price(&functions, &rooms), 9130674516975);
+    }
+
+    #[test]
+    fn test_part2() {
+        let (functions, rooms) = build(&INPUT_TEST);
+        assert_eq!(even_rooms_price(&functions, &rooms), 1000986169836015);
     }
 }
