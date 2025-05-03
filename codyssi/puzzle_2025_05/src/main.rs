@@ -41,8 +41,14 @@ fn diff_closest_furthest(islands: &[Coord]) -> u32 {
     furthest.dist_from_ship() - closest.dist_from_ship()
 }
 
-fn sort_by_dist_from(islands: &[Coord], ref_island: Coord) -> Vec<Coord> {
-    let mut sorted = islands.to_vec();
+// Sort the islands by distances to the reference island, ignoring the islands from the ignore list.
+fn sort_by_dist_from(islands: &[Coord], ref_island: Coord, ignore: &[Coord]) -> Vec<Coord> {
+    let mut sorted: Vec<Coord> = islands
+        .iter()
+        .filter(|&c| !ignore.contains(c))
+        .copied()
+        .collect();
+
     sorted.sort_by(|a, b| {
         let a_dist = ref_island.dist_from(*a);
         let b_dist = ref_island.dist_from(*b);
@@ -52,14 +58,31 @@ fn sort_by_dist_from(islands: &[Coord], ref_island: Coord) -> Vec<Coord> {
 }
 
 fn dist_closest_next_closests(islands: &[Coord]) -> u32 {
-    let sorted_from_ship = sort_by_dist_from(islands, Coord::ship());
+    let sorted_from_ship = sort_by_dist_from(islands, Coord::ship(), &[]);
     let closest = sorted_from_ship.first().unwrap();
 
-    let islands_minus_closest: Vec<_> = islands.iter().filter(|&c| c != closest).copied().collect();
-    let sorted_from_closest = sort_by_dist_from(&islands_minus_closest, *closest);
+    let sorted_from_closest = sort_by_dist_from(islands, *closest, &[*closest]);
     let closest_from_closest = sorted_from_closest.first().unwrap();
 
     closest.dist_from(*closest_from_closest)
+}
+
+fn find_next_to_visit(islands: &[Coord], from: Coord, already_visited: &[Coord]) -> Option<Coord> {
+    let sorted_from_ship = sort_by_dist_from(islands, from, already_visited);
+    sorted_from_ship.first().copied()
+}
+
+fn path_visit_all_dist(islands: &[Coord]) -> u32 {
+    let mut total_dist = 0;
+
+    let mut visited = vec![Coord::ship()];
+    let mut from = Coord::ship();
+    while let Some(next) = find_next_to_visit(islands, from, &visited) {
+        total_dist += from.dist_from(next);
+        visited.push(next);
+        from = next;
+    }
+    total_dist
 }
 
 fn main() {
@@ -69,6 +92,7 @@ fn main() {
 
     println!("Part 1: {}", diff_closest_furthest(&islands));
     println!("Part 2: {}", dist_closest_next_closests(&islands));
+    println!("Part 3: {}", path_visit_all_dist(&islands));
 }
 
 #[cfg(test)]
@@ -87,5 +111,11 @@ mod tests {
     fn test_part2() {
         let islands = build(&INPUT_TEST);
         assert_eq!(dist_closest_next_closests(&islands), 114);
+    }
+
+    #[test]
+    fn test_part3() {
+        let islands = build(&INPUT_TEST);
+        assert_eq!(path_visit_all_dist(&islands), 1384);
     }
 }
