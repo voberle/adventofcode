@@ -17,7 +17,9 @@ fn build(input: &str) -> (Vec<u32>, Vec<(usize, usize)>, usize) {
 fn track_freq_1(frequencies: &[u32], instructions: &[(usize, usize)], index: usize) -> u32 {
     let mut freqs = frequencies.to_vec();
     for (x, y) in instructions {
-        freqs.swap(x - 1, y - 1);
+        let (x, y) = (x - 1, y - 1);
+
+        freqs.swap(x, y);
     }
     freqs[index - 1]
 }
@@ -30,10 +32,29 @@ fn track_freq_2(frequencies: &[u32], instructions: &[(usize, usize)], index: usi
             instructions[index].1 - 1,
             instructions[(index + 1).rem_euclid(instructions.len())].0 - 1,
         );
+
         let z_val = freqs[z];
         freqs[z] = freqs[y];
         freqs[y] = freqs[x];
         freqs[x] = z_val;
+    }
+    freqs[index - 1]
+}
+
+fn track_freq_3(frequencies: &[u32], instructions: &[(usize, usize)], index: usize) -> u32 {
+    let mut freqs = frequencies.to_vec();
+
+    for (x, y) in instructions {
+        let (x, y) = (x - 1, y - 1);
+
+        // Find block len.
+        let (x, y) = if x > y { (y, x) } else { (x, y) }; // Order them.
+        // Don’t overlap and don’t extend beyond the final track.
+        let len = (y - x).min(freqs.len() - y);
+
+        for i in 0..len {
+            freqs.swap(x + i, y + i);
+        }
     }
     freqs[index - 1]
 }
@@ -45,6 +66,7 @@ fn main() {
 
     println!("Part 1: {}", track_freq_1(&freqs, &instructions, index));
     println!("Part 2: {}", track_freq_2(&freqs, &instructions, index));
+    println!("Part 3: {}", track_freq_3(&freqs, &instructions, index));
 }
 
 #[cfg(test)]
@@ -63,5 +85,11 @@ mod tests {
     fn test_part2() {
         let (freqs, instructions, index) = build(&INPUT_TEST);
         assert_eq!(track_freq_2(&freqs, &instructions, index), 796);
+    }
+
+    #[test]
+    fn test_part3() {
+        let (freqs, instructions, index) = build(&INPUT_TEST);
+        assert_eq!(track_freq_3(&freqs, &instructions, index), 827);
     }
 }
