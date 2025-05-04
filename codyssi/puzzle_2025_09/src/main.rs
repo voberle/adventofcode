@@ -33,27 +33,48 @@ fn build(input: &str) -> (HashMap<String, i32>, Vec<Transaction>) {
         );
     }
 
-    let transactions = parts[1]
-        .lines()
-        .map(Transaction::from)
-        .collect();
+    let transactions = parts[1].lines().map(Transaction::from).collect();
 
     (balances, transactions)
 }
 
-fn three_highest_balances_sum(
-    initial_balances: &HashMap<String, i32>,
-    transactions: &[Transaction],
-) -> i32 {
-    let mut balances = initial_balances.clone();
+fn three_highest_balances_sum(balances: &HashMap<String, i32>) -> i32 {
+    let mut amounts: Vec<i32> = balances.values().copied().collect();
+    amounts.sort_unstable();
+    amounts[amounts.len() - 3..].iter().sum()
+}
+
+fn apply_transactions(balances: &mut HashMap<String, i32>, transactions: &[Transaction]) {
     for tr in transactions {
         *balances.get_mut(&tr.from).unwrap() -= tr.amount;
         *balances.get_mut(&tr.to).unwrap() += tr.amount;
     }
+}
 
-    let mut amounts: Vec<i32> = balances.values().copied().collect();
-    amounts.sort_unstable();
-    amounts[amounts.len() - 3..].iter().sum()
+fn apply_transactions_limited(balances: &mut HashMap<String, i32>, transactions: &[Transaction]) {
+    for tr in transactions {
+        let amount = tr.amount.min(*balances.get_mut(&tr.from).unwrap());
+
+        *balances.get_mut(&tr.from).unwrap() -= amount;
+        *balances.get_mut(&tr.to).unwrap() += amount;
+    }
+}
+
+fn balances_sum(initial_balances: &HashMap<String, i32>, transactions: &[Transaction]) -> i32 {
+    let mut balances = initial_balances.clone();
+    apply_transactions(&mut balances, transactions);
+
+    three_highest_balances_sum(&balances)
+}
+
+fn limited_balances_sum(
+    initial_balances: &HashMap<String, i32>,
+    transactions: &[Transaction],
+) -> i32 {
+    let mut balances = initial_balances.clone();
+    apply_transactions_limited(&mut balances, transactions);
+
+    three_highest_balances_sum(&balances)
 }
 
 fn main() {
@@ -61,10 +82,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let (balances, transactions) = build(&input);
 
-    println!(
-        "Part 1: {}",
-        three_highest_balances_sum(&balances, &transactions)
-    );
+    println!("Part 1: {}", balances_sum(&balances, &transactions));
+    println!("Part 2: {}", limited_balances_sum(&balances, &transactions));
 }
 
 #[cfg(test)]
@@ -76,6 +95,12 @@ mod tests {
     #[test]
     fn test_part1() {
         let (balances, transactions) = build(&INPUT_TEST);
-        assert_eq!(three_highest_balances_sum(&balances, &transactions), 2870);
+        assert_eq!(balances_sum(&balances, &transactions), 2870);
+    }
+
+    #[test]
+    fn test_part2() {
+        let (balances, transactions) = build(&INPUT_TEST);
+        assert_eq!(limited_balances_sum(&balances, &transactions), 2542);
     }
 }
