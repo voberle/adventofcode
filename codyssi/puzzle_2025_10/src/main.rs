@@ -141,6 +141,13 @@ fn safest_danger_level_to_15x15(grid: &Grid) -> u32 {
     find_shortest_path(grid, start, end)
 }
 
+fn safest_danger_level_to_end(grid: &Grid) -> u32 {
+    let start = 0;
+    let end = grid.values.len() - 1;
+
+    find_shortest_path(grid, start, end)
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
@@ -148,6 +155,7 @@ fn main() {
 
     println!("Part 1: {}", safest_danger_level(&grid));
     println!("Part 2: {}", safest_danger_level_to_15x15(&grid));
+    println!("Part 3: {}", safest_danger_level_to_end(&grid));
 }
 
 #[cfg(test)]
@@ -166,5 +174,11 @@ mod tests {
     fn test_part2() {
         let grid = Grid::build(&INPUT_TEST);
         assert_eq!(safest_danger_level_to_15x15(&grid), 94);
+    }
+
+    #[test]
+    fn test_part3() {
+        let grid = Grid::build(&INPUT_TEST);
+        assert_eq!(safest_danger_level_to_end(&grid), 120);
     }
 }
