@@ -3,7 +3,7 @@ use std::io::{self, Read};
 #[derive(Clone)]
 struct Number {
     nb: String,
-    base: u32,
+    base: u64,
 }
 
 impl Number {
@@ -30,8 +30,32 @@ impl Number {
 
         self.nb
             .chars()
-            .fold(0, |acc, c| acc * u64::from(self.base) + char_to_digit(c))
+            .fold(0, |acc, c| acc * self.base + char_to_digit(c))
     }
+}
+
+#[allow(clippy::cast_possible_truncation)]
+fn to_base(n: u64, base: u64) -> String {
+    #[rustfmt::skip]
+    const CHARS: &[char] = &[
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+        '!', '@', '#', '$', '%', '^',
+    ];
+
+    // We use a Vec instead of a String, as we need to reverse it at the end.
+    let mut result = Vec::new();
+
+    let mut n = n;
+    while n != 0 {
+        let rem = n % base;
+        result.push(CHARS[rem as usize]);
+        n /= base;
+    }
+    result.reverse();
+
+    result.iter().collect()
 }
 
 fn build(input: &str) -> Vec<Number> {
@@ -42,12 +66,18 @@ fn largest_number(numbers: &[Number]) -> u64 {
     numbers.iter().map(Number::value).max().unwrap()
 }
 
+fn sum_base68(numbers: &[Number]) -> String {
+    let sum = numbers.iter().map(Number::value).sum();
+    to_base(sum, 68)
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let numbers = build(&input);
 
     println!("Part 1: {}", largest_number(&numbers));
+    println!("Part 2: {}", sum_base68(&numbers));
 }
 
 #[cfg(test)]
@@ -69,5 +99,11 @@ mod tests {
     fn test_part1() {
         let numbers = build(&INPUT_TEST);
         assert_eq!(largest_number(&numbers), 9047685997827);
+    }
+
+    #[test]
+    fn test_part2() {
+        let numbers = build(&INPUT_TEST);
+        assert_eq!(sum_base68(&numbers), "4iWAbo%6");
     }
 }
