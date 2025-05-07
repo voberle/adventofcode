@@ -71,6 +71,21 @@ fn sum_base68(numbers: &[Number]) -> String {
     to_base(sum, 68)
 }
 
+fn smallest_base_for_4_chars(numbers: &[Number]) -> u64 {
+    let sum = numbers.iter().map(Number::value).sum();
+
+    // Largest number we can represent in base 2 with at most 4 chars:
+    //   15 = 2 ^ 4 - 1
+    // Largest number we can represent in base b with at most 4 chars:
+    //   b ^ 4 - 1
+    // So we need to find the first such number bigger than our sum.
+    let mut b: u64 = 1;
+    while b.pow(4) - 1 < sum {
+        b += 1;
+    }
+    b
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
@@ -78,6 +93,7 @@ fn main() {
 
     println!("Part 1: {}", largest_number(&numbers));
     println!("Part 2: {}", sum_base68(&numbers));
+    println!("Part 3: {}", smallest_base_for_4_chars(&numbers));
 }
 
 #[cfg(test)]
@@ -105,5 +121,11 @@ mod tests {
     fn test_part2() {
         let numbers = build(&INPUT_TEST);
         assert_eq!(sum_base68(&numbers), "4iWAbo%6");
+    }
+
+    #[test]
+    fn test_part3() {
+        let numbers = build(&INPUT_TEST);
+        assert_eq!(smallest_base_for_4_chars(&numbers), 2366);
     }
 }
