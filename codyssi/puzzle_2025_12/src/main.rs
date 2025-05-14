@@ -237,33 +237,32 @@ fn part1(grid: &Grid, instructions: &[Instruction]) -> u64 {
     largest_sum(&grid)
 }
 
+fn exec_action_pair(
+    actions_pair: &[Action],
+    grid: &mut Grid,
+    instructions: &mut VecDeque<Instruction>,
+) {
+    assert!(matches!(actions_pair[0], Action::Take));
+    assert!(!instructions.is_empty());
+    match actions_pair[1] {
+        Action::Take => panic!("Take must be followed by Cycle or Act"),
+        Action::Cycle => {
+            instructions.rotate_left(1);
+        }
+        Action::Act => {
+            let instr = instructions.pop_front().unwrap();
+            instr.apply(grid);
+        }
+    }
+}
+
 fn part2(grid: &Grid, instructions: &[Instruction], actions: &[Action]) -> u64 {
     let mut grid = grid.clone();
-
     let mut instructions: VecDeque<Instruction> = instructions.iter().copied().collect();
-    let mut current_instruction: Option<Instruction> = None;
 
-    for action in actions {
-        // println!("{action:?}: {current_instruction:?}");
-        match action {
-            Action::Take => {
-                current_instruction = Some(instructions.pop_front().expect("Empty actions list"));
-            }
-            Action::Cycle => {
-                if let Some(instr) = current_instruction.take() {
-                    instructions.push_back(instr);
-                } else {
-                    panic!("Cycle action but no current instruction");
-                }
-            }
-            Action::Act => {
-                if let Some(instr) = current_instruction.take() {
-                    instr.apply(&mut grid);
-                } else {
-                    panic!("Act action but no current instruction");
-                }
-            }
-        }
+    // Take is always followed by either a Cycle or a Act.
+    for actions_pair in actions.chunks(2) {
+        exec_action_pair(actions_pair, &mut grid, &mut instructions);
     }
 
     largest_sum(&grid)
@@ -271,35 +270,14 @@ fn part2(grid: &Grid, instructions: &[Instruction], actions: &[Action]) -> u64 {
 
 fn part3(grid: &Grid, instructions: &[Instruction], actions: &[Action]) -> u64 {
     let mut grid = grid.clone();
-
     let mut instructions: VecDeque<Instruction> = instructions.iter().copied().collect();
-    let mut current_instruction: Option<Instruction> = None;
 
-    for action in actions.iter().cycle() {
-        // println!("{action:?}: {current_instruction:?}");
-        match action {
-            Action::Take => {
-                current_instruction = Some(instructions.pop_front().expect("Empty actions list"));
-            }
-            Action::Cycle => {
-                if let Some(instr) = current_instruction.take() {
-                    instructions.push_back(instr);
-                } else {
-                    panic!("Cycle action but no current instruction");
-                }
-            }
-            Action::Act => {
-                if let Some(instr) = current_instruction.take() {
-                    instr.apply(&mut grid);
-                } else {
-                    panic!("Act action but no current instruction");
-                }
-
-                if instructions.is_empty() {
-                    break;
-                }
-            }
+    for actions_pair in actions.chunks(2).cycle() {
+        if instructions.is_empty() {
+            break;
         }
+
+        exec_action_pair(actions_pair, &mut grid, &mut instructions);
     }
 
     largest_sum(&grid)
