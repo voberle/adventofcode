@@ -3,6 +3,8 @@ use std::{
     io::{self, Read},
 };
 
+const VALUES_COUNT: u64 = 1_073_741_824;
+
 #[derive(Debug, Clone)]
 struct Grid {
     values: Vec<u64>,
@@ -18,7 +20,11 @@ impl From<&str> for Grid {
             .flat_map(|l| {
                 rows += 1;
                 l.split_ascii_whitespace()
-                    .map(|s| s.parse().unwrap())
+                    .map(|s| {
+                        let v = s.parse().unwrap();
+                        assert!(v < VALUES_COUNT);
+                        v
+                    })
                     .collect::<Vec<_>>()
             })
             .collect();
@@ -156,8 +162,6 @@ impl From<&str> for Instruction {
     }
 }
 
-const VALUES_COUNT: u64 = 1_073_741_824;
-
 impl Instruction {
     fn apply(&self, grid: &mut Grid) {
         fn add(n: u64, amount: u64) -> u64 {
@@ -216,10 +220,14 @@ fn build(input: &str) -> (Grid, Vec<Instruction>, Vec<Action>) {
 
 fn largest_sum(grid: &Grid) -> u64 {
     let rows_sum_max: u64 = (0..grid.rows)
-        .map(|row| grid.values[row..row + grid.cols].iter().sum())
+        .map(|row| {
+            grid.values[row * grid.cols..(row + 1) * grid.cols]
+                .iter()
+                .sum()
+        })
         .max()
         .unwrap();
-    let cols_sum_max: u64 = (0..grid.rows)
+    let cols_sum_max: u64 = (0..grid.cols)
         .map(|col| grid.values.iter().skip(col).step_by(grid.cols).sum())
         .max()
         .unwrap();
