@@ -1,4 +1,7 @@
-use std::io::{self, Read};
+use std::{
+    collections::VecDeque,
+    io::{self, Read},
+};
 
 #[derive(Debug, Clone)]
 struct Grid {
@@ -81,7 +84,7 @@ impl Grid {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum Instruction {
     ShiftRow(usize, usize),
     ShiftCol(usize, usize),
@@ -183,6 +186,7 @@ impl Instruction {
     }
 }
 
+#[derive(Debug)]
 enum Action {
     Take,
     Cycle,
@@ -210,19 +214,7 @@ fn build(input: &str) -> (Grid, Vec<Instruction>, Vec<Action>) {
     (grid, instructions, actions)
 }
 
-fn apply_instructions(grid: &mut Grid, instructions: &[Instruction]) {
-    for ins in instructions {
-        ins.apply(grid);
-
-        // println!();
-        // grid.print();
-    }
-}
-
-fn largest_sum(grid: &Grid, instructions: &[Instruction]) -> u64 {
-    let mut grid = grid.clone();
-    apply_instructions(&mut grid, instructions);
-
+fn largest_sum(grid: &Grid) -> u64 {
     let rows_sum_max: u64 = (0..grid.rows)
         .map(|row| grid.values[row..row + grid.cols].iter().sum())
         .max()
@@ -236,12 +228,54 @@ fn largest_sum(grid: &Grid, instructions: &[Instruction]) -> u64 {
     rows_sum_max.max(cols_sum_max)
 }
 
+fn part1(grid: &Grid, instructions: &[Instruction]) -> u64 {
+    let mut grid = grid.clone();
+    for ins in instructions {
+        ins.apply(&mut grid);
+    }
+
+    largest_sum(&grid)
+}
+
+fn part2(grid: &Grid, instructions: &[Instruction], actions: &[Action]) -> u64 {
+    let mut grid = grid.clone();
+
+    let mut instructions: VecDeque<Instruction> = instructions.iter().copied().collect();
+    let mut current_instruction: Option<Instruction> = None;
+
+    for action in actions {
+        // println!("{action:?}: {current_instruction:?}");
+        match action {
+            Action::Take => {
+                current_instruction = Some(instructions.pop_front().expect("Empty actions list"));
+            }
+            Action::Cycle => {
+                if let Some(instr) = current_instruction.take() {
+                    instructions.push_back(instr);
+                } else {
+                    panic!("Cycle action but no current instruction");
+                }
+            }
+            Action::Act => {
+                if let Some(instr) = current_instruction.take() {
+                    instr.apply(&mut grid);
+                } else {
+                    panic!("Act action but no current instruction");
+                }
+            }
+        }
+    }
+
+    largest_sum(&grid)
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let (grid, instructions, actions) = build(&input);
 
-    println!("Part 1: {}", largest_sum(&grid, &instructions));
+    println!("Part 1: {}", part1(&grid, &instructions));
+    println!("Part 2: {}", part2(&grid, &instructions, &actions));
 }
 
 #[cfg(test)]
@@ -278,7 +312,13 @@ mod tests {
 
     #[test]
     fn test_part1() {
+        let (grid, instructions, _actions) = build(&INPUT_TEST);
+        assert_eq!(part1(&grid, &instructions), 18938);
+    }
+
+    #[test]
+    fn test_part2() {
         let (grid, instructions, actions) = build(&INPUT_TEST);
-        assert_eq!(largest_sum(&grid, &instructions), 18938);
+        assert_eq!(part2(&grid, &instructions, &actions), 11496);
     }
 }
