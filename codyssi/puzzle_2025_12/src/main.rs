@@ -269,6 +269,42 @@ fn part2(grid: &Grid, instructions: &[Instruction], actions: &[Action]) -> u64 {
     largest_sum(&grid)
 }
 
+fn part3(grid: &Grid, instructions: &[Instruction], actions: &[Action]) -> u64 {
+    let mut grid = grid.clone();
+
+    let mut instructions: VecDeque<Instruction> = instructions.iter().copied().collect();
+    let mut current_instruction: Option<Instruction> = None;
+
+    for action in actions.iter().cycle() {
+        // println!("{action:?}: {current_instruction:?}");
+        match action {
+            Action::Take => {
+                current_instruction = Some(instructions.pop_front().expect("Empty actions list"));
+            }
+            Action::Cycle => {
+                if let Some(instr) = current_instruction.take() {
+                    instructions.push_back(instr);
+                } else {
+                    panic!("Cycle action but no current instruction");
+                }
+            }
+            Action::Act => {
+                if let Some(instr) = current_instruction.take() {
+                    instr.apply(&mut grid);
+                } else {
+                    panic!("Act action but no current instruction");
+                }
+
+                if instructions.is_empty() {
+                    break;
+                }
+            }
+        }
+    }
+
+    largest_sum(&grid)
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
@@ -276,6 +312,7 @@ fn main() {
 
     println!("Part 1: {}", part1(&grid, &instructions));
     println!("Part 2: {}", part2(&grid, &instructions, &actions));
+    println!("Part 3: {}", part3(&grid, &instructions, &actions));
 }
 
 #[cfg(test)]
@@ -320,5 +357,11 @@ mod tests {
     fn test_part2() {
         let (grid, instructions, actions) = build(&INPUT_TEST);
         assert_eq!(part2(&grid, &instructions, &actions), 11496);
+    }
+
+    #[test]
+    fn test_part3() {
+        let (grid, instructions, actions) = build(&INPUT_TEST);
+        assert_eq!(part3(&grid, &instructions, &actions), 19022);
     }
 }
