@@ -36,15 +36,16 @@ fn convert_paths(paths: &[Path], ignore_len: bool) -> (Vec<String>, Vec<Vec<u32>
     }
     let locations_vec: Vec<String> = locations_set.iter().cloned().collect();
 
-    let mut id2loc: HashMap<String, usize> = HashMap::default();
+    // Helper map of location names to location IDs.
+    let mut loc_to_id: HashMap<String, usize> = HashMap::default();
     for (index, loc) in locations_vec.iter().enumerate() {
-        id2loc.insert(loc.clone(), index);
+        loc_to_id.insert(loc.clone(), index);
     }
 
     let mut paths_vec = vec![vec![0; locations_vec.len()]; locations_vec.len()];
     for path in paths {
-        let from_id = *id2loc.get(&path.from).unwrap();
-        let to_id = *id2loc.get(&path.to).unwrap();
+        let from_id = *loc_to_id.get(&path.from).unwrap();
+        let to_id = *loc_to_id.get(&path.to).unwrap();
         paths_vec[from_id][to_id] = if ignore_len { 1 } else { path.len };
     }
 
@@ -91,6 +92,68 @@ fn three_longest_paths(paths: &[Path], ignore_len: bool) -> u32 {
     stt_paths[stt_paths.len() - 3..].iter().product()
 }
 
+// Recursive.
+fn explore(
+    paths_vec: &Vec<Vec<u32>>,
+    from: usize,
+    last: usize,
+    visited: &[bool],
+    current_dist: u32,
+    best_dist: &mut u32,
+) {
+    for next_loc in paths_vec[last]
+        .iter()
+        .enumerate()
+        .filter(|(_, d)| **d != 0)
+        .map(|(i, _)| i)
+    {
+        if next_loc == from {
+            // Cycle
+            let new_dist = current_dist + paths_vec[last][next_loc];
+            if new_dist > *best_dist {
+                *best_dist = new_dist;
+            }
+        }
+
+        if !visited[next_loc] {
+            // Not yet visited, so explore it.
+            let mut new_visited = visited.to_vec();
+            new_visited[next_loc] = true;
+
+            let new_dist = current_dist + paths_vec[last][next_loc];
+
+            explore(paths_vec, from, next_loc, &new_visited, new_dist, best_dist);
+        }
+    }
+}
+
+fn longest_cycle_length(paths: &[Path]) -> u32 {
+    let (_, paths_vec) = convert_paths(paths, false);
+
+    let mut best_dist = 0;
+    for from_index in 0..paths_vec.len() {
+        for to_index in 0..paths_vec.len() {
+            if paths_vec[from_index][to_index] != 0 {
+                let mut visited = vec![false; paths_vec.len()];
+                visited[from_index] = true;
+                visited[to_index] = true;
+                let current_dist = paths_vec[from_index][to_index];
+
+                explore(
+                    &paths_vec,
+                    from_index,
+                    to_index,
+                    &visited,
+                    current_dist,
+                    &mut best_dist,
+                );
+            }
+        }
+    }
+
+    best_dist
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
@@ -98,6 +161,7 @@ fn main() {
 
     println!("Part 1: {}", three_longest_paths(&paths, true));
     println!("Part 2: {}", three_longest_paths(&paths, false));
+    println!("Part 3: {}", longest_cycle_length(&paths));
 }
 
 #[cfg(test)]
@@ -116,5 +180,11 @@ mod tests {
     fn test_part2() {
         let paths = build(&INPUT_TEST);
         assert_eq!(three_longest_paths(&paths, false), 44720);
+    }
+
+    #[test]
+    fn test_part3() {
+        let paths = build(&INPUT_TEST);
+        assert_eq!(longest_cycle_length(&paths), 18);
     }
 }
