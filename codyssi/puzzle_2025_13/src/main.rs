@@ -27,7 +27,7 @@ fn build(input: &str) -> Vec<Path> {
 
 // Convert the list of paths to a vector where locations are indexes,
 // as this is easier to manipulate in an algorithm.
-fn convert_paths(paths: &[Path]) -> (Vec<String>, Vec<Vec<u32>>) {
+fn convert_paths(paths: &[Path], ignore_len: bool) -> (Vec<String>, Vec<Vec<u32>>) {
     // First we need to find the list of distinct locations.
     let mut locations_set: HashSet<String> = HashSet::default();
     for path in paths {
@@ -45,14 +45,14 @@ fn convert_paths(paths: &[Path]) -> (Vec<String>, Vec<Vec<u32>>) {
     for path in paths {
         let from_id = *id2loc.get(&path.from).unwrap();
         let to_id = *id2loc.get(&path.to).unwrap();
-        paths_vec[from_id][to_id] = 1;
+        paths_vec[from_id][to_id] = if ignore_len { 1 } else { path.len };
     }
 
     (locations_vec, paths_vec)
 }
 
-fn three_longest_paths(paths: &[Path]) -> u32 {
-    let (locations_vec, mut paths_vec) = convert_paths(paths);
+fn three_longest_paths(paths: &[Path], ignore_len: bool) -> u32 {
+    let (locations_vec, mut paths_vec) = convert_paths(paths, ignore_len);
 
     loop {
         let mut something_modified = false;
@@ -60,8 +60,13 @@ fn three_longest_paths(paths: &[Path]) -> u32 {
         for from_index in 0..paths_vec.len() {
             for to_index in 0..paths_vec.len() {
                 if paths_vec[from_index][to_index] != 0 {
+                    // For each path with a known distance, see if this path can be extended
+                    // by checking in the table for paths starting with the end of this path.
                     for i in 0..paths_vec.len() {
                         if paths_vec[to_index][i] != 0 {
+                            // This is a path that start with the end of the path, and that has a distance.
+
+                            // Calculate if going via this path would be shorter.
                             let new_len = paths_vec[from_index][to_index] + paths_vec[to_index][i];
                             if paths_vec[from_index][i] == 0 || new_len < paths_vec[from_index][i] {
                                 paths_vec[from_index][i] = new_len;
@@ -91,7 +96,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let paths = build(&input);
 
-    println!("Part 1: {}", three_longest_paths(&paths));
+    println!("Part 1: {}", three_longest_paths(&paths, true));
+    println!("Part 2: {}", three_longest_paths(&paths, false));
 }
 
 #[cfg(test)]
@@ -103,6 +109,12 @@ mod tests {
     #[test]
     fn test_part1() {
         let paths = build(&INPUT_TEST);
-        assert_eq!(three_longest_paths(&paths), 36);
+        assert_eq!(three_longest_paths(&paths, true), 36);
+    }
+
+    #[test]
+    fn test_part2() {
+        let paths = build(&INPUT_TEST);
+        assert_eq!(three_longest_paths(&paths, false), 44720);
     }
 }
