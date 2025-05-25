@@ -65,3 +65,7 @@ version = "0.1.0"
 [[package]]
 name = "puzzle_2025_12"
 version = "0.1.0"
+
+[[package]]
+name = "puzzle_2025_13"
+version = "0.1.0"
