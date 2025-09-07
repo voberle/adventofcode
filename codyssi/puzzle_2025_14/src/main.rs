@@ -12,6 +12,7 @@ where
     s.parse::<T>().unwrap()
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct Item {
     id: usize,
@@ -50,7 +51,7 @@ fn five_highest_uniq_mat(items: &[Item]) -> u32 {
     items[items.len() - 5..].iter().map(|i| i.materials).sum()
 }
 
-fn make_combi(
+fn make_combi<const MAX_COST: u32>(
     remaining_items: &[Item],
     cost: u32,
     quality_total: u32,
@@ -58,8 +59,6 @@ fn make_combi(
     best_total_quality: &mut u32,
     smallest_uniq_mat_sum: &mut u32,
 ) {
-    const MAX_COST: u32 = 30;
-
     let mut items = remaining_items.to_vec();
     while let Some(q) = items.pop() {
         let new_cost = cost + q.cost;
@@ -78,7 +77,7 @@ fn make_combi(
             *smallest_uniq_mat_sum = new_uniq_mat_total;
         }
 
-        make_combi(
+        make_combi::<MAX_COST>(
             &items,
             new_cost,
             new_quality_total,
@@ -89,7 +88,7 @@ fn make_combi(
     }
 }
 
-fn optimal_combi_x_uniq_mat(items: &[Item]) -> u32 {
+fn optimal_combination_brute<const MAX_COST: u32>(items: &[Item]) -> u32 {
     // Sort the items by quality. Starting with the biggest quality, try to create all possible combinations.
     // Find the best one.
     // Then drop that item from the list and go on.
@@ -105,7 +104,7 @@ fn optimal_combi_x_uniq_mat(items: &[Item]) -> u32 {
     let mut smallest_uniq_mat_sum = 0;
 
     while let Some(q) = items.pop() {
-        make_combi(
+        make_combi::<MAX_COST>(
             &items,
             q.cost,
             q.quality,
@@ -125,7 +124,9 @@ fn main() {
     let items = build(&input);
 
     println!("Part 1: {}", five_highest_uniq_mat(&items));
-    println!("Part 2: {}", optimal_combi_x_uniq_mat(&items));
+    println!("Part 2: {}", optimal_combination_brute::<30>(&items));
+    // Too slow:
+    // println!("Part 3: {}", optimal_combination_brute::<300>(&items));
 }
 
 #[cfg(test)]
@@ -143,6 +144,12 @@ mod tests {
     #[test]
     fn test_part2() {
         let items = build(&INPUT_TEST);
-        assert_eq!(optimal_combi_x_uniq_mat(&items), 8256);
+        assert_eq!(optimal_combination_brute::<30>(&items), 8256);
+    }
+
+    #[test]
+    fn test_part3_brute_force() {
+        let items = build(&INPUT_TEST);
+        assert_eq!(optimal_combination_brute::<150>(&items), 59388);
     }
 }
