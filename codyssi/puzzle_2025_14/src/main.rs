@@ -1,4 +1,7 @@
-use std::io::{self, Read};
+use std::{
+    cmp::Ordering,
+    io::{self, Read},
+};
 
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -88,17 +91,15 @@ fn make_combi<const MAX_COST: u32>(
     }
 }
 
+// Initial brute-force version.
+// Sort the items by quality. Starting with the biggest quality, try to create all possible combinations.
+// Find the best one.
+// Then drop that item from the list and go on.
+#[allow(dead_code)]
 fn optimal_combination_brute<const MAX_COST: u32>(items: &[Item]) -> u32 {
-    // Sort the items by quality. Starting with the biggest quality, try to create all possible combinations.
-    // Find the best one.
-    // Then drop that item from the list and go on.
-
     let mut items = items.to_vec();
     items.sort_by_key(|i| i.quality);
-
     // Alternatively sorting by decreasing cost is too slow for real input.
-    // items.sort_by_key(|i| i.cost);
-    // items.reverse();
 
     let mut best_total_quality = 0;
     let mut smallest_uniq_mat_sum = 0;
@@ -114,8 +115,55 @@ fn optimal_combination_brute<const MAX_COST: u32>(items: &[Item]) -> u32 {
         );
     }
 
-    // println!("best quality={best_total_quality}, smallest uniq mat sum={smallest_uniq_mat_sum}");
     best_total_quality * smallest_uniq_mat_sum
+}
+
+// Optimized version: Solving the 0/1 Knapsack Problem by using dynamic programming.
+fn optimal_combination(items: &[Item], max_cost: usize) -> u32 {
+    // An entry opt_qual_mat[i][w] will store the maximum quality / least unique materials that can be obtained
+    // using the first i items with a total cost of at most w.
+    let mut opt_qual_mat = vec![vec![(0, 0); max_cost + 1]; items.len() + 1];
+
+    // We leave the first row and column initialized with 0.
+
+    for i in 1..=items.len() {
+        for c in 1..=max_cost {
+            if items[i - 1].cost as usize > c {
+                // The current item's cost is greater than the current capacity c.
+                // We can't include item i, the max is the same as the max without this item.
+                opt_qual_mat[i][c] = opt_qual_mat[i - 1][c];
+            } else {
+                // The current item's cost is less than or equal to the current capacity c.
+
+                // If we don't include the item, the value is the same as the max without this item.
+                let dont_include = opt_qual_mat[i - 1][c];
+
+                // If we include it, the value is
+                //   the value of the current item
+                // plus
+                //   the maximum value from the remaining items with the remaining cost capacity.
+                let include_quality =
+                    items[i - 1].quality + opt_qual_mat[i - 1][c - items[i - 1].cost as usize].0;
+                let include_uniq_mat =
+                    items[i - 1].materials + opt_qual_mat[i - 1][c - items[i - 1].cost as usize].1;
+
+                // Take the maximum of these two options.
+                match dont_include.0.cmp(&include_quality) {
+                    Ordering::Greater => opt_qual_mat[i][c] = dont_include,
+                    Ordering::Less => opt_qual_mat[i][c] = (include_quality, include_uniq_mat),
+                    Ordering::Equal => {
+                        if dont_include.1 < include_uniq_mat {
+                            opt_qual_mat[i][c] = dont_include;
+                        } else {
+                            opt_qual_mat[i][c] = (include_quality, include_uniq_mat);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    let best = opt_qual_mat[items.len()][max_cost];
+    best.0 * best.1
 }
 
 fn main() {
@@ -124,9 +172,13 @@ fn main() {
     let items = build(&input);
 
     println!("Part 1: {}", five_highest_uniq_mat(&items));
-    println!("Part 2: {}", optimal_combination_brute::<30>(&items));
+
+    // println!("Part 2 brute force: {}", optimal_combination_brute::<30>(&items));
     // Too slow:
     // println!("Part 3: {}", optimal_combination_brute::<300>(&items));
+
+    println!("Part 2: {}", optimal_combination(&items, 30));
+    println!("Part 3: {}", optimal_combination(&items, 300));
 }
 
 #[cfg(test)]
@@ -142,14 +194,21 @@ mod tests {
     }
 
     #[test]
-    fn test_part2() {
+    fn test_part2_3_brute_force() {
         let items = build(&INPUT_TEST);
         assert_eq!(optimal_combination_brute::<30>(&items), 8256);
+        assert_eq!(optimal_combination_brute::<150>(&items), 59388);
     }
 
     #[test]
-    fn test_part3_brute_force() {
+    fn test_part2() {
         let items = build(&INPUT_TEST);
-        assert_eq!(optimal_combination_brute::<150>(&items), 59388);
+        assert_eq!(optimal_combination(&items, 30), 8256);
+    }
+
+    #[test]
+    fn test_part3() {
+        let items = build(&INPUT_TEST);
+        assert_eq!(optimal_combination(&items, 150), 59388);
     }
 }
