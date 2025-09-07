@@ -50,12 +50,82 @@ fn five_highest_uniq_mat(items: &[Item]) -> u32 {
     items[items.len() - 5..].iter().map(|i| i.materials).sum()
 }
 
+fn make_combi(
+    remaining_items: &[Item],
+    cost: u32,
+    quality_total: u32,
+    uniq_mat_total: u32,
+    best_total_quality: &mut u32,
+    smallest_uniq_mat_sum: &mut u32,
+) {
+    const MAX_COST: u32 = 30;
+
+    let mut items = remaining_items.to_vec();
+    while let Some(q) = items.pop() {
+        let new_cost = cost + q.cost;
+        if new_cost > MAX_COST {
+            continue;
+        }
+
+        let new_quality_total = quality_total + q.quality;
+        let new_uniq_mat_total = uniq_mat_total + q.materials;
+        if new_quality_total > *best_total_quality {
+            *best_total_quality = new_quality_total;
+            *smallest_uniq_mat_sum = new_uniq_mat_total;
+        } else if new_quality_total == *best_total_quality
+            && new_uniq_mat_total < *smallest_uniq_mat_sum
+        {
+            *smallest_uniq_mat_sum = new_uniq_mat_total;
+        }
+
+        make_combi(
+            &items,
+            new_cost,
+            new_quality_total,
+            new_uniq_mat_total,
+            best_total_quality,
+            smallest_uniq_mat_sum,
+        );
+    }
+}
+
+fn optimal_combi_x_uniq_mat(items: &[Item]) -> u32 {
+    // Sort the items by quality. Starting with the biggest quality, try to create all possible combinations.
+    // Find the best one.
+    // Then drop that item from the list and go on.
+
+    let mut items = items.to_vec();
+    items.sort_by_key(|i| i.quality);
+
+    // Alternatively sorting by decreasing cost is too slow for real input.
+    // items.sort_by_key(|i| i.cost);
+    // items.reverse();
+
+    let mut best_total_quality = 0;
+    let mut smallest_uniq_mat_sum = 0;
+
+    while let Some(q) = items.pop() {
+        make_combi(
+            &items,
+            q.cost,
+            q.quality,
+            q.materials,
+            &mut best_total_quality,
+            &mut smallest_uniq_mat_sum,
+        );
+    }
+
+    // println!("best quality={best_total_quality}, smallest uniq mat sum={smallest_uniq_mat_sum}");
+    best_total_quality * smallest_uniq_mat_sum
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let items = build(&input);
 
     println!("Part 1: {}", five_highest_uniq_mat(&items));
+    println!("Part 2: {}", optimal_combi_x_uniq_mat(&items));
 }
 
 #[cfg(test)]
@@ -68,5 +138,11 @@ mod tests {
     fn test_part1() {
         let items = build(&INPUT_TEST);
         assert_eq!(five_highest_uniq_mat(&items), 90);
+    }
+
+    #[test]
+    fn test_part2() {
+        let items = build(&INPUT_TEST);
+        assert_eq!(optimal_combi_x_uniq_mat(&items), 8256);
     }
 }
