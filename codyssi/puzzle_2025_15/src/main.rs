@@ -1,5 +1,7 @@
 use std::io::{self, Read};
 
+use itertools::Itertools;
+
 #[allow(dead_code)]
 struct Artifact {
     code: String,
@@ -16,9 +18,15 @@ impl Artifact {
     }
 }
 
-fn build(input: &str) -> Vec<Artifact> {
+fn build(input: &str) -> (Vec<Artifact>, (Artifact, Artifact)) {
     let input_parts: Vec<_> = input.split("\n\n").collect();
-    input_parts[0].lines().map(Artifact::build).collect()
+    let artifacts = input_parts[0].lines().map(Artifact::build).collect();
+    let pair = input_parts[1]
+        .lines()
+        .map(Artifact::build)
+        .collect_tuple()
+        .unwrap();
+    (artifacts, pair)
 }
 
 // Our tree is a vector of Node. Each node has a value that is the index from the artifacts vector,
@@ -130,10 +138,8 @@ fn find_largest_layer_sum(artifacts: &[Artifact], layers: &[Vec<usize>]) -> u32 
         .unwrap()
 }
 
-fn largest_layer(artifacts: &[Artifact]) -> u32 {
-    let tree = make_tree(artifacts);
-
-    let layers = collect_layers(&tree);
+fn largest_layer(artifacts: &[Artifact], tree: &Tree) -> u32 {
+    let layers = collect_layers(tree);
     // print_layers(artifacts, &layers);
 
     let occupied_layers_cnt = u32::try_from(layers.len()).unwrap();
@@ -142,21 +148,14 @@ fn largest_layer(artifacts: &[Artifact]) -> u32 {
     occupied_layers_cnt * largest_sum
 }
 
-fn seq_for_id_500000(artifacts: &[Artifact]) -> String {
-    const ID_TO_INSERT: u32 = 500_000;
-
-    let tree = make_tree(artifacts);
-
-    let mut sequence = String::new();
+fn find_seq_for(artifacts: &[Artifact], tree: &Tree, id: u32) -> Vec<String> {
+    let mut sequence = Vec::new();
 
     let mut current_node_idx = 0;
     loop {
-        if !sequence.is_empty() {
-            sequence.push('-');
-        }
-        sequence.push_str(&artifacts[tree[current_node_idx].artifact_idx].code);
+        sequence.push(artifacts[tree[current_node_idx].artifact_idx].code.clone());
 
-        if ID_TO_INSERT > artifacts[tree[current_node_idx].artifact_idx].id {
+        if id > artifacts[tree[current_node_idx].artifact_idx].id {
             if let Some(right_idx) = tree[current_node_idx].right {
                 // There is a node under right side, keep searching.
                 current_node_idx = right_idx;
@@ -176,13 +175,45 @@ fn seq_for_id_500000(artifacts: &[Artifact]) -> String {
     sequence
 }
 
+fn seq_for_id_500000(artifacts: &[Artifact], tree: &Tree) -> String {
+    const ID_TO_INSERT: u32 = 500_000;
+
+    let sequence = find_seq_for(artifacts, tree, ID_TO_INSERT);
+    sequence.join("-")
+}
+
+fn least_common_ancestor(
+    artifacts: &[Artifact],
+    tree: &Tree,
+    extra_pair: &(Artifact, Artifact),
+) -> String {
+    let seq1 = find_seq_for(artifacts, tree, extra_pair.0.id);
+    let seq2 = find_seq_for(artifacts, tree, extra_pair.1.id);
+
+    // Find the first code common in both sequences, starting from the end.
+    for c1 in seq1.iter().rev() {
+        for c2 in seq2.iter().rev() {
+            if c1 == c2 {
+                return c1.to_string();
+            }
+        }
+    }
+    panic!("No common ancestor found");
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let artifacts = build(&input);
+    let (artifacts, extra_pair) = build(&input);
 
-    println!("Part 1: {}", largest_layer(&artifacts));
-    println!("Part 2: {}", seq_for_id_500000(&artifacts));
+    let tree = make_tree(&artifacts);
+
+    println!("Part 1: {}", largest_layer(&artifacts, &tree));
+    println!("Part 2: {}", seq_for_id_500000(&artifacts, &tree));
+    println!(
+        "Part 3: {}",
+        least_common_ancestor(&artifacts, &tree, &extra_pair)
+    );
 }
 
 #[cfg(test)]
@@ -193,16 +224,31 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        let artifacts = build(&INPUT_TEST);
-        assert_eq!(largest_layer(&artifacts), 12645822);
+        let (artifacts, _) = build(&INPUT_TEST);
+
+        let tree = make_tree(&artifacts);
+        assert_eq!(largest_layer(&artifacts, &tree), 12645822);
     }
 
     #[test]
     fn test_seq_for_id_500000() {
-        let artifacts = build(&INPUT_TEST);
+        let (artifacts, _) = build(&INPUT_TEST);
+
+        let tree = make_tree(&artifacts);
         assert_eq!(
-            seq_for_id_500000(&artifacts),
+            seq_for_id_500000(&artifacts, &tree),
             "ozNxANO-pYNonIG-MUantNm-lOSlxki-SDJtdpa-JSXfNAJ"
+        );
+    }
+
+    #[test]
+    fn test_least_common_ancestor() {
+        let (artifacts, extra_pair) = build(&INPUT_TEST);
+
+        let tree = make_tree(&artifacts);
+        assert_eq!(
+            least_common_ancestor(&artifacts, &tree, &extra_pair),
+            "pYNonIG"
         );
     }
 }
