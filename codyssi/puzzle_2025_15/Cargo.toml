@@ -1,0 +1,11 @@
+[package]
+name = "puzzle_2025_15"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true
