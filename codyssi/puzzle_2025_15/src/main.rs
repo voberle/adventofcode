@@ -130,7 +130,7 @@ fn find_largest_layer_sum(artifacts: &[Artifact], layers: &[Vec<usize>]) -> u32 
         .unwrap()
 }
 
-fn part1(artifacts: &[Artifact]) -> u32 {
+fn largest_layer(artifacts: &[Artifact]) -> u32 {
     let tree = make_tree(artifacts);
 
     let layers = collect_layers(&tree);
@@ -142,12 +142,47 @@ fn part1(artifacts: &[Artifact]) -> u32 {
     occupied_layers_cnt * largest_sum
 }
 
+fn seq_for_id_500000(artifacts: &[Artifact]) -> String {
+    const ID_TO_INSERT: u32 = 500_000;
+
+    let tree = make_tree(artifacts);
+
+    let mut sequence = String::new();
+
+    let mut current_node_idx = 0;
+    loop {
+        if !sequence.is_empty() {
+            sequence.push('-');
+        }
+        sequence.push_str(&artifacts[tree[current_node_idx].artifact_idx].code);
+
+        if ID_TO_INSERT > artifacts[tree[current_node_idx].artifact_idx].id {
+            if let Some(right_idx) = tree[current_node_idx].right {
+                // There is a node under right side, keep searching.
+                current_node_idx = right_idx;
+            } else {
+                // No right node, done.
+                break;
+            }
+        } else if let Some(left_idx) = tree[current_node_idx].left {
+            // There is a node under left side, keep searching.
+            current_node_idx = left_idx;
+        } else {
+            // No left node, done.
+            break;
+        }
+    }
+
+    sequence
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let artifacts = build(&input);
 
-    println!("Part 1: {}", part1(&artifacts));
+    println!("Part 1: {}", largest_layer(&artifacts));
+    println!("Part 2: {}", seq_for_id_500000(&artifacts));
 }
 
 #[cfg(test)]
@@ -159,6 +194,15 @@ mod tests {
     #[test]
     fn test_part1() {
         let artifacts = build(&INPUT_TEST);
-        assert_eq!(part1(&artifacts), 12645822);
+        assert_eq!(largest_layer(&artifacts), 12645822);
+    }
+
+    #[test]
+    fn test_seq_for_id_500000() {
+        let artifacts = build(&INPUT_TEST);
+        assert_eq!(
+            seq_for_id_500000(&artifacts),
+            "ozNxANO-pYNonIG-MUantNm-lOSlxki-SDJtdpa-JSXfNAJ"
+        );
     }
 }
