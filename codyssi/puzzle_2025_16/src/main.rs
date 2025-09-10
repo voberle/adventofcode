@@ -14,20 +14,20 @@ impl Instruction {
         if parts[0].starts_with("FACE") {
             Instruction::Face(value)
         } else if parts[0].starts_with("ROW") {
-            // Instruction row numbers start at 1, but we prefer to start at 0.
             let index = parts[0]
                 .trim_start_matches("ROW ")
                 .parse::<usize>()
-                .unwrap()
-                - 1;
-            Instruction::Row(index, value)
+                .unwrap();
+            // Instruction row numbers start at 1, but we prefer to start at 0.
+            assert!(index > 0);
+            Instruction::Row(index - 1, value)
         } else if parts[0].starts_with("COL") {
             let index = parts[0]
                 .trim_start_matches("COL ")
                 .parse::<usize>()
-                .unwrap()
-                - 1;
-            Instruction::Col(index, value)
+                .unwrap();
+            assert!(index > 0);
+            Instruction::Col(index - 1, value)
         } else {
             panic!("Invalid instruction")
         }
@@ -62,6 +62,12 @@ fn build(input: &str) -> (Vec<Instruction>, Vec<Twist>) {
     assert_eq!(instructions.len(), twists.len() + 1);
 
     (instructions, twists)
+}
+
+fn add(nb: u64, value: u64) -> u64 {
+    // It's a modulo 100, but values have to be between 1 and 100.
+    assert!((1..=100).contains(&nb));
+    (nb + value - 1) % 100 + 1
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -131,19 +137,31 @@ impl<const SIDE: usize> Face<SIDE> {
 
     fn apply_face(&mut self, value: u64) {
         for number in &mut self.0 {
-            *number = (*number + value) % 100;
+            *number = add(*number, value);
         }
     }
 
     fn apply_row(&mut self, row: usize, value: u64) {
-        for number in &mut self.0.iter_mut().skip(row * SIDE).take(SIDE) {
-            *number = (*number + value) % 100;
+        for number in self.0.iter_mut().skip(row * SIDE).take(SIDE) {
+            *number = add(*number, value);
         }
     }
 
     fn apply_col(&mut self, col: usize, value: u64) {
-        for number in &mut self.0.iter_mut().skip(col).step_by(SIDE) {
-            *number = (*number + value) % 100;
+        for number in self.0.iter_mut().skip(col).step_by(SIDE) {
+            *number = add(*number, value);
+        }
+    }
+
+    fn print(&self, offset: usize) {
+        for row in self.0.chunks(SIDE) {
+            for _ in 0..offset {
+                print!(" ");
+            }
+            for v in row {
+                print!("{v}");
+            }
+            println!();
         }
     }
 }
@@ -171,6 +189,18 @@ impl<const SIDE: usize> Cube<SIDE> {
         }
     }
 
+    fn faces_iter(&self) -> impl Iterator<Item = &Face<SIDE>> {
+        [
+            &self.up,
+            &self.down,
+            &self.front,
+            &self.back,
+            &self.right,
+            &self.left,
+        ]
+        .into_iter()
+    }
+
     // “L” rotates the cube one face to the right (so that the new ‘current face’ is
     // one face to the left of the previous ‘current face’).
     fn rotate_left(&self) -> Self {
@@ -193,7 +223,7 @@ impl<const SIDE: usize> Cube<SIDE> {
             front: self.right.mirror_vertical(),
             back: self.left.mirror_vertical(),
             right: self.back.clone(),
-            left: self.left.clone(),
+            left: self.front.clone(),
         }
     }
 
@@ -221,6 +251,22 @@ impl<const SIDE: usize> Cube<SIDE> {
             right: self.right.rotate_90_counter_clockwise(),
             left: self.left.rotate_90_counter_clockwise(),
         }
+    }
+
+    #[allow(dead_code)]
+    fn print(&self) {
+        println!("Front:");
+        self.front.print(SIDE);
+        println!("Left:");
+        self.left.print(SIDE);
+        println!("Down:");
+        self.down.print(SIDE);
+        println!("Right:");
+        self.right.print(SIDE);
+        println!("Back:");
+        self.back.print(SIDE);
+        println!("Up:");
+        self.up.print(SIDE);
     }
 }
 
@@ -296,15 +342,60 @@ fn highest_absorptions<const SIDE: usize>(instructions: &[Instruction], twists: 
     abs[abs.len() - 1] * abs[abs.len() - 2]
 }
 
+fn dominants_sums_for_face<const SIDE: usize>(face: &Face<SIDE>) -> u64 {
+    let rows_max_sum: u64 = face
+        .0
+        .chunks(SIDE)
+        .map(|row| row.iter().sum())
+        .max()
+        .unwrap();
+    let cols_max_sum: u64 = (0..SIDE)
+        .map(|c| face.0.iter().skip(c).step_by(SIDE).sum::<u64>())
+        .max()
+        .unwrap();
+    rows_max_sum.max(cols_max_sum)
+}
+
+fn dominants_sums<const SIDE: usize>(instructions: &[Instruction], twists: &[Twist]) -> u128 {
+    let mut cube: Cube<SIDE> = Cube::new();
+    // cube.print();
+    // println!();
+
+    // Apply first instruction.
+    cube.front = apply_instruction_to_face(&instructions[0], &cube.front);
+    // cube.print();
+    // println!();
+
+    for (instruction, twist) in instructions.iter().skip(1).zip(twists) {
+        // println!("{:?}", twist);
+        cube = rotate_cube(&cube, twist);
+
+        cube.front = apply_instruction_to_face(instruction, &cube.front);
+        // cube.print();
+        // println!();
+    }
+
+    cube.faces_iter()
+        .map(|face| u128::from(dominants_sums_for_face(face)))
+        .product()
+}
+
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
     let (instructions, twists) = build(&input);
 
+    // println!(
+    //     "X: {}",
+    //     dominants_sums::<3>(&instructions, &twists)
+    // );
+    // return;
+
     println!(
         "Part 1: {}",
         highest_absorptions::<80>(&instructions, &twists)
     );
+    println!("Part 2: {}", dominants_sums::<80>(&instructions, &twists));
 }
 
 #[cfg(test)]
@@ -330,6 +421,16 @@ mod tests {
 
     fn init_face() -> Face<3> {
         Face(vec![1, 2, 3, 4, 5, 6, 7, 8, 9])
+    }
+
+    #[test]
+    fn test_add() {
+        assert_eq!(add(1, 38), 39);
+        assert_eq!(add(39, 68), 7);
+        assert_eq!(add(90, 9), 99);
+        assert_eq!(add(90, 10), 100);
+        assert_eq!(add(90, 11), 1);
+        assert_eq!(add(1, 100), 1);
     }
 
     #[test]
@@ -378,7 +479,7 @@ mod tests {
     }
 
     #[test]
-    fn test_cube_rotate_left() {
+    fn test_cube_rotate() {
         let cube = init_cube();
         let mut c = cube.clone();
         c = c.rotate_left();
@@ -386,6 +487,41 @@ mod tests {
         c = c.rotate_left();
         c = c.rotate_left();
         assert_eq!(c, cube);
+        c = c.rotate_right();
+        c = c.rotate_right();
+        c = c.rotate_right();
+        c = c.rotate_right();
+        assert_eq!(c, cube);
+        c = c.rotate_up();
+        c = c.rotate_up();
+        c = c.rotate_up();
+        c = c.rotate_up();
+        assert_eq!(c, cube);
+        c = c.rotate_down();
+        c = c.rotate_down();
+        c = c.rotate_down();
+        c = c.rotate_down();
+        assert_eq!(c, cube);
+        c = c.rotate_up();
+        c = c.rotate_left();
+        c = c.rotate_left();
+        c = c.rotate_up();
+        c = c.rotate_up();
+        c = c.rotate_right();
+        c = c.rotate_right();
+        c = c.rotate_up();
+        assert_eq!(c, cube);
+    }
+
+    #[test]
+    fn test_dominants_sums_for_face() {
+        // 1  2  3 | 6
+        // 4  5  6 | 15
+        // 7  8  9 | 24
+        // ---------
+        // 12 15 18
+        let face = init_face();
+        assert_eq!(dominants_sums_for_face(&face), 24);
     }
 
     #[test]
@@ -400,6 +536,21 @@ mod tests {
         assert_eq!(
             highest_absorptions::<80>(&instructions, &twists),
             6902016000
+        );
+    }
+
+    #[test]
+    fn test_part2_1() {
+        let (instructions, twists) = build(&INPUT_TEST_1);
+        assert_eq!(dominants_sums::<3>(&instructions, &twists), 118727856);
+    }
+
+    #[test]
+    fn test_part2_2() {
+        let (instructions, twists) = build(&INPUT_TEST_2);
+        assert_eq!(
+            dominants_sums::<80>(&instructions, &twists),
+            369594451623936000000
         );
     }
 }
