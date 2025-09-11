@@ -1,0 +1,4 @@
+S1 : 0 -> 6 : FROM START TO END
+S2 : 2 -> 3 : FROM S1 TO S1
+
+Possible Moves : 1, 3

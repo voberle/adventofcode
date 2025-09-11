@@ -1,0 +1,12 @@
+S1 : 0 -> 99 : FROM START TO END
+S2 : 8 -> 91 : FROM S1 TO S1
+S3 : 82 -> 91 : FROM S1 TO S1
+S4 : 90 -> 97 : FROM S2 TO S1
+S5 : 29 -> 74 : FROM S1 TO S1
+S6 : 87 -> 90 : FROM S3 TO S2
+S7 : 37 -> 71 : FROM S2 TO S1
+S8 : 88 -> 90 : FROM S6 TO S3
+S9 : 34 -> 37 : FROM S2 TO S5
+S10 : 13 -> 57 : FROM S1 TO S2
+
+Possible Moves : 1, 3, 5, 6
