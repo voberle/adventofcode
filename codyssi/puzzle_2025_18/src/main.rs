@@ -6,6 +6,7 @@ use std::{
 use once_cell::sync::Lazy;
 use regex::Regex;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Coords {
     x: i64,
     y: i64,
@@ -17,6 +18,15 @@ impl Coords {
     const fn new(x: i64, y: i64, z: i64, a: i64) -> Self {
         Self { x, y, z, a }
     }
+
+    fn get_at(&self, time: i64, velocity: &Coords, space_dims: &Coords) -> Self {
+        Self {
+            x: (self.x + velocity.x * time).rem_euclid(space_dims.x),
+            y: (self.y + velocity.y * time).rem_euclid(space_dims.y),
+            z: (self.z + velocity.z * time).rem_euclid(space_dims.z),
+            a: (self.a + 1 + velocity.a * time).rem_euclid(space_dims.a) - 1,
+        }
+    }
 }
 
 impl Display for Coords {
@@ -26,17 +36,14 @@ impl Display for Coords {
 }
 
 struct Rule {
-    number: usize,
+    _number: usize,
     x: i64,
     y: i64,
     z: i64,
     a: i64,
     divide: i64,
     remainder: i64,
-    vel_x: i64,
-    vel_y: i64,
-    vel_z: i64,
-    vel_a: i64,
+    velocity: Coords,
 }
 
 impl Rule {
@@ -48,17 +55,19 @@ impl Rule {
 
         let p = RE.captures(line).unwrap();
         Self {
-            number: p[1].parse().unwrap(),
+            _number: p[1].parse().unwrap(),
             x: p[2].parse().unwrap(),
             y: p[3].parse().unwrap(),
             z: p[4].parse().unwrap(),
             a: p[5].parse().unwrap(),
             divide: p[6].parse().unwrap(),
             remainder: p[7].parse().unwrap(),
-            vel_x: p[8].parse().unwrap(),
-            vel_y: p[9].parse().unwrap(),
-            vel_z: p[10].parse().unwrap(),
-            vel_a: p[11].parse().unwrap(),
+            velocity: Coords {
+                x: p[8].parse().unwrap(),
+                y: p[9].parse().unwrap(),
+                z: p[10].parse().unwrap(),
+                a: p[11].parse().unwrap(),
+            },
         }
     }
 
@@ -133,6 +142,17 @@ mod tests {
     }
 
     #[test]
+    fn test_coords_at() {
+        let coords = Coords::new(3, 9, 1, -1);
+        let velocity = Coords::new(1, -1, 0, 1);
+        let space_dims = Coords::new(10, 15, 60, 3);
+        assert_eq!(
+            coords.get_at(3, &velocity, &space_dims),
+            Coords::new(6, 6, 1, -1)
+        );
+    }
+
+    #[test]
     fn test_rule_build() {
         let rule = Rule::build(
             "RULE 1: 8x+10y+3z+5a DIVIDE 9 HAS REMAINDER 4 | DEBRIS VELOCITY (0, -1, 0, 1)",
@@ -140,8 +160,8 @@ mod tests {
         assert_eq!(rule.number, 1);
         assert_eq!(rule.y, 10);
         assert_eq!(rule.remainder, 4);
-        assert_eq!(rule.vel_x, 0);
-        assert_eq!(rule.vel_y, -1);
+        assert_eq!(rule.velocity.x, 0);
+        assert_eq!(rule.velocity.y, -1);
 
         assert!(rule.check_coords(&Coords::new(3, 4, 1, 0)));
         assert!(!rule.check_coords(&Coords::new(4, 4, 1, 0)));
