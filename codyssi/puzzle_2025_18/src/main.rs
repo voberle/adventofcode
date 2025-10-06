@@ -77,29 +77,23 @@ impl Rule {
         self.remainder == t.rem_euclid(self.divide)
     }
 
-    fn total_debris(&self, space_dims: &Coords) -> i64 {
+    fn get_all_debris(&self, space_dims: &Coords) -> Vec<Coords> {
         // Space dimensions for a always go from -1 to 1
         assert_eq!(space_dims.a, 3);
 
         (0..space_dims.x)
-            .map(|x| {
-                (0..space_dims.y)
-                    .map(|y| {
-                        (0..space_dims.z)
-                            .map(|z| {
-                                (-1..=1)
-                                    .map(|a| {
-                                        let c = Coords::new(x, y, z, a);
-                                        // println!("{}", c);
-                                        i64::from(self.check_coords(&c))
-                                    })
-                                    .sum::<i64>()
-                            })
-                            .sum::<i64>()
+            .flat_map(|x| {
+                (0..space_dims.y).flat_map(move |y| {
+                    (0..space_dims.z).flat_map(move |z| {
+                        (-1..=1).filter_map(move |a| {
+                            let c = Coords::new(x, y, z, a);
+                            // println!("{}", c);
+                            if self.check_coords(&c) { Some(c) } else { None }
+                        })
                     })
-                    .sum::<i64>()
+                })
             })
-            .sum::<i64>()
+            .collect()
     }
 }
 
@@ -107,11 +101,14 @@ fn build(input: &str) -> Vec<Rule> {
     input.lines().map(Rule::build).collect()
 }
 
-fn total_debris(rules: &[Rule], space_dims: &Coords) -> i64 {
+fn total_debris(rules: &[Rule], space_dims: &Coords) -> usize {
     // Space dimensions for a always go from -1 to 1
     assert_eq!(space_dims.a, 3);
 
-    rules.iter().map(|rule| rule.total_debris(space_dims)).sum()
+    rules
+        .iter()
+        .map(|rule| rule.get_all_debris(space_dims).len())
+        .sum()
 }
 
 fn main() {
@@ -157,7 +154,7 @@ mod tests {
         let rule = Rule::build(
             "RULE 1: 8x+10y+3z+5a DIVIDE 9 HAS REMAINDER 4 | DEBRIS VELOCITY (0, -1, 0, 1)",
         );
-        assert_eq!(rule.number, 1);
+        assert_eq!(rule._number, 1);
         assert_eq!(rule.y, 10);
         assert_eq!(rule.remainder, 4);
         assert_eq!(rule.velocity.x, 0);
@@ -175,7 +172,7 @@ mod tests {
         assert_eq!(rule.y, 2);
 
         const SPACE_DIMS: Coords = Coords::new(3, 3, 5, 3);
-        assert_eq!(rule.total_debris(&SPACE_DIMS), 14);
+        assert_eq!(rule.get_all_debris(&SPACE_DIMS).len(), 14);
     }
 
     #[test]
