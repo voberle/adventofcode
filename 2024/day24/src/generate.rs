@@ -26,13 +26,13 @@ fn generate_adder(n: usize, carry_over: &str) -> (Vec<String>, Vec<Gate>, String
     let c = gen_name('c', n);
     let d = gen_name('d', n);
     let gates = vec![
-        Gate::Xor(x.to_string(), y.to_string(), a.to_string()),
-        Gate::And(x.to_string(), y.to_string(), b.to_string()),
-        Gate::Xor(carry_over.to_string(), a.to_string(), z.to_string()),
-        Gate::And(carry_over.to_string(), a.to_string(), c.to_string()),
-        Gate::Or(c.to_string(), b.to_string(), d.to_string()),
+        Gate::Xor(x.clone(), y.clone(), a.clone()),
+        Gate::And(x.clone(), y.clone(), b.clone()),
+        Gate::Xor(carry_over.to_string(), a.clone(), z.clone()),
+        Gate::And(carry_over.to_string(), a.clone(), c.clone()),
+        Gate::Or(c.clone(), b.clone(), d.clone()),
     ];
-    let carry_over = d.to_string();
+    let carry_over = d.clone();
     (vec![x, y, z, a, b, c, d], gates, carry_over)
 }
 
@@ -49,8 +49,8 @@ fn generate_circuit(bits_count: usize) -> (FxHashMap<String, u8>, Vec<Gate>) {
     let mut carry = gen_name('b', n);
     wires.extend([x.clone(), y.clone(), z.clone(), carry.clone()]);
     gates.extend([
-        Gate::Xor(x.to_string(), y.to_string(), z.to_string()),
-        Gate::And(x.to_string(), y.to_string(), carry.to_string()),
+        Gate::Xor(x.clone(), y.clone(), z.clone()),
+        Gate::And(x.clone(), y.clone(), carry.clone()),
     ]);
 
     for n in 1..bits_count {
@@ -63,7 +63,7 @@ fn generate_circuit(bits_count: usize) -> (FxHashMap<String, u8>, Vec<Gate>) {
     // Rename last carry to z
     let last_z = gen_name('z', bits_count);
     let p = wires.iter().position(|w| *w == carry).unwrap();
-    wires[p] = last_z.to_string();
+    wires[p].clone_from(&last_z);
 
     rename_gate_output(&mut gates, &carry, &last_z);
 
@@ -153,7 +153,7 @@ pub fn find_swapped_wires(gates: &[Gate]) {
         if let Some((old, new)) = something_to_rename {
             rename(&mut working_adder, &old, &new);
 
-            correct_wires.insert(new.to_string());
+            correct_wires.insert(new.clone());
         } else {
             break;
         }

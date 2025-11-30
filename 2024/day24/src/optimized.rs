@@ -43,11 +43,11 @@ impl OptGate {
         if wires[self.output].is_some() {
             return false;
         }
-        if let Some(in1_val) = wires[self.input1] {
-            if let Some(in2_val) = wires[self.input2] {
-                wires[self.output] = Some((self.function)(in1_val, in2_val));
-                return true;
-            }
+        if let Some(in1_val) = wires[self.input1]
+            && let Some(in2_val) = wires[self.input2]
+        {
+            wires[self.output] = Some((self.function)(in1_val, in2_val));
+            return true;
         }
         false
     }
@@ -90,7 +90,7 @@ impl Circuit {
 
         let mut name_to_index = FxHashMap::default();
         for (i, name) in index_to_name.iter().enumerate() {
-            name_to_index.insert(name.to_string(), i);
+            name_to_index.insert(name.clone(), i);
         }
 
         let initial_wires = index_to_name

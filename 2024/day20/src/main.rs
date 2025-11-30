@@ -66,7 +66,7 @@ impl Grid {
                     ((pos % self.cols) as isize + d_col) as usize,
                 )
             })
-            .filter(|&(row, col)| (row < self.rows && col < self.cols))
+            .filter(|&(row, col)| row < self.rows && col < self.cols)
             .map(|(row, col)| row * self.cols + col)
     }
 

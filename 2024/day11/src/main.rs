@@ -38,7 +38,7 @@ fn blink(stones: &FxHashMap<u64, usize>) -> FxHashMap<u64, usize> {
         let digits_count = digits_count(s);
         if s == 0 {
             *new_stones.entry(1).or_default() += cnt;
-        } else if digits_count % 2 == 0 {
+        } else if digits_count.is_multiple_of(2) {
             let (left, right) = split(s, digits_count);
             *new_stones.entry(left).or_default() += cnt;
             *new_stones.entry(right).or_default() += cnt;

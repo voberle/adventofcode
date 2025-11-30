@@ -57,7 +57,7 @@ fn next_positions<'a>(
                 ((pos % grid.cols) as isize + d_col) as usize,
             )
         })
-        .filter(|&(_, _, row, col)| (row < grid.rows && col < grid.cols))
+        .filter(|&(_, _, row, col)| row < grid.rows && col < grid.cols)
         .map(|(d_row, d_col, row, col)| (d_row, d_col, row * grid.cols + col))
 }
 

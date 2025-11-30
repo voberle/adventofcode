@@ -39,7 +39,7 @@ impl Grid {
             Up => pos < self.cols,
             Right => pos % self.cols == self.cols - 1,
             Down => pos / self.cols == self.rows - 1,
-            Left => pos % self.cols == 0,
+            Left => pos.is_multiple_of(self.cols),
         }
     }
 
@@ -73,11 +73,12 @@ enum Direction {
 fn walk(map: &Grid, pos: usize, region: &mut FxHashSet<usize>) {
     let value = map.values[pos];
     for dir in [Up, Down, Left, Right] {
-        if let Some(next_pos) = map.try_next_pos(pos, dir) {
-            if !region.contains(&next_pos) && map.values[next_pos] == value {
-                region.insert(next_pos);
-                walk(map, next_pos, region);
-            }
+        if let Some(next_pos) = map.try_next_pos(pos, dir)
+            && !region.contains(&next_pos)
+            && map.values[next_pos] == value
+        {
+            region.insert(next_pos);
+            walk(map, next_pos, region);
         }
     }
 }

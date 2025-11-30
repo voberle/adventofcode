@@ -64,7 +64,9 @@ impl DirKey {
             },
         };
         // After the moves we still need to press A each time.
-        moves.iter_mut().for_each(|m| m.push(A));
+        for m in &mut moves {
+            m.push(A);
+        }
         moves
     }
 }

@@ -140,10 +140,10 @@ fn find_shortest_path(
                     }
 
                     let next_cost = cost + 1;
-                    if let Some(prevcost) = distance.get(&next_pos) {
-                        if *prevcost <= next_cost {
-                            return None;
-                        }
+                    if let Some(prevcost) = distance.get(&next_pos)
+                        && *prevcost <= next_cost
+                    {
+                        return None;
                     }
 
                     if next_cost >= shortest_distance {

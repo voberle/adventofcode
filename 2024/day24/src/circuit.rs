@@ -40,11 +40,11 @@ impl Gate {
         if wires.contains_key(out) {
             return false;
         }
-        if let Some(in1_val) = wires.get(in1) {
-            if let Some(in2_val) = wires.get(in2) {
-                wires.insert(out.to_string(), op_fn(*in1_val, *in2_val));
-                return true;
-            }
+        if let Some(in1_val) = wires.get(in1)
+            && let Some(in2_val) = wires.get(in2)
+        {
+            wires.insert(out.to_string(), op_fn(*in1_val, *in2_val));
+            return true;
         }
         false
     }
@@ -61,7 +61,7 @@ impl Gate {
     pub fn get_inputs(&self) -> (String, String) {
         match self {
             Gate::And(i1, i2, _) | Gate::Or(i1, i2, _) | Gate::Xor(i1, i2, _) => {
-                ((*i1).to_string(), (*i2).to_string())
+                ((*i1).clone(), (*i2).clone())
             }
         }
     }
@@ -69,7 +69,7 @@ impl Gate {
     #[allow(dead_code)]
     pub fn get_output(&self) -> String {
         match self {
-            Gate::And(_, _, o) | Gate::Or(_, _, o) | Gate::Xor(_, _, o) => (*o).to_string(),
+            Gate::And(_, _, o) | Gate::Or(_, _, o) | Gate::Xor(_, _, o) => (*o).clone(),
         }
     }
 
@@ -245,7 +245,7 @@ pub fn swap_wires_investigation(gates: &[Gate]) -> String {
                 // Real swap
                 gates[p1].set_output(&n2);
                 gates[p2].set_output(&n1);
-                last_pair_to_swap = Some((n1.to_string(), n2.to_string()));
+                last_pair_to_swap = Some((n1.clone(), n2.clone()));
                 break 'outer;
             }
         }

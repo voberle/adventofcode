@@ -1,5 +1,3 @@
-#![allow(clippy::match_on_vec_items)]
-
 use std::{
     fmt,
     io::{self, Read},

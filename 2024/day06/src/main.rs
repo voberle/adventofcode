@@ -67,7 +67,7 @@ impl Grid {
             Up => pos < self.cols,
             Right => pos % self.cols == self.cols - 1,
             Down => pos / self.cols == self.rows - 1,
-            Left => pos % self.cols == 0,
+            Left => pos.is_multiple_of(self.cols),
         }
     }
 

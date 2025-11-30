@@ -88,7 +88,7 @@ impl Grid {
             North => pos < self.cols,
             East => pos % self.cols == self.cols - 1,
             South => pos / self.cols == self.rows - 1,
-            West => pos % self.cols == 0,
+            West => pos.is_multiple_of(self.cols),
         }
     }
 
@@ -169,11 +169,11 @@ fn find_smallest_cost(map: &Grid, start: usize, start_direction: Direction, end:
 
             let next_cost = cost + 1 + dir.cost_change(d);
 
-            if let Some(prevcost) = distance.get(&(next_pos, d)) {
-                if *prevcost <= next_cost {
-                    // We have visited this place at cheaper
-                    return None;
-                }
+            if let Some(prevcost) = distance.get(&(next_pos, d))
+                && *prevcost <= next_cost
+            {
+                // We have visited this place at cheaper
+                return None;
             }
 
             if next_cost >= smallest_cost {
@@ -271,10 +271,10 @@ fn find_all_best_paths(
                 predecessors.insert((next_pos, d), vec![(pos, dir)]);
             } else {
                 // Same path, just update predecessors.
-                if let Some(pred_list) = predecessors.get_mut(&(next_pos, d)) {
-                    if !pred_list.contains(&(pos, dir)) {
-                        pred_list.push((pos, dir));
-                    }
+                if let Some(pred_list) = predecessors.get_mut(&(next_pos, d))
+                    && !pred_list.contains(&(pos, dir))
+                {
+                    pred_list.push((pos, dir));
                 }
             }
 
