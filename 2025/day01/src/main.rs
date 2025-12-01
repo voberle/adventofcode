@@ -33,26 +33,18 @@ fn method_0x4etc_brute_force(rotations: &[(char, u32)]) -> u32 {
 
     let mut pos: i64 = 50;
     for (dir, cnt) in rotations {
-        match dir {
-            'L' => {
-                for _ in 0..*cnt {
-                    pos -= 1;
-                    pos = pos.rem_euclid(100);
-                    if pos == 0 {
-                        pwd += 1;
-                    }
-                }
+        for _ in 0..*cnt {
+            pos = (pos
+                + match dir {
+                    'L' => -1,
+                    'R' => 1,
+                    _ => panic!("Invalid direction"),
+                })
+            .rem_euclid(100);
+
+            if pos == 0 {
+                pwd += 1;
             }
-            'R' => {
-                for _ in 0..*cnt {
-                    pos += 1;
-                    pos = pos.rem_euclid(100);
-                    if pos == 0 {
-                        pwd += 1;
-                    }
-                }
-            }
-            _ => panic!("Invalid direction"),
         }
     }
     pwd
