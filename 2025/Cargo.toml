@@ -1,6 +1,5 @@
 [workspace]
-members = [
-]
+members = ["day01"]
 resolver = "2"
 
 [workspace.lints.clippy]
