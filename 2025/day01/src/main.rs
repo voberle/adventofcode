@@ -12,11 +12,13 @@ fn actual_password(rotations: &[(char, u32)]) -> u32 {
 
     let mut pos: i64 = 50;
     for (dir, cnt) in rotations {
-        pos = match dir {
-            'L' => pos - i64::from(*cnt),
-            'R' => pos + i64::from(*cnt),
+        let rotation = match dir {
+            'L' => -i64::from(*cnt),
+            'R' => i64::from(*cnt),
             _ => panic!("Invalid direction"),
-        } % 100;
+        };
+
+        pos = (pos + rotation).rem_euclid(100);
 
         if pos == 0 {
             pwd += 1;
@@ -25,8 +27,35 @@ fn actual_password(rotations: &[(char, u32)]) -> u32 {
     pwd
 }
 
-fn part2(rotations: &[(char, u32)]) -> i64 {
-    0
+// Horrible brute-force solution.
+fn method_0x4etc_brute_force(rotations: &[(char, u32)]) -> u32 {
+    let mut pwd = 0;
+
+    let mut pos: i64 = 50;
+    for (dir, cnt) in rotations {
+        match dir {
+            'L' => {
+                for _ in 0..*cnt {
+                    pos -= 1;
+                    pos = pos.rem_euclid(100);
+                    if pos == 0 {
+                        pwd += 1;
+                    }
+                }
+            }
+            'R' => {
+                for _ in 0..*cnt {
+                    pos += 1;
+                    pos = pos.rem_euclid(100);
+                    if pos == 0 {
+                        pwd += 1;
+                    }
+                }
+            }
+            _ => panic!("Invalid direction"),
+        }
+    }
+    pwd
 }
 
 fn main() {
@@ -35,7 +64,7 @@ fn main() {
     let rotations = build(&input);
 
     println!("Part 1: {}", actual_password(&rotations));
-    println!("Part 2: {}", part2(&rotations));
+    println!("Part 2: {}", method_0x4etc_brute_force(&rotations));
 }
 
 #[cfg(test)]
@@ -51,6 +80,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        assert_eq!(method_0x4etc_brute_force(&build(INPUT_TEST)), 6);
     }
 }
