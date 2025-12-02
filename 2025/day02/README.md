@@ -6,3 +6,4 @@ I used the simple approach of converting each number to check into a vector of c
 
 ## Part 2
 
+I quickly got the idea how to do it, but it was harder to actually implement and get all the indexes right.

@@ -8,6 +8,6 @@ My Rust implementations of [Advent of Code 2025](https://adventofcode.com/2025).
 
 Modulo.
 
-### Day 2: [Gift Shop](day02/README.md) 🌟
+### Day 2: [Gift Shop](day02/README.md) 🌟🌟
 
 Ranges.
