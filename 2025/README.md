@@ -12,4 +12,6 @@ Modulo.
 
 Ranges.
 
-### Day 3: [Lobby](day03/README.md) 🌟
+### Day 3: [Lobby](day03/README.md) 🌟🌟
+
+Sub-slices.
