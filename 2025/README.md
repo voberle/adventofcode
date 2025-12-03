@@ -11,3 +11,5 @@ Modulo.
 ### Day 2: [Gift Shop](day02/README.md) 🌟🌟
 
 Ranges.
+
+### Day 3: [Lobby](day03/README.md) 🌟
