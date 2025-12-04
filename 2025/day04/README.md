@@ -6,3 +6,4 @@ This was trivial grid stuff.
 
 ## Part 2
 
+A very simple second part as well.

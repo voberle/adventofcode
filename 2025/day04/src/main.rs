@@ -1,5 +1,6 @@
 use std::io::{self, Read};
 
+#[derive(Clone, PartialEq, Eq)]
 struct Grid {
     values: Vec<bool>,
     rows: usize,
@@ -66,8 +67,8 @@ impl Grid {
     }
 }
 
-fn accessible_rolls(map: &Grid) -> usize {
-    let forklifts: Vec<_> = (0..map.values.len())
+fn accessible_rolls(map: &Grid) -> Vec<usize> {
+    (0..map.values.len())
         .filter(|pos| {
             // Forklifts that have less than 4 forklifts around.
             map.values[*pos]
@@ -77,15 +78,35 @@ fn accessible_rolls(map: &Grid) -> usize {
                     .count()
                     < 4
         })
-        .collect();
-
-    map.print_with_pos(&forklifts);
-
-    forklifts.len()
+        .collect()
 }
 
-fn part2(map: &Grid) -> i64 {
-    0
+fn accessible_rolls_count(map: &Grid) -> usize {
+    accessible_rolls(map).len()
+}
+
+fn rolls_count(map: &Grid) -> usize {
+    map.values.iter().filter(|v| **v).count()
+}
+
+fn removable_rolls(original_map: &Grid) -> usize {
+    let mut map = original_map.clone();
+    loop {
+        let mut new_map = map.clone();
+
+        for p in accessible_rolls(&new_map) {
+            assert!(new_map.values[p]);
+            new_map.values[p] = false;
+        }
+
+        if new_map == map {
+            break;
+        }
+
+        map = new_map;
+    }
+
+    rolls_count(original_map) - rolls_count(&map)
 }
 
 fn main() {
@@ -93,8 +114,8 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let map = Grid::build(&input);
 
-    println!("Part 1: {}", accessible_rolls(&map));
-    println!("Part 2: {}", part2(&map));
+    println!("Part 1: {}", accessible_rolls_count(&map));
+    println!("Part 2: {}", removable_rolls(&map));
 }
 
 #[cfg(test)]
@@ -105,11 +126,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(accessible_rolls(&Grid::build(INPUT_TEST)), 13);
+        assert_eq!(accessible_rolls_count(&Grid::build(INPUT_TEST)), 13);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Grid::build(INPUT_TEST)), 0);
+        assert_eq!(removable_rolls(&Grid::build(INPUT_TEST)), 43);
     }
 }

@@ -16,6 +16,6 @@ Ranges.
 
 Sub-slices.
 
-### Day 4: [Printing Department](day04/README.md) 🌟
+### Day 4: [Printing Department](day04/README.md) 🌟🌟
 
 Grid.
