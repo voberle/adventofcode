@@ -15,3 +15,7 @@ Ranges.
 ### Day 3: [Lobby](day03/README.md) 🌟🌟
 
 Sub-slices.
+
+### Day 4: [Printing Department](day04/README.md) 🌟
+
+Grid.
