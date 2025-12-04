@@ -85,20 +85,24 @@ fn accessible_rolls_count(map: &Grid) -> usize {
     accessible_rolls(map).len()
 }
 
-fn rolls_count(map: &Grid) -> usize {
-    map.values.iter().filter(|v| **v).count()
-}
-
 fn removable_rolls(original_map: &Grid) -> usize {
+    let mut total_removed_rolls = 0;
+
     let mut map = original_map.clone();
     loop {
         let mut new_map = map.clone();
 
-        for p in accessible_rolls(&new_map) {
+        // Get and count accessible rolls.
+        let accessible_rolls_positions = accessible_rolls(&new_map);
+        total_removed_rolls += accessible_rolls_positions.len();
+
+        // Remove accessible rolls.
+        for p in accessible_rolls_positions {
             assert!(new_map.values[p]);
             new_map.values[p] = false;
         }
 
+        // If map didn't change, stop.
         if new_map == map {
             break;
         }
@@ -106,7 +110,7 @@ fn removable_rolls(original_map: &Grid) -> usize {
         map = new_map;
     }
 
-    rolls_count(original_map) - rolls_count(&map)
+    total_removed_rolls
 }
 
 fn main() {
