@@ -19,3 +19,7 @@ Sub-slices.
 ### Day 4: [Printing Department](day04/README.md) 🌟🌟
 
 Grid.
+
+### Day 5: [Cafeteria](day05/README.md) 🌟
+
+Ranges.
