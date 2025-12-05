@@ -35,8 +35,65 @@ fn fresh_ingredients_count(
         .count()
 }
 
-fn part2(fresh_ingredient_ranges: &[(u64, u64)], available_ingredients: &[u64]) -> i64 {
-    0
+use std::cmp::Ordering;
+
+/// Takes a list of ranges and simplifies it into an ordered non-overlapping list.
+/// Works only with ranges that have inclusive start and exclusive end.
+fn simplify_ranges<T>(ranges: &[(T, T)]) -> Vec<(T, T)>
+where
+    T: PartialOrd + Copy,
+{
+    // Algorith from https://cs.stackexchange.com/a/106978
+    // List of beginning and ending points. The boolean tells the type (true is start, false is end).
+    let mut positions: Vec<(bool, T)> = ranges
+        .iter()
+        .flat_map(|r| [(true, r.0), (false, r.1)])
+        .collect();
+
+    // Sort by position, with starting points comparing below ending points when positions are equal.
+    positions.sort_by(|a, b| {
+        if a.1 == b.1 {
+            if a.0 && !b.0 {
+                // a is start, b is end
+                Ordering::Less
+            } else if !a.0 && b.0 {
+                // a is end, b is start
+                Ordering::Greater
+            } else {
+                Ordering::Equal
+            }
+        } else {
+            a.1.partial_cmp(&b.1).unwrap()
+        }
+    });
+    assert!(positions.len() > 1 && positions.first().unwrap().0);
+
+    let mut simplified_ranges = Vec::new();
+    let mut start: T = positions.first().unwrap().1; // we need a value to initialize start with.
+    let mut c = 0;
+    for (pos_type, pos) in positions {
+        if pos_type {
+            // 0->1 transition
+            if c == 0 {
+                start = pos;
+            }
+            c += 1;
+        } else {
+            // 1->0 transition
+            if c == 1 {
+                let end = pos;
+                simplified_ranges.push((start, end));
+            }
+            c -= 1;
+        }
+    }
+    simplified_ranges
+}
+
+fn total_fresh_ids(fresh_ingredient_ranges: &[(u64, u64)]) -> u64 {
+    let sanitized_ranges = simplify_ranges(fresh_ingredient_ranges);
+
+    sanitized_ranges.iter().map(|r| r.1 - r.0 + 1).sum()
 }
 
 fn main() {
@@ -48,10 +105,7 @@ fn main() {
         "Part 1: {}",
         fresh_ingredients_count(&fresh_ingredient_ranges, &available_ingredients)
     );
-    println!(
-        "Part 2: {}",
-        part2(&fresh_ingredient_ranges, &available_ingredients)
-    );
+    println!("Part 2: {}", total_fresh_ids(&fresh_ingredient_ranges));
 }
 
 #[cfg(test)]
@@ -72,6 +126,6 @@ mod tests {
     #[test]
     fn test_part2() {
         let (fresh_ingredient_ranges, available_ingredients) = build(INPUT_TEST);
-        assert_eq!(part2(&fresh_ingredient_ranges, &available_ingredients), 0);
+        assert_eq!(total_fresh_ids(&fresh_ingredient_ranges), 14);
     }
 }
