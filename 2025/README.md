@@ -24,6 +24,6 @@ Grid.
 
 Ranges.
 
-### Day 6: [Trash Compactor](day06/README.md) 🌟
+### Day 6: [Trash Compactor](day06/README.md) 🌟🌟
 
-Cephalopod maths.
+Parsing in columns.
