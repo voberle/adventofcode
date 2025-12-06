@@ -20,6 +20,10 @@ Sub-slices.
 
 Grid.
 
-### Day 5: [Cafeteria](day05/README.md) 🌟
+### Day 5: [Cafeteria](day05/README.md) 🌟🌟
 
 Ranges.
+
+### Day 6: [Trash Compactor](day06/README.md) 🌟
+
+Cephalopod maths.
