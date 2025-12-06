@@ -20,6 +20,12 @@ struct Problem {
     numbers: Vec<u64>,
 }
 
+impl Problem {
+    fn new(operation: Operation, numbers: Vec<u64>) -> Self {
+        Self { operation, numbers }
+    }
+}
+
 fn build_part1(input: &str) -> Vec<Problem> {
     let lines: Vec<Vec<_>> = input
         .lines()
@@ -28,11 +34,13 @@ fn build_part1(input: &str) -> Vec<Problem> {
     let operations = lines.last().unwrap();
 
     (0..operations.len())
-        .map(|col| Problem {
-            operation: Operation::build(operations[col]),
-            numbers: (0..lines.len() - 1)
-                .map(|row| lines[row][col].parse().unwrap())
-                .collect(),
+        .map(|col| {
+            Problem::new(
+                Operation::build(operations[col]),
+                (0..lines.len() - 1)
+                    .map(|row| lines[row][col].parse().unwrap())
+                    .collect(),
+            )
         })
         .collect()
 }
@@ -59,23 +67,18 @@ fn build_part2(input: &str) -> Vec<Problem> {
     // Starting at the end is easier since the operation is in the first column.
     for column in columns.iter().rev() {
         if column.trim().is_empty() {
-            numbers.clear();
             continue;
         }
         match column.chars().last() {
             Some('+') => {
                 numbers.push(column.trim_end_matches('+').trim().parse().unwrap());
-                problems.push(Problem {
-                    operation: Operation::Addition,
-                    numbers: numbers.clone(),
-                });
+                problems.push(Problem::new(Operation::Addition, numbers));
+                numbers = Vec::new();
             }
             Some('*') => {
                 numbers.push(column.trim_end_matches('*').trim().parse().unwrap());
-                problems.push(Problem {
-                    operation: Operation::Multiplication,
-                    numbers: numbers.clone(),
-                });
+                problems.push(Problem::new(Operation::Multiplication, numbers));
+                numbers = Vec::new();
             }
             Some(_) => numbers.push(column.trim().parse().unwrap()),
             None => panic!("Impossible"),
