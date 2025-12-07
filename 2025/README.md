@@ -27,3 +27,7 @@ Ranges.
 ### Day 6: [Trash Compactor](day06/README.md) 🌟🌟
 
 Parsing in columns.
+
+### Day 7: [Laboratories](day07/README.md) 🌟
+
+Beams.
