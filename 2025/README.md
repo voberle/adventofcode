@@ -28,6 +28,6 @@ Ranges.
 
 Parsing in columns.
 
-### Day 7: [Laboratories](day07/README.md) 🌟
+### Day 7: [Laboratories](day07/README.md) 🌟🌟
 
-Beams.
+Beams, recursion.
