@@ -31,3 +31,7 @@ Parsing in columns.
 ### Day 7: [Laboratories](day07/README.md) 🌟🌟
 
 Beams, recursion.
+
+### Day 8: [Playground](day08/README.md) 🌟
+
+Circuits connection.
