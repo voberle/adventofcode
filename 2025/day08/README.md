@@ -12,3 +12,4 @@ Finally, I calculate the size of all circuits and get the 3 biggest ones.
 
 ## Part 2
 
+I didn't expect it, but part 2 was easy.

@@ -33,7 +33,7 @@ fn build(input: &str) -> Vec<Position> {
     input.lines().map(Position::build).collect()
 }
 
-fn three_largest_product(positions: &[Position], connections_count: usize) -> usize {
+fn make_connections(positions: &[Position]) -> Vec<(usize, usize, u64)> {
     // List of all connections
     let mut connections: Vec<(usize, usize, u64)> = (0..positions.len())
         .combinations(2)
@@ -48,7 +48,14 @@ fn three_largest_product(positions: &[Position], connections_count: usize) -> us
         .collect();
     // Sorted by closeness.
     connections.sort_unstable_by_key(|c| c.2);
+    connections
+}
 
+fn three_largest_product(
+    positions: &[Position],
+    connections: &[(usize, usize, u64)],
+    connections_count: usize,
+) -> usize {
     let mut circuits: Vec<usize> = (0..positions.len()).collect();
 
     // Connect the requested number of circuits.
@@ -82,8 +89,29 @@ fn three_largest_product(positions: &[Position], connections_count: usize) -> us
     sizes[sizes.len() - 1] * sizes[sizes.len() - 2] * sizes[sizes.len() - 3]
 }
 
-fn part2(positions: &[Position]) -> u64 {
-    0
+fn x_product_all_connected(positions: &[Position], connections: &[(usize, usize, u64)]) -> u64 {
+    let mut circuits: Vec<usize> = (0..positions.len()).collect();
+
+    // Connect until we have only one circuit.
+    for (i1, i2, _) in connections {
+        let (circuit_id1, circuit_id2) = (circuits[*i1], circuits[*i2]);
+
+        if circuit_id1 == circuit_id2 {
+            continue;
+        }
+
+        for circuit_id in &mut circuits {
+            if *circuit_id == circuit_id1 {
+                *circuit_id = circuit_id2;
+            }
+        }
+
+        if circuits.iter().all(|v| *v == circuits[0]) {
+            // One circuit, done.
+            return positions[*i1].x * positions[*i2].x;
+        }
+    }
+    panic!("Didn't manage to create one circuit.");
 }
 
 fn main() {
@@ -91,9 +119,16 @@ fn main() {
     io::stdin().read_to_string(&mut input).unwrap();
     let positions = build(&input);
 
-    println!("Part 1: {}", three_largest_product(&positions, 1000));
-    // println!("Part 1: {}", three_largest_product(&positions, 10));
-    println!("Part 2: {}", part2(&positions));
+    let connections = make_connections(&positions);
+
+    println!(
+        "Part 1: {}",
+        three_largest_product(&positions, &connections, 1000)
+    );
+    println!(
+        "Part 2: {}",
+        x_product_all_connected(&positions, &connections)
+    );
 }
 
 #[cfg(test)]
@@ -104,11 +139,15 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(three_largest_product(&build(INPUT_TEST), 10), 40);
+        let positions = build(INPUT_TEST);
+        let connections = make_connections(&positions);
+        assert_eq!(three_largest_product(&positions, &connections, 10), 40);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&build(INPUT_TEST)), 0);
+        let positions = build(INPUT_TEST);
+        let connections = make_connections(&positions);
+        assert_eq!(x_product_all_connected(&positions, &connections), 25272);
     }
 }

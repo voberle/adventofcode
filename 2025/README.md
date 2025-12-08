@@ -32,6 +32,6 @@ Parsing in columns.
 
 Beams, recursion.
 
-### Day 8: [Playground](day08/README.md) 🌟
+### Day 8: [Playground](day08/README.md) 🌟🌟
 
 Circuits connection.
