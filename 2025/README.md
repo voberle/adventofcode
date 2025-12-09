@@ -35,3 +35,7 @@ Beams, recursion.
 ### Day 8: [Playground](day08/README.md) 🌟🌟
 
 Circuits connection.
+
+### Day 9: [Movie Theater](day09/README.md) 🌟
+
+Rectangle areas.
