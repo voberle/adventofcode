@@ -1,12 +1,12 @@
 use std::io::{self, Read};
 
-#[derive(Debug, PartialEq)]
+// Lowest bit is on the left (aka first light).
+#[derive(Debug, Clone, Copy, PartialEq)]
 struct LightDiagram(u32);
 
 impl LightDiagram {
     fn build(s: &str) -> Self {
-        Self(s[1..s.len() - 1].chars().fold(0, |acc, c| {
-            println!("acc={acc}, c={c}");
+        Self(s[1..s.len() - 1].chars().rev().fold(0, |acc, c| {
             acc * 2
                 + match c {
                     '.' => 0,
@@ -15,23 +15,31 @@ impl LightDiagram {
                 }
         }))
     }
+
+    fn toggle(self, buttons: Buttons) -> Self {
+        Self(self.0 ^ buttons.0)
+    }
 }
 
-#[derive(Debug)]
-struct WiringSchematic(Vec<Vec<usize>>);
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct Buttons(u32);
+
+impl Buttons {
+    fn build(press: &str) -> Self {
+        let mut value = 0;
+        for p in press[1..press.len() - 1].split(',') {
+            value |= 1u32 << p.parse::<u32>().unwrap();
+        }
+        Self(value)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+struct WiringSchematic(Vec<Buttons>);
 
 impl WiringSchematic {
-    fn build(v: &[&str]) -> Self {
-        Self(
-            v.iter()
-                .map(|s| {
-                    s[1..s.len() - 1]
-                        .split(',')
-                        .map(|p| p.parse().unwrap())
-                        .collect()
-                })
-                .collect(),
-        )
+    fn build(presses: &[&str]) -> Self {
+        Self(presses.iter().map(|press| Buttons::build(press)).collect())
     }
 }
 
@@ -99,6 +107,27 @@ mod tests {
     #[test]
     fn test_light_diagrams() {
         assert_eq!(LightDiagram::build("[.##.]"), LightDiagram(6));
+        assert_eq!(LightDiagram::build("[...#.]"), LightDiagram(8));
+    }
+
+    #[test]
+    fn test_buttons() {
+        assert_eq!(Buttons::build("(1,3)"), Buttons(10));
+    }
+
+    #[test]
+    fn test_wiring_schematic() {
+        assert_eq!(
+            WiringSchematic::build(&["(1,3)"]),
+            WiringSchematic(vec![Buttons(10)])
+        );
+    }
+
+    #[test]
+    fn test_toggle() {
+        let lights = LightDiagram::build("[#.....]");
+        let buttons = Buttons::build("(0,3,4)");
+        assert_eq!(lights.toggle(buttons), LightDiagram::build("[...##.]"));
     }
 
     #[test]
