@@ -40,4 +40,6 @@ Circuits connection.
 
 Rectangle areas.
 
-### Day 10: [Factory](day10/README.md)
+### Day 10: [Factory](day10/README.md) 🌟
+
+Shortest path.

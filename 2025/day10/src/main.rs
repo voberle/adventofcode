@@ -1,7 +1,12 @@
-use std::io::{self, Read};
+use std::{
+    collections::BinaryHeap,
+    io::{self, Read},
+};
+
+use fxhash::{FxHashMap, FxHashSet};
 
 // Lowest bit is on the left (aka first light).
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct LightDiagram(u32);
 
 impl LightDiagram {
@@ -57,45 +62,111 @@ impl JoltageReqs {
     }
 }
 
-fn build(input: &str) -> (Vec<LightDiagram>, Vec<WiringSchematic>, Vec<JoltageReqs>) {
-    input
-        .lines()
-        .map(|line| {
-            let parts: Vec<_> = line.split_ascii_whitespace().collect();
-            (
-                LightDiagram::build(parts[0]),
-                WiringSchematic::build(&parts[1..parts.len() - 1]),
-                JoltageReqs::build(parts[parts.len() - 1]),
-            )
-        })
-        .collect()
+struct Machine {
+    light_diagrams: LightDiagram,
+    wiring_schematics: WiringSchematic,
+    joltage_reqs: JoltageReqs,
 }
 
-fn fewest_presses(light_diagrams: &[LightDiagram], wiring_schematics: &[WiringSchematic]) -> usize {
-    0
+impl Machine {
+    fn build(line: &str) -> Machine {
+        let parts: Vec<_> = line.split_ascii_whitespace().collect();
+        Machine {
+            light_diagrams: LightDiagram::build(parts[0]),
+            wiring_schematics: WiringSchematic::build(&parts[1..parts.len() - 1]),
+            joltage_reqs: JoltageReqs::build(parts[parts.len() - 1]),
+        }
+    }
 }
 
-fn part2(
-    light_diagrams: &[LightDiagram],
-    wiring_schematics: &[WiringSchematic],
-    joltage_reqs: &[JoltageReqs],
-) -> i64 {
+fn build(input: &str) -> Vec<Machine> {
+    input.lines().map(Machine::build).collect()
+}
+
+// Node we are exploring with Dijkstra.
+#[derive(Debug, PartialEq, Eq)]
+struct Node {
+    lights: LightDiagram,
+    cost: usize,
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+// Dijkstra shortest path.
+fn find_shortest_path(end: LightDiagram, wiring_schematic: &WiringSchematic) -> usize {
+    let start = LightDiagram(0);
+
+    let mut visited: FxHashSet<LightDiagram> = FxHashSet::default();
+    let mut distance: FxHashMap<LightDiagram, usize> = FxHashMap::default();
+    let mut shortest_distance = usize::MAX;
+
+    let mut queue: BinaryHeap<Node> = BinaryHeap::new();
+    queue.push(Node {
+        lights: start,
+        cost: 0,
+    });
+
+    while let Some(Node { lights, cost }) = queue.pop() {
+        visited.insert(lights);
+
+        if lights == end {
+            shortest_distance = shortest_distance.min(cost);
+            continue;
+        }
+
+        queue.extend(wiring_schematic.0.iter().filter_map(|buttons| {
+            let next_lights = lights.toggle(*buttons);
+
+            if visited.contains(&next_lights) {
+                return None;
+            }
+
+            let next_cost = cost + 1;
+            if let Some(prevcost) = distance.get(&next_lights)
+                && *prevcost <= next_cost
+            {
+                return None;
+            }
+
+            distance.insert(next_lights, next_cost);
+            Some(Node {
+                lights: next_lights,
+                cost: next_cost,
+            })
+        }));
+    }
+    shortest_distance
+}
+
+fn fewest_presses_for_machine(machine: &Machine) -> usize {
+    find_shortest_path(machine.light_diagrams, &machine.wiring_schematics)
+}
+
+fn fewest_presses(machines: &[Machine]) -> usize {
+    machines.iter().map(fewest_presses_for_machine).sum()
+}
+
+fn part2(machines: &[Machine]) -> i64 {
     0
 }
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let (light_diagrams, wiring_schematics, joltage_reqs) = build(&input);
+    let machines = build(&input);
 
-    println!(
-        "Part 1: {}",
-        fewest_presses(&light_diagrams, &wiring_schematics)
-    );
-    println!(
-        "Part 2: {}",
-        part2(&light_diagrams, &wiring_schematics, &joltage_reqs)
-    );
+    println!("Part 1: {}", fewest_presses(&machines));
+    println!("Part 2: {}", part2(&machines));
 }
 
 #[cfg(test)]
@@ -132,13 +203,11 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        let (light_diagrams, wiring_schematics, _) = build(&INPUT_TEST);
-        assert_eq!(fewest_presses(&light_diagrams, &wiring_schematics), 7);
+        assert_eq!(fewest_presses(&build(INPUT_TEST)), 7);
     }
 
     #[test]
     fn test_part2() {
-        let (light_diagrams, wiring_schematics, joltage_reqs) = build(&INPUT_TEST);
-        assert_eq!(part2(&light_diagrams, &wiring_schematics, &joltage_reqs), 0);
+        assert_eq!(part2(&build(INPUT_TEST)), 0);
     }
 }
