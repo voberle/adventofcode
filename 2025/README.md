@@ -39,3 +39,5 @@ Circuits connection.
 ### Day 9: [Movie Theater](day09/README.md) 🌟
 
 Rectangle areas.
+
+### Day 10: [Factory](day10/README.md)
