@@ -59,34 +59,30 @@ fn find_all_paths(
     current: usize,
     end: usize,
     visited: &mut Vec<bool>,
-    path: &mut Vec<usize>,
     results_count: &mut usize,
 ) {
     visited[current] = true;
-    path.push(current);
 
     if current == end {
-        if filter.iter().all(|f| path.contains(f)) {
+        if filter.iter().all(|i| visited[*i]) {
             *results_count += 1;
         }
     } else if let Some(neighbors) = graph.get(current) {
         for neighbor in neighbors {
             if !visited[*neighbor] {
-                find_all_paths(graph, filter, *neighbor, end, visited, path, results_count);
+                find_all_paths(graph, filter, *neighbor, end, visited, results_count);
             }
         }
     }
 
     // Backtrack
-    path.pop();
     visited[current] = false;
 }
 
 fn count_all_paths(graph: &[Vec<usize>], filter: &[usize], from: usize, to: usize) -> usize {
     let mut visited = vec![false; graph.len()];
-    let mut path = vec![];
     let mut results_count = 0;
-    find_all_paths(graph, filter, from, to, &mut visited, &mut path, &mut results_count);
+    find_all_paths(graph, filter, from, to, &mut visited, &mut results_count);
 
     results_count
 }
@@ -98,7 +94,12 @@ fn total_paths(rack: &Rack) -> usize {
 fn total_paths_dac_fft(rack: &Rack) -> usize {
     let dac = rack.get_id("dac");
     let fft = rack.get_id("fft");
-    count_all_paths(&rack.graph, &[dac, fft], rack.get_id("svr"), rack.get_id("out"))
+    count_all_paths(
+        &rack.graph,
+        &[dac, fft],
+        rack.get_id("svr"),
+        rack.get_id("out"),
+    )
 }
 
 fn main() {
