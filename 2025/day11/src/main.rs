@@ -55,22 +55,24 @@ impl Rack {
 // Depth-First Search (DFS) with backtracking.
 fn find_all_paths(
     graph: &[Vec<usize>],
+    filter: &[usize],
     current: usize,
     end: usize,
     visited: &mut Vec<bool>,
     path: &mut Vec<usize>,
-    results: &mut Vec<Vec<usize>>,
+    results_count: &mut usize,
 ) {
     visited[current] = true;
     path.push(current);
 
     if current == end {
-        // For part 1, it would not be necessary to store all paths, just count them.
-        results.push(path.clone());
+        if filter.iter().all(|f| path.contains(f)) {
+            *results_count += 1;
+        }
     } else if let Some(neighbors) = graph.get(current) {
         for neighbor in neighbors {
             if !visited[*neighbor] {
-                find_all_paths(graph, *neighbor, end, visited, path, results);
+                find_all_paths(graph, filter, *neighbor, end, visited, path, results_count);
             }
         }
     }
@@ -80,30 +82,23 @@ fn find_all_paths(
     visited[current] = false;
 }
 
-fn get_all_paths(graph: &[Vec<usize>], from: usize, to: usize) -> Vec<Vec<usize>> {
+fn count_all_paths(graph: &[Vec<usize>], filter: &[usize], from: usize, to: usize) -> usize {
     let mut visited = vec![false; graph.len()];
     let mut path = vec![];
-    let mut results = vec![];
-    find_all_paths(graph, from, to, &mut visited, &mut path, &mut results);
+    let mut results_count = 0;
+    find_all_paths(graph, filter, from, to, &mut visited, &mut path, &mut results_count);
 
-    results
+    results_count
 }
 
 fn total_paths(rack: &Rack) -> usize {
-    let results = get_all_paths(&rack.graph, rack.get_id("you"), rack.get_id("out"));
-
-    results.len()
+    count_all_paths(&rack.graph, &[], rack.get_id("you"), rack.get_id("out"))
 }
 
 fn total_paths_dac_fft(rack: &Rack) -> usize {
-    let results = get_all_paths(&rack.graph, rack.get_id("svr"), rack.get_id("out"));
-
     let dac = rack.get_id("dac");
     let fft = rack.get_id("fft");
-    results
-        .iter()
-        .filter(|path| path.contains(&dac) && path.contains(&fft))
-        .count()
+    count_all_paths(&rack.graph, &[dac, fft], rack.get_id("svr"), rack.get_id("out"))
 }
 
 fn main() {
