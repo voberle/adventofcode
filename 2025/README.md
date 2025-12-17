@@ -43,3 +43,5 @@ Rectangle areas.
 ### Day 10: [Factory](day10/README.md) 🌟
 
 Shortest path.
+
+### Day 11: [Reactor](day11/README.md)
