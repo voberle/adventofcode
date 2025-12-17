@@ -4,8 +4,7 @@ use fxhash::FxHashMap;
 
 struct Rack {
     graph: Vec<Vec<usize>>,
-    you: usize,
-    out: usize,
+    devices: FxHashMap<String, usize>,
 }
 
 impl Rack {
@@ -23,32 +22,33 @@ impl Rack {
             .collect();
         // println!("{:#?}", list);
 
-        let mut names_to_id: FxHashMap<String, usize> = FxHashMap::default();
-        names_to_id.extend(
+        let mut devices: FxHashMap<String, usize> = FxHashMap::default();
+        devices.extend(
             list.iter()
                 .flat_map(|(k, v)| std::iter::once(k).chain(v.iter()))
                 .map(|s| (s.clone(), usize::MAX)),
         );
 
-        for (i, val) in names_to_id.iter_mut().enumerate() {
+        for (i, val) in devices.iter_mut().enumerate() {
             *val.1 = i;
         }
         // println!("{:#?}", names_to_id);
 
-        let you = *names_to_id.get_mut("you").unwrap();
-        let out = *names_to_id.get_mut("out").unwrap();
-
-        let mut graph: Vec<Vec<usize>> = vec![vec![]; names_to_id.len()];
+        let mut graph: Vec<Vec<usize>> = vec![vec![]; devices.len()];
         for (dev, conns) in list {
-            let i = *names_to_id.get(&dev).unwrap();
+            let i = *devices.get(&dev).unwrap();
             for conn in conns {
-                let k = *names_to_id.get(&conn).unwrap();
+                let k = *devices.get(&conn).unwrap();
                 graph[i].push(k);
             }
         }
         // println!("{:#?}", graph);
 
-        Self { graph, you, out }
+        Self { graph, devices }
+    }
+
+    fn get_id(&self, device: &str) -> usize {
+        *self.devices.get(device).unwrap()
     }
 }
 
@@ -89,8 +89,8 @@ fn total_paths(rack: &Rack) -> usize {
     let mut results_count = 0;
     find_all_paths(
         &rack.graph,
-        rack.you,
-        rack.out,
+        rack.get_id("you"),
+        rack.get_id("out"),
         &mut visited,
         &mut path,
         &mut results_count,
