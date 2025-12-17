@@ -50,6 +50,30 @@ impl Rack {
     fn get_id(&self, device: &str) -> usize {
         *self.devices.get(device).unwrap()
     }
+
+    // Graphviz output
+    #[allow(dead_code)]
+    fn print_graph(&self) {
+        let mut id_to_name: Vec<String> = vec![String::new(); self.devices.len()];
+        for (n, i) in &self.devices {
+            id_to_name[*i].clone_from(n);
+        }
+
+        println!("digraph {{");
+        for (dev, conns) in self.graph.iter().enumerate() {
+            let from = &id_to_name[dev];
+            for conn in conns {
+                let to = &id_to_name[*conn];
+                println!("\t{from} -> {to}");
+            }
+        }
+        println!("\tsvr [style=filled color=green]");
+        println!("\tdac [style=filled color=yellow]");
+        println!("\tfft [style=filled color=yellow]");
+        println!("\tout [style=filled color=red]");
+
+        println!("}}");
+    }
 }
 
 // Depth-First Search (DFS) with backtracking.
@@ -105,10 +129,13 @@ fn total_paths_dac_fft(rack: &Rack) -> usize {
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let input_parsed = Rack::build(&input);
+    let rack = Rack::build(&input);
 
-    println!("Part 1: {}", total_paths(&input_parsed));
-    println!("Part 2: {}", total_paths_dac_fft(&input_parsed));
+    // dot -Tpdf -Kdot input.gv > input.pdf
+    // rack.print_graph();
+
+    println!("Part 1: {}", total_paths(&rack));
+    println!("Part 2: {}", total_paths_dac_fft(&rack));
 }
 
 #[cfg(test)]
