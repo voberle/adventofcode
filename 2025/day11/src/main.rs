@@ -59,8 +59,48 @@ impl Rack {
     }
 }
 
+// Depth-First Search (DFS) with backtracking.
+fn find_all_paths(
+    graph: &[Vec<usize>],
+    current: usize,
+    end: usize,
+    visited: &mut Vec<bool>,
+    path: &mut Vec<usize>,
+    results: &mut Vec<Vec<usize>>,
+) {
+    visited[current] = true;
+    path.push(current);
+
+    if current == end {
+        // For part 1, it would not be necessary to store all paths, just count them.
+        results.push(path.clone());
+    } else if let Some(neighbors) = graph.get(current) {
+        for neighbor in neighbors {
+            if !visited[*neighbor] {
+                find_all_paths(graph, *neighbor, end, visited, path, results);
+            }
+        }
+    }
+
+    // Backtrack
+    path.pop();
+    visited[current] = false;
+}
+
 fn total_paths(rack: &Rack) -> usize {
-    0
+    let mut visited = vec![false; rack.graph.len()];
+    let mut path = vec![];
+    let mut results = vec![];
+    find_all_paths(
+        &rack.graph,
+        rack.you,
+        rack.out,
+        &mut visited,
+        &mut path,
+        &mut results,
+    );
+
+    results.len()
 }
 
 fn part2(rack: &Rack) -> i64 {

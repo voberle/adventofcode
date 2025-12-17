@@ -44,4 +44,6 @@ Rectangle areas.
 
 Shortest path.
 
-### Day 11: [Reactor](day11/README.md)
+### Day 11: [Reactor](day11/README.md) 🌟
+
+Graph, DFS, all paths.
