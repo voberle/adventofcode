@@ -30,20 +30,13 @@ impl Rack {
                 .map(|s| (s.clone(), usize::MAX)),
         );
 
-        let you = 0;
-        let out = names_to_id.len() - 1;
-
-        *names_to_id.get_mut("you").unwrap() = you;
-        *names_to_id.get_mut("out").unwrap() = out;
-        let mut i = 1;
-        for val in &mut names_to_id {
-            if *val.1 != usize::MAX {
-                continue;
-            }
+        for (i, val) in names_to_id.iter_mut().enumerate() {
             *val.1 = i;
-            i += 1;
         }
         // println!("{:#?}", names_to_id);
+
+        let you = *names_to_id.get_mut("you").unwrap();
+        let out = *names_to_id.get_mut("out").unwrap();
 
         let mut graph: Vec<Vec<usize>> = vec![vec![]; names_to_id.len()];
         for (dev, conns) in list {
