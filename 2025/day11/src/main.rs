@@ -59,20 +59,18 @@ fn find_all_paths(
     end: usize,
     visited: &mut Vec<bool>,
     path: &mut Vec<usize>,
-    // results: &mut Vec<Vec<usize>>,
-    results_count: &mut usize,
+    results: &mut Vec<Vec<usize>>,
 ) {
     visited[current] = true;
     path.push(current);
 
     if current == end {
         // For part 1, it would not be necessary to store all paths, just count them.
-        // results.push(path.clone());
-        *results_count += 1;
+        results.push(path.clone());
     } else if let Some(neighbors) = graph.get(current) {
         for neighbor in neighbors {
             if !visited[*neighbor] {
-                find_all_paths(graph, *neighbor, end, visited, path, results_count);
+                find_all_paths(graph, *neighbor, end, visited, path, results);
             }
         }
     }
@@ -82,26 +80,30 @@ fn find_all_paths(
     visited[current] = false;
 }
 
-fn total_paths(rack: &Rack) -> usize {
-    let mut visited = vec![false; rack.graph.len()];
+fn get_all_paths(graph: &[Vec<usize>], from: usize, to: usize) -> Vec<Vec<usize>> {
+    let mut visited = vec![false; graph.len()];
     let mut path = vec![];
-    // let mut results = vec![];
-    let mut results_count = 0;
-    find_all_paths(
-        &rack.graph,
-        rack.get_id("you"),
-        rack.get_id("out"),
-        &mut visited,
-        &mut path,
-        &mut results_count,
-    );
+    let mut results = vec![];
+    find_all_paths(graph, from, to, &mut visited, &mut path, &mut results);
 
-    // results.len()
-    results_count
+    results
 }
 
-fn part2(rack: &Rack) -> i64 {
-    0
+fn total_paths(rack: &Rack) -> usize {
+    let results = get_all_paths(&rack.graph, rack.get_id("you"), rack.get_id("out"));
+
+    results.len()
+}
+
+fn total_paths_dac_fft(rack: &Rack) -> usize {
+    let results = get_all_paths(&rack.graph, rack.get_id("svr"), rack.get_id("out"));
+
+    let dac = rack.get_id("dac");
+    let fft = rack.get_id("fft");
+    results
+        .iter()
+        .filter(|path| path.contains(&dac) && path.contains(&fft))
+        .count()
 }
 
 fn main() {
@@ -110,22 +112,23 @@ fn main() {
     let input_parsed = Rack::build(&input);
 
     println!("Part 1: {}", total_paths(&input_parsed));
-    println!("Part 2: {}", part2(&input_parsed));
+    println!("Part 2: {}", total_paths_dac_fft(&input_parsed));
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const INPUT_TEST: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_1: &str = include_str!("../resources/input_test_1");
+    const INPUT_TEST_2: &str = include_str!("../resources/input_test_2");
 
     #[test]
     fn test_part1() {
-        assert_eq!(total_paths(&Rack::build(INPUT_TEST)), 5);
+        assert_eq!(total_paths(&Rack::build(INPUT_TEST_1)), 5);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&Rack::build(INPUT_TEST)), 0);
+        assert_eq!(total_paths_dac_fft(&Rack::build(INPUT_TEST_2)), 2);
     }
 }
