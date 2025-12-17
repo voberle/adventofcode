@@ -59,18 +59,20 @@ fn find_all_paths(
     end: usize,
     visited: &mut Vec<bool>,
     path: &mut Vec<usize>,
-    results: &mut Vec<Vec<usize>>,
+    // results: &mut Vec<Vec<usize>>,
+    results_count: &mut usize,
 ) {
     visited[current] = true;
     path.push(current);
 
     if current == end {
         // For part 1, it would not be necessary to store all paths, just count them.
-        results.push(path.clone());
+        // results.push(path.clone());
+        *results_count += 1;
     } else if let Some(neighbors) = graph.get(current) {
         for neighbor in neighbors {
             if !visited[*neighbor] {
-                find_all_paths(graph, *neighbor, end, visited, path, results);
+                find_all_paths(graph, *neighbor, end, visited, path, results_count);
             }
         }
     }
@@ -83,17 +85,19 @@ fn find_all_paths(
 fn total_paths(rack: &Rack) -> usize {
     let mut visited = vec![false; rack.graph.len()];
     let mut path = vec![];
-    let mut results = vec![];
+    // let mut results = vec![];
+    let mut results_count = 0;
     find_all_paths(
         &rack.graph,
         rack.you,
         rack.out,
         &mut visited,
         &mut path,
-        &mut results,
+        &mut results_count,
     );
 
-    results.len()
+    // results.len()
+    results_count
 }
 
 fn part2(rack: &Rack) -> i64 {
