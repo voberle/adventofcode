@@ -80,22 +80,24 @@ impl Rack {
 // Recursive function.
 fn find_all_paths(
     graph: &[Vec<usize>],
-    filter: &[usize],
     current: usize,
     end: usize,
     visited: &mut Vec<bool>,
+    cache: &mut Vec<u64>,
 ) -> u64 {
+    if cache[current] != u64::MAX {
+        return cache[current];
+    }
+
     visited[current] = true;
 
     let mut results_count = 0;
     if current == end {
-        if filter.iter().all(|i| visited[*i]) {
-            results_count = 1;
-        }
+        results_count = 1;
     } else if let Some(neighbors) = graph.get(current) {
         for neighbor in neighbors {
             if !visited[*neighbor] {
-                results_count += find_all_paths(graph, filter, *neighbor, end, visited);
+                results_count += find_all_paths(graph, *neighbor, end, visited, cache);
             }
         }
     }
@@ -103,27 +105,31 @@ fn find_all_paths(
     // Backtrack
     visited[current] = false;
 
+    cache[current] = results_count;
     results_count
 }
 
-fn count_all_paths(graph: &[Vec<usize>], filter: &[usize], from: usize, to: usize) -> u64 {
+fn count_all_paths(graph: &[Vec<usize>], from: usize, to: usize) -> u64 {
     let mut visited = vec![false; graph.len()];
-    find_all_paths(graph, filter, from, to, &mut visited)
+    let mut cache = vec![u64::MAX; graph.len()];
+    find_all_paths(graph, from, to, &mut visited, &mut cache)
 }
 
 fn total_paths(rack: &Rack) -> u64 {
-    count_all_paths(&rack.graph, &[], rack.get_id("you"), rack.get_id("out"))
+    count_all_paths(&rack.graph, rack.get_id("you"), rack.get_id("out"))
 }
 
 fn total_paths_dac_fft(rack: &Rack) -> u64 {
+    let svr = rack.get_id("svr");
     let dac = rack.get_id("dac");
     let fft = rack.get_id("fft");
-    count_all_paths(
-        &rack.graph,
-        &[dac, fft],
-        rack.get_id("svr"),
-        rack.get_id("out"),
-    )
+    let out = rack.get_id("out");
+
+    // With the Graphviz output, we see that all paths pass first by fft and then dac.
+    // So we can count all paths from svr -> fft, fft -> dac and dac -> out and multiply the results.
+    count_all_paths(&rack.graph, svr, fft)
+        * count_all_paths(&rack.graph, fft, dac)
+        * count_all_paths(&rack.graph, dac, out)
 }
 
 fn main() {

@@ -8,3 +8,10 @@ Then a DFS found all paths.
 
 ## Part 2
 
+The number of paths to find in part 2 was very big, so some tricks were required.
+
+I refactored the DFS code to be able to add caching to it.
+
+Then with a Graphviz output, I saw in which order we pass the required nodes.
+We see that all paths pass first by fft and then dac.
+So we can count all paths from svr -> fft, fft -> dac and dac -> out and multiply the results.
