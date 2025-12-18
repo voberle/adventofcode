@@ -77,45 +77,45 @@ impl Rack {
 }
 
 // Depth-First Search (DFS) with backtracking.
+// Recursive function.
 fn find_all_paths(
     graph: &[Vec<usize>],
     filter: &[usize],
     current: usize,
     end: usize,
     visited: &mut Vec<bool>,
-    results_count: &mut usize,
-) {
+) -> u64 {
     visited[current] = true;
 
+    let mut results_count = 0;
     if current == end {
         if filter.iter().all(|i| visited[*i]) {
-            *results_count += 1;
+            results_count = 1;
         }
     } else if let Some(neighbors) = graph.get(current) {
         for neighbor in neighbors {
             if !visited[*neighbor] {
-                find_all_paths(graph, filter, *neighbor, end, visited, results_count);
+                results_count += find_all_paths(graph, filter, *neighbor, end, visited);
             }
         }
     }
 
     // Backtrack
     visited[current] = false;
-}
-
-fn count_all_paths(graph: &[Vec<usize>], filter: &[usize], from: usize, to: usize) -> usize {
-    let mut visited = vec![false; graph.len()];
-    let mut results_count = 0;
-    find_all_paths(graph, filter, from, to, &mut visited, &mut results_count);
 
     results_count
 }
 
-fn total_paths(rack: &Rack) -> usize {
+fn count_all_paths(graph: &[Vec<usize>], filter: &[usize], from: usize, to: usize) -> u64 {
+    let mut visited = vec![false; graph.len()];
+    find_all_paths(graph, filter, from, to, &mut visited)
+}
+
+fn total_paths(rack: &Rack) -> u64 {
     count_all_paths(&rack.graph, &[], rack.get_id("you"), rack.get_id("out"))
 }
 
-fn total_paths_dac_fft(rack: &Rack) -> usize {
+fn total_paths_dac_fft(rack: &Rack) -> u64 {
     let dac = rack.get_id("dac");
     let fft = rack.get_id("fft");
     count_all_paths(
